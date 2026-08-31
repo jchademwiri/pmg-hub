@@ -1,18 +1,18 @@
-import type { Metadata } from 'next'
-import { getAllAccountingPeriods } from '@pmg/db'
-import { SetPageTotal } from '@/components/navigation/page-header-context'
+import type { Metadata } from 'next';
+import { getAllAccountingPeriods } from '@pmg/db';
+import { SetPageTotal } from '@/components/navigation/page-header-context';
 import {
   closeAccountingPeriod,
   lockAccountingPeriod,
   reopenAccountingPeriod,
-} from '@/app/actions/accounting'
-import { PeriodsClient } from './periods-client'
+} from '@/app/actions/accounting';
+import { PeriodsClient } from './periods-client';
 
-export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Accounting Periods' }
+export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Accounting Periods' };
 
 export default async function AccountingPeriodsPage() {
-  const periods = await getAllAccountingPeriods()
+  const periods = await getAllAccountingPeriods();
 
   return (
     <div className="flex flex-col gap-6">
@@ -32,5 +32,5 @@ export default async function AccountingPeriodsPage() {
         reopenAction={reopenAccountingPeriod}
       />
     </div>
-  )
+  );
 }

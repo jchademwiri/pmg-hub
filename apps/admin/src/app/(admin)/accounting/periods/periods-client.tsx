@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { useRouter } from 'next/navigation'
-import { Lock, Unlock, RefreshCw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import * as React from 'react';
+import { useRouter } from 'next/navigation';
+import { Lock, Unlock, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -11,44 +11,55 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { fmtDateTime, fmtMonthYear } from '@/lib/format'
-import { toast } from 'sonner'
-import type { AccountingPeriodWithNames } from '@pmg/db'
+} from '@/components/ui/table';
+import { fmtDateTime, fmtMonthYear } from '@/lib/format';
+import { toast } from 'sonner';
+import type { AccountingPeriodWithNames } from '@pmg/db';
 
 interface PeriodsClientProps {
-  periods: AccountingPeriodWithNames[]
-  closeAction: (period: string) => Promise<{ error?: string }>
-  lockAction: (period: string) => Promise<{ error?: string }>
-  reopenAction: (period: string) => Promise<{ error?: string }>
+  periods: AccountingPeriodWithNames[];
+  closeAction: (period: string) => Promise<{ error?: string }>;
+  lockAction: (period: string) => Promise<{ error?: string }>;
+  reopenAction: (period: string) => Promise<{ error?: string }>;
 }
 
 const STATUS_STYLES: Record<string, string> = {
   open: 'bg-emerald-500/15 text-emerald-600',
   closed: 'bg-amber-500/15 text-amber-600',
   locked: 'bg-zinc-500/15 text-zinc-600',
-}
+};
 
-export function PeriodsClient({ periods, closeAction, lockAction, reopenAction }: PeriodsClientProps) {
-  const router = useRouter()
-  const [processing, setProcessing] = React.useState<string | null>(null)
+export function PeriodsClient({
+  periods,
+  closeAction,
+  lockAction,
+  reopenAction,
+}: PeriodsClientProps) {
+  const router = useRouter();
+  const [processing, setProcessing] = React.useState<string | null>(null);
 
   async function handleAction(action: 'close' | 'lock' | 'reopen', period: string) {
-    const labels = { close: 'Close', lock: 'Lock', reopen: 'Reopen' }
-    if (action === 'lock' && !confirm(`Permanently lock period ${fmtMonthYear(period)}? This cannot be undone.`)) return
+    const labels = { close: 'Close', lock: 'Lock', reopen: 'Reopen' };
+    if (
+      action === 'lock' &&
+      !confirm(`Permanently lock period ${fmtMonthYear(period)}? This cannot be undone.`)
+    )
+      return;
 
-    setProcessing(period)
-    let result: { error?: string }
-    if (action === 'close') result = await closeAction(period)
-    else if (action === 'lock') result = await lockAction(period)
-    else result = await reopenAction(period)
-    setProcessing(null)
+    setProcessing(period);
+    let result: { error?: string };
+    if (action === 'close') result = await closeAction(period);
+    else if (action === 'lock') result = await lockAction(period);
+    else result = await reopenAction(period);
+    setProcessing(null);
 
     if (result.error) {
-      toast.error(result.error)
+      toast.error(result.error);
     } else {
-      toast.success(`Period ${fmtMonthYear(period)} ${action === 'close' ? 'closed' : action === 'lock' ? 'locked' : 'reopened'}`)
-      router.refresh()
+      toast.success(
+        `Period ${fmtMonthYear(period)} ${action === 'close' ? 'closed' : action === 'lock' ? 'locked' : 'reopened'}`,
+      );
+      router.refresh();
     }
   }
 
@@ -56,7 +67,8 @@ export function PeriodsClient({ periods, closeAction, lockAction, reopenAction }
     <div className="flex flex-col gap-4">
       {periods.length === 0 ? (
         <div className="text-sm text-muted-foreground border rounded-md p-8 text-center bg-card">
-          No accounting periods found. Periods are created automatically when journal entries are posted.
+          No accounting periods found. Periods are created automatically when journal entries are
+          posted.
         </div>
       ) : (
         <Table>
@@ -74,15 +86,23 @@ export function PeriodsClient({ periods, closeAction, lockAction, reopenAction }
           <TableBody>
             {periods.map((period) => (
               <TableRow key={period.id}>
-                <TableCell className="text-sm font-semibold">{fmtMonthYear(period.period)}</TableCell>
+                <TableCell className="text-sm font-semibold">
+                  {fmtMonthYear(period.period)}
+                </TableCell>
                 <TableCell>
-                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[period.status] ?? ''}`}>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[period.status] ?? ''}`}
+                  >
                     {period.status}
                   </span>
                 </TableCell>
-                <TableCell className="text-sm">{period.closedAt ? fmtDateTime(period.closedAt) : '—'}</TableCell>
+                <TableCell className="text-sm">
+                  {period.closedAt ? fmtDateTime(period.closedAt) : '—'}
+                </TableCell>
                 <TableCell className="text-sm">{period.closedByName ?? '—'}</TableCell>
-                <TableCell className="text-sm">{period.lockedAt ? fmtDateTime(period.lockedAt) : '—'}</TableCell>
+                <TableCell className="text-sm">
+                  {period.lockedAt ? fmtDateTime(period.lockedAt) : '—'}
+                </TableCell>
                 <TableCell className="text-sm">{period.lockedByName ?? '—'}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
@@ -130,5 +150,5 @@ export function PeriodsClient({ periods, closeAction, lockAction, reopenAction }
         </Table>
       )}
     </div>
-  )
+  );
 }

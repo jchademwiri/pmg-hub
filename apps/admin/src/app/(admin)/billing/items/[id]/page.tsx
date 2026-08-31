@@ -43,9 +43,7 @@ export default async function ItemDetailPage({ params }: Props) {
               <h2 className="text-lg font-semibold">{item.name}</h2>
               <BillingStatusBadge status={item.status} />
             </div>
-            <p className="text-sm text-muted-foreground">
-              Created {fmtDate(item.createdAt)}
-            </p>
+            <p className="text-sm text-muted-foreground">Created {fmtDate(item.createdAt)}</p>
           </div>
         </div>
       </div>
@@ -107,7 +105,10 @@ export default async function ItemDetailPage({ params }: Props) {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Unit Price</span>
-                  <span className="tabular-nums">{formatZAR(Number(item.unitPrice))} <span className="text-xs text-muted-foreground">excl. VAT</span></span>
+                  <span className="tabular-nums">
+                    {formatZAR(Number(item.unitPrice))}{' '}
+                    <span className="text-xs text-muted-foreground">excl. VAT</span>
+                  </span>
                 </div>
                 {item.unitLabel && (
                   <div className="flex justify-between text-sm">

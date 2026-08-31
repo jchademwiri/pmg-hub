@@ -1,28 +1,31 @@
-import Link from 'next/link'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import Link from 'next/link';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface PaginationProps {
-  currentPage: number
-  totalPages: number
-  buildHref: (page: number) => string
-  className?: string
+  currentPage: number;
+  totalPages: number;
+  buildHref: (page: number) => string;
+  className?: string;
 }
 
 export function Pagination({ currentPage, totalPages, buildHref, className }: PaginationProps) {
-  if (totalPages <= 1) return null
+  if (totalPages <= 1) return null;
 
-  const pages: (number | '...')[] = []
+  const pages: (number | '...')[] = [];
   for (let i = 1; i <= totalPages; i++) {
     if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
-      pages.push(i)
+      pages.push(i);
     } else if (pages[pages.length - 1] !== '...') {
-      pages.push('...')
+      pages.push('...');
     }
   }
 
   return (
-    <nav className={cn('flex items-center justify-between px-2 py-2', className)} aria-label="Pagination">
+    <nav
+      className={cn('flex items-center justify-between px-2 py-2', className)}
+      aria-label="Pagination"
+    >
       <div className="flex items-center gap-1">
         {currentPage > 1 && (
           <Link
@@ -49,13 +52,13 @@ export function Pagination({ currentPage, totalPages, buildHref, className }: Pa
                 'inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm transition-colors',
                 page === currentPage
                   ? 'bg-primary text-primary-foreground font-medium'
-                  : 'hover:bg-muted'
+                  : 'hover:bg-muted',
               )}
               aria-current={page === currentPage ? 'page' : undefined}
             >
               {page}
             </Link>
-          )
+          ),
         )}
       </div>
 
@@ -71,5 +74,5 @@ export function Pagination({ currentPage, totalPages, buildHref, className }: Pa
         )}
       </div>
     </nav>
-  )
+  );
 }

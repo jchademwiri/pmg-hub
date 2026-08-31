@@ -10,6 +10,7 @@ its numbers are read from the snapshot table rather than recalculated from live
 data, making historical reporting stable and trustworthy.
 
 The feature has three parts:
+
 1. A new `snapshots` database table that mirrors the `PeriodSummary` shape.
 2. A "Close Month" button on the dashboard that creates a snapshot from live data.
 3. A `/snapshots` page that lists all closed months in a table.
@@ -28,7 +29,7 @@ The feature has three parts:
 - **Period**: A calendar month expressed as a `YYYY-MM` string (e.g. `2026-03`).
 - **PeriodSummary**: The eight-field financial summary type already defined in
   `@pmg/db`: `{ revenue, expenses, pmgShare, profitPool, salary, reinvest,
-  reserve, flex }`.
+reserve, flex }`.
 - **Dashboard**: The `/dashboard` Server Component page in the admin app.
 - **Snapshots_Page**: The `/snapshots` Server Component page listing all closed
   months.
@@ -200,7 +201,7 @@ can review all closed months and their locked financial figures in one place.
    as a full month name and year using:
    `new Date(period + '-01').toLocaleString('en-ZA', { month: 'long', year: 'numeric' })`
    - consistent with how months are formatted elsewhere in the codebase
-   (e.g. `expense-filter-bar.tsx`).
+     (e.g. `expense-filter-bar.tsx`).
 10. WHEN no snapshots exist, THE Snapshots_Page SHALL render the empty-state
     message: "No months have been closed yet. Use the Close Month button on the
     dashboard to lock a month's figures."
@@ -224,7 +225,7 @@ created, so that historical figures cannot be accidentally altered.
    property).
 4. THE Snapshot_System SHALL compute snapshot values using the Financial_Model
    formulas: `pmgShare = revenue × 0.20`, `profitPool = revenue − expenses −
-   pmgShare`, `salary = profitPool × 0.35`, `reinvest = profitPool × 0.30`,
+pmgShare`, `salary = profitPool × 0.35`, `reinvest = profitPool × 0.30`,
    `reserve = profitPool × 0.30`, `flex = profitPool × 0.05`.
 
 ---

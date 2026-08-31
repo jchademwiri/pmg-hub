@@ -1,31 +1,31 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { toast } from 'sonner'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Field, FieldLabel } from '@/components/ui/field'
-import { Textarea } from '@/components/ui/textarea'
+import * as React from 'react';
+import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Textarea } from '@/components/ui/textarea';
 
 interface LeadNotesFormProps {
-  currentNotes: string | null
-  updateAction: (formData: FormData) => Promise<{ error?: string }>
+  currentNotes: string | null;
+  updateAction: (formData: FormData) => Promise<{ error?: string }>;
 }
 
 export function LeadNotesForm({ currentNotes, updateAction }: LeadNotesFormProps) {
-  const [isPending, startTransition] = React.useTransition()
-  const [error, setError] = React.useState<string | null>(null)
+  const [isPending, startTransition] = React.useTransition();
+  const [error, setError] = React.useState<string | null>(null);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setError(null)
-    const formData = new FormData(e.currentTarget)
+    e.preventDefault();
+    setError(null);
+    const formData = new FormData(e.currentTarget);
     startTransition(() => {
       updateAction(formData).then((result) => {
-        if (result.error) setError(result.error)
-        else toast.success('Notes saved')
-      })
-    })
+        if (result.error) setError(result.error);
+        else toast.success('Notes saved');
+      });
+    });
   }
 
   return (
@@ -54,5 +54,5 @@ export function LeadNotesForm({ currentNotes, updateAction }: LeadNotesFormProps
         </Alert>
       )}
     </form>
-  )
+  );
 }

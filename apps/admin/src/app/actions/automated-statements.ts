@@ -16,6 +16,7 @@ import { getClientOutstandingInvoices } from './billing-payments';
 import { generateBillingPdf } from '@/lib/server-billing-pdf';
 import { getPortalBaseUrl } from '@/lib/portal-url';
 import { formatZAR } from '@/lib/format';
+import { getSessionOrRedirect } from '@/lib/auth';
 import {
   createEmailClient,
   StatementDeliveryEmail,
@@ -35,19 +36,25 @@ import React from 'react';
  * and emails statements to clients with an outstanding balance > 0,
  * unless they are explicitly marked as excludeFromAutoStatements.
  */
-export async function triggerAutomatedStatementsRun(asOfDate?: string): Promise<{ error?: string; generatedCount?: number; skippedZeroBalance?: number }> {
+export async function triggerAutomatedStatementsRun(
+  asOfDate?: string,
+  options?: { isInternal?: boolean },
+): Promise<{ error?: string; generatedCount?: number; skippedZeroBalance?: number }> {
   try {
+    if (!options?.isInternal) {
+      await getSessionOrRedirect();
+    }
     const db = getDb();
     const todayStr = asOfDate || getSASTToday();
-    
+
     const d = new Date(todayStr);
     const tomorrow = new Date(d);
     tomorrow.setDate(tomorrow.getDate() + 1);
     const isLastDayOfMonth = tomorrow.getMonth() !== d.getMonth();
-    
+
     const todayDay = parseInt(todayStr.slice(8, 10), 10);
 
-    const cycleCondition = isLastDayOfMonth 
+    const cycleCondition = isLastDayOfMonth
       ? sql`${divisionBillingSettings.statementCycleDay} >= ${todayDay}`
       : eq(divisionBillingSettings.statementCycleDay, todayDay);
 
@@ -56,12 +63,7 @@ export async function triggerAutomatedStatementsRun(asOfDate?: string): Promise<
     const activeDivisions = await db
       .select()
       .from(divisionBillingSettings)
-      .where(
-        and(
-          eq(divisionBillingSettings.autoSendStatements, true),
-          cycleCondition
-        )
-      );
+      .where(and(eq(divisionBillingSettings.autoSendStatements, true), cycleCondition));
 
     if (activeDivisions.length === 0) {
       return { generatedCount: 0, skippedZeroBalance: 0 };
@@ -72,8 +74,9 @@ export async function triggerAutomatedStatementsRun(asOfDate?: string): Promise<
 
     for (const divSetting of activeDivisions) {
       const divisionId = divSetting.divisionId;
-      const statementType = (divSetting.statementType as 'outstanding' | 'activity') || 'outstanding';
-      
+      const statementType =
+        (divSetting.statementType as 'outstanding' | 'activity') || 'outstanding';
+
       const [division] = await db.select().from(divisions).where(eq(divisions.id, divisionId));
       if (!division) continue;
       const divisionName = division.name;
@@ -86,8 +89,8 @@ export async function triggerAutomatedStatementsRun(asOfDate?: string): Promise<
           and(
             eq(clients.divisionId, divisionId),
             eq(clients.isActive, true),
-            eq(clients.excludeFromAutoStatements, false)
-          )
+            eq(clients.excludeFromAutoStatements, false),
+          ),
         );
 
       for (const client of divisionClients) {
@@ -130,7 +133,7 @@ export async function triggerAutomatedStatementsRun(asOfDate?: string): Promise<
 
         const portalUrl = `${getPortalBaseUrl()}/statement`;
 
-        const invoicesList = outstandingInvoices.map(inv => ({
+        const invoicesList = outstandingInvoices.map((inv) => ({
           documentNumber: inv.documentNumber,
           invoiceDate: fmtDate(inv.invoiceDate),
           outstanding: formatZAR(inv.outstanding),
@@ -147,7 +150,8 @@ export async function triggerAutomatedStatementsRun(asOfDate?: string): Promise<
           websiteUrl: divSetting.divisionWebsite || DEFAULT_WEBSITE_URL,
           logoUrl: divSetting.logoUrl || undefined,
           portalUrl,
-          personalMessage: 'Here is your automated monthly statement summarizing your current open balance.',
+          personalMessage:
+            'Here is your automated monthly statement summarizing your current open balance.',
           bankDetails: {
             bankName: divSetting.bankName || '',
             accountName: divSetting.bankAccountName || '',
@@ -161,7 +165,7 @@ export async function triggerAutomatedStatementsRun(asOfDate?: string): Promise<
           {
             filename: `Statement-${clientCleanName}-${todayStr}.pdf`,
             content: statementPdf.buffer,
-          }
+          },
         ];
 
         const adminCc = resolveDivisionAdminEmail(divisionName, divSetting.salesRepEmail ?? null);
@@ -176,7 +180,10 @@ export async function triggerAutomatedStatementsRun(asOfDate?: string): Promise<
         });
 
         if (error) {
-          console.error(`Failed to deliver automated statement email to ${client.email}:`, error.message);
+          console.error(
+            `Failed to deliver automated statement email to ${client.email}:`,
+            error.message,
+          );
         } else {
           generatedCount++;
         }

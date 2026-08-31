@@ -5,7 +5,12 @@ import { saveDivisionBillingSettings } from '@/app/actions/settings';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { SettingsPageHeader } from '@/components/settings/settings-page-header';
-import { DEFAULT_EMAIL_FROM, resolveDivisionAdminEmail, resolveFromEmail, resolveDefaultFromEmail } from '@pmg/emails';
+import {
+  DEFAULT_EMAIL_FROM,
+  resolveDivisionAdminEmail,
+  resolveFromEmail,
+  resolveDefaultFromEmail,
+} from '@pmg/emails';
 import {
   Table,
   TableBody,
@@ -50,7 +55,9 @@ export default async function BillingEmailPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Card size="sm">
             <CardHeader>
-              <CardTitle>{configuredEmailCount} of {divisions.length}</CardTitle>
+              <CardTitle>
+                {configuredEmailCount} of {divisions.length}
+              </CardTitle>
               <CardDescription>Divisions with contact email</CardDescription>
             </CardHeader>
           </Card>
@@ -63,7 +70,9 @@ export default async function BillingEmailPage() {
           <Card size="sm">
             <CardHeader>
               <CardTitle>
-                {configuredEmailCount === divisions.length && divisions.length > 0 ? 'Ready' : 'Needs review'}
+                {configuredEmailCount === divisions.length && divisions.length > 0
+                  ? 'Ready'
+                  : 'Needs review'}
               </CardTitle>
               <CardDescription>Email routing status</CardDescription>
             </CardHeader>
@@ -82,7 +91,10 @@ export default async function BillingEmailPage() {
           <TableBody>
             {divisions.map((div) => {
               const s = allSettings[div.id];
-              const fromEmail = resolveFromEmail(s?.divisionWebsite, resolveDefaultFromEmail(div.name));
+              const fromEmail = resolveFromEmail(
+                s?.divisionWebsite,
+                resolveDefaultFromEmail(div.name),
+              );
               const adminCc = resolveDivisionAdminEmail(div.name, s?.salesRepEmail ?? null);
               const hasContactEmail = !!s?.salesRepEmail;
 
@@ -105,13 +117,17 @@ export default async function BillingEmailPage() {
                   <TableCell className="py-4">
                     <span className="font-mono text-xs text-foreground">{fromEmail}</span>
                     {!s?.divisionWebsite && (
-                      <Badge variant="secondary" className="ml-2 text-[10px]">fallback</Badge>
+                      <Badge variant="secondary" className="ml-2 text-[10px]">
+                        fallback
+                      </Badge>
                     )}
                   </TableCell>
                   <TableCell className="py-4 pr-4">
                     <span className="font-mono text-xs text-foreground">{adminCc}</span>
                     {!s?.salesRepEmail && (
-                      <Badge variant="secondary" className="ml-2 text-[10px]">brand default</Badge>
+                      <Badge variant="secondary" className="ml-2 text-[10px]">
+                        brand default
+                      </Badge>
                     )}
                   </TableCell>
                 </TableRow>
@@ -119,7 +135,10 @@ export default async function BillingEmailPage() {
             })}
             {divisions.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 py-4 text-center text-sm text-muted-foreground">
+                <TableCell
+                  colSpan={4}
+                  className="h-24 py-4 text-center text-sm text-muted-foreground"
+                >
                   No divisions configured yet.
                 </TableCell>
               </TableRow>

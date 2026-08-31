@@ -58,7 +58,7 @@ export async function GET(
   // Read the monthPeriod search parameter for statements
   const url = new URL(req.url);
   const monthPeriodParam = url.searchParams.get('monthPeriod');
-  
+
   // If no parameter is provided, default to 'current' to match the admin panel.
   // Otherwise, only apply if it's one of the valid period buckets.
   let monthPeriod: 'current' | 'previous' | 'past3' | 'past6' | undefined = undefined;

@@ -7,7 +7,7 @@
  * - Division __none__ → null passthrough
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
@@ -19,13 +19,13 @@ const mockDbReturn = {
       }),
     }),
   }),
-}
+};
 
-const mockGetDb = vi.fn().mockReturnValue(mockDbReturn)
-const mockDbCreateEntry = vi.fn()
-const mockRecalculateWaterfall = vi.fn()
-const mockRevalidatePath = vi.fn()
-const mockGetSession = vi.fn().mockResolvedValue({ user: { id: 'user-1' } })
+const mockGetDb = vi.fn().mockReturnValue(mockDbReturn);
+const mockDbCreateEntry = vi.fn();
+const mockRecalculateWaterfall = vi.fn();
+const mockRevalidatePath = vi.fn();
+const mockGetSession = vi.fn().mockResolvedValue({ user: { id: 'user-1' } });
 
 vi.mock('@pmg/db', () => ({
   getDb: () => mockGetDb(),
@@ -34,102 +34,102 @@ vi.mock('@pmg/db', () => ({
   createProjectScheduleEntry: mockDbCreateEntry,
   recalculateProjectWaterfall: mockRecalculateWaterfall,
   projectScheduleEntries: {},
-}))
+}));
 
-vi.mock('next/cache', () => ({ revalidatePath: mockRevalidatePath }))
-vi.mock('@/lib/auth', () => ({ getSessionOrRedirect: mockGetSession }))
+vi.mock('next/cache', () => ({ revalidatePath: mockRevalidatePath }));
+vi.mock('@/lib/auth', () => ({ getSessionOrRedirect: mockGetSession }));
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe('createProjectScheduleEntry — validation', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    mockGetSession.mockResolvedValue({ user: { id: 'user-1' } })
-    mockGetDb.mockReturnValue(mockDbReturn)
-    mockRecalculateWaterfall.mockResolvedValue(undefined)
-  })
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ user: { id: 'user-1' } });
+    mockGetDb.mockReturnValue(mockDbReturn);
+    mockRecalculateWaterfall.mockResolvedValue(undefined);
+  });
 
   it('rejects empty clientId', async () => {
-    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule')
-    const fd = new FormData()
-    fd.set('clientId', '')
-    fd.set('projectReference', 'T12/2026')
-    fd.set('closingDate', '2026-07-14')
-    fd.set('effortDays', '3')
-    fd.set('startDate', '2026-07-01')
+    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule');
+    const fd = new FormData();
+    fd.set('clientId', '');
+    fd.set('projectReference', 'T12/2026');
+    fd.set('closingDate', '2026-07-14');
+    fd.set('effortDays', '3');
+    fd.set('startDate', '2026-07-01');
 
-    const result = await createProjectScheduleEntry(fd)
-    expect(result.error).toBe('A client is required.')
-  })
+    const result = await createProjectScheduleEntry(fd);
+    expect(result.error).toBe('A client is required.');
+  });
 
   it('rejects empty projectReference', async () => {
-    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule')
-    const fd = new FormData()
-    fd.set('clientId', 'client-1')
-    fd.set('projectReference', '')
-    fd.set('closingDate', '2026-07-14')
-    fd.set('effortDays', '3')
-    fd.set('startDate', '2026-07-01')
+    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule');
+    const fd = new FormData();
+    fd.set('clientId', 'client-1');
+    fd.set('projectReference', '');
+    fd.set('closingDate', '2026-07-14');
+    fd.set('effortDays', '3');
+    fd.set('startDate', '2026-07-01');
 
-    const result = await createProjectScheduleEntry(fd)
-    expect(result.error).toBe('Tender reference is required.')
-  })
+    const result = await createProjectScheduleEntry(fd);
+    expect(result.error).toBe('Tender reference is required.');
+  });
 
   it('rejects effortDays of 0', async () => {
-    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule')
-    const fd = new FormData()
-    fd.set('clientId', 'client-1')
-    fd.set('projectReference', 'T12/2026')
-    fd.set('closingDate', '2026-07-14')
-    fd.set('effortDays', '0')
-    fd.set('startDate', '2026-07-01')
+    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule');
+    const fd = new FormData();
+    fd.set('clientId', 'client-1');
+    fd.set('projectReference', 'T12/2026');
+    fd.set('closingDate', '2026-07-14');
+    fd.set('effortDays', '0');
+    fd.set('startDate', '2026-07-01');
 
-    const result = await createProjectScheduleEntry(fd)
-    expect(result.error).toMatch(/Effort must be greater than 0/)
-  })
+    const result = await createProjectScheduleEntry(fd);
+    expect(result.error).toMatch(/Effort must be greater than 0/);
+  });
 
   it('rejects missing closingDate', async () => {
-    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule')
-    const fd = new FormData()
-    fd.set('clientId', 'client-1')
-    fd.set('projectReference', 'T12/2026')
-    fd.set('closingDate', '')
-    fd.set('effortDays', '3')
-    fd.set('startDate', '2026-07-01')
+    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule');
+    const fd = new FormData();
+    fd.set('clientId', 'client-1');
+    fd.set('projectReference', 'T12/2026');
+    fd.set('closingDate', '');
+    fd.set('effortDays', '3');
+    fd.set('startDate', '2026-07-01');
 
-    const result = await createProjectScheduleEntry(fd)
-    expect(result.error).toBe('Closing date is required.')
-  })
-})
+    const result = await createProjectScheduleEntry(fd);
+    expect(result.error).toBe('Closing date is required.');
+  });
+});
 
 describe('createProjectScheduleEntry — success & date calc', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    mockGetSession.mockResolvedValue({ user: { id: 'user-1' } })
-    mockGetDb.mockReturnValue(mockDbReturn)
-    mockDbCreateEntry.mockResolvedValue({ id: 'new-tender-id' })
-    mockRecalculateWaterfall.mockResolvedValue(undefined)
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date('2026-07-01'))
-  })
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ user: { id: 'user-1' } });
+    mockGetDb.mockReturnValue(mockDbReturn);
+    mockDbCreateEntry.mockResolvedValue({ id: 'new-tender-id' });
+    mockRecalculateWaterfall.mockResolvedValue(undefined);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-01'));
+  });
 
   afterEach(() => {
-    vi.useRealTimers()
-  })
+    vi.useRealTimers();
+  });
 
   it('succeeds with valid data', async () => {
-    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule')
-    const fd = new FormData()
-    fd.set('clientId', 'client-1')
-    fd.set('projectReference', 'T12/2026')
-    fd.set('closingDate', '2026-07-14')
-    fd.set('effortDays', '3')
-    fd.set('priority', 'high')
-    fd.set('notes', 'Test notes')
-    fd.set('blockers', 'No blockers')
+    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule');
+    const fd = new FormData();
+    fd.set('clientId', 'client-1');
+    fd.set('projectReference', 'T12/2026');
+    fd.set('closingDate', '2026-07-14');
+    fd.set('effortDays', '3');
+    fd.set('priority', 'high');
+    fd.set('notes', 'Test notes');
+    fd.set('blockers', 'No blockers');
 
-    const result = await createProjectScheduleEntry(fd)
-    expect(result.error).toBeUndefined()
+    const result = await createProjectScheduleEntry(fd);
+    expect(result.error).toBeUndefined();
     expect(mockDbCreateEntry).toHaveBeenCalledWith(
       expect.objectContaining({
         clientId: 'client-1',
@@ -142,92 +142,92 @@ describe('createProjectScheduleEntry — success & date calc', () => {
         blockers: 'No blockers',
         createdBy: 'user-1',
       }),
-    )
-  })
+    );
+  });
 
   it('calculates targetCompletionDate = today + effortDays', async () => {
-    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule')
-    const fd = new FormData()
-    fd.set('clientId', 'client-1')
-    fd.set('projectReference', 'T12/2026')
-    fd.set('closingDate', '2026-07-14')
-    fd.set('effortDays', '5')
+    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule');
+    const fd = new FormData();
+    fd.set('clientId', 'client-1');
+    fd.set('projectReference', 'T12/2026');
+    fd.set('closingDate', '2026-07-14');
+    fd.set('effortDays', '5');
 
-    await createProjectScheduleEntry(fd)
+    await createProjectScheduleEntry(fd);
     expect(mockDbCreateEntry).toHaveBeenCalledWith(
       expect.objectContaining({
         startDate: '2026-07-01',
         targetCompletionDate: '2026-07-06',
         effortDays: 5,
       }),
-    )
-  })
+    );
+  });
 
   it('defaults bufferDays to 5 when omitted', async () => {
-    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule')
-    const fd = new FormData()
-    fd.set('clientId', 'client-1')
-    fd.set('projectReference', 'T12/2026')
-    fd.set('closingDate', '2026-07-14')
-    fd.set('effortDays', '5')
+    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule');
+    const fd = new FormData();
+    fd.set('clientId', 'client-1');
+    fd.set('projectReference', 'T12/2026');
+    fd.set('closingDate', '2026-07-14');
+    fd.set('effortDays', '5');
 
-    await createProjectScheduleEntry(fd)
+    await createProjectScheduleEntry(fd);
     expect(mockDbCreateEntry).toHaveBeenCalledWith(
       expect.objectContaining({
         bufferDays: 5,
         startDate: '2026-07-01',
         targetCompletionDate: '2026-07-06',
       }),
-    )
-  })
+    );
+  });
 
   it('accepts custom bufferDays', async () => {
-    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule')
-    const fd = new FormData()
-    fd.set('clientId', 'client-1')
-    fd.set('projectReference', 'T12/2026')
-    fd.set('closingDate', '2026-07-14')
-    fd.set('effortDays', '5')
-    fd.set('bufferDays', '1')
+    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule');
+    const fd = new FormData();
+    fd.set('clientId', 'client-1');
+    fd.set('projectReference', 'T12/2026');
+    fd.set('closingDate', '2026-07-14');
+    fd.set('effortDays', '5');
+    fd.set('bufferDays', '1');
 
-    await createProjectScheduleEntry(fd)
+    await createProjectScheduleEntry(fd);
     expect(mockDbCreateEntry).toHaveBeenCalledWith(
       expect.objectContaining({
         bufferDays: 1,
         startDate: '2026-07-01',
         targetCompletionDate: '2026-07-06',
       }),
-    )
-  })
+    );
+  });
 
   it('recalculates the waterfall after creation', async () => {
-    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule')
-    const fd = new FormData()
-    fd.set('clientId', 'client-1')
-    fd.set('projectReference', 'T12/2026')
-    fd.set('closingDate', '2026-07-14')
-    fd.set('effortDays', '3')
+    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule');
+    const fd = new FormData();
+    fd.set('clientId', 'client-1');
+    fd.set('projectReference', 'T12/2026');
+    fd.set('closingDate', '2026-07-14');
+    fd.set('effortDays', '3');
 
-    await createProjectScheduleEntry(fd)
-    expect(mockRecalculateWaterfall).toHaveBeenCalled()
-  })
+    await createProjectScheduleEntry(fd);
+    expect(mockRecalculateWaterfall).toHaveBeenCalled();
+  });
 
   it('converts __none__ divisionId to null', async () => {
-    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule')
-    const fd = new FormData()
-    fd.set('clientId', 'client-1')
-    fd.set('projectReference', 'T12/2026')
-    fd.set('closingDate', '2026-07-14')
-    fd.set('effortDays', '3')
-    fd.set('startDate', '2026-07-01')
-    fd.set('divisionId', '__none__')
+    const { createProjectScheduleEntry } = await import('@/app/actions/project-schedule');
+    const fd = new FormData();
+    fd.set('clientId', 'client-1');
+    fd.set('projectReference', 'T12/2026');
+    fd.set('closingDate', '2026-07-14');
+    fd.set('effortDays', '3');
+    fd.set('startDate', '2026-07-01');
+    fd.set('divisionId', '__none__');
 
-    await createProjectScheduleEntry(fd)
+    await createProjectScheduleEntry(fd);
     expect(mockDbCreateEntry).toHaveBeenCalledWith(
       expect.objectContaining({
         clientId: 'client-1',
         divisionId: null,
       }),
-    )
-  })
-})
+    );
+  });
+});

@@ -19,14 +19,14 @@ Recommended direction:
 
 Relevant current files:
 
-| Area | File | Current behavior |
-| --- | --- | --- |
-| Snapshots page | `apps/admin/src/app/(admin)/insights/snapshots/page.tsx` | Server page loads `getAllSnapshots()` and renders `SnapshotsCockpit`. Header explains snapshots are monthly locked periods created from the dashboard close-month action. |
-| Snapshot cockpit | `apps/admin/src/components/insights/snapshots-cockpit.tsx` | Client component with an all-time/default view, period card rail, KPI cards, Level 1 revenue split bar, and all-time monthly performance area chart. |
-| Reports page | `apps/admin/src/app/(admin)/insights/reports/page.tsx` | Server page resolves a fiscal year, loads chart data, renders a 2x2 grid of charts, year filter, and CSV export. |
-| Report charts | `apps/admin/src/components/reports/*.tsx` | Recharts components for month-over-month comparison, revenue by division, expenses by category, and profit pool split. |
-| Snapshot schema | `packages/db/src/schema/snapshots.ts` | `snapshots` table stores one unique period with revenue, expenses, PMG share, profit pool, salary, reinvest, reserve, flex, and `createdAt`. |
-| Snapshot queries | `packages/db/src/queries/snapshots.ts` | Reads all snapshots, reads a snapshot by period, inserts a closed-period snapshot. |
+| Area             | File                                                       | Current behavior                                                                                                                                                          |
+| ---------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Snapshots page   | `apps/admin/src/app/(admin)/insights/snapshots/page.tsx`   | Server page loads `getAllSnapshots()` and renders `SnapshotsCockpit`. Header explains snapshots are monthly locked periods created from the dashboard close-month action. |
+| Snapshot cockpit | `apps/admin/src/components/insights/snapshots-cockpit.tsx` | Client component with an all-time/default view, period card rail, KPI cards, Level 1 revenue split bar, and all-time monthly performance area chart.                      |
+| Reports page     | `apps/admin/src/app/(admin)/insights/reports/page.tsx`     | Server page resolves a fiscal year, loads chart data, renders a 2x2 grid of charts, year filter, and CSV export.                                                          |
+| Report charts    | `apps/admin/src/components/reports/*.tsx`                  | Recharts components for month-over-month comparison, revenue by division, expenses by category, and profit pool split.                                                    |
+| Snapshot schema  | `packages/db/src/schema/snapshots.ts`                      | `snapshots` table stores one unique period with revenue, expenses, PMG share, profit pool, salary, reinvest, reserve, flex, and `createdAt`.                              |
+| Snapshot queries | `packages/db/src/queries/snapshots.ts`                     | Reads all snapshots, reads a snapshot by period, inserts a closed-period snapshot.                                                                                        |
 
 Current strengths:
 
@@ -210,16 +210,16 @@ Current snapshot fields support a good first version:
 
 Recommended additions over time:
 
-| Field | Purpose |
-| --- | --- |
-| `createdBy` | Show who locked the period. |
-| `status` | `locked`, `adjusted`, `voided`, `review_required`. |
-| `closedAt` | Separate close timestamp from DB insertion timestamp if needed. |
-| `sourceHash` | Optional integrity hash of source totals used to detect retroactive changes. |
-| `notes` | Manual close note or exception summary. |
-| `revenueCount` / `expenseCount` | Snapshot metadata for audit confidence. |
-| `reconciliationVariance` | Show whether cash/ledger reconciliation matched at close. |
-| `previousSnapshotId` | Useful for comparison and audit trails. |
+| Field                           | Purpose                                                                      |
+| ------------------------------- | ---------------------------------------------------------------------------- |
+| `createdBy`                     | Show who locked the period.                                                  |
+| `status`                        | `locked`, `adjusted`, `voided`, `review_required`.                           |
+| `closedAt`                      | Separate close timestamp from DB insertion timestamp if needed.              |
+| `sourceHash`                    | Optional integrity hash of source totals used to detect retroactive changes. |
+| `notes`                         | Manual close note or exception summary.                                      |
+| `revenueCount` / `expenseCount` | Snapshot metadata for audit confidence.                                      |
+| `reconciliationVariance`        | Show whether cash/ledger reconciliation matched at close.                    |
+| `previousSnapshotId`            | Useful for comparison and audit trails.                                      |
 
 ### Close Month Flow
 
@@ -454,14 +454,14 @@ Follow Tableau and Power BI guidance:
 
 Chart choices for PMG Hub:
 
-| Question | Best chart |
-| --- | --- |
-| How did revenue/expenses/profit change over time? | Multi-line or area chart. |
-| Which divisions contributed revenue? | Stacked area for trend, ranked bar for selected period. |
-| Where did expenses go? | Horizontal ranked bar chart. |
-| How was profit pool distributed? | Stacked bar chart plus allocation summary. |
-| How does this period compare to previous? | Variance cards or grouped bars. |
-| What explains a number? | Drill-down table in sheet. |
+| Question                                          | Best chart                                              |
+| ------------------------------------------------- | ------------------------------------------------------- |
+| How did revenue/expenses/profit change over time? | Multi-line or area chart.                               |
+| Which divisions contributed revenue?              | Stacked area for trend, ranked bar for selected period. |
+| Where did expenses go?                            | Horizontal ranked bar chart.                            |
+| How was profit pool distributed?                  | Stacked bar chart plus allocation summary.              |
+| How does this period compare to previous?         | Variance cards or grouped bars.                         |
+| What explains a number?                           | Drill-down table in sheet.                              |
 
 ## Proposed Information Architecture
 

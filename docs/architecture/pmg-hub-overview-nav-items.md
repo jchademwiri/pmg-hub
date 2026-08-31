@@ -20,9 +20,8 @@ That means there was no way to reach a group's own root page (`/billing`, `/fina
 The sidebar's active-state logic used:
 
 ```ts
-const isActive = item.url === '/settings'
-  ? pathname === '/settings'
-  : pathname.startsWith(item.url)
+const isActive =
+  item.url === '/settings' ? pathname === '/settings' : pathname.startsWith(item.url);
 ```
 
 There was already a special case for `/settings`, with a comment explaining why: without it, `/settings` would show as "active" while viewing `/settings/users`, because `'/settings/users'.startsWith('/settings')` is true. The same problem would have appeared for every new Overview item — `/billing` showing active while actually viewing `/billing/invoices`, and so on for Finance, Accounting, and Relationships.
@@ -30,10 +29,8 @@ There was already a special case for `/settings`, with a comment explaining why:
 Rather than adding four more special cases, the check is generalized:
 
 ```ts
-const isGroupRoot = item.url.split('/').filter(Boolean).length === 1
-const isActive = isGroupRoot
-  ? pathname === item.url
-  : pathname.startsWith(item.url)
+const isGroupRoot = item.url.split('/').filter(Boolean).length === 1;
+const isActive = isGroupRoot ? pathname === item.url : pathname.startsWith(item.url);
 ```
 
 Any nav item whose URL is a single path segment (`/billing`, `/finance`, `/accounting`, `/relationships`, `/settings`) now gets exact-match behavior automatically. Sub-routes (`/billing/invoices`, `/finance/income`, etc.) keep the original `startsWith` behavior, which is correct for them.
@@ -58,7 +55,7 @@ Any nav item whose URL is a single path segment (`/billing`, `/finance`, `/accou
 
 Because `ROUTE_LABELS` is auto-derived from the sidebar items (`derivedLabels`), and `/billing`/`/finance`/`/accounting` are now sidebar items titled "Overview" rather than entries in `EXTRA_LABELS` titled "Billing"/"Finance"/"Accounting", any breadcrumb or page title that reads from `ROUTE_LABELS` will now show "Overview" instead of the section name when on that root page.
 
-This matches the literal request — "Overview" is meant to be the nav label, and it's the same root route either way — but if you'd rather the breadcrumb still say "Billing" while the *sidebar item* says "Overview", that needs splitting into two separate label sources (one for sidebar item titles, one for breadcrumb/page titles) rather than deriving both from the same `title` field. Flagging this now rather than silently picking one; let me know if you want it split.
+This matches the literal request — "Overview" is meant to be the nav label, and it's the same root route either way — but if you'd rather the breadcrumb still say "Billing" while the _sidebar item_ says "Overview", that needs splitting into two separate label sources (one for sidebar item titles, one for breadcrumb/page titles) rather than deriving both from the same `title` field. Flagging this now rather than silently picking one; let me know if you want it split.
 
 ---
 

@@ -24,7 +24,15 @@ import { jsPDF } from 'jspdf';
 
 import { fmtDate, formatZAR, getSASTParts, getSASTToday } from './format';
 import { calculateAgeing, totalAgeingDue } from './billing-ageing';
-import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, adjustOpeningBalance, resolveDivisionBranding, buildBankingProps } from './client-billing-helpers';
+import {
+  buildOrgProps,
+  determineStatementStatus,
+  buildIncomeInvoiceMap,
+  buildTransactionHistory,
+  adjustOpeningBalance,
+  resolveDivisionBranding,
+  buildBankingProps,
+} from './client-billing-helpers';
 import { PAGE, split, ensurePage, drawShellHeader, drawShellFooter } from './pdf-shell';
 
 type BillingPdfType = 'invoice' | 'quote' | 'statement' | 'receipt';
@@ -188,7 +196,11 @@ function drawMeta(doc: jsPDF, data: PdfDocumentData) {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7);
   doc.setTextColor(113, 113, 122);
-  doc.text(data.type === 'statement' ? 'ACCOUNT' : data.type === 'receipt' ? 'RECEIVED FROM' : 'BILL TO', PAGE.margin, y);
+  doc.text(
+    data.type === 'statement' ? 'ACCOUNT' : data.type === 'receipt' ? 'RECEIVED FROM' : 'BILL TO',
+    PAGE.margin,
+    y,
+  );
 
   doc.setFontSize(10);
   doc.setTextColor(24, 24, 27);
@@ -318,7 +330,11 @@ function drawTransactions(doc: jsPDF, data: PdfDocumentData, startY: number) {
   }
   y += 12;
 
-  if (data.openingBalance != null && data.openingBalance !== 0 && data.statementType !== 'outstanding') {
+  if (
+    data.openingBalance != null &&
+    data.openingBalance !== 0 &&
+    data.statementType !== 'outstanding'
+  ) {
     y = ensurePage(doc, y, 9);
     doc.setFillColor(249, 250, 251);
     doc.rect(PAGE.margin, y - 2, PAGE.width - PAGE.margin * 2, 8, 'F');
@@ -330,7 +346,9 @@ function drawTransactions(doc: jsPDF, data: PdfDocumentData, startY: number) {
     doc.text('-', 145, y + 3, { align: 'right' });
     doc.text('-', 170, y + 3, { align: 'right' });
     doc.setFont('helvetica', 'bold');
-    doc.text(formatZAR(data.openingBalance), PAGE.width - PAGE.margin - 2, y + 3, { align: 'right' });
+    doc.text(formatZAR(data.openingBalance), PAGE.width - PAGE.margin - 2, y + 3, {
+      align: 'right',
+    });
     doc.setFont('helvetica', 'normal');
     y += 9;
   }
@@ -375,13 +393,15 @@ function drawTotals(doc: jsPDF, data: PdfDocumentData, startY: number) {
   if (!totals) return y;
 
   const rows = [
-    totals.subtotal != null ? ['Subtotal', totals.subtotal] as const : null,
-    totals.discount && totals.discount > 0 ? ['Discount', -totals.discount] as const : null,
-    totals.vat && totals.vat > 0 ? ['VAT', totals.vat] as const : null,
-    totals.total != null ? ['Total Invoiced', totals.total] as const : null,
-    totals.paid != null && totals.paid > 0 ? ['Less Payments', -totals.paid] as const : null,
-    totals.writtenOff != null && totals.writtenOff > 0 ? ['Less Write-Off', -totals.writtenOff] as const : null,
-    totals.balanceDue != null ? ['Balance Due', totals.balanceDue] as const : null,
+    totals.subtotal != null ? (['Subtotal', totals.subtotal] as const) : null,
+    totals.discount && totals.discount > 0 ? (['Discount', -totals.discount] as const) : null,
+    totals.vat && totals.vat > 0 ? (['VAT', totals.vat] as const) : null,
+    totals.total != null ? (['Total Invoiced', totals.total] as const) : null,
+    totals.paid != null && totals.paid > 0 ? (['Less Payments', -totals.paid] as const) : null,
+    totals.writtenOff != null && totals.writtenOff > 0
+      ? (['Less Write-Off', -totals.writtenOff] as const)
+      : null,
+    totals.balanceDue != null ? (['Balance Due', totals.balanceDue] as const) : null,
   ].filter(Boolean) as ReadonlyArray<readonly [string, number]>;
 
   for (const [label, amount] of rows) {
@@ -470,12 +490,16 @@ async function buildInvoicePdfData(id: string): Promise<PdfDocumentData | null> 
   const orgSettings = await getOrganisationSettings();
 
   const total = safeNumber(invoice.total);
-  const paid = invoice.status === 'paid' 
-    ? total 
-    : Math.min(total, safeNumber(invoice.allocatedAmount));
+  const paid =
+    invoice.status === 'paid' ? total : Math.min(total, safeNumber(invoice.allocatedAmount));
   const writtenOff = safeNumber(invoice.writeOffAmount);
   const balanceDue = Math.max(0, total - paid - writtenOff);
-  const showPaymentSummary = paid > 0 || writtenOff > 0 || invoice.status === 'paid' || invoice.status === 'partially_paid' || invoice.status === 'written_off';
+  const showPaymentSummary =
+    paid > 0 ||
+    writtenOff > 0 ||
+    invoice.status === 'paid' ||
+    invoice.status === 'partially_paid' ||
+    invoice.status === 'written_off';
 
   return {
     type: 'invoice',
@@ -496,7 +520,10 @@ async function buildInvoicePdfData(id: string): Promise<PdfDocumentData | null> 
       description: line.itemName || line.description,
       qty: safeNumber(line.quantity),
       unitPrice: safeNumber(line.unitPrice),
-      amount: line.lineTotal != null ? safeNumber(line.lineTotal) : safeNumber(line.quantity) * safeNumber(line.unitPrice),
+      amount:
+        line.lineTotal != null
+          ? safeNumber(line.lineTotal)
+          : safeNumber(line.quantity) * safeNumber(line.unitPrice),
     })),
     notes: invoice.notes ?? settings?.invoiceNotes,
     terms: invoice.terms,
@@ -538,7 +565,10 @@ async function buildQuotePdfData(id: string): Promise<PdfDocumentData | null> {
       description: line.itemName || line.description,
       qty: safeNumber(line.quantity),
       unitPrice: safeNumber(line.unitPrice),
-      amount: line.lineTotal != null ? safeNumber(line.lineTotal) : safeNumber(line.quantity) * safeNumber(line.unitPrice),
+      amount:
+        line.lineTotal != null
+          ? safeNumber(line.lineTotal)
+          : safeNumber(line.quantity) * safeNumber(line.unitPrice),
     })),
     notes: quote.notes ?? settings?.quoteNotes,
     terms: quote.terms,
@@ -574,19 +604,24 @@ async function buildReceiptPdfData(id: string): Promise<PdfDocumentData | null> 
     reference: payment.description,
     transactions: allocations.length
       ? allocations.map((allocation) => ({
-          date: allocation.createdAt instanceof Date ? allocation.createdAt.toISOString() : String(allocation.createdAt),
+          date:
+            allocation.createdAt instanceof Date
+              ? allocation.createdAt.toISOString()
+              : String(allocation.createdAt),
           reference: allocation.invoiceNumber,
           description: 'Invoice allocation',
           credit: safeNumber(allocation.amount),
           balance: 0,
         }))
-      : [{
-          date: payment.date,
-          reference: '-',
-          description: payment.description ?? 'Unallocated payment / retainer',
-          credit: safeNumber(payment.amount),
-          balance: 0,
-        }],
+      : [
+          {
+            date: payment.date,
+            reference: '-',
+            description: payment.description ?? 'Unallocated payment / retainer',
+            credit: safeNumber(payment.amount),
+            balance: 0,
+          },
+        ],
     totals: {
       paid: safeNumber(payment.amount),
     },
@@ -596,7 +631,12 @@ async function buildReceiptPdfData(id: string): Promise<PdfDocumentData | null> 
 
 async function buildStatementPdfData(
   clientId: string,
-  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' | 'past6'; statementType?: 'activity' | 'outstanding'; includeDraftInvoiceId?: string },
+  filters?: {
+    year?: number;
+    monthPeriod?: 'current' | 'previous' | 'past3' | 'past6';
+    statementType?: 'activity' | 'outstanding';
+    includeDraftInvoiceId?: string;
+  },
 ): Promise<PdfDocumentData | null> {
   const statement = await getClientStatement(clientId, filters);
   if (!statement) return null;
@@ -604,7 +644,10 @@ async function buildStatementPdfData(
   const orgSettings = await getOrganisationSettings();
   const [incomeResult, dbCreditNotes, dbRefunds] = await Promise.all([
     getAllIncome({ clientId, ...filters }),
-    db.select().from(creditNotes).where(and(eq(creditNotes.clientId, clientId), sql`${creditNotes.status} != 'void'`)),
+    db
+      .select()
+      .from(creditNotes)
+      .where(and(eq(creditNotes.clientId, clientId), sql`${creditNotes.status} != 'void'`)),
     db.select().from(creditRefunds).where(eq(creditRefunds.clientId, clientId)),
   ]);
 
@@ -637,11 +680,13 @@ async function buildStatementPdfData(
   let finalBalance: number;
 
   if (filters?.statementType === 'outstanding') {
-    const outstandingInvoices = statement.outstandingInvoices ?? statement.invoices.filter(i => {
-       const balance = safeNumber(i.total) - safeNumber(i.allocatedAmount);
-       return balance > 0 && i.status !== 'void' && i.status !== 'written_off';
-    });
-    
+    const outstandingInvoices =
+      statement.outstandingInvoices ??
+      statement.invoices.filter((i) => {
+        const balance = safeNumber(i.total) - safeNumber(i.allocatedAmount);
+        return balance > 0 && i.status !== 'void' && i.status !== 'written_off';
+      });
+
     transactions = outstandingInvoices.map((invoice) => ({
       date: invoice.invoiceDate,
       reference: invoice.documentNumber,
@@ -650,10 +695,10 @@ async function buildStatementPdfData(
       credit: safeNumber(invoice.allocatedAmount),
       balance: safeNumber(invoice.total) - safeNumber(invoice.allocatedAmount),
     }));
-    
+
     // Sort transactions by date ascending (oldest first)
     transactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    
+
     finalBalance = transactions.reduce((sum, tx) => sum + (tx.balance ?? 0), 0);
   } else {
     const raw = [
@@ -697,14 +742,12 @@ async function buildStatementPdfData(
     ];
 
     transactions = buildTransactionHistory(raw, openingBalance);
-    finalBalance = transactions.length > 0 ? transactions[0]!.balance ?? openingBalance : openingBalance;
+    finalBalance =
+      transactions.length > 0 ? (transactions[0]!.balance ?? openingBalance) : openingBalance;
   }
 
   const todayStr = getSASTToday();
-  const ageing = calculateAgeing(
-    statement.outstandingInvoices ?? statement.invoices,
-    todayStr,
-  );
+  const ageing = calculateAgeing(statement.outstandingInvoices ?? statement.invoices, todayStr);
 
   const clientRecord = await getClientById(clientId);
   const allDivisions = await getAllDivisions();
@@ -713,7 +756,9 @@ async function buildStatementPdfData(
     statement.invoices,
     allDivisions,
   );
-  const settings = effectiveDivisionId ? await getDivisionBillingSettings(effectiveDivisionId) : null;
+  const settings = effectiveDivisionId
+    ? await getDivisionBillingSettings(effectiveDivisionId)
+    : null;
 
   const status = determineStatementStatus(statement.summary.totalOutstanding, statement.invoices);
   return {
@@ -746,16 +791,21 @@ async function buildStatementPdfData(
 export async function generateBillingPdf(
   type: BillingPdfType,
   id: string,
-  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' | 'past6'; statementType?: 'activity' | 'outstanding'; includeDraftInvoiceId?: string },
+  filters?: {
+    year?: number;
+    monthPeriod?: 'current' | 'previous' | 'past3' | 'past6';
+    statementType?: 'activity' | 'outstanding';
+    includeDraftInvoiceId?: string;
+  },
 ) {
   const data =
     type === 'invoice'
       ? await buildInvoicePdfData(id)
       : type === 'quote'
-      ? await buildQuotePdfData(id)
-      : type === 'receipt'
-      ? await buildReceiptPdfData(id)
-      : await buildStatementPdfData(id, filters);
+        ? await buildQuotePdfData(id)
+        : type === 'receipt'
+          ? await buildReceiptPdfData(id)
+          : await buildStatementPdfData(id, filters);
 
   if (!data) return null;
 

@@ -9,18 +9,23 @@ This implementation plan details the addition of **Direct Email Delivery** for i
 Direct email delivery is the final critical link in transitioning fully away from Zoho Invoice.
 
 ### Subdomain Sender Alignment (`info.` prefix)
+
 Your verified Resend domains are subdomains prefixed with `info.` (e.g., `info.tenderedgesolutions.co.za` or `info.playhousemedia.co.za`). Rather than hardcoding a single static address, the email server action will **dynamically resolve the sending address**:
+
 1. It reads `divisionWebsite` from `divisionBillingSettings`.
 2. It cleans the URL (removing protocols, query paths, and `www.` prefixes) to isolate the root domain (e.g., `tenderedgesolutions.co.za`).
 3. It constructs the sender as: `[Division Name] <noreply@info.[root-domain]>`.
 4. It falls back gracefully to `.env.local` settings if website info is missing or malformed.
 
 ### Dual Attachments (Invoice + Client Statement)
+
 To make your invoicing process even more professional and informative than Zoho's, emailing an invoice will **automatically attach both**:
+
 1. **The Invoice PDF** (e.g., `TES-INV-2026-009.pdf`).
 2. **The Client's Statement PDF** (e.g., `Statement-Tender-Edge-Solutions.pdf`), showing their full ledger statement for the current financial year.
 
 ### Why Client-Side PDF Generation is Superior
+
 To email invoices and quotes, we must generate high-fidelity PDF documents to attach to emails. Rather than executing heavy headless browser engines (like Puppeteer or Playwright) on the server—which are slow, consume massive memory/storage, and frequently crash in serverless/stateless environments—we propose a **Client-Side PDF compilation architecture**:
 
 ```
@@ -81,6 +86,7 @@ We will group modifications by package and file:
 We will implement two professional, responsive transactional templates using React Email components.
 
 #### [NEW] [InvoiceDeliveryEmail.tsx](file:///D:/websites/pmg-hub/packages/emails/src/templates/InvoiceDeliveryEmail.tsx)
+
 This file renders a premium, branded HTML email for invoice presentation.
 
 ```typescript
@@ -160,7 +166,7 @@ export const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
             </Heading>
 
             <Text className="m-0 mb-[16px] text-[15px] leading-[24px] text-[#334155]">
-              Please find attached invoice **{documentNumber}** issued by **{companyName}**. 
+              Please find attached invoice **{documentNumber}** issued by **{companyName}**.
               {hasStatementAttached && " We have also attached your current account statement for your convenience."}
             </Text>
 
@@ -275,6 +281,7 @@ export default InvoiceDeliveryEmail;
 ```
 
 #### [NEW] [QuoteDeliveryEmail.tsx](file:///D:/websites/pmg-hub/packages/emails/src/templates/QuoteDeliveryEmail.tsx)
+
 Renders a beautiful quote delivery email, structurally matching the invoice email but substituting quotation detail cards and expiration reminders.
 
 ---
@@ -284,6 +291,7 @@ Renders a beautiful quote delivery email, structurally matching the invoice emai
 We will introduce a central, secure server action to execute sending commands, dynamic domain resolution, and multi-file attachments.
 
 #### [NEW] [email-delivery.ts](file:///D:/websites/pmg-hub/apps/admin/src/app/actions/email-delivery.ts)
+
 This handles authentication, dynamic subdomain validation, and Resend delivery.
 
 ```typescript
@@ -308,10 +316,11 @@ const EmailPayloadSchema = z.object({
 // Helper to extract root domain and construct verified info. subdomain
 function resolveFromEmail(divisionWebsite: string | null, fallbackFrom: string): string {
   if (!divisionWebsite) return fallbackFrom;
-  let domain = divisionWebsite.trim()
+  let domain = divisionWebsite
+    .trim()
     .replace(/^(https?:\/\/)?(www\.)?/, '')
     .split('/')[0];
-  
+
   if (!domain) return fallbackFrom;
   return `noreply@info.${domain}`;
 }
@@ -319,13 +328,21 @@ function resolveFromEmail(divisionWebsite: string | null, fallbackFrom: string):
 export async function sendDocumentEmailAction(rawPayload: unknown) {
   try {
     await getSessionOrRedirect();
-    
+
     const parsed = EmailPayloadSchema.safeParse(rawPayload);
     if (!parsed.success) {
       return { error: parsed.error.issues[0]?.message ?? 'Invalid request parameters.' };
     }
-    
-    const { documentId, documentType, recipientEmail, subject, personalMessage, base64Pdf, base64StatementPdf } = parsed.data;
+
+    const {
+      documentId,
+      documentType,
+      recipientEmail,
+      subject,
+      personalMessage,
+      base64Pdf,
+      base64StatementPdf,
+    } = parsed.data;
     const db = getDb();
 
     if (documentType === 'invoice') {
@@ -345,14 +362,17 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         .where(eq(invoices.id, documentId));
 
       if (!invoice) return { error: 'Invoice not found.' };
-      
+
       const [client] = await db.select().from(clients).where(eq(clients.id, invoice.clientId!));
-      const [billingConfig] = await db.select().from(divisionBillingSettings).where(eq(divisionBillingSettings.divisionId, invoice.divisionId));
+      const [billingConfig] = await db
+        .select()
+        .from(divisionBillingSettings)
+        .where(eq(divisionBillingSettings.divisionId, invoice.divisionId));
 
       const apiKey = process.env.RESEND_API_KEY!;
       const defaultFrom = process.env.EMAIL_FROM_ADDRESS || 'noreply@info.playhousemedia.co.za';
       const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
-      
+
       // Dynamic info. subdomain resolution
       const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite || null, defaultFrom);
 
@@ -371,17 +391,21 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         totalAmount: `R ${Number(invoice.total).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
         poNumber: invoice.poNumber || undefined,
         personalMessage: personalMessage || undefined,
-        companyName: billingConfig?.salesRepName ? billingConfig.salesRepName : 'Playhouse Media Group',
+        companyName: billingConfig?.salesRepName
+          ? billingConfig.salesRepName
+          : 'Playhouse Media Group',
         primaryColor: '#1d4ed8',
         websiteUrl: billingConfig?.divisionWebsite || 'https://playhousemedia.co.za',
         logoUrl: billingConfig?.logoUrl || undefined,
         hasStatementAttached: !!base64StatementPdf,
-        bankDetails: billingConfig ? {
-          bankName: billingConfig.bankName || '',
-          accountName: billingConfig.bankAccountName || '',
-          accountNumber: billingConfig.bankAccountNumber || '',
-          branchCode: billingConfig.bankBranchCode || '',
-        } : undefined,
+        bankDetails: billingConfig
+          ? {
+              bankName: billingConfig.bankName || '',
+              accountName: billingConfig.bankAccountName || '',
+              accountNumber: billingConfig.bankAccountNumber || '',
+              branchCode: billingConfig.bankBranchCode || '',
+            }
+          : undefined,
       };
 
       // Multi-file attachment setup
@@ -389,11 +413,14 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         {
           filename: `${invoice.documentNumber}.pdf`,
           content: Buffer.from(base64Pdf, 'base64'),
-        }
+        },
       ];
 
       if (base64StatementPdf) {
-        const clientCleanName = (client?.businessName || client?.name || 'Client').replace(/[^a-zA-Z0-9]/g, '_');
+        const clientCleanName = (client?.businessName || client?.name || 'Client').replace(
+          /[^a-zA-Z0-9]/g,
+          '_',
+        );
         attachments.push({
           filename: `Statement-${clientCleanName}.pdf`,
           content: Buffer.from(base64StatementPdf, 'base64'),
@@ -440,7 +467,10 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       if (!quote) return { error: 'Quotation not found.' };
 
       const [client] = await db.select().from(clients).where(eq(clients.id, quote.clientId!));
-      const [billingConfig] = await db.select().from(divisionBillingSettings).where(eq(divisionBillingSettings.divisionId, quote.divisionId));
+      const [billingConfig] = await db
+        .select()
+        .from(divisionBillingSettings)
+        .where(eq(divisionBillingSettings.divisionId, quote.divisionId));
 
       const apiKey = process.env.RESEND_API_KEY!;
       const defaultFrom = process.env.EMAIL_FROM_ADDRESS || 'noreply@info.playhousemedia.co.za';
@@ -457,10 +487,14 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         clientName: client?.businessName || client?.name || 'Client',
         documentNumber: quote.documentNumber,
         quoteDate: new Date(quote.quoteDate).toLocaleDateString('en-ZA'),
-        expiryDate: quote.expiryDate ? new Date(quote.expiryDate).toLocaleDateString('en-ZA') : undefined,
+        expiryDate: quote.expiryDate
+          ? new Date(quote.expiryDate).toLocaleDateString('en-ZA')
+          : undefined,
         totalAmount: `R ${Number(quote.total).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
         personalMessage: personalMessage || undefined,
-        companyName: billingConfig?.salesRepName ? billingConfig.salesRepName : 'Playhouse Media Group',
+        companyName: billingConfig?.salesRepName
+          ? billingConfig.salesRepName
+          : 'Playhouse Media Group',
         primaryColor: '#1d4ed8',
         websiteUrl: billingConfig?.divisionWebsite || 'https://playhousemedia.co.za',
         logoUrl: billingConfig?.logoUrl || undefined,
@@ -474,8 +508,8 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
           {
             filename: `${quote.documentNumber}.pdf`,
             content: Buffer.from(base64Pdf, 'base64'),
-          }
-        ]
+          },
+        ],
       } as any);
 
       if (error) {
@@ -505,6 +539,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
 We will design a hidden portal view of the Statement on the invoice detail page and implement sequential dual-rendering in the emailing dialog.
 
 #### [NEW] [email-document-dialog.tsx](file:///D:/websites/pmg-hub/apps/admin/src/components/billing/email-document-dialog.tsx)
+
 This modal orchestrates sequential in-browser capture of the invoice card followed by the statement card.
 
 ```typescript
@@ -557,7 +592,7 @@ export function EmailDocumentDialog({
       toast.error('Recipient email is required.');
       return;
     }
-    
+
     setIsSending(true);
     try {
       const { jsPDF } = await import('jspdf');
@@ -753,6 +788,7 @@ export function EmailDocumentDialog({
 To ensure seamless execution, the following testing protocols will be executed:
 
 ### local Sandbox Tests
+
 - **Simulator Delivery:** Test using Resend default simulator targets to guarantee error-handling logic maps properly:
   - `delivered@resend.dev`: Verifies seamless email execution and client-side status transformation to `'issued'` / `'sent'`.
   - `bounced@resend.dev`: Validates that error reporting in the client handles API rejections cleanly and notifies the administrator.
@@ -762,6 +798,7 @@ To ensure seamless execution, the following testing protocols will be executed:
   ```
 
 ### Manual Verification Checklist
+
 1. **Client-Side PDF Compression Check:** Email a document to a verified personal testing mailbox, download the attached PDF, and verify that there is no text distortion or spacing degradation on multi-page cards.
 2. **EFT Bank Block Integrity:** Validate that active bank routing information is read correctly from database tables and printed inside the email body card.
 3. **Draft Lock Gate:** Test that once a Draft invoice or quotation has been emailed, its status toggles automatically to `issued` (for invoices) or `sent` (for quotes) inside dashboard metrics, ensuring database integrity.

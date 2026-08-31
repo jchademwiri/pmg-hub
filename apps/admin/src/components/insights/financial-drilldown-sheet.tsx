@@ -1,31 +1,58 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetDescription,
-} from '@/components/ui/sheet'
-import { Badge } from '@/components/ui/badge'
-import { formatZAR, fmtDate, fmtMonthYear } from '@/lib/format'
-import { cn } from '@/lib/utils'
-import { getDrilldownData, type DrilldownType, type DrilldownResult } from '@/app/actions/drilldown'
-import { TrendingUp, TrendingDown, Shield, Loader2 } from 'lucide-react'
+} from '@/components/ui/sheet';
+import { Badge } from '@/components/ui/badge';
+import { formatZAR, fmtDate, fmtMonthYear } from '@/lib/format';
+import { cn } from '@/lib/utils';
+import {
+  getDrilldownData,
+  type DrilldownType,
+  type DrilldownResult,
+} from '@/app/actions/drilldown';
+import { TrendingUp, TrendingDown, Shield, Loader2 } from 'lucide-react';
 
 interface FinancialDrilldownSheetProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  period: string | null
-  drillType: DrilldownType | null
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  period: string | null;
+  drillType: DrilldownType | null;
 }
 
-const TYPE_META: Record<DrilldownType, { label: string; icon: React.ComponentType<{ className?: string }>; color: string; description: string }> = {
-  revenue:   { label: 'Revenue',      icon: TrendingUp,  color: 'text-emerald-600', description: 'Income rows for this period' },
-  expenses:  { label: 'Expenses',     icon: TrendingDown, color: 'text-amber-600',  description: 'Expense rows for this period' },
-  pmg_share: { label: 'PMG Share',    icon: Shield,      color: 'text-blue-600',   description: 'Retained 25% PMG Share allocations and ledger entries' },
-}
+const TYPE_META: Record<
+  DrilldownType,
+  {
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+    description: string;
+  }
+> = {
+  revenue: {
+    label: 'Revenue',
+    icon: TrendingUp,
+    color: 'text-emerald-600',
+    description: 'Income rows for this period',
+  },
+  expenses: {
+    label: 'Expenses',
+    icon: TrendingDown,
+    color: 'text-amber-600',
+    description: 'Expense rows for this period',
+  },
+  pmg_share: {
+    label: 'PMG Share',
+    icon: Shield,
+    color: 'text-blue-600',
+    description: 'Retained 25% PMG Share allocations and ledger entries',
+  },
+};
 
 export function FinancialDrilldownSheet({
   open,
@@ -33,27 +60,33 @@ export function FinancialDrilldownSheet({
   period,
   drillType,
 }: FinancialDrilldownSheetProps) {
-  const [data, setData] = useState<DrilldownResult | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [data, setData] = useState<DrilldownResult | null>(null);
+  const [loading, setLoading] = useState(false);
 
   // Fetch data when sheet opens or params change
   useEffect(() => {
-    if (!open || !period || !drillType) return
-    let cancelled = false
-    setLoading(true)
+    if (!open || !period || !drillType) return;
+    let cancelled = false;
+    setLoading(true);
     getDrilldownData(period, drillType)
-      .then((result) => { if (!cancelled) setData(result) })
-      .finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
-  }, [open, period, drillType])
+      .then((result) => {
+        if (!cancelled) setData(result);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, period, drillType]);
 
   // Reset data when sheet closes
   useEffect(() => {
-    if (!open) setData(null)
-  }, [open])
+    if (!open) setData(null);
+  }, [open]);
 
-  const meta = drillType ? TYPE_META[drillType] : null
-  const Icon = meta?.icon ?? TrendingUp
+  const meta = drillType ? TYPE_META[drillType] : null;
+  const Icon = meta?.icon ?? TrendingUp;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -96,12 +129,24 @@ export function FinancialDrilldownSheet({
         </div>
       </SheetContent>
     </Sheet>
-  )
+  );
 }
 
 // ── Income Table ─────────────────────────────────────────────────────────────
 
-function IncomeTable({ rows, total }: { rows: { date: string; divisionName: string; clientName: string; description: string | null; amount: number }[]; total: number }) {
+function IncomeTable({
+  rows,
+  total,
+}: {
+  rows: {
+    date: string;
+    divisionName: string;
+    clientName: string;
+    description: string | null;
+    amount: number;
+  }[];
+  total: number;
+}) {
   return (
     <>
       <div className="flex items-center justify-between rounded-lg bg-emerald-50 dark:bg-emerald-950/20 p-3">
@@ -110,28 +155,52 @@ function IncomeTable({ rows, total }: { rows: { date: string; divisionName: stri
       </div>
       <div className="flex flex-col gap-1">
         {rows.map((row, i) => (
-          <div key={i} className="flex items-center justify-between gap-3 rounded-md border border-border/50 px-3 py-2 hover:bg-muted/30 transition-colors">
+          <div
+            key={i}
+            className="flex items-center justify-between gap-3 rounded-md border border-border/50 px-3 py-2 hover:bg-muted/30 transition-colors"
+          >
             <div className="flex flex-col gap-0.5 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-foreground truncate">{row.clientName}</span>
-                <Badge variant="secondary" className="text-[9px] shrink-0">{row.divisionName}</Badge>
+                <span className="text-xs font-medium text-foreground truncate">
+                  {row.clientName}
+                </span>
+                <Badge variant="secondary" className="text-[9px] shrink-0">
+                  {row.divisionName}
+                </Badge>
               </div>
               {row.description && (
-                <span className="text-[10px] text-muted-foreground truncate">{row.description}</span>
+                <span className="text-[10px] text-muted-foreground truncate">
+                  {row.description}
+                </span>
               )}
               <span className="text-[10px] text-muted-foreground">{fmtDate(row.date)}</span>
             </div>
-            <span className="text-xs font-semibold text-emerald-600 tabular-nums shrink-0">+{formatZAR(row.amount)}</span>
+            <span className="text-xs font-semibold text-emerald-600 tabular-nums shrink-0">
+              +{formatZAR(row.amount)}
+            </span>
           </div>
         ))}
       </div>
     </>
-  )
+  );
 }
 
 // ── Expense Table ────────────────────────────────────────────────────────────
 
-function ExpenseTable({ rows, total }: { rows: { date: string; divisionName: string; category: string; clientName: string; description: string | null; amount: number }[]; total: number }) {
+function ExpenseTable({
+  rows,
+  total,
+}: {
+  rows: {
+    date: string;
+    divisionName: string;
+    category: string;
+    clientName: string;
+    description: string | null;
+    amount: number;
+  }[];
+  total: number;
+}) {
   return (
     <>
       <div className="flex items-center justify-between rounded-lg bg-amber-50 dark:bg-amber-950/20 p-3">
@@ -140,28 +209,43 @@ function ExpenseTable({ rows, total }: { rows: { date: string; divisionName: str
       </div>
       <div className="flex flex-col gap-1">
         {rows.map((row, i) => (
-          <div key={i} className="flex items-center justify-between gap-3 rounded-md border border-border/50 px-3 py-2 hover:bg-muted/30 transition-colors">
+          <div
+            key={i}
+            className="flex items-center justify-between gap-3 rounded-md border border-border/50 px-3 py-2 hover:bg-muted/30 transition-colors"
+          >
             <div className="flex flex-col gap-0.5 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-foreground truncate">{row.category}</span>
-                <Badge variant="secondary" className="text-[9px] shrink-0">{row.divisionName}</Badge>
+                <Badge variant="secondary" className="text-[9px] shrink-0">
+                  {row.divisionName}
+                </Badge>
               </div>
               {row.description && (
-                <span className="text-[10px] text-muted-foreground truncate">{row.description}</span>
+                <span className="text-[10px] text-muted-foreground truncate">
+                  {row.description}
+                </span>
               )}
               <span className="text-[10px] text-muted-foreground">{fmtDate(row.date)}</span>
             </div>
-            <span className="text-xs font-semibold text-amber-600 tabular-nums shrink-0">-{formatZAR(row.amount)}</span>
+            <span className="text-xs font-semibold text-amber-600 tabular-nums shrink-0">
+              -{formatZAR(row.amount)}
+            </span>
           </div>
         ))}
       </div>
     </>
-  )
+  );
 }
 
 // ── Ledger Table ─────────────────────────────────────────────────────────────
 
-function LedgerTable({ rows, total }: { rows: { date: string; description: string | null; amount: number; entryType: string }[]; total: number }) {
+function LedgerTable({
+  rows,
+  total,
+}: {
+  rows: { date: string; description: string | null; amount: number; entryType: string }[];
+  total: number;
+}) {
   return (
     <>
       <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
@@ -170,18 +254,27 @@ function LedgerTable({ rows, total }: { rows: { date: string; description: strin
       </div>
       <div className="flex flex-col gap-1">
         {rows.map((row, i) => (
-          <div key={i} className="flex items-center justify-between gap-3 rounded-md border border-border/50 px-3 py-2 hover:bg-muted/30 transition-colors">
+          <div
+            key={i}
+            className="flex items-center justify-between gap-3 rounded-md border border-border/50 px-3 py-2 hover:bg-muted/30 transition-colors"
+          >
             <div className="flex flex-col gap-0.5 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-foreground truncate">{row.description ?? '—'}</span>
-                <Badge variant="outline" className="text-[9px] shrink-0 capitalize">{row.entryType}</Badge>
+                <span className="text-xs font-medium text-foreground truncate">
+                  {row.description ?? '—'}
+                </span>
+                <Badge variant="outline" className="text-[9px] shrink-0 capitalize">
+                  {row.entryType}
+                </Badge>
               </div>
               <span className="text-[10px] text-muted-foreground">{fmtDate(row.date)}</span>
             </div>
-            <span className="text-xs font-semibold text-foreground tabular-nums shrink-0">-{formatZAR(row.amount)}</span>
+            <span className="text-xs font-semibold text-foreground tabular-nums shrink-0">
+              -{formatZAR(row.amount)}
+            </span>
           </div>
         ))}
       </div>
     </>
-  )
+  );
 }

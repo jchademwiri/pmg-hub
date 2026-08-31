@@ -28,7 +28,8 @@ export function ConvertToClientButton({ leadId, leadStatus }: ConvertToClientBut
   const handleConvert = () => {
     confirm({
       title: 'Convert Lead to Client?',
-      description: 'This will automatically create an active client profile using the contact details of this lead. This action cannot be undone.',
+      description:
+        'This will automatically create an active client profile using the contact details of this lead. This action cannot be undone.',
       confirmText: 'Convert',
       variant: 'default',
     }).then((confirmed) => {
@@ -47,9 +48,9 @@ export function ConvertToClientButton({ leadId, leadStatus }: ConvertToClientBut
   };
 
   return (
-    <Button 
-      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" 
-      onClick={handleConvert} 
+    <Button
+      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+      onClick={handleConvert}
       disabled={isPending}
     >
       {isPending ? (

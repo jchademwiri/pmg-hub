@@ -1,11 +1,11 @@
-'use client'
+'use client';
 
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 interface ErrorProps {
-  error: Error & { digest?: string }
-  reset: () => void
+  error: Error & { digest?: string };
+  reset: () => void;
 }
 
 export default function SchedulingError({ error, reset }: ErrorProps) {
@@ -28,5 +28,5 @@ export default function SchedulingError({ error, reset }: ErrorProps) {
         </Button>
       </div>
     </div>
-  )
+  );
 }

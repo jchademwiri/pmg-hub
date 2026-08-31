@@ -1,21 +1,21 @@
-'use client'
+'use client';
 
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { fmtMonthYear } from '@/lib/format'
+} from '@/components/ui/select';
+import { fmtMonthYear } from '@/lib/format';
 
 interface FilterBarProps {
-  divisions: { id: string; name: string }[]
-  months?: string[]
-  currentDivisionId?: string
-  currentMonth?: string
-  baseUrl?: string
+  divisions: { id: string; name: string }[];
+  months?: string[];
+  currentDivisionId?: string;
+  currentMonth?: string;
+  baseUrl?: string;
 }
 
 export function FilterBar({
@@ -25,28 +25,25 @@ export function FilterBar({
   currentMonth,
   baseUrl = '/billing/payments',
 }: FilterBarProps) {
-  const router = useRouter()
+  const router = useRouter();
 
   function handleDivisionChange(value: string) {
-    const params = new URLSearchParams()
-    if (value !== 'all') params.set('divisionId', value)
-    if (currentMonth) params.set('month', currentMonth)
-    router.push(baseUrl + '?' + params.toString())
+    const params = new URLSearchParams();
+    if (value !== 'all') params.set('divisionId', value);
+    if (currentMonth) params.set('month', currentMonth);
+    router.push(baseUrl + '?' + params.toString());
   }
 
   function handleMonthChange(value: string) {
-    const params = new URLSearchParams()
-    if (currentDivisionId) params.set('divisionId', currentDivisionId)
-    if (value !== 'all') params.set('month', value)
-    router.push(baseUrl + '?' + params.toString())
+    const params = new URLSearchParams();
+    if (currentDivisionId) params.set('divisionId', currentDivisionId);
+    if (value !== 'all') params.set('month', value);
+    router.push(baseUrl + '?' + params.toString());
   }
 
   return (
     <div className="flex flex-wrap gap-3">
-      <Select
-        value={currentDivisionId ?? 'all'}
-        onValueChange={handleDivisionChange}
-      >
+      <Select value={currentDivisionId ?? 'all'} onValueChange={handleDivisionChange}>
         <SelectTrigger className="w-48">
           <SelectValue placeholder="All divisions" />
         </SelectTrigger>
@@ -61,10 +58,7 @@ export function FilterBar({
       </Select>
 
       {months && months.length > 0 && (
-        <Select
-          value={currentMonth ?? 'all'}
-          onValueChange={handleMonthChange}
-        >
+        <Select value={currentMonth ?? 'all'} onValueChange={handleMonthChange}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="All months" />
           </SelectTrigger>
@@ -79,5 +73,5 @@ export function FilterBar({
         </Select>
       )}
     </div>
-  )
+  );
 }

@@ -31,7 +31,9 @@ export async function deleteComplianceRecord(id: string): Promise<void> {
   await db.delete(complianceDocuments).where(eq(complianceDocuments.id, id));
 }
 
-export async function getComplianceRecordsByClient(clientId: string): Promise<ComplianceDocument[]> {
+export async function getComplianceRecordsByClient(
+  clientId: string,
+): Promise<ComplianceDocument[]> {
   return db
     .select()
     .from(complianceDocuments)
@@ -68,8 +70,8 @@ export async function getUpcomingExpirationsForReminders(): Promise<ComplianceDo
     .where(
       and(
         gte(complianceDocuments.expiryDate, yesterdayStr as string),
-        lte(complianceDocuments.expiryDate, futureStr as string)
-      )
+        lte(complianceDocuments.expiryDate, futureStr as string),
+      ),
     )
     .orderBy(asc(complianceDocuments.expiryDate));
 }

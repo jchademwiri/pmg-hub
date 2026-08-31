@@ -1,26 +1,26 @@
-import type { Metadata } from 'next'
-import { Shield, KeyRound, Lock, History, LogIn, Laptop } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Field, FieldLabel } from '@/components/ui/field'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { SettingsPageHeader } from '@/components/settings/settings-page-header'
-import { SettingsSection } from '@/components/settings/settings-section'
+import type { Metadata } from 'next';
+import { Shield, KeyRound, Lock, History, LogIn, Laptop } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SettingsPageHeader } from '@/components/settings/settings-page-header';
+import { SettingsSection } from '@/components/settings/settings-section';
 import {
   getPaginatedSignInLogs,
   getPaginatedSystemAuditLogs,
   getPaginatedActiveSessions,
-} from '@/lib/audit-log'
-import { PaginatedLogPanel, PaginatedSessionsPanel } from './security-logs-client'
+} from '@/lib/audit-log';
+import { PaginatedLogPanel, PaginatedSessionsPanel } from './security-logs-client';
 
-export const metadata: Metadata = { title: 'Security Settings' }
+export const metadata: Metadata = { title: 'Security Settings' };
 
 export default async function SecuritySettingsPage() {
   const [systemAuditLogs, signInLogs, sessions] = await Promise.all([
     getPaginatedSystemAuditLogs({ page: 1, pageSize: 5 }),
     getPaginatedSignInLogs({ page: 1, pageSize: 5 }),
     getPaginatedActiveSessions({ page: 1, pageSize: 5 }),
-  ])
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -33,7 +33,8 @@ export default async function SecuritySettingsPage() {
         <Shield />
         <AlertTitle>System Security & Activity Log</AlertTitle>
         <AlertDescription>
-          Review active sessions, authentication history, and recent administrative actions taken across the system.
+          Review active sessions, authentication history, and recent administrative actions taken
+          across the system.
         </AlertDescription>
       </Alert>
 
@@ -69,7 +70,10 @@ export default async function SecuritySettingsPage() {
 
         {/* Password Tab */}
         <TabsContent value="password" className="mt-4">
-          <SettingsSection title="Password" description="Update your account password (Password management coming soon).">
+          <SettingsSection
+            title="Password"
+            description="Update your account password (Password management coming soon)."
+          >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field className="sm:col-span-2">
                 <FieldLabel>Current Password</FieldLabel>
@@ -119,10 +123,5 @@ export default async function SecuritySettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
-
-
-
-
-

@@ -13,26 +13,26 @@ Use an invoice when:
 
 ## Invoice Statuses
 
-| Status | Meaning | What To Do |
-|--------|---------|------------|
-| Draft | Not yet issued | Review before sending |
-| Issued | Sent and awaiting payment | Follow up until paid |
-| Partially Paid | Some payment received | Follow up for the balance |
-| Paid | Fully paid | No action needed |
-| Overdue | Past due date | Send a reminder |
-| Void | Cancelled | Keep for audit trail |
+| Status         | Meaning                   | What To Do                |
+| -------------- | ------------------------- | ------------------------- |
+| Draft          | Not yet issued            | Review before sending     |
+| Issued         | Sent and awaiting payment | Follow up until paid      |
+| Partially Paid | Some payment received     | Follow up for the balance |
+| Paid           | Fully paid                | No action needed          |
+| Overdue        | Past due date             | Send a reminder           |
+| Void           | Cancelled                 | Keep for audit trail      |
 
 ## How To Read The Invoice List
 
-| Column | Meaning |
-|--------|---------|
-| Invoice # | Unique invoice number |
-| Division | `AWS`, `TES`, or `PMG` |
-| Client | Who must pay |
-| Issue Date | Invoice date |
-| Due Date | Expected payment date |
-| Amount | Invoice total |
-| Status | Payment or document state |
+| Column     | Meaning                   |
+| ---------- | ------------------------- |
+| Invoice #  | Unique invoice number     |
+| Division   | `AWS`, `TES`, or `PMG`    |
+| Client     | Who must pay              |
+| Issue Date | Invoice date              |
+| Due Date   | Expected payment date     |
+| Amount     | Invoice total             |
+| Status     | Payment or document state |
 
 ## What Happens In Accounting
 
@@ -59,4 +59,3 @@ CR Accounts Receivable
 5. Save as draft while checking.
 6. Issue the invoice when ready.
 7. Record payment when money arrives.
-

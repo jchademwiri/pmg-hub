@@ -118,12 +118,12 @@ describe('calculateAgeing', () => {
   it('handles multiple invoices across different buckets', () => {
     const result = calculateAgeing(
       [
-        inv({ dueDate: '2026-06-22', total: 500 }),           // Current
-        inv({ dueDate: '2026-06-10', total: 300 }),           // 1-14
+        inv({ dueDate: '2026-06-22', total: 500 }), // Current
+        inv({ dueDate: '2026-06-10', total: 300 }), // 1-14
         inv({ dueDate: '2026-05-25', total: 200, status: 'overdue' }), // 15-30
-        inv({ dueDate: '2026-04-25', total: 400 }),           // 31-60
-        inv({ dueDate: '2026-03-25', total: 100 }),           // 61+
-        inv({ dueDate: '2026-01-01', total: 600 }),           // 61+
+        inv({ dueDate: '2026-04-25', total: 400 }), // 31-60
+        inv({ dueDate: '2026-03-25', total: 100 }), // 61+
+        inv({ dueDate: '2026-01-01', total: 600 }), // 61+
         inv({ dueDate: '2026-06-01', total: 999, status: 'paid' }), // excluded
       ],
       today,

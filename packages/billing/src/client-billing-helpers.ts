@@ -24,7 +24,7 @@ export function determineStatementStatus(
   invoices: { status: string }[],
 ): 'Paid' | 'Outstanding' | 'Overdue' {
   if (totalOutstanding <= 0) return 'Paid';
-  const hasOverdue = invoices.some(i => i.status === 'overdue');
+  const hasOverdue = invoices.some((i) => i.status === 'overdue');
   return hasOverdue ? 'Overdue' : 'Outstanding';
 }
 
@@ -36,10 +36,7 @@ export function determineStatementStatus(
  */
 export function buildTransactionHistory<
   T extends { date: string; debit?: number; credit?: number },
->(
-  items: T[],
-  openingBalance: number,
-): (T & { balance: number })[] {
+>(items: T[], openingBalance: number): (T & { balance: number })[] {
   const sorted = [...items].sort((a, b) => a.date.localeCompare(b.date));
   let balance = openingBalance;
   const withBalance = sorted.map((item) => {
@@ -117,15 +114,12 @@ export function resolveDivisionBranding(
   const effectiveDivisionId = linkedId ?? firstInvoiceDivId;
 
   // Try linked division from allDivisions list first (authoritative client division)
-  const linkedDivName = linkedId && allDivisions
-    ? allDivisions.find((d) => d.id === linkedId)?.name
-    : undefined;
+  const linkedDivName =
+    linkedId && allDivisions ? allDivisions.find((d) => d.id === linkedId)?.name : undefined;
   const linkedInvoice = invoices.find((inv) => inv.divisionId === linkedId);
 
-  const divisionName = linkedDivName
-    ?? linkedInvoice?.divisionName
-    ?? invoices[0]?.divisionName
-    ?? defaultName;
+  const divisionName =
+    linkedDivName ?? linkedInvoice?.divisionName ?? invoices[0]?.divisionName ?? defaultName;
 
   return { divisionName, effectiveDivisionId };
 }
@@ -136,8 +130,22 @@ export function resolveDivisionBranding(
  */
 export function buildOrgProps(
   divisionName: string,
-  divSettings?: { salesRepEmail?: string | null; salesRepPhone?: string | null; divisionWebsite?: string | null; salesRepName?: string | null } | null,
-  orgSettings?: { registrationNumber?: string | null; vatNumber?: string | null; email?: string | null; phone?: string | null; website?: string | null; addressStreet?: string | null; addressCity?: string | null; addressPostal?: string | null } | null,
+  divSettings?: {
+    salesRepEmail?: string | null;
+    salesRepPhone?: string | null;
+    divisionWebsite?: string | null;
+    salesRepName?: string | null;
+  } | null,
+  orgSettings?: {
+    registrationNumber?: string | null;
+    vatNumber?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    website?: string | null;
+    addressStreet?: string | null;
+    addressCity?: string | null;
+    addressPostal?: string | null;
+  } | null,
   /** Pass `null` to suppress the "A division of..." line entirely; omit or pass `undefined` to use the default `'Playhouse Media Group'` */
   divisionOf?: string | null,
 ): OrgPreviewProps {
@@ -145,7 +153,8 @@ export function buildOrgProps(
   return {
     name: divisionName,
     logoUrl: getDocumentLogoUrl(divisionName),
-    divisionOf: !isMainOrg && divisionOf !== null ? (divisionOf ?? 'Playhouse Media Group') : undefined,
+    divisionOf:
+      !isMainOrg && divisionOf !== null ? (divisionOf ?? 'Playhouse Media Group') : undefined,
     registrationNumber: orgSettings?.registrationNumber ?? undefined,
     vatNumber: orgSettings?.vatNumber ?? undefined,
     email: divSettings?.salesRepEmail ?? orgSettings?.email ?? undefined,
@@ -168,7 +177,8 @@ export function buildBankingProps(
     bankAccountNumber?: string | null;
     bankBranchCode?: string | null;
   } | null,
-): { bankName: string; accountName: string; accountNumber: string; branchCode: string } | undefined {
+):
+  { bankName: string; accountName: string; accountNumber: string; branchCode: string } | undefined {
   return {
     bankName: settings?.bankName || 'Capitec',
     accountName: settings?.bankAccountName || 'PMG Solutions',
@@ -192,7 +202,9 @@ export interface ActivityEvent {
  * Calculates average days to pay for a client's paid invoices
  */
 export function calculateAverageDaysToPay(invoices: InvoiceDetail[]): number {
-  const paidInvoices = invoices.filter(inv => inv.status === 'paid' && inv.paidAt && inv.invoiceDate);
+  const paidInvoices = invoices.filter(
+    (inv) => inv.status === 'paid' && inv.paidAt && inv.invoiceDate,
+  );
   if (paidInvoices.length === 0) return 0;
 
   let totalDays = 0;
@@ -212,16 +224,16 @@ export function calculateAverageDaysToPay(invoices: InvoiceDetail[]): number {
 export function calculateClientHealth(
   invoices: InvoiceDetail[],
   outstandingBalance: number,
-  overdueBalance: number
+  overdueBalance: number,
 ): { score: 'Excellent' | 'Good' | 'At Risk' | 'Critical'; color: string } {
   const avgDays = calculateAverageDaysToPay(invoices);
-  
+
   // Check if any invoice is > 90 days overdue
   const today = new Date();
   const ninetyDaysAgo = new Date();
   ninetyDaysAgo.setDate(today.getDate() - 90);
 
-  const criticalOverdue = invoices.some(inv => {
+  const criticalOverdue = invoices.some((inv) => {
     if (inv.status === 'overdue' && inv.dueDate) {
       return new Date(inv.dueDate) < ninetyDaysAgo;
     }
@@ -252,7 +264,7 @@ export function calculateClientHealth(
 export function buildActivityFeed(
   quotes: QuotationDetail[],
   invoices: InvoiceDetail[],
-  payments: any[]
+  payments: any[],
 ): ActivityEvent[] {
   const events: ActivityEvent[] = [];
 

@@ -19,23 +19,25 @@ export function LazyPaymentsTable({ year, month, divisionId, deleteAction }: Pro
 
   useEffect(() => {
     let mounted = true;
-    
-    const fetchPromise = month 
+
+    const fetchPromise = month
       ? fetchPaymentsByMonth(year, month, divisionId)
       : fetchPaymentsByYear(year, divisionId);
-      
+
     fetchPromise.then((res) => {
       if (mounted) {
         setData(res.data);
         setClosedPeriods(res.closedPeriods || []);
       }
     });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [year, month, divisionId, refreshCounter]);
 
   const wrappedDeleteAction = async (id: string) => {
     const res = await deleteAction(id);
-    if (!res.error) setRefreshCounter(c => c + 1);
+    if (!res.error) setRefreshCounter((c) => c + 1);
     return res;
   };
 
@@ -43,5 +45,11 @@ export function LazyPaymentsTable({ year, month, divisionId, deleteAction }: Pro
     return <Skeleton className="h-32 w-full mt-4" />;
   }
 
-  return <PaymentsTable entries={data} closedPeriods={closedPeriods} deleteAction={wrappedDeleteAction} />;
+  return (
+    <PaymentsTable
+      entries={data}
+      closedPeriods={closedPeriods}
+      deleteAction={wrappedDeleteAction}
+    />
+  );
 }

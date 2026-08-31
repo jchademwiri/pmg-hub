@@ -57,20 +57,46 @@ function HiddenPreserveInputs({ settings }: { settings: DivisionBillingSettings 
   if (!settings) return null;
   return (
     <>
-      {settings.defaultVatRate ? <input type="hidden" name="defaultVatRate" value={settings.defaultVatRate} /> : null}
-      {settings.paymentTermsDays != null ? <input type="hidden" name="paymentTermsDays" value={settings.paymentTermsDays} /> : null}
+      {settings.defaultVatRate ? (
+        <input type="hidden" name="defaultVatRate" value={settings.defaultVatRate} />
+      ) : null}
+      {settings.paymentTermsDays != null ? (
+        <input type="hidden" name="paymentTermsDays" value={settings.paymentTermsDays} />
+      ) : null}
       {settings.bankName ? <input type="hidden" name="bankName" value={settings.bankName} /> : null}
-      {settings.bankAccountName ? <input type="hidden" name="bankAccountName" value={settings.bankAccountName} /> : null}
-      {settings.bankAccountNumber ? <input type="hidden" name="bankAccountNumber" value={settings.bankAccountNumber} /> : null}
-      {settings.bankBranchCode ? <input type="hidden" name="bankBranchCode" value={settings.bankBranchCode} /> : null}
-      {settings.invoiceNotes ? <input type="hidden" name="invoiceNotes" value={settings.invoiceNotes} /> : null}
-      {settings.quoteNotes ? <input type="hidden" name="quoteNotes" value={settings.quoteNotes} /> : null}
-      {settings.salesRepName ? <input type="hidden" name="salesRepName" value={settings.salesRepName} /> : null}
-      {settings.salesRepPhone ? <input type="hidden" name="salesRepPhone" value={settings.salesRepPhone} /> : null}
-      {settings.salesRepEmail ? <input type="hidden" name="salesRepEmail" value={settings.salesRepEmail} /> : null}
-      {settings.divisionWebsite ? <input type="hidden" name="divisionWebsite" value={settings.divisionWebsite} /> : null}
-      {settings.creditExpiryMonths != null ? <input type="hidden" name="creditExpiryMonths" value={settings.creditExpiryMonths} /> : null}
-      {settings.autoApplyCredits ? <input type="hidden" name="autoApplyCredits" value="on" /> : null}
+      {settings.bankAccountName ? (
+        <input type="hidden" name="bankAccountName" value={settings.bankAccountName} />
+      ) : null}
+      {settings.bankAccountNumber ? (
+        <input type="hidden" name="bankAccountNumber" value={settings.bankAccountNumber} />
+      ) : null}
+      {settings.bankBranchCode ? (
+        <input type="hidden" name="bankBranchCode" value={settings.bankBranchCode} />
+      ) : null}
+      {settings.invoiceNotes ? (
+        <input type="hidden" name="invoiceNotes" value={settings.invoiceNotes} />
+      ) : null}
+      {settings.quoteNotes ? (
+        <input type="hidden" name="quoteNotes" value={settings.quoteNotes} />
+      ) : null}
+      {settings.salesRepName ? (
+        <input type="hidden" name="salesRepName" value={settings.salesRepName} />
+      ) : null}
+      {settings.salesRepPhone ? (
+        <input type="hidden" name="salesRepPhone" value={settings.salesRepPhone} />
+      ) : null}
+      {settings.salesRepEmail ? (
+        <input type="hidden" name="salesRepEmail" value={settings.salesRepEmail} />
+      ) : null}
+      {settings.divisionWebsite ? (
+        <input type="hidden" name="divisionWebsite" value={settings.divisionWebsite} />
+      ) : null}
+      {settings.creditExpiryMonths != null ? (
+        <input type="hidden" name="creditExpiryMonths" value={settings.creditExpiryMonths} />
+      ) : null}
+      {settings.autoApplyCredits ? (
+        <input type="hidden" name="autoApplyCredits" value="on" />
+      ) : null}
     </>
   );
 }
@@ -87,7 +113,9 @@ function DivisionDefaultsForm({ division, currentSettings, saveAction }: Divisio
   const s = currentSettings;
 
   const [defaultVatRate, setDefaultVatRate] = useState<string>(s?.defaultVatRate ?? '15');
-  const [paymentTermsDays, setPaymentTermsDays] = useState<string | number>(s?.paymentTermsDays ?? 30);
+  const [paymentTermsDays, setPaymentTermsDays] = useState<string | number>(
+    s?.paymentTermsDays ?? 30,
+  );
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -105,7 +133,12 @@ function DivisionDefaultsForm({ division, currentSettings, saveAction }: Divisio
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} onChange={() => setIsDirty(true)} className="flex flex-col gap-6">
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      onChange={() => setIsDirty(true)}
+      className="flex flex-col gap-6"
+    >
       <HiddenPreserveInputs settings={s} />
 
       <SettingsSection
@@ -130,7 +163,10 @@ function DivisionDefaultsForm({ division, currentSettings, saveAction }: Divisio
         </div>
       </SettingsSection>
 
-      <SettingsSection title="Tax & Payment Terms" description="Default VAT rate and payment terms applied to new documents.">
+      <SettingsSection
+        title="Tax & Payment Terms"
+        description="Default VAT rate and payment terms applied to new documents."
+      >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field>
             <FieldLabel>Default VAT Rate (%)</FieldLabel>
@@ -186,11 +222,16 @@ function DivisionDefaultsForm({ division, currentSettings, saveAction }: Divisio
   );
 }
 
-export function BillingDefaultsClient({ divisions, allSettings, saveAction }: BillingSettingsClientProps) {
+export function BillingDefaultsClient({
+  divisions,
+  allSettings,
+  saveAction,
+}: BillingSettingsClientProps) {
   const [activeId, setActiveId] = useState<string>(divisions[0]?.id ?? '');
   const activeDivision = divisions.find((d) => d.id === activeId) ?? divisions[0];
 
-  if (!activeDivision) return <EmptyState title="No divisions found" message="Add a division first." />;
+  if (!activeDivision)
+    return <EmptyState title="No divisions found" message="Add a division first." />;
 
   return (
     <div className="flex flex-col gap-6">
@@ -221,7 +262,11 @@ export function BillingDefaultsClient({ divisions, allSettings, saveAction }: Bi
 
 // ── 2. Document Templates & Notes Form ───────────────────────────────────────
 
-function DivisionTemplatesForm({ division, currentSettings, saveAction }: DivisionBillingFormProps) {
+function DivisionTemplatesForm({
+  division,
+  currentSettings,
+  saveAction,
+}: DivisionBillingFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -247,7 +292,12 @@ function DivisionTemplatesForm({ division, currentSettings, saveAction }: Divisi
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} onChange={() => setIsDirty(true)} className="flex flex-col gap-6">
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      onChange={() => setIsDirty(true)}
+      className="flex flex-col gap-6"
+    >
       <HiddenPreserveInputs settings={s} />
 
       <SettingsSection
@@ -298,7 +348,11 @@ function DivisionTemplatesForm({ division, currentSettings, saveAction }: Divisi
   );
 }
 
-export function BillingTemplatesClient({ divisions, allSettings, saveAction }: BillingSettingsClientProps) {
+export function BillingTemplatesClient({
+  divisions,
+  allSettings,
+  saveAction,
+}: BillingSettingsClientProps) {
   const [activeId, setActiveId] = useState<string>(divisions[0]?.id ?? '');
   const activeDivision = divisions.find((d) => d.id === activeId) ?? divisions[0];
 
@@ -340,7 +394,9 @@ function DivisionCreditForm({ division, currentSettings, saveAction }: DivisionB
   const [isDirty, setIsDirty] = useState(false);
 
   const s = currentSettings;
-  const [creditExpiryMonths, setCreditExpiryMonths] = useState<string | number>(s?.creditExpiryMonths ?? 12);
+  const [creditExpiryMonths, setCreditExpiryMonths] = useState<string | number>(
+    s?.creditExpiryMonths ?? 12,
+  );
   const [autoApplyCredits, setAutoApplyCredits] = useState<boolean>(s?.autoApplyCredits ?? true);
 
   function handleSubmit(e: FormEvent) {
@@ -359,7 +415,12 @@ function DivisionCreditForm({ division, currentSettings, saveAction }: DivisionB
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} onChange={() => setIsDirty(true)} className="flex flex-col gap-6">
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      onChange={() => setIsDirty(true)}
+      className="flex flex-col gap-6"
+    >
       <HiddenPreserveInputs settings={s} />
 
       <SettingsSection
@@ -378,7 +439,9 @@ function DivisionCreditForm({ division, currentSettings, saveAction }: DivisionB
               onChange={(e) => setCreditExpiryMonths(e.target.value)}
               disabled={isPending}
             />
-            <p className="text-xs text-muted-foreground">Set to 0 for credit notes that never expire.</p>
+            <p className="text-xs text-muted-foreground">
+              Set to 0 for credit notes that never expire.
+            </p>
           </Field>
           <Field orientation="horizontal" className="items-end pb-1">
             {autoApplyCredits ? <input type="hidden" name="autoApplyCredits" value="on" /> : null}
@@ -420,7 +483,11 @@ function DivisionCreditForm({ division, currentSettings, saveAction }: DivisionB
   );
 }
 
-export function BillingCreditClient({ divisions, allSettings, saveAction }: BillingSettingsClientProps) {
+export function BillingCreditClient({
+  divisions,
+  allSettings,
+  saveAction,
+}: BillingSettingsClientProps) {
   const [activeId, setActiveId] = useState<string>(divisions[0]?.id ?? '');
   const activeDivision = divisions.find((d) => d.id === activeId) ?? divisions[0];
 
@@ -489,7 +556,12 @@ function DivisionEmailContactForm({
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} onChange={() => setIsDirty(true)} className="flex flex-col gap-6">
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      onChange={() => setIsDirty(true)}
+      className="flex flex-col gap-6"
+    >
       <HiddenPreserveInputs settings={s} />
 
       <SettingsSection
@@ -561,7 +633,11 @@ function DivisionEmailContactForm({
   );
 }
 
-export function BillingEmailClient({ divisions, allSettings, saveAction }: BillingSettingsClientProps) {
+export function BillingEmailClient({
+  divisions,
+  allSettings,
+  saveAction,
+}: BillingSettingsClientProps) {
   const [activeId, setActiveId] = useState<string>(divisions[0]?.id ?? '');
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const activeDivision = divisions.find((d) => d.id === activeId) ?? divisions[0];
@@ -573,7 +649,9 @@ export function BillingEmailClient({ divisions, allSettings, saveAction }: Billi
       <div className="flex items-center justify-between border-b pb-3">
         <div>
           <h3 className="text-base font-semibold tracking-tight">Division Contact Info</h3>
-          <p className="text-xs text-muted-foreground">Sales rep contact email, phone, and website details per division.</p>
+          <p className="text-xs text-muted-foreground">
+            Sales rep contact email, phone, and website details per division.
+          </p>
         </div>
         <Button
           variant="outline"
@@ -593,7 +671,12 @@ export function BillingEmailClient({ divisions, allSettings, saveAction }: Billi
               <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
               Edit Division Contact Info
             </h4>
-            <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)} className="h-7 text-xs">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditing(false)}
+              className="h-7 text-xs"
+            >
               Cancel
             </Button>
           </div>
@@ -659,7 +742,9 @@ function BankingMatrixRow({
   const [isPending, startTransition] = useTransition();
   const [bankName, setBankName] = useState<string>(settings?.bankName ?? '');
   const [bankAccountName, setBankAccountName] = useState<string>(settings?.bankAccountName ?? '');
-  const [bankAccountNumber, setBankAccountNumber] = useState<string>(settings?.bankAccountNumber ?? '');
+  const [bankAccountNumber, setBankAccountNumber] = useState<string>(
+    settings?.bankAccountNumber ?? '',
+  );
   const [bankBranchCode, setBankBranchCode] = useState<string>(settings?.bankBranchCode ?? '');
 
   function handleSave() {
@@ -671,14 +756,16 @@ function BankingMatrixRow({
       fd.append('bankBranchCode', bankBranchCode);
 
       if (settings?.defaultVatRate) fd.append('defaultVatRate', settings.defaultVatRate);
-      if (settings?.paymentTermsDays != null) fd.append('paymentTermsDays', String(settings.paymentTermsDays));
+      if (settings?.paymentTermsDays != null)
+        fd.append('paymentTermsDays', String(settings.paymentTermsDays));
       if (settings?.salesRepName) fd.append('salesRepName', settings.salesRepName);
       if (settings?.salesRepEmail) fd.append('salesRepEmail', settings.salesRepEmail);
       if (settings?.salesRepPhone) fd.append('salesRepPhone', settings.salesRepPhone);
       if (settings?.divisionWebsite) fd.append('divisionWebsite', settings.divisionWebsite);
       if (settings?.invoiceNotes) fd.append('invoiceNotes', settings.invoiceNotes);
       if (settings?.quoteNotes) fd.append('quoteNotes', settings.quoteNotes);
-      if (settings?.creditExpiryMonths != null) fd.append('creditExpiryMonths', String(settings.creditExpiryMonths));
+      if (settings?.creditExpiryMonths != null)
+        fd.append('creditExpiryMonths', String(settings.creditExpiryMonths));
       if (settings?.autoApplyCredits) fd.append('autoApplyCredits', 'on');
 
       const res = await saveAction(division.id, fd);
@@ -863,6 +950,16 @@ export function BankingAccountsClient({
   );
 }
 
-export function BillingSettingsClient({ divisions, allSettings, saveAction }: BillingSettingsClientProps) {
-  return <BillingDefaultsClient divisions={divisions} allSettings={allSettings} saveAction={saveAction} />;
+export function BillingSettingsClient({
+  divisions,
+  allSettings,
+  saveAction,
+}: BillingSettingsClientProps) {
+  return (
+    <BillingDefaultsClient
+      divisions={divisions}
+      allSettings={allSettings}
+      saveAction={saveAction}
+    />
+  );
 }

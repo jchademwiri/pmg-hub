@@ -12,14 +12,14 @@ Create → Add DNS records → Verify → Poll status → Send
 
 ### Node.js
 
-| Operation | Method | Notes |
-|-----------|--------|-------|
-| Create | `resend.domains.create(params)` | Returns DNS records to configure |
-| Get | `resend.domains.get(id)` | Returns domain with DNS records and status |
-| List | `resend.domains.list({ limit?, offset? })` | Paginated list |
-| Update | `resend.domains.update(params)` | Update tracking, TLS, capabilities |
-| Delete | `resend.domains.remove(id)` | Permanent - not `.delete()` |
-| Verify | `resend.domains.verify(id)` | Triggers async DNS verification |
+| Operation | Method                                     | Notes                                      |
+| --------- | ------------------------------------------ | ------------------------------------------ |
+| Create    | `resend.domains.create(params)`            | Returns DNS records to configure           |
+| Get       | `resend.domains.get(id)`                   | Returns domain with DNS records and status |
+| List      | `resend.domains.list({ limit?, offset? })` | Paginated list                             |
+| Update    | `resend.domains.update(params)`            | Update tracking, TLS, capabilities         |
+| Delete    | `resend.domains.remove(id)`                | Permanent - not `.delete()`                |
+| Verify    | `resend.domains.verify(id)`                | Triggers async DNS verification            |
 
 ### Python
 
@@ -37,9 +37,9 @@ Prefer a subdomain (e.g., `send.yourdomain.com`) over the root domain:
 
 ```typescript
 const { data, error } = await resend.domains.create({
-  name: 'send.acme.com',           // subdomain recommended
-  region: 'us-east-1',              // immutable after creation
-  customReturnPath: 'bounce',       // optional: bounce@send.acme.com - helps DMARC alignment
+  name: 'send.acme.com', // subdomain recommended
+  region: 'us-east-1', // immutable after creation
+  customReturnPath: 'bounce', // optional: bounce@send.acme.com - helps DMARC alignment
   openTracking: false,
   clickTracking: false,
 });
@@ -50,8 +50,8 @@ if (error) {
 
 // data.records contains DNS records to add:
 // [{ type: 'MX', name: '...', value: '...' }, { type: 'TXT', ... }, ...]
-console.log(data.id);      // domain ID for later calls
-console.log(data.records);  // add these to your DNS provider
+console.log(data.id); // domain ID for later calls
+console.log(data.records); // add these to your DNS provider
 ```
 
 ```python
@@ -100,29 +100,29 @@ const { data, error } = await resend.domains.update({
 
 ## Parameter Reference
 
-| Parameter | Values | Default | Notes |
-|-----------|--------|---------|-------|
-| `region` | `us-east-1`, `eu-west-1`, `sa-east-1`, `ap-northeast-1` | `us-east-1` | **Immutable** after creation |
-| `customReturnPath` | string (e.g., `"bounce"`) | none | Results in `bounce@yourdomain.com` - helps DMARC alignment |
-| `tls` | `opportunistic`, `enforced` | `opportunistic` | |
-| `openTracking` | `true`, `false` | Domain default | |
-| `clickTracking` | `true`, `false` | Domain default | |
-| `capabilities` | `{ sending: 'enabled'\|'disabled', receiving: 'enabled'\|'disabled' }` | sending enabled | |
+| Parameter          | Values                                                                 | Default         | Notes                                                      |
+| ------------------ | ---------------------------------------------------------------------- | --------------- | ---------------------------------------------------------- |
+| `region`           | `us-east-1`, `eu-west-1`, `sa-east-1`, `ap-northeast-1`                | `us-east-1`     | **Immutable** after creation                               |
+| `customReturnPath` | string (e.g., `"bounce"`)                                              | none            | Results in `bounce@yourdomain.com` - helps DMARC alignment |
+| `tls`              | `opportunistic`, `enforced`                                            | `opportunistic` |                                                            |
+| `openTracking`     | `true`, `false`                                                        | Domain default  |                                                            |
+| `clickTracking`    | `true`, `false`                                                        | Domain default  |                                                            |
+| `capabilities`     | `{ sending: 'enabled'\|'disabled', receiving: 'enabled'\|'disabled' }` | sending enabled |                                                            |
 
 ## Common Mistakes
 
-| Mistake | Fix |
-|---------|-----|
-| Using root domain when a subdomain would be safer | Consider `send.yourdomain.com` - avoids MX conflicts with existing email and isolates reputation |
-| Sending before DNS records are added | Create returns DNS records - add them to your provider first, then verify |
-| Expecting `verify()` to be synchronous | Verify triggers async check - poll with `get()` to confirm status |
-| Trying to change `region` after creation | Region is **immutable** - delete and recreate the domain |
-| MX record value doesn't match region | MX must be region-specific (`feedback-smtp.{region}.amazonses.com`) - use the exact records from the create response |
-| Cloudflare proxy mode enabled | Disable proxy (orange → gray cloud) for all Resend DNS records - CNAME proxy breaks DKIM verification |
-| DNS provider auto-appends domain name | GoDaddy/Namecheap may turn `resend._domainkey.send.acme.com` into `resend._domainkey.send.acme.com.acme.com` - add a trailing dot or enter just the subdomain portion |
-| DNS records added to root instead of subdomain | DKIM CNAMEs go on `resend._domainkey.send.yourdomain.com`, not `resend._domainkey.yourdomain.com` |
-| Calling `.delete()` | SDK method is `.remove()` |
-| Deleting a domain accidentally | Delete is permanent with no undo - verify intent before calling |
-| Using `enforced` TLS with recipients that don't support it | Use `opportunistic` (default) unless you know all recipients support TLS |
-| Not checking `error` in Node.js | SDK returns `{ data, error }`, does not throw - always destructure and check |
-| Forgetting region on create | Defaults to `us-east-1` - set explicitly for EU/SA/AP data residency requirements |
+| Mistake                                                    | Fix                                                                                                                                                                   |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Using root domain when a subdomain would be safer          | Consider `send.yourdomain.com` - avoids MX conflicts with existing email and isolates reputation                                                                      |
+| Sending before DNS records are added                       | Create returns DNS records - add them to your provider first, then verify                                                                                             |
+| Expecting `verify()` to be synchronous                     | Verify triggers async check - poll with `get()` to confirm status                                                                                                     |
+| Trying to change `region` after creation                   | Region is **immutable** - delete and recreate the domain                                                                                                              |
+| MX record value doesn't match region                       | MX must be region-specific (`feedback-smtp.{region}.amazonses.com`) - use the exact records from the create response                                                  |
+| Cloudflare proxy mode enabled                              | Disable proxy (orange → gray cloud) for all Resend DNS records - CNAME proxy breaks DKIM verification                                                                 |
+| DNS provider auto-appends domain name                      | GoDaddy/Namecheap may turn `resend._domainkey.send.acme.com` into `resend._domainkey.send.acme.com.acme.com` - add a trailing dot or enter just the subdomain portion |
+| DNS records added to root instead of subdomain             | DKIM CNAMEs go on `resend._domainkey.send.yourdomain.com`, not `resend._domainkey.yourdomain.com`                                                                     |
+| Calling `.delete()`                                        | SDK method is `.remove()`                                                                                                                                             |
+| Deleting a domain accidentally                             | Delete is permanent with no undo - verify intent before calling                                                                                                       |
+| Using `enforced` TLS with recipients that don't support it | Use `opportunistic` (default) unless you know all recipients support TLS                                                                                              |
+| Not checking `error` in Node.js                            | SDK returns `{ data, error }`, does not throw - always destructure and check                                                                                          |
+| Forgetting region on create                                | Defaults to `us-east-1` - set explicitly for EU/SA/AP data residency requirements                                                                                     |

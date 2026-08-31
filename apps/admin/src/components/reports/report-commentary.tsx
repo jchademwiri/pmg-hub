@@ -1,15 +1,15 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import type { MoMSnapshot } from '@/lib/financial'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Info, Sparkles, Loader2 } from 'lucide-react'
-import { generateCommentaryAction } from '@/app/actions/reports'
+import { useEffect, useState } from 'react';
+import type { MoMSnapshot } from '@/lib/financial';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Info, Sparkles, Loader2 } from 'lucide-react';
+import { generateCommentaryAction } from '@/app/actions/reports';
 
 interface ReportCommentaryProps {
-  momData: MoMSnapshot[]
-  currentMonthLabel: string
-  previousMonthLabel: string
+  momData: MoMSnapshot[];
+  currentMonthLabel: string;
+  previousMonthLabel: string;
 }
 
 export function ReportCommentary({
@@ -17,44 +17,44 @@ export function ReportCommentary({
   currentMonthLabel,
   previousMonthLabel,
 }: ReportCommentaryProps) {
-  const [loading, setLoading] = useState(momData.length > 0)
-  const [commentary, setCommentary] = useState<string | null>(null)
-  const [isAi, setIsAi] = useState(false)
+  const [loading, setLoading] = useState(momData.length > 0);
+  const [commentary, setCommentary] = useState<string | null>(null);
+  const [isAi, setIsAi] = useState(false);
 
   useEffect(() => {
-    let active = true
+    let active = true;
 
     if (momData.length === 0) {
       return () => {
-        active = false
-      }
+        active = false;
+      };
     }
 
     generateCommentaryAction(momData, { currentMonthLabel, previousMonthLabel })
       .then((res) => {
         if (active) {
-          setCommentary(res.text)
-          setIsAi(res.isAi)
+          setCommentary(res.text);
+          setIsAi(res.isAi);
         }
       })
       .catch((err) => {
-        console.error(err)
+        console.error(err);
         if (active) {
-          setCommentary('Failed to generate commentary.')
+          setCommentary('Failed to generate commentary.');
         }
       })
       .finally(() => {
         if (active) {
-          setLoading(false)
+          setLoading(false);
         }
-      })
+      });
 
     return () => {
-      active = false
-    }
-  }, [currentMonthLabel, momData, previousMonthLabel])
+      active = false;
+    };
+  }, [currentMonthLabel, momData, previousMonthLabel]);
 
-  if (momData.length === 0) return null
+  if (momData.length === 0) return null;
 
   return (
     <Card className="rounded-xl border border-border bg-gradient-to-tr from-card to-card/75 backdrop-blur-md shadow-none hover:shadow-md hover:shadow-primary/5 transition-all duration-300">
@@ -86,5 +86,5 @@ export function ReportCommentary({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

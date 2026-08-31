@@ -1,20 +1,20 @@
-'use client' // Error boundaries must be Client Components
+'use client'; // Error boundaries must be Client Components
 
-import { useEffect } from 'react'
-import { AlertCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
+import { useEffect } from 'react';
+import { AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 export default function DashboardError({
   error,
   unstable_retry,
 }: {
-  error: Error & { digest?: string }
-  unstable_retry: () => void
+  error: Error & { digest?: string };
+  unstable_retry: () => void;
 }) {
   useEffect(() => {
-    console.error(error)
-  }, [error])
+    console.error(error);
+  }, [error]);
 
   return (
     <div className="flex items-center justify-center py-16">
@@ -29,5 +29,5 @@ export default function DashboardError({
         </AlertDescription>
       </Alert>
     </div>
-  )
+  );
 }

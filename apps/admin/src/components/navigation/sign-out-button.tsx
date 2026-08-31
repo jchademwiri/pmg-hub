@@ -1,13 +1,13 @@
-'use client'
+'use client';
 
-import { signOut } from '@/lib/auth-client'
-import { Button } from '@/components/ui/button'
-import { LogOut } from 'lucide-react'
+import { signOut } from '@/lib/auth-client';
+import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
 
 export function SignOutButton() {
   async function handleSignOut() {
-    await signOut()
-    window.location.href = '/login'
+    await signOut();
+    window.location.href = '/login';
   }
 
   return (
@@ -20,5 +20,5 @@ export function SignOutButton() {
       <LogOut className="size-4" />
       Sign out
     </Button>
-  )
+  );
 }

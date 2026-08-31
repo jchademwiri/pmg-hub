@@ -16,8 +16,8 @@ export default async function PortalProjectsPage() {
     .where(
       and(
         eq(projectScheduleEntries.clientId, client.id),
-        ne(projectScheduleEntries.status, 'cancelled')
-      )
+        ne(projectScheduleEntries.status, 'cancelled'),
+      ),
     )
     .orderBy(asc(projectScheduleEntries.sortOrder));
 

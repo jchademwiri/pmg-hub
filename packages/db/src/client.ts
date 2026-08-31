@@ -1,7 +1,7 @@
-import { Pool } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-serverless";
-import * as schema from "./schema/index";
-import { getEnv } from "./env";
+import { Pool } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import * as schema from './schema/index';
+import { getEnv } from './env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 

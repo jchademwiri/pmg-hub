@@ -2,16 +2,18 @@
 
 **Route:** `/scheduling/list` (Client Portal)  
 **Status:** Draft  
-**Target Audience:** Portal Clients (Read-Only)  
+**Target Audience:** Portal Clients (Read-Only)
 
 ---
 
 ## 1. Objective
+
 The **Project List Page** allows the client to view the complete history of all their tenders (past, present, and upcoming). It provides search and status filtering, along with a detailed slide-over drawer to inspect the granular checklist progress of any specific project.
 
 ---
 
 ## 2. Page Layout & Wireframe
+
 The page consists of a filter bar, a project list table, and a detailed slide-over drawer:
 
 ```
@@ -51,12 +53,15 @@ The page consists of a filter bar, a project list table, and a detailed slide-ov
 ## 3. Detailed Component Specifications
 
 ### 3.1 Search & Filter Bar
+
 - **Search Input**: Real-time filtering by tender reference name.
 - **Status Filter**: Dropdown to filter by `Planned`, `In Progress`, `Completed`, `Submitted`, or `Cancelled`.
 - **Clear Filters Button**: Visible only when filters are active.
 
 ### 3.2 Projects Table
+
 A responsive data table displaying:
+
 - **Project Reference**: Bold title.
 - **Status**: Renders the client-friendly `TenderStatusBadge` (read-only, no chevron or dropdown).
 - **Progress**: Renders the percentage and a mini progress bar.
@@ -64,7 +69,9 @@ A responsive data table displaying:
 - Clicking on any row opens the **Progress Details Drawer**.
 
 ### 3.3 Progress Details Drawer (Slide-Over)
+
 A slide-over panel that opens from the right side of the screen:
+
 - **Header**: Shows the project name, status badge, and progress bar.
 - **Checklist Sections**: Renders the custom sections (e.g., "Document Progress") and their checklist items.
 - **Completed Items**: Displayed with a green checkmark icon and line-through text.
@@ -74,5 +81,6 @@ A slide-over panel that opens from the right side of the screen:
 ---
 
 ## 4. Security & Data Isolation
+
 - The API route `/api/portal/projects` must validate the client's session and restrict results to `clientId = session.clientId`.
 - The slide-over drawer fetches checklist items from `/api/portal/projects/[id]/checklist` which must also verify that the requested project belongs to the authenticated client.

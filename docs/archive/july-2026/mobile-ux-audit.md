@@ -1,6 +1,6 @@
 # Deep Mobile UX Audit: PMG Hub
 
-This audit evaluates the **Admin App** and **Client Portal** within the PMG Hub ecosystem, prioritizing **user intent** on mobile devices over simple responsiveness. 
+This audit evaluates the **Admin App** and **Client Portal** within the PMG Hub ecosystem, prioritizing **user intent** on mobile devices over simple responsiveness.
 
 ---
 
@@ -9,7 +9,9 @@ This audit evaluates the **Admin App** and **Client Portal** within the PMG Hub 
 > **Note:** This document is **Preliminary/Superseded**. Please refer to `mobile-ux-audit-report.md` for the authoritative audit and scoring.
 
 ### Admin App
+
 **Score: 6/10**
+
 - **Mobile Usability (5/10):** Currently relies on stacking desktop tables and complex forms. High cognitive load on small screens.
 - **Navigation (6/10):** Sidebars typically collapse to a hamburger menu, which is slow for quick, frequent actions.
 - **Information Hierarchy (5/10):** Too much data density. Staff checking quick statuses are overwhelmed by full datasets.
@@ -17,7 +19,9 @@ This audit evaluates the **Admin App** and **Client Portal** within the PMG Hub 
 - **Ease of Use (6/10):** Good for desktop, but mobile requires too much panning and zooming or vertical scrolling.
 
 ### Client Portal
+
 **Score: 7.5/10**
+
 - **Mobile Usability (8/10):** Better baseline. The use of cards and simple grids translates well to mobile.
 - **Navigation (7/10):** Standard routing, but could benefit from a bottom navigation bar for a more "app-like" feel.
 - **Information Hierarchy (8/10):** The dashboard clearly prioritizes outstanding balances and payment progress.
@@ -31,20 +35,23 @@ This audit evaluates the **Admin App** and **Client Portal** within the PMG Hub 
 ### Admin App
 
 #### Dashboard
+
 - **Current Purpose:** Overview of financials, projects, and leads.
 - **Mobile Pain Points:** Charts and large summary tables (YTD, MoM deltas) stack endlessly, requiring massive vertical scrolling.
-- **Mobile Recommendations:** 
+- **Mobile Recommendations:**
   - **Remove:** Complex budget charts, aging reports, and full MoM deltas.
   - **Prioritize:** "Today's Tasks", "Urgent Alerts", and a simple "Revenue vs. Target" progress bar.
 - **Suggested Redesign:** A vertically scrolling feed of "Action Items" (e.g., "3 Projects need approval", "5 Outstanding Invoices").
 
 #### Projects & Billing
+
 - **Mobile Pain Points:** Data tables with 8+ columns become unreadable horizontal scrolls.
 - **Mobile Recommendations:** Convert tables to **Summary Cards**. Only show Project Name, Status Badge, and Primary Action (e.g., "Update Status"). Move deep edits to desktop.
 
 ### Client Portal
 
 #### Dashboard
+
 - **Current Purpose:** Overview of billing relationship and project progress.
 - **Mobile Pain Points:** The "Payment Progress" and "Payment Reminder" banners are good, but Recent Invoices and Quotes lists can get long.
 - **Mobile Recommendations:**
@@ -53,6 +60,7 @@ This audit evaluates the **Admin App** and **Client Portal** within the PMG Hub 
 - **Suggested Redesign:** A banking-app style interface. Big balance at the top, a simple progress ring for the project, and 3-4 quick action buttons below.
 
 #### Invoices & Statements
+
 - **Mobile Pain Points:** Viewing a PDF invoice on a phone requires pinching and zooming.
 - **Mobile Recommendations:** Provide a "Mobile Summary" view of the invoice (Total, Due Date, Line Items in a simple list) with a secondary "Download PDF" option. Implement a mobile-specific or conditionally rendered chart implementation rather than just hiding desktop charts with CSS.
 
@@ -60,33 +68,37 @@ This audit evaluates the **Admin App** and **Client Portal** within the PMG Hub 
 
 ## 3. Component Audit
 
-- **Data Tables:** 
-  - *Desktop:* Full width, sortable, filterable.
-  - *Mobile:* **Do not use.** Replace with stacked cards showing only 3-4 key data points. Implement a "Tap to expand" pattern for more details.
+- **Data Tables:**
+  - _Desktop:_ Full width, sortable, filterable.
+  - _Mobile:_ **Do not use.** Replace with stacked cards showing only 3-4 key data points. Implement a "Tap to expand" pattern for more details.
 - **Forms:**
-  - *Desktop:* Multi-column layouts.
-  - *Mobile:* Strictly single-column. Use native date pickers and large touch targets for dropdowns. Avoid complex multi-step wizards unless broken into separate, distinct screens.
+  - _Desktop:_ Multi-column layouts.
+  - _Mobile:_ Strictly single-column. Use native date pickers and large touch targets for dropdowns. Avoid complex multi-step wizards unless broken into separate, distinct screens.
 - **Navigation (Sidebar):**
-  - *Desktop:* Persistent left sidebar.
-  - *Mobile:* Switch to a **Bottom Navigation Bar** for the 4-5 most used routes (Dashboard, Projects, Alerts, Profile) to enable one-handed use.
+  - _Desktop:_ Persistent left sidebar.
+  - _Mobile:_ Switch to a **Bottom Navigation Bar** for the 4-5 most used routes (Dashboard, Projects, Alerts, Profile) to enable one-handed use.
 - **Dialogs/Modals:**
-  - *Desktop:* Centered popups.
-  - *Mobile:* Use **Bottom Sheets** (slide up from the bottom) for actions like filtering or quick edits. They are easier to reach with a thumb.
+  - _Desktop:_ Centered popups.
+  - _Mobile:_ Use **Bottom Sheets** (slide up from the bottom) for actions like filtering or quick edits. They are easier to reach with a thumb.
 
 ---
 
 ## 4. Mobile Dashboard Redesign
 
 ### Admin Mobile Dashboard: "The Daily Briefing"
-*Optimized for Productivity & Triage*
+
+_Optimized for Productivity & Triage_
+
 1. **Header:** Greeting & Date.
 2. **Alerts Ribbon:** High-priority items only (e.g., "🚨 2 Tenders due today").
 3. **Quick Actions Grid:** 2x2 grid of primary actions (e.g., "Log Update", "Approve Invoice").
 4. **My Focus Today:** A swipeable carousel of active projects the user is assigned to.
-5. *(Everything else is hidden behind navigation tabs)*
+5. _(Everything else is hidden behind navigation tabs)_
 
 ### Client Mobile Dashboard: "The Command Center"
-*Optimized for Clarity & Transparency*
+
+_Optimized for Clarity & Transparency_
+
 1. **Hero Section:** Big, bold Outstanding Balance with a primary "Make Payment" CTA.
 2. **Project Status Ring:** A visual circular progress indicator of their current main project.
 3. **Action Required:** A specific card if a document needs signing or a quote needs approval.
@@ -105,14 +117,17 @@ This audit evaluates the **Admin App** and **Client Portal** within the PMG Hub 
 ## 6. Information Hierarchy
 
 ### Must Always Be Visible (Mobile)
+
 - **Admin:** Alerts, pending approvals, search bar.
 - **Portal:** Outstanding balance, current project phase, urgent actions.
 
 ### Secondary Information (One tap away)
+
 - **Admin:** Project details, contact information, task lists.
 - **Portal:** Past invoices, quote history, downloaded documents.
 
 ### Advanced Information (Desktop only / Deeply hidden)
+
 - **Admin:** Financial forecasting, complex reporting, bulk user management.
 - **Portal:** Detailed line-item breakdowns of historical projects.
 
@@ -120,11 +135,12 @@ This audit evaluates the **Admin App** and **Client Portal** within the PMG Hub 
 
 ## 7. Desktop vs Mobile Strategy
 
-**The Golden Rule:** Feature parity is a trap. 
+**The Golden Rule:** Feature parity is a trap.
+
 - **Desktop** is the workspace. It requires high information density, multi-tasking capabilities, and robust editing tools.
 - **Mobile** is the remote control. It requires immediacy, status updates, and simple binary decisions (Approve/Reject).
 
-*Do not attempt to make the Desktop UI responsive by simply squishing it.* Serve different layouts or hide complex components entirely when the viewport is small.
+_Do not attempt to make the Desktop UI responsive by simply squishing it._ Serve different layouts or hide complex components entirely when the viewport is small.
 
 ---
 

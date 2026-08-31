@@ -1,13 +1,13 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { formatZAR } from '@/lib/format'
-import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp } from 'lucide-react'
-import { Card, CardHeader, CardDescription, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import type { PeriodSummary } from '@/lib/financial'
+import { useState } from 'react';
+import { formatZAR } from '@/lib/format';
+import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp } from 'lucide-react';
+import { Card, CardHeader, CardDescription, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import type { PeriodSummary } from '@/lib/financial';
 
-type Delta = { current: number; previous: number } | null
+type Delta = { current: number; previous: number } | null;
 
 function DeltaBadge({
   current,
@@ -15,60 +15,78 @@ function DeltaBadge({
   invertDelta,
   label = 'vs prev month',
 }: {
-  current: number
-  previous: number
-  invertDelta?: boolean
-  label?: string
+  current: number;
+  previous: number;
+  invertDelta?: boolean;
+  label?: string;
 }) {
-  if (previous === 0 && current === 0) return null
+  if (previous === 0 && current === 0) return null;
   if (previous === 0) {
-    const isGood = invertDelta ? false : true
+    const isGood = invertDelta ? false : true;
     return (
-      <span className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold ${isGood ? 'text-emerald-500' : 'text-red-500'}`}>
+      <span
+        className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold ${isGood ? 'text-emerald-500' : 'text-red-500'}`}
+      >
         <TrendingUp className="size-3" />
         new {label}
       </span>
-    )
+    );
   }
-  const diff = current - previous
-  const pct  = Math.abs((diff / previous) * 100)
-  const isUp   = diff > 0
-  const isGood = invertDelta ? !isUp : isUp
-  const isFlat = pct < 0.05
+  const diff = current - previous;
+  const pct = Math.abs((diff / previous) * 100);
+  const isUp = diff > 0;
+  const isGood = invertDelta ? !isUp : isUp;
+  const isFlat = pct < 0.05;
 
   if (isFlat) {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground">
         <Minus className="size-3" /> 0%
       </span>
-    )
+    );
   }
 
   return (
-    <span className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold ${isGood ? 'text-emerald-500' : 'text-red-500'}`}>
+    <span
+      className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold ${isGood ? 'text-emerald-500' : 'text-red-500'}`}
+    >
       {isUp ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
-      {isUp ? '+' : '-'}{pct.toFixed(1)}% {label}
+      {isUp ? '+' : '-'}
+      {pct.toFixed(1)}% {label}
     </span>
-  )
+  );
 }
 
-function Sparkline({ data, colorClass = 'text-emerald-500', label }: { data: number[]; colorClass?: string; label: string }) {
-  if (!data || data.length <= 1) return null
-  const max = Math.max(...data)
-  const min = Math.min(...data)
-  const range = max - min === 0 ? 1 : max - min
+function Sparkline({
+  data,
+  colorClass = 'text-emerald-500',
+  label,
+}: {
+  data: number[];
+  colorClass?: string;
+  label: string;
+}) {
+  if (!data || data.length <= 1) return null;
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min === 0 ? 1 : max - min;
 
-  const width = 100
-  const height = 30
+  const width = 100;
+  const height = 30;
   const points = data
     .map((val, index) => {
-      const x = (index / (data.length - 1)) * width
-      const y = height - ((val - min) / range) * height
-      return `${x},${y}`
+      const x = (index / (data.length - 1)) * width;
+      const y = height - ((val - min) / range) * height;
+      return `${x},${y}`;
     })
-    .join(' ')
+    .join(' ');
 
-  const trend = data[data.length - 1] > data[0] ? 'trending up' : data[data.length - 1] < data[0] ? 'trending down' : 'flat'
+  const trend =
+    data[data.length - 1] > data[0]
+      ? 'trending up'
+      : data[data.length - 1] < data[0]
+        ? 'trending down'
+        : 'flat';
 
   return (
     <svg
@@ -86,20 +104,20 @@ function Sparkline({ data, colorClass = 'text-emerald-500', label }: { data: num
         points={points}
       />
     </svg>
-  )
+  );
 }
 
 type KpiCardProps = {
-  label: string
-  value: number
-  delta?: Delta
-  invertDelta?: boolean
-  highlight?: 'danger' | 'success'
-  deltaLabel?: string
-  sparklineData?: number[]
-  sparklineColor?: string
-  textColorClass?: string
-}
+  label: string;
+  value: number;
+  delta?: Delta;
+  invertDelta?: boolean;
+  highlight?: 'danger' | 'success';
+  deltaLabel?: string;
+  sparklineData?: number[];
+  sparklineColor?: string;
+  textColorClass?: string;
+};
 
 function KpiCard({
   label,
@@ -113,22 +131,36 @@ function KpiCard({
   textColorClass,
 }: KpiCardProps) {
   const borderClass =
-    highlight === 'danger'  ? 'border-red-500/30 hover:border-red-500/50' :
-    highlight === 'success' ? 'border-emerald-500/30 hover:border-emerald-500/50' : 'border-border/60 hover:border-border/100'
-  const valueClass = textColorClass || (
-    highlight === 'danger'  ? 'text-red-600' :
-    highlight === 'success' ? 'text-emerald-600' :
-    invertDelta ? 'text-amber-600' : 'text-emerald-600'
-  )
+    highlight === 'danger'
+      ? 'border-red-500/30 hover:border-red-500/50'
+      : highlight === 'success'
+        ? 'border-emerald-500/30 hover:border-emerald-500/50'
+        : 'border-border/60 hover:border-border/100';
+  const valueClass =
+    textColorClass ||
+    (highlight === 'danger'
+      ? 'text-red-600'
+      : highlight === 'success'
+        ? 'text-emerald-600'
+        : invertDelta
+          ? 'text-amber-600'
+          : 'text-emerald-600');
 
   return (
-    <Card size="sm" className={`rounded-xl border ${borderClass} bg-gradient-to-tr from-card to-card/75 backdrop-blur-md shadow-none hover:-translate-y-1 hover:shadow-md hover:shadow-primary/5 transition-all duration-300 group`}>
+    <Card
+      size="sm"
+      className={`rounded-xl border ${borderClass} bg-gradient-to-tr from-card to-card/75 backdrop-blur-md shadow-none hover:-translate-y-1 hover:shadow-md hover:shadow-primary/5 transition-all duration-300 group`}
+    >
       <CardHeader className="pb-1">
-        <CardDescription className="text-muted-foreground text-[10px] sm:text-xs font-medium tracking-wide uppercase group-hover:text-foreground/80 transition-colors duration-200">{label}</CardDescription>
+        <CardDescription className="text-muted-foreground text-[10px] sm:text-xs font-medium tracking-wide uppercase group-hover:text-foreground/80 transition-colors duration-200">
+          {label}
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-start gap-2 pt-0.5 w-full xl:flex-row xl:items-end xl:justify-between xl:gap-1.5">
         <div className="flex flex-col gap-0.5 min-w-0 w-full xl:w-auto">
-          <p className={`${valueClass} text-base sm:text-lg lg:text-xl xl:text-2xl font-bold tabular-nums tracking-tight whitespace-nowrap`}>
+          <p
+            className={`${valueClass} text-base sm:text-lg lg:text-xl xl:text-2xl font-bold tabular-nums tracking-tight whitespace-nowrap`}
+          >
             {formatZAR(value)}
           </p>
           {delta && (
@@ -147,34 +179,42 @@ function KpiCard({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
 
 type Props = {
-  summary: PeriodSummary
+  summary: PeriodSummary;
   deltas: {
-    revenue:  Delta
-    expenses: Delta
-    profit:   Delta
-  } | null
-  previousSummary: PeriodSummary | null
-  deltaLabel?: string
-  sparklineData?: { revenue: number; expenses: number }[]
-  pmgShareRate?: number
-}
+    revenue: Delta;
+    expenses: Delta;
+    profit: Delta;
+  } | null;
+  previousSummary: PeriodSummary | null;
+  deltaLabel?: string;
+  sparklineData?: { revenue: number; expenses: number }[];
+  pmgShareRate?: number;
+};
 
-export function KpiGrid({ summary, deltas, previousSummary, deltaLabel, sparklineData = [], pmgShareRate = 0.25 }: Props) {
-  const [showAll, setShowAll] = useState(false)
+export function KpiGrid({
+  summary,
+  deltas,
+  previousSummary,
+  deltaLabel,
+  sparklineData = [],
+  pmgShareRate = 0.25,
+}: Props) {
+  const [showAll, setShowAll] = useState(false);
 
-  const pmgDelta: Delta = deltas?.revenue && previousSummary
-    ? { current: summary.pmgShare, previous: previousSummary.pmgShare }
-    : null
+  const pmgDelta: Delta =
+    deltas?.revenue && previousSummary
+      ? { current: summary.pmgShare, previous: previousSummary.pmgShare }
+      : null;
 
   // Map monthly data splits for the Sparkline components
-  const revenueTrends = sparklineData.map((d) => d.revenue)
-  const expensesTrends = sparklineData.map((d) => d.expenses)
-  const pmgShareTrends = sparklineData.map((d) => d.revenue * pmgShareRate)
-  const profitPoolTrends = sparklineData.map((d) => d.revenue * (1 - pmgShareRate) - d.expenses)
+  const revenueTrends = sparklineData.map((d) => d.revenue);
+  const expensesTrends = sparklineData.map((d) => d.expenses);
+  const pmgShareTrends = sparklineData.map((d) => d.revenue * pmgShareRate);
+  const profitPoolTrends = sparklineData.map((d) => d.revenue * (1 - pmgShareRate) - d.expenses);
 
   return (
     <div className="flex flex-col gap-3">
@@ -223,14 +263,23 @@ export function KpiGrid({ summary, deltas, previousSummary, deltaLabel, sparklin
         </div>
       </div>
       <div className="lg:hidden flex justify-center">
-        <Button variant="ghost" size="sm" onClick={() => setShowAll(!showAll)} className="text-xs text-muted-foreground">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowAll(!showAll)}
+          className="text-xs text-muted-foreground"
+        >
           {showAll ? (
-            <>Hide details <ChevronUp className="ml-1 size-3" /></>
+            <>
+              Hide details <ChevronUp className="ml-1 size-3" />
+            </>
           ) : (
-            <>Show all KPIs <ChevronDown className="ml-1 size-3" /></>
+            <>
+              Show all KPIs <ChevronDown className="ml-1 size-3" />
+            </>
           )}
         </Button>
       </div>
     </div>
-  )
+  );
 }

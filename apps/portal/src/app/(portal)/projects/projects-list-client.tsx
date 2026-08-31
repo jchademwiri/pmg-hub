@@ -74,7 +74,9 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
   // Summary Calculations
   const total = projects.length;
   const inProgress = projects.filter((p) => p.status === 'in_progress').length;
-  const completed = projects.filter((p) => p.status === 'completed' || p.status === 'submitted').length;
+  const completed = projects.filter(
+    (p) => p.status === 'completed' || p.status === 'submitted',
+  ).length;
 
   const upcomingDeadlines = projects
     .filter((p) => p.status !== 'completed' && p.status !== 'submitted')
@@ -196,10 +198,16 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
       <Tabs defaultValue="list" className="w-full">
         <div className="flex items-center justify-between border-b border-white/5 pb-3">
           <TabsList className="bg-[#0a0f1d] border border-white/5 p-1">
-            <TabsTrigger value="list" className="gap-1.5 text-xs data-active:bg-blue-500/10 data-active:text-blue-400 cursor-pointer">
+            <TabsTrigger
+              value="list"
+              className="gap-1.5 text-xs data-active:bg-blue-500/10 data-active:text-blue-400 cursor-pointer"
+            >
               <List className="size-3.5" /> List View
             </TabsTrigger>
-            <TabsTrigger value="timeline" className="gap-1.5 text-xs data-active:bg-blue-500/10 data-active:text-blue-400 cursor-pointer">
+            <TabsTrigger
+              value="timeline"
+              className="gap-1.5 text-xs data-active:bg-blue-500/10 data-active:text-blue-400 cursor-pointer"
+            >
               <CalendarDays className="size-3.5" /> Timeline
             </TabsTrigger>
           </TabsList>
@@ -217,18 +225,29 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
               <Table>
                 <TableHeader className="bg-[#080c14]/50 border-b border-white/5">
                   <TableRow>
-                    <TableHead className="text-muted-foreground font-semibold">Project Reference</TableHead>
+                    <TableHead className="text-muted-foreground font-semibold">
+                      Project Reference
+                    </TableHead>
                     <TableHead className="text-muted-foreground font-semibold">Status</TableHead>
-                    <TableHead className="text-muted-foreground font-semibold">Task Progress</TableHead>
-                    <TableHead className="hidden md:table-cell text-muted-foreground font-semibold">Working Window</TableHead>
-                    <TableHead className="text-muted-foreground font-semibold text-right">Deadline</TableHead>
+                    <TableHead className="text-muted-foreground font-semibold">
+                      Task Progress
+                    </TableHead>
+                    <TableHead className="hidden md:table-cell text-muted-foreground font-semibold">
+                      Working Window
+                    </TableHead>
+                    <TableHead className="text-muted-foreground font-semibold text-right">
+                      Deadline
+                    </TableHead>
                     <TableHead className="w-10" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sortedProjects.map((p) => {
                     const progress = progressMap[p.id] || { total: 0, completed: 0 };
-                    const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+                    const percent =
+                      progress.total > 0
+                        ? Math.round((progress.completed / progress.total) * 100)
+                        : 0;
                     const status = STATUS_CONFIG[p.status] || { label: p.status, className: '' };
 
                     return (
@@ -246,7 +265,10 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 ${status.className}`}>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 ${status.className}`}
+                          >
                             {status.label}
                           </Badge>
                         </TableCell>
@@ -300,13 +322,12 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
                   <div className="min-w-[800px] relative p-6">
                     {/* Time Grid Header */}
                     <div className="flex border-b border-white/5 pb-2 mb-4 relative z-10 select-none">
-                      <div className="w-48 shrink-0 font-semibold text-xs text-muted-foreground">Project</div>
+                      <div className="w-48 shrink-0 font-semibold text-xs text-muted-foreground">
+                        Project
+                      </div>
                       <div className="flex-1 flex text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                         {timelineDays.map((day, idx) => (
-                          <div
-                            key={idx}
-                            className="flex-1 border-l border-white/5 pl-2 truncate"
-                          >
+                          <div key={idx} className="flex-1 border-l border-white/5 pl-2 truncate">
                             {day.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}
                           </div>
                         ))}
@@ -321,16 +342,23 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
                           entry.startDate,
                         );
                         const workDays = daysBetween(entry.startDate, entry.targetCompletionDate);
-                        const status = STATUS_CONFIG[entry.status] || { label: entry.status, className: '' };
+                        const status = STATUS_CONFIG[entry.status] || {
+                          label: entry.status,
+                          className: '',
+                        };
                         const progress = progressMap[entry.id] || { total: 0, completed: 0 };
-                        const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+                        const percent =
+                          progress.total > 0
+                            ? Math.round((progress.completed / progress.total) * 100)
+                            : 0;
 
                         // Calculate Gantt bar colors
                         let barColor = 'bg-sky-500/20 border-sky-500/40 hover:bg-sky-500/30';
                         if (entry.status === 'in_progress') {
                           barColor = 'bg-blue-600/30 border-blue-500/50 hover:bg-blue-600/45';
                         } else if (entry.status === 'completed' || entry.status === 'submitted') {
-                          barColor = 'bg-emerald-500/25 border-emerald-500/40 hover:bg-emerald-500/35';
+                          barColor =
+                            'bg-emerald-500/25 border-emerald-500/40 hover:bg-emerald-500/35';
                         }
 
                         return (

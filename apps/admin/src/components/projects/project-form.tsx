@@ -62,12 +62,16 @@ export function ProjectForm({ clients, divisions, project }: ProjectFormProps) {
   // Controlled fields
   const [closingDate, setClosingDate] = React.useState(project?.closingDate ?? '');
   const [effortDays, setEffortDays] = React.useState(project?.effortDays?.toString() ?? '');
-  const [selectedClientId, setSelectedClientId] = React.useState(project?.clientId ?? initialClientId);
-  const [selectedDivisionId, setSelectedDivisionId] = React.useState(project?.divisionId ?? '__none__');
+  const [selectedClientId, setSelectedClientId] = React.useState(
+    project?.clientId ?? initialClientId,
+  );
+  const [selectedDivisionId, setSelectedDivisionId] = React.useState(
+    project?.divisionId ?? '__none__',
+  );
   const [status, setStatus] = React.useState(project?.status ?? 'planned');
   const [outcome, setOutcome] = React.useState(project?.outcome ?? '__none__');
   const [actualEffortDays, setActualEffortDays] = React.useState(
-    project?.actualEffortDays?.toString() ?? ''
+    project?.actualEffortDays?.toString() ?? '',
   );
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -148,7 +152,12 @@ export function ProjectForm({ clients, divisions, project }: ProjectFormProps) {
                   ))}
                 </SelectContent>
               </Select>
-              <input id="tender-client-hidden" type="hidden" name="clientId" value={selectedClientId} />
+              <input
+                id="tender-client-hidden"
+                type="hidden"
+                name="clientId"
+                value={selectedClientId}
+              />
             </Field>
 
             {/* Division */}
@@ -169,7 +178,12 @@ export function ProjectForm({ clients, divisions, project }: ProjectFormProps) {
                   ))}
                 </SelectContent>
               </Select>
-              <input id="tender-division-hidden" type="hidden" name="divisionId" value={selectedDivisionId} />
+              <input
+                id="tender-division-hidden"
+                type="hidden"
+                name="divisionId"
+                value={selectedDivisionId}
+              />
             </Field>
           </div>
 
@@ -218,11 +232,21 @@ export function ProjectForm({ clients, divisions, project }: ProjectFormProps) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="planned" className="text-xs">Planned</SelectItem>
-                        <SelectItem value="in_progress" className="text-xs">In Progress</SelectItem>
-                        <SelectItem value="completed" className="text-xs">Completed</SelectItem>
-                        <SelectItem value="submitted" className="text-xs">Submitted</SelectItem>
-                        <SelectItem value="cancelled" className="text-xs">Cancelled</SelectItem>
+                        <SelectItem value="planned" className="text-xs">
+                          Planned
+                        </SelectItem>
+                        <SelectItem value="in_progress" className="text-xs">
+                          In Progress
+                        </SelectItem>
+                        <SelectItem value="completed" className="text-xs">
+                          Completed
+                        </SelectItem>
+                        <SelectItem value="submitted" className="text-xs">
+                          Submitted
+                        </SelectItem>
+                        <SelectItem value="cancelled" className="text-xs">
+                          Cancelled
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
@@ -235,9 +259,15 @@ export function ProjectForm({ clients, divisions, project }: ProjectFormProps) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__none__" className="text-xs text-muted-foreground">Pending</SelectItem>
-                        <SelectItem value="won" className="text-xs">Won</SelectItem>
-                        <SelectItem value="lost" className="text-xs">Lost</SelectItem>
+                        <SelectItem value="__none__" className="text-xs text-muted-foreground">
+                          Pending
+                        </SelectItem>
+                        <SelectItem value="won" className="text-xs">
+                          Won
+                        </SelectItem>
+                        <SelectItem value="lost" className="text-xs">
+                          Lost
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
@@ -368,7 +398,6 @@ export function ProjectForm({ clients, divisions, project }: ProjectFormProps) {
             </Select>
           </Field>
 
-
           {/* Schedule preview */}
           {showPreview && (
             <div className="rounded-md border border-dashed border-border bg-card px-4 py-3 mt-2">
@@ -400,17 +429,17 @@ export function ProjectForm({ clients, divisions, project }: ProjectFormProps) {
       {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
 
       <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          asChild
-          disabled={isPending}
-        >
+        <Button type="button" variant="outline" size="sm" asChild disabled={isPending}>
           <Link href={project ? `/projects/${project.id}` : '/projects'}>Cancel</Link>
         </Button>
         <Button type="submit" disabled={isPending} size="sm">
-          {isPending ? (project ? 'Saving…' : 'Adding…') : (project ? 'Save Changes' : 'Add to Schedule')}
+          {isPending
+            ? project
+              ? 'Saving…'
+              : 'Adding…'
+            : project
+              ? 'Save Changes'
+              : 'Add to Schedule'}
         </Button>
       </div>
     </form>

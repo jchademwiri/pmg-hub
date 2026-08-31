@@ -3,17 +3,9 @@ import { NextResponse } from 'next/server';
 import { buildExport, type ExportType } from '@/lib/data-export';
 import { getSessionOrRedirect, requireRole } from '@/lib/auth';
 
-const exportTypes = new Set<ExportType>([
-  'income-expenses',
-  'invoices',
-  'clients',
-  'full-json',
-]);
+const exportTypes = new Set<ExportType>(['income-expenses', 'invoices', 'clients', 'full-json']);
 
-export async function GET(
-  _request: Request,
-  context: { params: Promise<{ type: string }> },
-) {
+export async function GET(_request: Request, context: { params: Promise<{ type: string }> }) {
   const session = await getSessionOrRedirect();
   if (!requireRole(session, 'admin')) {
     return new NextResponse('Forbidden', { status: 403 });

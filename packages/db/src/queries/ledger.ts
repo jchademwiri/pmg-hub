@@ -21,7 +21,7 @@ export async function getLedgerEntriesCurrentMonth(allocationType?: AllocationTy
 }> {
   const conditions = [
     sql`${ledger.date} >= DATE_TRUNC('month', NOW())`,
-    sql`${ledger.date} < DATE_TRUNC('month', NOW()) + INTERVAL '1 month'`
+    sql`${ledger.date} < DATE_TRUNC('month', NOW()) + INTERVAL '1 month'`,
   ];
   if (allocationType) {
     conditions.push(eq(ledger.allocationType, allocationType));
@@ -36,7 +36,7 @@ export async function getLedgerEntriesCurrentMonth(allocationType?: AllocationTy
     .from(ledger)
     .where(and(...conditions))
     .orderBy(desc(ledger.date));
-    
+
   const entries = result.map((r) => ({
     date: r.date,
     description: r.description,
@@ -60,7 +60,7 @@ export async function getLedgerEntriesPreviousMonth(allocationType?: AllocationT
 }> {
   const conditions = [
     sql`${ledger.date} >= DATE_TRUNC('month', NOW()) - INTERVAL '1 month'`,
-    sql`${ledger.date} < DATE_TRUNC('month', NOW())`
+    sql`${ledger.date} < DATE_TRUNC('month', NOW())`,
   ];
   if (allocationType) {
     conditions.push(eq(ledger.allocationType, allocationType));
@@ -75,7 +75,7 @@ export async function getLedgerEntriesPreviousMonth(allocationType?: AllocationT
     .from(ledger)
     .where(and(...conditions))
     .orderBy(desc(ledger.date));
-    
+
   const entries = result.map((r) => ({
     date: r.date,
     description: r.description,
@@ -88,7 +88,9 @@ export async function getLedgerEntriesYTD(allocationType?: AllocationType): Prom
   total: number;
   entries: { date: string; description: string | null; amount: number }[];
 }> {
-  const conditions = [sql`${ledger.date} >= DATE_TRUNC('year', NOW() - INTERVAL '2 months') + INTERVAL '2 months'`];
+  const conditions = [
+    sql`${ledger.date} >= DATE_TRUNC('year', NOW() - INTERVAL '2 months') + INTERVAL '2 months'`,
+  ];
   if (allocationType) {
     conditions.push(eq(ledger.allocationType, allocationType));
   }
@@ -102,7 +104,7 @@ export async function getLedgerEntriesYTD(allocationType?: AllocationType): Prom
     .from(ledger)
     .where(and(...conditions))
     .orderBy(desc(ledger.date));
-    
+
   const entries = result.map((r) => ({
     date: r.date,
     description: r.description,
@@ -118,9 +120,11 @@ export async function getLedgerByAllocationYTD(): Promise<Record<string, number>
       total: sql<string>`COALESCE(SUM(${ledger.amount}), '0')`,
     })
     .from(ledger)
-    .where(sql`${ledger.date} >= DATE_TRUNC('year', NOW() - INTERVAL '2 months') + INTERVAL '2 months'`)
+    .where(
+      sql`${ledger.date} >= DATE_TRUNC('year', NOW() - INTERVAL '2 months') + INTERVAL '2 months'`,
+    )
     .groupBy(ledger.allocationType);
-    
+
   const map: Record<string, number> = {};
   for (const row of result) map[row.allocationType] = Number(row.total);
   return map;
@@ -128,7 +132,7 @@ export async function getLedgerByAllocationYTD(): Promise<Record<string, number>
 
 export async function getAllLedgerEntries(
   filters?: { allocationType?: AllocationType; entryType?: 'spend' | 'transfer' | 'adjustment' },
-  pageObj?: { page: number; pageSize: number }
+  pageObj?: { page: number; pageSize: number },
 ): Promise<{ data: LedgerEntryRow[]; total: number; sum: number }> {
   const conditions = [];
   if (filters?.allocationType) conditions.push(eq(ledger.allocationType, filters.allocationType));
@@ -220,20 +224,23 @@ export async function insertLedgerEntry(data: {
   };
 }
 
-export async function updateLedgerEntry(id: string, data: Partial<{
-  amount: number;
-  date: string;
-  allocationType: AllocationType;
-  entryType: 'spend' | 'transfer' | 'adjustment';
-  description?: string;
-}>): Promise<void> {
+export async function updateLedgerEntry(
+  id: string,
+  data: Partial<{
+    amount: number;
+    date: string;
+    allocationType: AllocationType;
+    entryType: 'spend' | 'transfer' | 'adjustment';
+    description?: string;
+  }>,
+): Promise<void> {
   const updates: Record<string, any> = {};
   if (data.amount !== undefined) updates.amount = String(data.amount);
   if (data.date !== undefined) updates.date = data.date;
   if (data.allocationType !== undefined) updates.allocationType = data.allocationType;
   if (data.entryType !== undefined) updates.entryType = data.entryType;
   if (data.description !== undefined) updates.description = data.description;
-  
+
   await db.update(ledger).set(updates).where(eq(ledger.id, id));
 }
 
@@ -242,5 +249,9 @@ export async function deleteLedgerEntry(id: string): Promise<void> {
 }
 
 export async function getLedgerByAllocation(allocationType: AllocationType) {
-  return await db.select().from(ledger).where(eq(ledger.allocationType, allocationType)).orderBy(desc(ledger.date));
+  return await db
+    .select()
+    .from(ledger)
+    .where(eq(ledger.allocationType, allocationType))
+    .orderBy(desc(ledger.date));
 }

@@ -29,11 +29,23 @@ interface ClientAgingDetailClientProps {
   totalOutstanding: number;
 }
 
-type SortField = 'invoiceDate' | 'documentNumber' | 'dueDate' | 'daysPastDue' | 'total' | 'outstanding';
+type SortField =
+  'invoiceDate' | 'documentNumber' | 'dueDate' | 'daysPastDue' | 'total' | 'outstanding';
 type SortOrder = 'asc' | 'desc';
 
-function SortIcon({ field, currentField, order }: { field: SortField; currentField: SortField; order: SortOrder }) {
-  if (currentField !== field) return <ArrowUpDown className="ml-1 size-3 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />;
+function SortIcon({
+  field,
+  currentField,
+  order,
+}: {
+  field: SortField;
+  currentField: SortField;
+  order: SortOrder;
+}) {
+  if (currentField !== field)
+    return (
+      <ArrowUpDown className="ml-1 size-3 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+    );
   return order === 'asc' ? (
     <ArrowUp className="ml-1 size-3 text-foreground" />
   ) : (
@@ -41,7 +53,11 @@ function SortIcon({ field, currentField, order }: { field: SortField; currentFie
   );
 }
 
-export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: ClientAgingDetailClientProps) {
+export function ClientAgingDetailClient({
+  client,
+  invoices,
+  totalOutstanding,
+}: ClientAgingDetailClientProps) {
   const [sortField, setSortField] = React.useState<SortField>('daysPastDue');
   const [sortOrder, setSortOrder] = React.useState<SortOrder>('desc');
   const [activeBucket, setActiveBucket] = React.useState<string | null>(null);
@@ -51,15 +67,18 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
     return new Date(year, month, day);
   }, []);
 
-  const getDaysPastDue = React.useCallback((dueDateStr: string | null): number => {
-    if (!dueDateStr) return 0;
-    const dueDate = new Date(`${dueDateStr}T00:00:00`);
-    const due = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
-    const tod = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    if (due >= tod) return 0;
-    const diffTime = tod.getTime() - due.getTime();
-    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  }, [today]);
+  const getDaysPastDue = React.useCallback(
+    (dueDateStr: string | null): number => {
+      if (!dueDateStr) return 0;
+      const dueDate = new Date(`${dueDateStr}T00:00:00`);
+      const due = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+      const tod = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      if (due >= tod) return 0;
+      const diffTime = tod.getTime() - due.getTime();
+      return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    },
+    [today],
+  );
 
   const invoiceData = React.useMemo(() => {
     return invoices.map((inv) => {
@@ -168,7 +187,7 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
     });
   }, [filteredInvoices, sortField, sortOrder]);
 
-  const overdueInvoices = invoiceData.filter(inv => inv.daysPastDue > 0);
+  const overdueInvoices = invoiceData.filter((inv) => inv.daysPastDue > 0);
 
   return (
     <div className="space-y-6">
@@ -284,7 +303,16 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
             <CardTitle className="text-sm font-semibold">Unpaid Invoices</CardTitle>
             {activeBucket && (
               <span className="text-[11px] font-medium bg-muted text-muted-foreground px-2 py-0.5 rounded-full flex items-center gap-1 animate-in fade-in duration-200">
-                Filtered: {activeBucket === 'current' ? 'Current' : activeBucket === '1_14' ? '1–14 Days' : activeBucket === '15_30' ? '15–30 Days' : activeBucket === '31_60' ? '31–60 Days' : '61+ Days'}
+                Filtered:{' '}
+                {activeBucket === 'current'
+                  ? 'Current'
+                  : activeBucket === '1_14'
+                    ? '1–14 Days'
+                    : activeBucket === '15_30'
+                      ? '15–30 Days'
+                      : activeBucket === '31_60'
+                        ? '31–60 Days'
+                        : '61+ Days'}
                 <button
                   onClick={() => setActiveBucket(null)}
                   className="hover:text-foreground font-bold ml-1 text-sm leading-none"
@@ -300,7 +328,11 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
               <SendOverdueRemindersButton
                 clientId={client.id}
                 trigger={
-                  <Button variant="outline" size="sm" className="gap-1.5 text-xs text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                  >
                     <Mail className="size-3.5" />
                     Send Overdue Reminder
                   </Button>
@@ -318,46 +350,70 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
         </CardHeader>
         <CardContent className="p-0">
           {sortedInvoices.length === 0 ? (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">All caught up! No outstanding invoices found.</div>
+            <div className="px-5 py-8 text-center text-sm text-muted-foreground">
+              All caught up! No outstanding invoices found.
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>
-                      <button onClick={() => handleSort('invoiceDate')} className="group flex items-center hover:text-foreground font-semibold">
+                      <button
+                        onClick={() => handleSort('invoiceDate')}
+                        className="group flex items-center hover:text-foreground font-semibold"
+                      >
                         Invoice Date
                         <SortIcon field="invoiceDate" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
                     <TableHead>
-                      <button onClick={() => handleSort('documentNumber')} className="group flex items-center hover:text-foreground font-semibold">
+                      <button
+                        onClick={() => handleSort('documentNumber')}
+                        className="group flex items-center hover:text-foreground font-semibold"
+                      >
                         Invoice #
-                        <SortIcon field="documentNumber" currentField={sortField} order={sortOrder} />
+                        <SortIcon
+                          field="documentNumber"
+                          currentField={sortField}
+                          order={sortOrder}
+                        />
                       </button>
                     </TableHead>
                     <TableHead>Reference</TableHead>
                     <TableHead>
-                      <button onClick={() => handleSort('dueDate')} className="group flex items-center hover:text-foreground font-semibold">
+                      <button
+                        onClick={() => handleSort('dueDate')}
+                        className="group flex items-center hover:text-foreground font-semibold"
+                      >
                         Due Date
                         <SortIcon field="dueDate" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
                     <TableHead className="text-center">
-                      <button onClick={() => handleSort('daysPastDue')} className="group mx-auto flex items-center hover:text-foreground font-semibold">
+                      <button
+                        onClick={() => handleSort('daysPastDue')}
+                        className="group mx-auto flex items-center hover:text-foreground font-semibold"
+                      >
                         Days Overdue
                         <SortIcon field="daysPastDue" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
                     <TableHead className="text-right">
-                      <button onClick={() => handleSort('total')} className="group ml-auto flex items-center hover:text-foreground font-semibold">
+                      <button
+                        onClick={() => handleSort('total')}
+                        className="group ml-auto flex items-center hover:text-foreground font-semibold"
+                      >
                         Total Amount
                         <SortIcon field="total" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
                     <TableHead className="text-right">Paid</TableHead>
                     <TableHead className="text-right">
-                      <button onClick={() => handleSort('outstanding')} className="group ml-auto flex items-center hover:text-foreground font-semibold">
+                      <button
+                        onClick={() => handleSort('outstanding')}
+                        className="group ml-auto flex items-center hover:text-foreground font-semibold"
+                      >
                         Unpaid Balance
                         <SortIcon field="outstanding" currentField={sortField} order={sortOrder} />
                       </button>
@@ -373,23 +429,25 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
 
                     return (
                       <TableRow key={inv.id}>
-                        <TableCell className="tabular-nums">
-                          {fmtDate(inv.invoiceDate)}
-                        </TableCell>
+                        <TableCell className="tabular-nums">{fmtDate(inv.invoiceDate)}</TableCell>
                         <TableCell className="font-mono text-[13px] font-medium text-primary hover:underline">
-                          <Link href={`/billing/invoices/${inv.id}`}>
-                            {inv.documentNumber}
-                          </Link>
+                          <Link href={`/billing/invoices/${inv.id}`}>{inv.documentNumber}</Link>
                         </TableCell>
                         <TableCell className="max-w-[150px] truncate text-muted-foreground">
                           {inv.reference || '—'}
                         </TableCell>
-                        <TableCell className="tabular-nums">
-                          {fmtDate(inv.dueDate)}
-                        </TableCell>
+                        <TableCell className="tabular-nums">{fmtDate(inv.dueDate)}</TableCell>
                         <TableCell className="text-center font-semibold tabular-nums">
                           {isOverdue ? (
-                            <span className={isCritical ? 'text-red-600 font-bold' : isWarning ? 'text-rose-500' : 'text-amber-500'}>
+                            <span
+                              className={
+                                isCritical
+                                  ? 'text-red-600 font-bold'
+                                  : isWarning
+                                    ? 'text-rose-500'
+                                    : 'text-amber-500'
+                              }
+                            >
                               {inv.daysPastDue} days
                             </span>
                           ) : (
@@ -400,14 +458,22 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
                           {formatZAR(Number(inv.total))}
                         </TableCell>
                         <TableCell className="text-right tabular-nums text-emerald-600">
-                          {Number(inv.allocatedAmount) > 0 ? formatZAR(Number(inv.allocatedAmount)) : '—'}
+                          {Number(inv.allocatedAmount) > 0
+                            ? formatZAR(Number(inv.allocatedAmount))
+                            : '—'}
                         </TableCell>
                         <TableCell className="text-right tabular-nums font-bold text-red-600">
                           {formatZAR(inv.outstanding)}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-center">
-                            <Button asChild size="icon" variant="ghost" className="size-8" title="View Invoice Detail">
+                            <Button
+                              asChild
+                              size="icon"
+                              variant="ghost"
+                              className="size-8"
+                              title="View Invoice Detail"
+                            >
                               <Link href={`/billing/invoices/${inv.id}`}>
                                 <FileText className="size-4 text-muted-foreground" />
                               </Link>

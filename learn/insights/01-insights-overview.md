@@ -24,11 +24,10 @@ Use:
 
 ## Good Questions To Ask
 
-| Question | Where To Look |
-|----------|---------------|
-| Which months are closed? | Snapshots |
-| Was a month profitable? | Snapshot detail |
-| What changed month over month? | Reports and commentary |
-| Which division is strongest? | Division report |
-| What transactions make up this number? | Drilldown panel |
-
+| Question                               | Where To Look          |
+| -------------------------------------- | ---------------------- |
+| Which months are closed?               | Snapshots              |
+| Was a month profitable?                | Snapshot detail        |
+| What changed month over month?         | Reports and commentary |
+| Which division is strongest?           | Division report        |
+| What transactions make up this number? | Drilldown panel        |

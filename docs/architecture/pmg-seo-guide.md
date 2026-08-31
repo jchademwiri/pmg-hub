@@ -35,15 +35,15 @@
 PMG runs a **House of Brands** model - 7 brands, each targeting a distinct market segment,
 all feeding back into each other through the PMG flywheel. Every brand deserves its own SEO identity.
 
-| Brand | Domain | Framework | Status |
-|---|---|---|---|
-| PMG Holding | `playhousemedia.co.za` | Astro (`apps/pmg`) | Live |
-| Tender Edge Solutions | `tenderedgesolutions.co.za` | Astro (`apps/tes`) | Live |
-| Apex Web Solutions | `apexwebsolutions.co.za` | Astro (`apps/aws`) | Live |
-| LaunchPad SA | `launchpadsa.co.za` | Astro (`apps/launchpad`) | Future |
-| Playhouse Creative Studio | `playhousecreative.co.za` | Astro (`apps/creative`) | Future |
-| StudyEdge SA | `studyedgesa.co.za` | Astro (`apps/studyedge`) | Future |
-| TenderTrack 360 | `tendertrack360.co.za` | Next.js (existing) | Beta |
+| Brand                     | Domain                      | Framework                | Status |
+| ------------------------- | --------------------------- | ------------------------ | ------ |
+| PMG Holding               | `playhousemedia.co.za`      | Astro (`apps/pmg`)       | Live   |
+| Tender Edge Solutions     | `tenderedgesolutions.co.za` | Astro (`apps/tes`)       | Live   |
+| Apex Web Solutions        | `apexwebsolutions.co.za`    | Astro (`apps/aws`)       | Live   |
+| LaunchPad SA              | `launchpadsa.co.za`         | Astro (`apps/launchpad`) | Future |
+| Playhouse Creative Studio | `playhousecreative.co.za`   | Astro (`apps/creative`)  | Future |
+| StudyEdge SA              | `studyedgesa.co.za`         | Astro (`apps/studyedge`) | Future |
+| TenderTrack 360           | `tendertrack360.co.za`      | Next.js (existing)       | Beta   |
 
 > **Note:** `apps/launchpad`, `apps/creative`, `apps/studyedge`, and `apps/tt360`
 > do not exist in the monorepo yet. SEO preparation for these brands is documented
@@ -63,17 +63,17 @@ Every site should cross-link to at least 2 other division sites using keyword-ri
 
 ## 2. Domain Architecture
 
-| Domain | Framework | Canonical | Indexed |
-|---|---|---|---|
-| `playhousemedia.co.za` | Astro (`apps/pmg`) | Self | ✅ Yes |
-| `playhousemedia.net` | Legacy Next.js (old) | → `.co.za` (301) | ❌ Redirect only |
-| `admin.playhousemedia.co.za` | Next.js 16 (`apps/admin`) | Self | ❌ noindex |
-| `tenderedgesolutions.co.za` | Astro (`apps/tes`) | Self | ✅ Yes |
-| `apexwebsolutions.co.za` | Astro (`apps/aws`) | Self | ✅ Yes |
-| `launchpadsa.co.za` | Astro (`apps/launchpad`) | Self | ✅ Yes (future) |
-| `playhousecreative.co.za` | Astro (`apps/creative`) | Self | ✅ Yes (future) |
-| `studyedgesa.co.za` | Astro (`apps/studyedge`) | Self | ✅ Yes (future) |
-| `tendertrack360.co.za` | Next.js (existing) | Self | ✅ Yes |
+| Domain                       | Framework                 | Canonical        | Indexed          |
+| ---------------------------- | ------------------------- | ---------------- | ---------------- |
+| `playhousemedia.co.za`       | Astro (`apps/pmg`)        | Self             | ✅ Yes           |
+| `playhousemedia.net`         | Legacy Next.js (old)      | → `.co.za` (301) | ❌ Redirect only |
+| `admin.playhousemedia.co.za` | Next.js 16 (`apps/admin`) | Self             | ❌ noindex       |
+| `tenderedgesolutions.co.za`  | Astro (`apps/tes`)        | Self             | ✅ Yes           |
+| `apexwebsolutions.co.za`     | Astro (`apps/aws`)        | Self             | ✅ Yes           |
+| `launchpadsa.co.za`          | Astro (`apps/launchpad`)  | Self             | ✅ Yes (future)  |
+| `playhousecreative.co.za`    | Astro (`apps/creative`)   | Self             | ✅ Yes (future)  |
+| `studyedgesa.co.za`          | Astro (`apps/studyedge`)  | Self             | ✅ Yes (future)  |
+| `tendertrack360.co.za`       | Next.js (existing)        | Self             | ✅ Yes           |
 
 ### Monorepo App Mapping
 
@@ -139,15 +139,15 @@ const defaultOg = ogImage ?? `/og-${brand}.png`;
 
 ### Title Tag Formula - Per Brand
 
-| Brand | Formula | Max |
-|---|---|---|
-| PMG | `{Service} \| Playhouse Media Group - Centurion, Gauteng` | 60 chars |
-| TES | `{Service} \| Tender Edge Solutions - {Location}` | 60 chars |
-| AWS | `{Service} in {Location} \| Apex Web Solutions` | 60 chars |
-| LaunchPad | `Register a {Type} Company in SA \| LaunchPad SA` | 60 chars |
-| Creative | `{Service} for SA Businesses \| Playhouse Creative Studio` | 60 chars |
-| StudyEdge | `{Subject} Tutoring & Support \| StudyEdge SA` | 60 chars |
-| TT360 | `TenderTrack 360 - Tender Management Software for SA` | 60 chars |
+| Brand     | Formula                                                    | Max      |
+| --------- | ---------------------------------------------------------- | -------- |
+| PMG       | `{Service} \| Playhouse Media Group - Centurion, Gauteng`  | 60 chars |
+| TES       | `{Service} \| Tender Edge Solutions - {Location}`          | 60 chars |
+| AWS       | `{Service} in {Location} \| Apex Web Solutions`            | 60 chars |
+| LaunchPad | `Register a {Type} Company in SA \| LaunchPad SA`          | 60 chars |
+| Creative  | `{Service} for SA Businesses \| Playhouse Creative Studio` | 60 chars |
+| StudyEdge | `{Subject} Tutoring & Support \| StudyEdge SA`             | 60 chars |
+| TT360     | `TenderTrack 360 - Tender Management Software for SA`      | 60 chars |
 
 > **Description length:** Keep meta descriptions between 140–160 characters.
 > Always include a call to action and the city/region for local relevance.
@@ -217,15 +217,15 @@ Disallow: /
 
 `HIGH` = target immediately on launch. `MED` = build toward with content.
 
-| Division | Primary Keywords | Local Modifier | Priority |
-|---|---|---|---|
-| TES | CSD registration · tender compliance SA · CIDB registration · B-BBEE affidavit · government tenders | Gauteng · Centurion · Pretoria | **HIGH** |
-| AWS | web design Pretoria · affordable website SA · web development Gauteng · small business website | Centurion · Pretoria · Gauteng | **HIGH** |
-| LaunchPad | company registration South Africa · CIPC registration · PTY registration · register company online | South Africa · Gauteng | **HIGH** |
-| Creative | logo design South Africa · company profile design · graphic design Pretoria · branding SA | Centurion · Gauteng | **MED** |
-| StudyEdge | UNISA assignment help · university tutoring SA · academic support South Africa | Gauteng · South Africa | **MED** |
-| TT360 | tender management software SA · tender tracking app · bid management South Africa | South Africa | **MED** |
-| PMG | business services Centurion · SME support Gauteng · tender and web services SA | Centurion · Gauteng | **MED** |
+| Division  | Primary Keywords                                                                                    | Local Modifier                 | Priority |
+| --------- | --------------------------------------------------------------------------------------------------- | ------------------------------ | -------- |
+| TES       | CSD registration · tender compliance SA · CIDB registration · B-BBEE affidavit · government tenders | Gauteng · Centurion · Pretoria | **HIGH** |
+| AWS       | web design Pretoria · affordable website SA · web development Gauteng · small business website      | Centurion · Pretoria · Gauteng | **HIGH** |
+| LaunchPad | company registration South Africa · CIPC registration · PTY registration · register company online  | South Africa · Gauteng         | **HIGH** |
+| Creative  | logo design South Africa · company profile design · graphic design Pretoria · branding SA           | Centurion · Gauteng            | **MED**  |
+| StudyEdge | UNISA assignment help · university tutoring SA · academic support South Africa                      | Gauteng · South Africa         | **MED**  |
+| TT360     | tender management software SA · tender tracking app · bid management South Africa                   | South Africa                   | **MED**  |
+| PMG       | business services Centurion · SME support Gauteng · tender and web services SA                      | Centurion · Gauteng            | **MED**  |
 
 ---
 
@@ -256,14 +256,14 @@ Disallow: /
 
 ### Cross-Link Anchor Text Examples
 
-| Linking to | Use this anchor text |
-|---|---|
-| TES | "tender compliance services in Centurion" |
-| AWS | "affordable web design in Pretoria" |
-| LaunchPad | "register your company in South Africa" |
-| Creative | "logo design and branding for SA businesses" |
-| StudyEdge | "UNISA assignment help and tutoring" |
-| TT360 | "tender management software for SA businesses" |
+| Linking to | Use this anchor text                           |
+| ---------- | ---------------------------------------------- |
+| TES        | "tender compliance services in Centurion"      |
+| AWS        | "affordable web design in Pretoria"            |
+| LaunchPad  | "register your company in South Africa"        |
+| Creative   | "logo design and branding for SA businesses"   |
+| StudyEdge  | "UNISA assignment help and tutoring"           |
+| TT360      | "tender management software for SA businesses" |
 
 ---
 
@@ -298,16 +298,16 @@ Disallow: /
 
 ### Top Keywords
 
-| Keyword | Intent | Priority |
-|---|---|---|
-| CSD registration | Transactional | **HIGH** |
-| tender compliance SA | Transactional | **HIGH** |
-| CIDB registration Gauteng | Transactional | **HIGH** |
-| B-BBEE affidavit | Transactional | **HIGH** |
-| how to win tenders SA | Informational | MED |
-| government tenders Centurion | Informational | MED |
-| SBD forms South Africa | Transactional | MED |
-| COIDA letter of good standing | Transactional | MED |
+| Keyword                       | Intent        | Priority |
+| ----------------------------- | ------------- | -------- |
+| CSD registration              | Transactional | **HIGH** |
+| tender compliance SA          | Transactional | **HIGH** |
+| CIDB registration Gauteng     | Transactional | **HIGH** |
+| B-BBEE affidavit              | Transactional | **HIGH** |
+| how to win tenders SA         | Informational | MED      |
+| government tenders Centurion  | Informational | MED      |
+| SBD forms South Africa        | Transactional | MED      |
+| COIDA letter of good standing | Transactional | MED      |
 
 ### Blog Content Ideas
 
@@ -350,13 +350,13 @@ Disallow: /
 
 ### Top Keywords
 
-| Keyword | Intent | Priority |
-|---|---|---|
-| web design Pretoria | Transactional | **HIGH** |
+| Keyword                         | Intent        | Priority |
+| ------------------------------- | ------------- | -------- |
+| web design Pretoria             | Transactional | **HIGH** |
 | affordable website South Africa | Transactional | **HIGH** |
-| web design Centurion | Transactional | **HIGH** |
-| small business website SA | Transactional | MED |
-| ecommerce website South Africa | Transactional | MED |
+| web design Centurion            | Transactional | **HIGH** |
+| small business website SA       | Transactional | MED      |
+| ecommerce website South Africa  | Transactional | MED      |
 
 ---
 
@@ -377,13 +377,13 @@ Disallow: /
 
 ### Top Keywords
 
-| Keyword | Priority |
-|---|---|
-| company registration South Africa | **HIGH** |
-| CIPC registration | **HIGH** |
-| PTY registration | **HIGH** |
-| register company online SA | **HIGH** |
-| how to start a business South Africa | MED |
+| Keyword                              | Priority |
+| ------------------------------------ | -------- |
+| company registration South Africa    | **HIGH** |
+| CIPC registration                    | **HIGH** |
+| PTY registration                     | **HIGH** |
+| register company online SA           | **HIGH** |
+| how to start a business South Africa | MED      |
 
 ---
 
@@ -404,13 +404,13 @@ Disallow: /
 
 ### Top Keywords
 
-| Keyword | Priority |
-|---|---|
-| logo design South Africa | **HIGH** |
-| company profile design SA | **HIGH** |
-| graphic design Pretoria | MED |
-| branding for small business SA | MED |
-| social media management Gauteng | MED |
+| Keyword                         | Priority |
+| ------------------------------- | -------- |
+| logo design South Africa        | **HIGH** |
+| company profile design SA       | **HIGH** |
+| graphic design Pretoria         | MED      |
+| branding for small business SA  | MED      |
+| social media management Gauteng | MED      |
 
 ---
 
@@ -431,12 +431,12 @@ Disallow: /
 
 ### Top Keywords
 
-| Keyword | Priority |
-|---|---|
-| UNISA assignment help | **HIGH** |
-| university tutoring SA | **HIGH** |
+| Keyword                       | Priority |
+| ----------------------------- | -------- |
+| UNISA assignment help         | **HIGH** |
+| university tutoring SA        | **HIGH** |
 | academic support South Africa | **HIGH** |
-| assignment help Gauteng | MED |
+| assignment help Gauteng       | MED      |
 
 > **Important:** Always frame content as guided learning and tutoring support -
 > not ghostwriting or submission services.
@@ -467,12 +467,12 @@ export const metadata: Metadata = {
 
 ### Top Keywords
 
-| Keyword | Priority |
-|---|---|
-| tender management software SA | **HIGH** |
+| Keyword                          | Priority |
+| -------------------------------- | -------- |
+| tender management software SA    | **HIGH** |
 | tender tracking app South Africa | **HIGH** |
-| bid management software | MED |
-| government tender tracker SA | MED |
+| bid management software          | MED      |
+| government tender tracker SA     | MED      |
 
 ---
 
@@ -528,14 +528,14 @@ const schema = {
 
 ### Per-Brand Schema Values
 
-| Brand | serviceType | priceRange |
-|---|---|---|
-| PMG | Business Consulting Services | R1,200 - R8,500 |
-| TES | Tender Compliance Consulting | R650 - R5,500 |
-| AWS | Web Design and Development | R4,500 - R25,000 |
-| LaunchPad | Company Registration Services | R1,200 - R4,500 |
-| Creative | Graphic Design and Branding | R1,800 - R8,000 |
-| StudyEdge | Academic Tutoring and Support | R250 - R3,500 |
+| Brand     | serviceType                   | priceRange       |
+| --------- | ----------------------------- | ---------------- |
+| PMG       | Business Consulting Services  | R1,200 - R8,500  |
+| TES       | Tender Compliance Consulting  | R650 - R5,500    |
+| AWS       | Web Design and Development    | R4,500 - R25,000 |
+| LaunchPad | Company Registration Services | R1,200 - R4,500  |
+| Creative  | Graphic Design and Branding   | R1,800 - R8,000  |
+| StudyEdge | Academic Tutoring and Support | R250 - R3,500    |
 
 ---
 
@@ -546,60 +546,60 @@ const schema = {
 ```ts
 export const brands = {
   pmg: {
-    name: "Playhouse Media Group",
-    url: "https://www.playhousemedia.co.za",
-    tagline: "Building Businesses. One Service at a Time.",
-    phone: "+27745017094",
-    email: "info@playhousemedia.co.za",
+    name: 'Playhouse Media Group',
+    url: 'https://www.playhousemedia.co.za',
+    tagline: 'Building Businesses. One Service at a Time.',
+    phone: '+27745017094',
+    email: 'info@playhousemedia.co.za',
     address: {
-      street: "285 Erasmus Ave, Raslouw AH",
-      city: "Centurion",
-      province: "Gauteng",
-      postal: "0157",
-      country: "ZA",
+      street: '285 Erasmus Ave, Raslouw AH',
+      city: 'Centurion',
+      province: 'Gauteng',
+      postal: '0157',
+      country: 'ZA',
     },
   },
   tes: {
-    name: "Tender Edge Solutions",
-    url: "https://www.tenderedgesolutions.co.za",
-    tagline: "Your Edge in Every Tender",
-    phone: "+27745017094",
-    email: "tenders@tenderedgesolutions.co.za",
+    name: 'Tender Edge Solutions',
+    url: 'https://www.tenderedgesolutions.co.za',
+    tagline: 'Your Edge in Every Tender',
+    phone: '+27745017094',
+    email: 'tenders@tenderedgesolutions.co.za',
   },
   aws: {
-    name: "Apex Web Solutions",
-    url: "https://www.apexwebsolutions.co.za",
-    tagline: "Where Great Websites Begin",
-    phone: "+27745017094",
-    email: "info@apexwebsolutions.co.za",
+    name: 'Apex Web Solutions',
+    url: 'https://www.apexwebsolutions.co.za',
+    tagline: 'Where Great Websites Begin',
+    phone: '+27745017094',
+    email: 'info@apexwebsolutions.co.za',
   },
   launchpad: {
-    name: "LaunchPad SA",
-    url: "https://www.launchpadsa.co.za",
-    tagline: "Where Every Business Begins",
-    phone: "+27745017094",
-    email: "info@launchpadsa.co.za",
+    name: 'LaunchPad SA',
+    url: 'https://www.launchpadsa.co.za',
+    tagline: 'Where Every Business Begins',
+    phone: '+27745017094',
+    email: 'info@launchpadsa.co.za',
   },
   creative: {
-    name: "Playhouse Creative Studio",
-    url: "https://www.playhousecreative.co.za",
-    tagline: "Your Brand, Brought to Life",
-    phone: "+27745017094",
-    email: "info@playhousecreative.co.za",
+    name: 'Playhouse Creative Studio',
+    url: 'https://www.playhousecreative.co.za',
+    tagline: 'Your Brand, Brought to Life',
+    phone: '+27745017094',
+    email: 'info@playhousecreative.co.za',
   },
   studyedge: {
-    name: "StudyEdge SA",
-    url: "https://www.studyedgesa.co.za",
-    tagline: "Your Academic Edge - Earned.",
-    phone: "+27745017094",
-    email: "info@studyedgesa.co.za",
+    name: 'StudyEdge SA',
+    url: 'https://www.studyedgesa.co.za',
+    tagline: 'Your Academic Edge - Earned.',
+    phone: '+27745017094',
+    email: 'info@studyedgesa.co.za',
   },
   tt360: {
-    name: "TenderTrack 360",
-    url: "https://www.tendertrack360.co.za",
-    tagline: "Streamline Your Tender Management Process",
-    phone: "+27745017094",
-    email: "info@tendertrack360.co.za",
+    name: 'TenderTrack 360',
+    url: 'https://www.tendertrack360.co.za',
+    tagline: 'Streamline Your Tender Management Process',
+    phone: '+27745017094',
+    email: 'info@tendertrack360.co.za',
   },
 } as const;
 
@@ -646,20 +646,20 @@ Disallow: /
 
 ```ts
 // src/proxy.ts - NOT middleware.ts
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {
-  const session = request.cookies.get('better-auth.session_token')
+  const session = request.cookies.get('better-auth.session_token');
   if (!session) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/login', request.url));
   }
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: ['/admin/:path*'],
-}
+};
 ```
 
 4. **Deploy to Vercel**
@@ -735,17 +735,17 @@ info@playhousemedia.co.za
 
 ## Resources
 
-| Tool | Use |
-|---|---|
-| [Google Search Console](https://search.google.com/search-console) | Verify domains, submit sitemaps, monitor rankings |
-| [Google Business Profile](https://business.google.com) | Create and manage local listing |
-| [PageSpeed Insights](https://pagespeed.web.dev) | Core Web Vitals testing |
-| [Schema Markup Validator](https://validator.schema.org) | Test JSON-LD structured data |
-| [Screaming Frog](https://www.screamingfrog.co.uk/seo-spider/) | Crawl for broken links |
-| [Ahrefs Webmaster Tools](https://ahrefs.com/webmaster-tools) | Backlinks and keyword tracking |
-| [Google Rich Results Test](https://search.google.com/test/rich-results) | Test schema markup |
+| Tool                                                                    | Use                                               |
+| ----------------------------------------------------------------------- | ------------------------------------------------- |
+| [Google Search Console](https://search.google.com/search-console)       | Verify domains, submit sitemaps, monitor rankings |
+| [Google Business Profile](https://business.google.com)                  | Create and manage local listing                   |
+| [PageSpeed Insights](https://pagespeed.web.dev)                         | Core Web Vitals testing                           |
+| [Schema Markup Validator](https://validator.schema.org)                 | Test JSON-LD structured data                      |
+| [Screaming Frog](https://www.screamingfrog.co.uk/seo-spider/)           | Crawl for broken links                            |
+| [Ahrefs Webmaster Tools](https://ahrefs.com/webmaster-tools)            | Backlinks and keyword tracking                    |
+| [Google Rich Results Test](https://search.google.com/test/rich-results) | Test schema markup                                |
 
 ---
 
-*Last updated: March 2026 · Playhouse Media Group (PTY) Ltd*
-*Jacob Chademwiri · 285 Erasmus Ave, Raslouw AH, Centurion, 0157*
+_Last updated: March 2026 · Playhouse Media Group (PTY) Ltd_
+_Jacob Chademwiri · 285 Erasmus Ave, Raslouw AH, Centurion, 0157_

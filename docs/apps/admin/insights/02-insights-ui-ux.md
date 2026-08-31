@@ -26,10 +26,10 @@
 
 The Insights section lives under `apps/admin/src/app/(admin)/insights/` with two sub-pages:
 
-| Page | Route | Component | Purpose |
-|------|-------|-----------|---------|
-| **Snapshots** | `/insights/snapshots` | `SnapshotsCockpit` | Displays closed monthly financial periods |
-| **Reports** | `/insights/reports` | `ReportsPage` | Charts and data visualization for financial analysis |
+| Page          | Route                 | Component          | Purpose                                              |
+| ------------- | --------------------- | ------------------ | ---------------------------------------------------- |
+| **Snapshots** | `/insights/snapshots` | `SnapshotsCockpit` | Displays closed monthly financial periods            |
+| **Reports**   | `/insights/reports`   | `ReportsPage`      | Charts and data visualization for financial analysis |
 
 **Navigation:** Both pages are grouped under "Insights" in the sidebar (`nav-data.ts`), using `Camera` (Snapshots) and `BarChart3` (Reports) icons.
 
@@ -38,10 +38,12 @@ The Insights section lives under `apps/admin/src/app/(admin)/insights/` with two
 **File:** `apps/admin/src/components/insights/snapshots-cockpit.tsx`
 
 **Layout:** 4-column grid (`lg:grid-cols-4`)
+
 - **Left sidebar (1 col):** Scrollable list of closed months with an "All-Time Overview" card at top
 - **Right panel (3 cols):** Detail cockpit showing KPIs, revenue split bar, and trend chart
 
 **Key Features:**
+
 - Selectable monthly cards (click to view detail)
 - Level 1 KPI strip: Revenue, Expenses, Profit Pool (3 cards)
 - Visual split bar showing PMG/Expenses/Profit Pool percentages
@@ -49,6 +51,7 @@ The Insights section lives under `apps/admin/src/app/(admin)/insights/` with two
 - Color coding: Green (profitable months), Red (loss months), Blue (active selection)
 
 **Schema (snapshots table):**
+
 ```
 id | period | revenue | expenses | pmgShare | profitPool | salary | reinvest | reserve | flex | createdAt
 ```
@@ -60,6 +63,7 @@ id | period | revenue | expenses | pmgShare | profitPool | salary | reinvest | r
 **Layout:** 2×2 grid of chart cards with header bar
 
 **Key Features:**
+
 - Year filter dropdown (top right)
 - Export CSV button (top right)
 - 4 chart cards in a 2×2 grid:
@@ -73,6 +77,7 @@ id | period | revenue | expenses | pmgShare | profitPool | salary | reinvest | r
 ### 1.4 Dashboard Integration
 
 The main Dashboard (`dashboard-shell.tsx`) already contains:
+
 - KPI grid with sparklines (Revenue, Expenses, PMG Share, Profit Pool)
 - Period tabs (Current Month, Previous Month, Year to Date)
 - Division area chart, Division revenue breakdown, Leads summary
@@ -86,18 +91,19 @@ The main Dashboard (`dashboard-shell.tsx`) already contains:
 
 ### 2.1 Industry Approaches to "Period Close"
 
-| Application | Mechanism | How It Works |
-|-------------|-----------|--------------|
+| Application           | Mechanism               | How It Works                                                                                                                                   |
+| --------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | **QuickBooks Online** | Closing Date + Password | Users set a "Closing Date" in settings. Transactions on/before this date are password-protected. Prevents accidental edits to finalized books. |
-| **Xero** | Lock Dates (two tiers) | "Period Lock Date" prevents standard users from editing. "End of Year Lock Date" prevents everyone (including advisers). |
-| **NetSuite** | Period Close Checklist | Enterprise-grade: mandatory checklist (revaluation, journal entries, subledger locks) must be cleared to close a period. |
-| **Sage 50** | Year-End Wizard | Guided wizard for closing fiscal year. Keeps multiple fiscal years open for transition. |
-| **Wave** | Implicit / Manual | No formal hard lock. Relies on fiscal year-end settings and manual reconciliations. |
-| **FreshBooks** | Report-Based | No formal period closing. Users generate reports for specific timeframes as their "snapshot." |
+| **Xero**              | Lock Dates (two tiers)  | "Period Lock Date" prevents standard users from editing. "End of Year Lock Date" prevents everyone (including advisers).                       |
+| **NetSuite**          | Period Close Checklist  | Enterprise-grade: mandatory checklist (revaluation, journal entries, subledger locks) must be cleared to close a period.                       |
+| **Sage 50**           | Year-End Wizard         | Guided wizard for closing fiscal year. Keeps multiple fiscal years open for transition.                                                        |
+| **Wave**              | Implicit / Manual       | No formal hard lock. Relies on fiscal year-end settings and manual reconciliations.                                                            |
+| **FreshBooks**        | Report-Based            | No formal period closing. Users generate reports for specific timeframes as their "snapshot."                                                  |
 
 ### 2.2 PMG's Current Approach
 
 PMG uses a **simple snapshot model**:
+
 - `closeMonth` action captures PeriodSummary and inserts into `snapshots` table
 - Once closed, the period's income/expenses are effectively frozen (date-rules block edits)
 - Snapshots store point-in-time financial model calculations
@@ -120,12 +126,14 @@ PMG uses a **simple snapshot model**:
 ### 3.1 Current Snapshot Cockpit — Strengths & Weaknesses
 
 **Strengths:**
+
 - Clean sidebar + detail layout (master-detail pattern)
 - Color-coded monthly cards (green/red for profit/loss)
 - Visual split bar is intuitive for revenue allocation
 - All-time trend chart provides historical context
 
 **Weaknesses:**
+
 - No drill-down from snapshot to underlying transactions
 - No comparison between snapshots (month-over-month)
 - No visual indicator of "locked" state vs "open" state
@@ -139,6 +147,7 @@ PMG uses a **simple snapshot model**:
 #### A. Enhanced Snapshot Card Design
 
 Each snapshot card in the sidebar should show:
+
 ```
 ┌─────────────────────────────┐
 │ 🔒 June 2025               │  ← Lock icon + period
@@ -149,6 +158,7 @@ Each snapshot card in the sidebar should show:
 ```
 
 **Recommendations:**
+
 - Add a padlock icon (🔒) to visually signal "locked" status
 - Add mini sparkline or progress bar showing margin percentage
 - Show PMG share percentage as a visual indicator
@@ -157,6 +167,7 @@ Each snapshot card in the sidebar should show:
 #### B. Enhanced Detail Panel
 
 When a snapshot is selected, show:
+
 1. **Header Card:** Period name, lock date, who closed it (if available)
 2. **KPI Strip (4 cards):** Revenue, Expenses, PMG Share, Profit Pool — each with:
    - The value
@@ -191,6 +202,7 @@ This is a standard pattern in QuickBooks/Xero — comparing closed periods.
 #### D. New: Snapshot-to-Ledger Drill-Down
 
 Allow clicking on any snapshot figure to see the underlying transactions:
+
 - Click "Revenue" → see all income entries for that period
 - Click "Expenses" → see all expense entries for that period
 - Click "Profit Pool" → see the allocation breakdown
@@ -228,12 +240,14 @@ This follows the "Overview first, zoom and filter, then details-on-demand" mantr
 ### 4.1 Current Reports Page — Strengths & Weaknesses
 
 **Strengths:**
+
 - Clean 2×2 chart grid layout
 - Year filter and CSV export in header
 - Consistent card styling across all charts
 - Good use of Recharts with shadcn ChartContainer
 
 **Weaknesses:**
+
 - No comparison views (MoM, YoY toggles)
 - No drill-down from charts to raw data
 - No summary KPIs at the top of the reports page
@@ -257,6 +271,7 @@ This follows the "Overview first, zoom and filter, then details-on-demand" mantr
 ```
 
 **Additions:**
+
 - **Period selector:** Expand from year-only to fiscal year + month range
 - **Comparison toggles:** MoM, YoY, Custom Range buttons
 - **Export dropdown:** CSV, PDF, Print-friendly view
@@ -280,13 +295,13 @@ This gives immediate context before diving into charts.
 
 Organize reports into logical sections using tabs:
 
-| Tab | Content |
-|-----|---------|
-| **Overview** | KPI strip + MoM comparison + Revenue vs Expenses trend |
-| **Revenue** | Revenue by Division (stacked area) + Division comparison |
-| **Expenses** | Expenses by Category + Expense trends + Top expense items |
-| **Profit Pool** | Allocation breakdown (stacked bar) + Allocation trends |
-| **Cash Flow** | Waterfall chart (Revenue → Expenses → Profit → Allocations) |
+| Tab             | Content                                                     |
+| --------------- | ----------------------------------------------------------- |
+| **Overview**    | KPI strip + MoM comparison + Revenue vs Expenses trend      |
+| **Revenue**     | Revenue by Division (stacked area) + Division comparison    |
+| **Expenses**    | Expenses by Category + Expense trends + Top expense items   |
+| **Profit Pool** | Allocation breakdown (stacked bar) + Allocation trends      |
+| **Cash Flow**   | Waterfall chart (Revenue → Expenses → Profit → Allocations) |
 
 #### D. New Chart Types to Add
 
@@ -328,12 +343,14 @@ This progressive disclosure approach prevents cognitive overload while allowing 
 ### 5.1 QuickBooks Online
 
 **Layout Philosophy:** Dashboard-to-Report hierarchy
+
 - **Main Dashboard:** Widgets for bank balances, money in/out, overdue invoices
 - **Reports Tab:** Organized by function (Financial, Sales, Tax)
 - **Period Close:** Settings → Closing Date + Password protection
 - **Key Pattern:** Simple, compliance-focused. Good for non-accountants.
 
 **PMG Can Learn From:**
+
 - Closing date password protection pattern
 - Report categorization by function
 - Simple, accessible language for financial concepts
@@ -341,12 +358,14 @@ This progressive disclosure approach prevents cognitive overload while allowing 
 ### 5.2 Xero
 
 **Layout Philosophy:** Performance-first with analytics focus
+
 - **Dashboard:** Live data feeds, interactive charts
 - **Analytics Tab:** Customizable widgets, trend lines
 - **Period Close:** Two-tier lock dates (period lock + end-of-year lock)
 - **Key Pattern:** Clean, modern, high whitespace. Good balance of simplicity and power.
 
 **PMG Can Learn From:**
+
 - Two-tier locking (period lock vs final lock)
 - Customizable dashboard widgets
 - Clean, modern aesthetic with high contrast
@@ -354,6 +373,7 @@ This progressive disclosure approach prevents cognitive overload while allowing 
 ### 5.3 Stripe Dashboard
 
 **Layout Philosophy:** Data density with minimalism
+
 - **Gold standard** for financial-grade UI
 - Minimalist, high-contrast aesthetic
 - Data Tiers: Ticker cards → Summary Table → List View
@@ -361,6 +381,7 @@ This progressive disclosure approach prevents cognitive overload while allowing 
 - **Key Pattern:** Extreme data density without clutter. Professional, trustworthy feel.
 
 **PMG Can Learn From:**
+
 - Data tier pattern (KPI → Charts → Tables → Details)
 - Click-through drill-down on every element
 - Professional color palette and typography
@@ -369,6 +390,7 @@ This progressive disclosure approach prevents cognitive overload while allowing 
 ### 5.4 Mercury / Brex / Ramp (Modern Neobanks)
 
 **Layout Philosophy:** Real-time visibility over historical accounting
+
 - Live data feeds, not static reports
 - Interactive, clickable cards (drill-down to transactions)
 - Heavy white space, high-contrast typography
@@ -376,6 +398,7 @@ This progressive disclosure approach prevents cognitive overload while allowing 
 - **Key Pattern:** Aesthetic, card-based, interactive. Modern fintech feel.
 
 **PMG Can Learn From:**
+
 - Card-based interactive elements
 - Clean, modern aesthetic
 - Transaction-level transparency
@@ -384,6 +407,7 @@ This progressive disclosure approach prevents cognitive overload while allowing 
 ### 5.5 Baremetrics / ProfitWell (SaaS Metrics)
 
 **Layout Philosophy:** Growth tracking and KPI optimization
+
 - Time-series trend lines for MRR, churn, LTV
 - Cohort analysis, funnel charts
 - Segmented views (by region, plan, user type)
@@ -391,21 +415,22 @@ This progressive disclosure approach prevents cognitive overload while allowing 
 - **Key Pattern:** Highly customizable, performance-oriented.
 
 **PMG Can Learn From:**
+
 - Segmentation capabilities (by division, by category)
 - Trend line patterns for growth metrics
 - Custom widget/comparison patterns
 
 ### 5.6 Comparison Summary
 
-| Feature | QuickBooks | Xero | Stripe | Mercury/Brex | PMG (Current) |
-|---------|-----------|------|--------|-------------|----------------|
+| Feature          | QuickBooks           | Xero                   | Stripe       | Mercury/Brex         | PMG (Current)      |
+| ---------------- | -------------------- | ---------------------- | ------------ | -------------------- | ------------------ |
 | **Primary Goal** | Tax/Legal Compliance | Analytics + Compliance | Data Density | Real-time Visibility | Financial Tracking |
-| **View Style** | Static Reports | Interactive Charts | Tiered Data | Card-based | Card + Charts |
-| **Period Close** | Date + Password | Two-tier Locks | N/A | Auto-sync | Simple Snapshot |
-| **Drill-down** | Limited | Moderate | Deep | Deep | None |
-| **Export** | PDF/XLS | PDF/XLS/CSV | CSV/API | CSV | CSV only |
-| **Comparison** | MoM/YoY | MoM/YoY/Custom | Custom | Custom | MoM only |
-| **Mobile** | Good | Good | Excellent | Excellent | Responsive |
+| **View Style**   | Static Reports       | Interactive Charts     | Tiered Data  | Card-based           | Card + Charts      |
+| **Period Close** | Date + Password      | Two-tier Locks         | N/A          | Auto-sync            | Simple Snapshot    |
+| **Drill-down**   | Limited              | Moderate               | Deep         | Deep                 | None               |
+| **Export**       | PDF/XLS              | PDF/XLS/CSV            | CSV/API      | CSV                  | CSV only           |
+| **Comparison**   | MoM/YoY              | MoM/YoY/Custom         | Custom       | Custom               | MoM only           |
+| **Mobile**       | Good                 | Good                   | Excellent    | Excellent            | Responsive         |
 
 ---
 
@@ -487,52 +512,53 @@ Used by: Baremetrics, ProfitWell
 
 ### 7.1 Snapshots Page Improvements
 
-| Priority | Improvement | Impact | Effort |
-|----------|------------|--------|--------|
-| **P0** | Add delta indicators to snapshot KPI cards (vs previous month) | High | Low |
-| **P0** | Add lock icon (🔒) to snapshot cards and detail header | Medium | Low |
-| **P1** | Add snapshot comparison view (select 2 snapshots to compare) | High | Medium |
-| **P1** | Add drill-down from snapshot figures to underlying transactions | High | Medium |
-| **P1** | Add "closed by" and "notes" fields to snapshot metadata | Medium | Medium |
-| **P2** | Add mini sparklines to sidebar snapshot cards | Medium | Low |
-| **P2** | Add export/print capability for individual snapshots | Medium | Low |
-| **P2** | Add hover tooltips with additional context on all elements | Low | Low |
-| **P3** | Add snapshot-level annotations (e.g., "New client onboarded") | Low | Medium |
+| Priority | Improvement                                                     | Impact | Effort |
+| -------- | --------------------------------------------------------------- | ------ | ------ |
+| **P0**   | Add delta indicators to snapshot KPI cards (vs previous month)  | High   | Low    |
+| **P0**   | Add lock icon (🔒) to snapshot cards and detail header          | Medium | Low    |
+| **P1**   | Add snapshot comparison view (select 2 snapshots to compare)    | High   | Medium |
+| **P1**   | Add drill-down from snapshot figures to underlying transactions | High   | Medium |
+| **P1**   | Add "closed by" and "notes" fields to snapshot metadata         | Medium | Medium |
+| **P2**   | Add mini sparklines to sidebar snapshot cards                   | Medium | Low    |
+| **P2**   | Add export/print capability for individual snapshots            | Medium | Low    |
+| **P2**   | Add hover tooltips with additional context on all elements      | Low    | Low    |
+| **P3**   | Add snapshot-level annotations (e.g., "New client onboarded")   | Low    | Medium |
 
 ### 7.2 Reports Page Improvements
 
-| Priority | Improvement | Impact | Effort |
-|----------|------------|--------|--------|
-| **P0** | Add summary KPI strip at top of reports page | High | Low |
-| **P0** | Add period selector (fiscal year + month range) | High | Medium |
-| **P0** | Add comparison toggles (MoM, YoY) | High | Medium |
-| **P1** | Add report tabs (Overview, Revenue, Expenses, Profit) | High | Medium |
-| **P1** | Add drill-down from charts to raw data | High | Medium |
-| **P1** | Add PDF export and print-friendly view | Medium | Medium |
-| **P2** | Add waterfall chart for cash flow visualization | Medium | Medium |
-| **P2** | Add Sankey diagram for allocation flow | Medium | High |
-| **P2** | Add cross-chart filtering (click month → highlight everywhere) | Medium | Medium |
-| **P3** | Add heatmap for monthly division performance | Low | High |
-| **P3** | Add annotations/marking on charts | Low | Medium |
+| Priority | Improvement                                                    | Impact | Effort |
+| -------- | -------------------------------------------------------------- | ------ | ------ |
+| **P0**   | Add summary KPI strip at top of reports page                   | High   | Low    |
+| **P0**   | Add period selector (fiscal year + month range)                | High   | Medium |
+| **P0**   | Add comparison toggles (MoM, YoY)                              | High   | Medium |
+| **P1**   | Add report tabs (Overview, Revenue, Expenses, Profit)          | High   | Medium |
+| **P1**   | Add drill-down from charts to raw data                         | High   | Medium |
+| **P1**   | Add PDF export and print-friendly view                         | Medium | Medium |
+| **P2**   | Add waterfall chart for cash flow visualization                | Medium | Medium |
+| **P2**   | Add Sankey diagram for allocation flow                         | Medium | High   |
+| **P2**   | Add cross-chart filtering (click month → highlight everywhere) | Medium | Medium |
+| **P3**   | Add heatmap for monthly division performance                   | Low    | High   |
+| **P3**   | Add annotations/marking on charts                              | Low    | Medium |
 
 ### 7.3 Cross-Cutting Improvements
 
-| Priority | Improvement | Impact | Effort |
-|----------|------------|--------|--------|
-| **P0** | Add sticky date range in page header (global filter) | High | Low |
-| **P0** | Ensure all charts are responsive and work on mobile | High | Medium |
-| **P1** | Add dark mode chart color tuning (muted pastels for data series) | Medium | Low |
-| **P1** | Add loading skeletons for all data-fetching states | Medium | Low |
-| **P1** | Add empty states with actionable CTAs for all sections | Medium | Low |
-| **P2** | Add keyboard shortcuts for navigation (Cmd+K search) | Low | Medium |
-| **P2** | Add role-based default views (Admin vs Viewer) | Low | Medium |
-| **P3** | Add scheduled report generation (email weekly/monthly) | Low | High |
+| Priority | Improvement                                                      | Impact | Effort |
+| -------- | ---------------------------------------------------------------- | ------ | ------ |
+| **P0**   | Add sticky date range in page header (global filter)             | High   | Low    |
+| **P0**   | Ensure all charts are responsive and work on mobile              | High   | Medium |
+| **P1**   | Add dark mode chart color tuning (muted pastels for data series) | Medium | Low    |
+| **P1**   | Add loading skeletons for all data-fetching states               | Medium | Low    |
+| **P1**   | Add empty states with actionable CTAs for all sections           | Medium | Low    |
+| **P2**   | Add keyboard shortcuts for navigation (Cmd+K search)             | Low    | Medium |
+| **P2**   | Add role-based default views (Admin vs Viewer)                   | Low    | Medium |
+| **P3**   | Add scheduled report generation (email weekly/monthly)           | Low    | High   |
 
 ### 7.4 Color & Typography Recommendations
 
 **Current State:** Uses shadcn semantic tokens well (`--chart-1` through `--chart-5`).
 
 **Recommendations:**
+
 1. **Standardize profit/loss colors:** Use `emerald` for positive, `red` for negative consistently across all pages
 2. **Dark mode:** Use slightly muted, pastel-leaning neon colors for chart series on dark backgrounds to prevent eye strain
 3. **Typography:** Use `tabular-nums` for all financial figures (already done in most places ✓)
@@ -552,6 +578,7 @@ Used by: Baremetrics, ProfitWell
 **Current State:** Pages use responsive grid classes (`grid-cols-1 lg:grid-cols-2`, etc.).
 
 **Recommendations:**
+
 1. **Snapshots sidebar:** On mobile, convert sidebar to a horizontal scrollable strip or dropdown
 2. **Report charts:** Stack charts vertically on mobile (single column)
 3. **KPI cards:** Use 2-column grid on mobile (already done ✓)
@@ -600,31 +627,31 @@ Used by: Baremetrics, ProfitWell
 
 ### Current Insight Components
 
-| Component | File | Purpose |
-|-----------|------|---------|
-| `SnapshotsCockpit` | `components/insights/snapshots-cockpit.tsx` | Main snapshots page layout |
-| `MoMComparisonChart` | `components/reports/mom-comparison-chart.tsx` | Month-over-month comparison |
-| `RevenueByDivisionChart` | `components/reports/revenue-by-division-chart.tsx` | Stacked area chart |
-| `ExpenseByCategoryChart` | `components/reports/expense-by-category-chart.tsx` | Horizontal bar chart |
-| `ProfitPoolChart` | `components/reports/profit-pool-chart.tsx` | Stacked bar chart |
-| `YearFilter` | `components/reports/year-filter.tsx` | Year selector dropdown |
-| `ExportCsvButton` | `components/reports/export-csv-button.tsx` | CSV export trigger |
-| `ExpenseSnapshot` | `components/dashboard/expense-snapshot.tsx` | Dashboard expense breakdown |
+| Component                | File                                               | Purpose                     |
+| ------------------------ | -------------------------------------------------- | --------------------------- |
+| `SnapshotsCockpit`       | `components/insights/snapshots-cockpit.tsx`        | Main snapshots page layout  |
+| `MoMComparisonChart`     | `components/reports/mom-comparison-chart.tsx`      | Month-over-month comparison |
+| `RevenueByDivisionChart` | `components/reports/revenue-by-division-chart.tsx` | Stacked area chart          |
+| `ExpenseByCategoryChart` | `components/reports/expense-by-category-chart.tsx` | Horizontal bar chart        |
+| `ProfitPoolChart`        | `components/reports/profit-pool-chart.tsx`         | Stacked bar chart           |
+| `YearFilter`             | `components/reports/year-filter.tsx`               | Year selector dropdown      |
+| `ExportCsvButton`        | `components/reports/export-csv-button.tsx`         | CSV export trigger          |
+| `ExpenseSnapshot`        | `components/dashboard/expense-snapshot.tsx`        | Dashboard expense breakdown |
 
 ### Recommended New Components
 
-| Component | Purpose |
-|-----------|---------|
-| `SnapshotComparisonPanel` | Side-by-side snapshot comparison |
-| `SnapshotDeltaBadge` | Delta indicator for snapshot KPIs |
-| `ReportKPIStrip` | Summary KPI cards for reports page |
-| `PeriodSelector` | Enhanced date range picker |
-| `ComparisonToggle` | MoM/YoY toggle buttons |
-| `WaterfallChart` | Cash flow waterfall visualization |
-| `SankeyDiagram` | Allocation flow visualization |
-| `ReportTabs` | Tabbed report sections |
-| `DrillDownTable` | Transaction-level detail table |
-| `ChartAnnotation` | Annotation overlay for charts |
+| Component                 | Purpose                            |
+| ------------------------- | ---------------------------------- |
+| `SnapshotComparisonPanel` | Side-by-side snapshot comparison   |
+| `SnapshotDeltaBadge`      | Delta indicator for snapshot KPIs  |
+| `ReportKPIStrip`          | Summary KPI cards for reports page |
+| `PeriodSelector`          | Enhanced date range picker         |
+| `ComparisonToggle`        | MoM/YoY toggle buttons             |
+| `WaterfallChart`          | Cash flow waterfall visualization  |
+| `SankeyDiagram`           | Allocation flow visualization      |
+| `ReportTabs`              | Tabbed report sections             |
+| `DrillDownTable`          | Transaction-level detail table     |
+| `ChartAnnotation`         | Annotation overlay for charts      |
 
 ---
 

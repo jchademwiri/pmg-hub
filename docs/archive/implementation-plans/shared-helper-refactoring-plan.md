@@ -40,8 +40,25 @@ export interface OrgPreviewProps {
 
 export function buildOrgProps(
   divisionName: string,
-  divSettings: { salesRepEmail?: string | null; salesRepPhone?: string | null; divisionWebsite?: string | null; salesRepName?: string | null } | null | undefined,
-  orgSettings?: { registrationNumber?: string | null; vatNumber?: string | null; email?: string | null; phone?: string | null; website?: string | null; addressStreet?: string | null; addressCity?: string | null; addressPostal?: string | null } | null,
+  divSettings:
+    | {
+        salesRepEmail?: string | null;
+        salesRepPhone?: string | null;
+        divisionWebsite?: string | null;
+        salesRepName?: string | null;
+      }
+    | null
+    | undefined,
+  orgSettings?: {
+    registrationNumber?: string | null;
+    vatNumber?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    website?: string | null;
+    addressStreet?: string | null;
+    addressCity?: string | null;
+    addressPostal?: string | null;
+  } | null,
 ): OrgPreviewProps {
   return {
     name: divisionName,
@@ -60,13 +77,13 @@ export function buildOrgProps(
 
 ### Files to update (11 replacements)
 
-| # | File | Occurrences |
-|---|---|---|
-| 1 | `apps/admin/src/lib/server-billing-pdf.ts` | 4x (invoice, quote, receipt, statement builders) |
-| 2 | `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx` | 2x (statementProps + docPreviewProps) |
-| 3 | `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx` | 1x |
-| 4 | `apps/admin/src/app/(admin)/relationships/clients/[id]/client-billing-workspace.tsx` | 3x (invoice, quote, statement previews) |
-| 5 | `apps/admin/src/app/(admin)/billing/quotes/[id]/page.tsx` | 1x |
+| #   | File                                                                                 | Occurrences                                      |
+| --- | ------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| 1   | `apps/admin/src/lib/server-billing-pdf.ts`                                           | 4x (invoice, quote, receipt, statement builders) |
+| 2   | `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx`                          | 2x (statementProps + docPreviewProps)            |
+| 3   | `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx`                  | 1x                                               |
+| 4   | `apps/admin/src/app/(admin)/relationships/clients/[id]/client-billing-workspace.tsx` | 3x (invoice, quote, statement previews)          |
+| 5   | `apps/admin/src/app/(admin)/billing/quotes/[id]/page.tsx`                            | 1x                                               |
 
 ### Net reduction
 
@@ -87,10 +104,10 @@ export function buildOrgProps(
 The Paid / Outstanding / Overdue status logic is repeated in 4 places:
 
 ```ts
-let docStatus = 'Paid'
+let docStatus = 'Paid';
 if (summary.totalOutstanding > 0) {
-  const hasOverdue = invoices.some(i => i.status === 'overdue')
-  docStatus = hasOverdue ? 'Overdue' : 'Outstanding'
+  const hasOverdue = invoices.some((i) => i.status === 'overdue');
+  docStatus = hasOverdue ? 'Overdue' : 'Outstanding';
 }
 ```
 
@@ -104,19 +121,19 @@ export function determineStatementStatus(
   invoices: { status: string }[],
 ): 'Paid' | 'Outstanding' | 'Overdue' {
   if (totalOutstanding <= 0) return 'Paid';
-  const hasOverdue = invoices.some(i => i.status === 'overdue');
+  const hasOverdue = invoices.some((i) => i.status === 'overdue');
   return hasOverdue ? 'Overdue' : 'Outstanding';
 }
 ```
 
 ### Files to update (4 replacements)
 
-| # | File | Occurrences |
-|---|---|---|
-| 1 | `apps/admin/src/lib/server-billing-pdf.ts` | 1x (statement builder) |
-| 2 | `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx` | 1x |
-| 3 | `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx` | 1x |
-| 4 | `apps/admin/src/app/(admin)/relationships/clients/[id]/client-billing-workspace.tsx` | 1x |
+| #   | File                                                                                 | Occurrences            |
+| --- | ------------------------------------------------------------------------------------ | ---------------------- |
+| 1   | `apps/admin/src/lib/server-billing-pdf.ts`                                           | 1x (statement builder) |
+| 2   | `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx`                  | 1x                     |
+| 3   | `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx`                          | 1x                     |
+| 4   | `apps/admin/src/app/(admin)/relationships/clients/[id]/client-billing-workspace.tsx` | 1x                     |
 
 ### Net reduction
 
@@ -131,9 +148,9 @@ export function determineStatementStatus(
 The income-to-invoice-number map-building pattern appears in 3 places:
 
 ```ts
-const incomeToInvoiceNumber = new Map<string, string>()
+const incomeToInvoiceNumber = new Map<string, string>();
 for (const inv of invoices) {
-  if (inv.incomeId) incomeToInvoiceNumber.set(inv.incomeId, inv.documentNumber)
+  if (inv.incomeId) incomeToInvoiceNumber.set(inv.incomeId, inv.documentNumber);
 }
 ```
 
@@ -153,11 +170,11 @@ export function buildIncomeInvoiceMap(
 
 ### Files to update (3 replacements)
 
-| # | File | Occurrences |
-|---|---|---|
-| 1 | `apps/admin/src/lib/server-billing-pdf.ts` | 1x (statement builder) |
-| 2 | `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx` | 1x |
-| 3 | `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx` | 1x |
+| #   | File                                                                | Occurrences            |
+| --- | ------------------------------------------------------------------- | ---------------------- |
+| 1   | `apps/admin/src/lib/server-billing-pdf.ts`                          | 1x (statement builder) |
+| 2   | `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx` | 1x                     |
+| 3   | `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx`         | 1x                     |
 
 Note: The `client-billing-workspace.tsx` has its own variant named `statementToInvoiceNumber` — worth aligning with the shared helper but optional.
 
@@ -180,10 +197,30 @@ Create a single `buildTransactionHistory()` that takes a unified input and retur
 
 ```ts
 export interface BuildTransactionsInput {
-  invoices: { id: string; invoiceDate: string; documentNumber: string; reference?: string | null; status: string; total: number }[];
+  invoices: {
+    id: string;
+    invoiceDate: string;
+    documentNumber: string;
+    reference?: string | null;
+    status: string;
+    total: number;
+  }[];
   incomeRecords: { id: string; date: string; amount: number }[];
-  creditNotes?: { id: string; createdAt: Date; documentNumber: string; reason?: string | null; amount: number; type?: string }[];
-  refunds?: { id: string; refundDate: string; reference?: string | null; description?: string | null; amount: number }[];
+  creditNotes?: {
+    id: string;
+    createdAt: Date;
+    documentNumber: string;
+    reason?: string | null;
+    amount: number;
+    type?: string;
+  }[];
+  refunds?: {
+    id: string;
+    refundDate: string;
+    reference?: string | null;
+    description?: string | null;
+    amount: number;
+  }[];
   periodFrom: string;
   periodTo: string;
   openingBalance: number;
@@ -218,12 +255,12 @@ export function buildTransactionHistory(input: BuildTransactionsInput): {
 
 ### Files to update
 
-| # | File | Occurrences | Complexity |
-|---|---|---|---|
-| 1 | `apps/admin/src/lib/server-billing-pdf.ts` | 1x (statement builder) | Full — includes credit notes/refunds |
-| 2 | `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx` | 1x | Full |
-| 3 | `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx` | 1x | Simplified (no credit notes/refunds) |
-| 4 | `apps/admin/src/app/(admin)/relationships/clients/[id]/client-billing-workspace.tsx` | 1x | Simplified |
+| #   | File                                                                                 | Occurrences            | Complexity                           |
+| --- | ------------------------------------------------------------------------------------ | ---------------------- | ------------------------------------ |
+| 1   | `apps/admin/src/lib/server-billing-pdf.ts`                                           | 1x (statement builder) | Full — includes credit notes/refunds |
+| 2   | `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx`                  | 1x                     | Full                                 |
+| 3   | `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx`                          | 1x                     | Simplified (no credit notes/refunds) |
+| 4   | `apps/admin/src/app/(admin)/relationships/clients/[id]/client-billing-workspace.tsx` | 1x                     | Simplified                           |
 
 ### Net reduction
 
@@ -275,10 +312,10 @@ export function adjustOpeningBalance(
 
 ### Files to update
 
-| # | File | Occurrences |
-|---|---|---|
-| 1 | `apps/admin/src/lib/server-billing-pdf.ts` | 1x |
-| 2 | `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx` | 1x |
+| #   | File                                                                | Occurrences |
+| --- | ------------------------------------------------------------------- | ----------- |
+| 1   | `apps/admin/src/lib/server-billing-pdf.ts`                          | 1x          |
+| 2   | `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx` | 1x          |
 
 ### Dependency
 
@@ -296,16 +333,19 @@ The division name resolution pattern (linked division fallback chain) is duplica
 const clientRecord = await getClientById(clientId);
 const linkedDivisionId = clientRecord?.divisionId ?? null;
 const effectiveDivisionId = linkedDivisionId ?? invoices[0]?.divisionId;
-const divSettings = effectiveDivisionId ? await getDivisionBillingSettings(effectiveDivisionId) : null;
+const divSettings = effectiveDivisionId
+  ? await getDivisionBillingSettings(effectiveDivisionId)
+  : null;
 const allDivisions = await getAllDivisions();
 const linkedDivisionName = linkedDivisionId
-  ? allDivisions.find(d => d.id === linkedDivisionId)?.name
+  ? allDivisions.find((d) => d.id === linkedDivisionId)?.name
   : undefined;
-const linkedInvoice = invoices.find(inv => inv.divisionId === linkedDivisionId);
-const orgName = linkedInvoice?.divisionName
-  ?? linkedDivisionName
-  ?? invoices[0]?.divisionName
-  ?? 'Playhouse Media Group';
+const linkedInvoice = invoices.find((inv) => inv.divisionId === linkedDivisionId);
+const orgName =
+  linkedInvoice?.divisionName ??
+  linkedDivisionName ??
+  invoices[0]?.divisionName ??
+  'Playhouse Media Group';
 ```
 
 ### Solution
@@ -325,26 +365,29 @@ export async function resolveDivisionBranding(
   const clientRecord = await getClientById(clientId);
   const linkedDivisionId = clientRecord?.divisionId ?? null;
   const effectiveDivisionId = linkedDivisionId ?? invoices[0]?.divisionId ?? null;
-  const divSettings = effectiveDivisionId ? await getDivisionBillingSettings(effectiveDivisionId) : null;
+  const divSettings = effectiveDivisionId
+    ? await getDivisionBillingSettings(effectiveDivisionId)
+    : null;
   const allDivisions = await getAllDivisions();
   const linkedDivisionName = linkedDivisionId
-    ? allDivisions.find(d => d.id === linkedDivisionId)?.name
+    ? allDivisions.find((d) => d.id === linkedDivisionId)?.name
     : undefined;
-  const linkedInvoice = invoices.find(inv => inv.divisionId === linkedDivisionId);
-  const divisionName = linkedInvoice?.divisionName
-    ?? linkedDivisionName
-    ?? invoices[0]?.divisionName
-    ?? 'Playhouse Media Group';
+  const linkedInvoice = invoices.find((inv) => inv.divisionId === linkedDivisionId);
+  const divisionName =
+    linkedInvoice?.divisionName ??
+    linkedDivisionName ??
+    invoices[0]?.divisionName ??
+    'Playhouse Media Group';
   return { linkedDivisionId, effectiveDivisionId, divSettings, divisionName };
 }
 ```
 
 ### Files to update
 
-| # | File | Occurrences |
-|---|---|---|
-| 1 | `apps/admin/src/lib/server-billing-pdf.ts` | 1x (statement builder) |
-| 2 | `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx` | 1x |
+| #   | File                                                                | Occurrences            |
+| --- | ------------------------------------------------------------------- | ---------------------- |
+| 1   | `apps/admin/src/lib/server-billing-pdf.ts`                          | 1x (statement builder) |
+| 2   | `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx` | 1x                     |
 
 The `client-billing-workspace.tsx` has a client-side version that uses `divisions.find(d => d.id === client.divisionId)` — this one cannot use the server-side helper since it's a `'use client'` component and doesn't have access to `getClientById` directly.
 
@@ -374,8 +417,14 @@ banking: divSettings?.bankName ? {
 
 ```ts
 export function buildBankingProps(
-  divSettings?: { bankName?: string | null; bankAccountName?: string | null; bankAccountNumber?: string | null; bankBranchCode?: string | null } | null,
-): { bankName: string; accountName: string; accountNumber: string; branchCode: string } | undefined {
+  divSettings?: {
+    bankName?: string | null;
+    bankAccountName?: string | null;
+    bankAccountNumber?: string | null;
+    bankBranchCode?: string | null;
+  } | null,
+):
+  { bankName: string; accountName: string; accountNumber: string; branchCode: string } | undefined {
   if (!divSettings?.bankName) return undefined;
   return {
     bankName: divSettings.bankName,
@@ -388,13 +437,13 @@ export function buildBankingProps(
 
 ### Files to update
 
-| # | File | Occurrences |
-|---|---|---|
-| 1 | `apps/admin/src/lib/server-billing-pdf.ts` | up to 4x (invoice, quote, receipt, statement) |
-| 2 | `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx` | 1x (docPreviewProps) |
-| 3 | `apps/admin/src/app/(admin)/billing/quotes/[id]/page.tsx` | 1x |
-| 4 | `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx` | 1x |
-| 5 | `apps/admin/src/app/(admin)/relationships/clients/[id]/client-billing-workspace.tsx` | 3x (invoice, quote, statement) |
+| #   | File                                                                                 | Occurrences                                   |
+| --- | ------------------------------------------------------------------------------------ | --------------------------------------------- |
+| 1   | `apps/admin/src/lib/server-billing-pdf.ts`                                           | up to 4x (invoice, quote, receipt, statement) |
+| 2   | `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx`                          | 1x (docPreviewProps)                          |
+| 3   | `apps/admin/src/app/(admin)/billing/quotes/[id]/page.tsx`                            | 1x                                            |
+| 4   | `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx`                  | 1x                                            |
+| 5   | `apps/admin/src/app/(admin)/relationships/clients/[id]/client-billing-workspace.tsx` | 3x (invoice, quote, statement)                |
 
 ---
 
@@ -415,16 +464,16 @@ Phases 0–2 and 6 are independent and can be done in parallel. Phases 4–5 fee
 
 ## Estimated Savings
 
-| Phase | Lines Removed | Complexity | Risk |
-|---|---|---|---|
-| 0 — buildOrgProps | ~100 | Low | 🟢 None |
-| 1 — determineStatus | ~12 | Trivial | 🟢 None |
-| 2 — incomeInvoiceMap | ~15 | Trivial | 🟢 None |
-| 3 — buildTransaction | ~140 | Medium | 🟡 Moderate |
-| 4 — adjustOpening | ~30 | Low | 🟢 None |
-| 5 — resolveDivision | ~25 | Medium | 🟡 Moderate |
-| 6 — buildBanking | ~40 | Trivial | 🟢 None |
-| **Total** | **~360+** | | |
+| Phase                | Lines Removed | Complexity | Risk        |
+| -------------------- | ------------- | ---------- | ----------- |
+| 0 — buildOrgProps    | ~100          | Low        | 🟢 None     |
+| 1 — determineStatus  | ~12           | Trivial    | 🟢 None     |
+| 2 — incomeInvoiceMap | ~15           | Trivial    | 🟢 None     |
+| 3 — buildTransaction | ~140          | Medium     | 🟡 Moderate |
+| 4 — adjustOpening    | ~30           | Low        | 🟢 None     |
+| 5 — resolveDivision  | ~25           | Medium     | 🟡 Moderate |
+| 6 — buildBanking     | ~40           | Trivial    | 🟢 None     |
+| **Total**            | **~360+**     |            |             |
 
 ## Testing Strategy
 
@@ -448,6 +497,7 @@ Server PDF Builder        ─── buildInvoicePdfData, buildQuotePdfData, buil
 ```
 
 Each of these constructs at minimum:
+
 - `org` object (Phase 0)
 - `banking` object (Phase 6)
 - Statement status (Phase 1) — for statement types

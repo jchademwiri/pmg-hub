@@ -1,14 +1,14 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import * as React from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -16,31 +16,31 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { formatZAR, fmtMonthYear } from '@/lib/format'
-import type { ProfitAndLossResult } from '@pmg/db'
+} from '@/components/ui/table';
+import { formatZAR, fmtMonthYear } from '@/lib/format';
+import type { ProfitAndLossResult } from '@pmg/db';
 
 interface ProfitAndLossClientProps {
-  data: ProfitAndLossResult
-  periods: string[]
-  selectedPeriod: string
+  data: ProfitAndLossResult;
+  periods: string[];
+  selectedPeriod: string;
 }
 
 export function ProfitAndLossClient({ data, periods, selectedPeriod }: ProfitAndLossClientProps) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   function handlePeriodChange(value: string) {
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParams.toString());
     if (value === 'all') {
-      params.delete('period')
+      params.delete('period');
     } else {
-      params.set('period', value)
+      params.set('period', value);
     }
-    router.push(`/accounting/profit-and-loss?${params.toString()}`, { scroll: false })
+    router.push(`/accounting/profit-and-loss?${params.toString()}`, { scroll: false });
   }
 
-  const isProfit = data.netProfit >= 0
+  const isProfit = data.netProfit >= 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -53,7 +53,9 @@ export function ProfitAndLossClient({ data, periods, selectedPeriod }: ProfitAnd
           <SelectContent>
             <SelectItem value="all">All Time</SelectItem>
             {periods.map((p) => (
-              <SelectItem key={p} value={p}>{fmtMonthYear(p)}</SelectItem>
+              <SelectItem key={p} value={p}>
+                {fmtMonthYear(p)}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -135,13 +137,17 @@ export function ProfitAndLossClient({ data, periods, selectedPeriod }: ProfitAnd
         )}
 
         {/* Net Profit */}
-        <div className={`px-5 py-4 border-t-2 flex items-center justify-between ${isProfit ? 'bg-emerald-500/5' : 'bg-destructive/5'}`}>
+        <div
+          className={`px-5 py-4 border-t-2 flex items-center justify-between ${isProfit ? 'bg-emerald-500/5' : 'bg-destructive/5'}`}
+        >
           <span className="text-sm font-semibold">Net Profit / (Loss)</span>
-          <span className={`text-lg font-bold tabular-nums ${isProfit ? 'text-emerald-600' : 'text-destructive'}`}>
+          <span
+            className={`text-lg font-bold tabular-nums ${isProfit ? 'text-emerald-600' : 'text-destructive'}`}
+          >
             {formatZAR(data.netProfit)}
           </span>
         </div>
       </div>
     </div>
-  )
+  );
 }

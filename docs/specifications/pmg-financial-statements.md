@@ -1,4 +1,5 @@
 # PMG Control Center - Financial Statements Module
+
 ### Feature Specification - Phase 11 (Financial Statements)
 
 > **Internal developer reference · Playhouse Media Group**
@@ -137,16 +138,16 @@ to suppliers).
 
 ### Summary of All New Tables
 
-| Table | Purpose | Required For |
-|---|---|---|
-| `bank_accounts` | Track PMG's bank account balances | Cash Flow Statement |
-| `assets` | Track what PMG owns - equipment, computers, vehicles | Balance Sheet |
-| `liabilities` | Track what PMG owes - loans, credit, outstanding payables | Balance Sheet |
+| Table           | Purpose                                                   | Required For        |
+| --------------- | --------------------------------------------------------- | ------------------- |
+| `bank_accounts` | Track PMG's bank account balances                         | Cash Flow Statement |
+| `assets`        | Track what PMG owns - equipment, computers, vehicles      | Balance Sheet       |
+| `liabilities`   | Track what PMG owes - loans, credit, outstanding payables | Balance Sheet       |
 
 ### New Column on Existing Table
 
-| Table | Column | Type | Purpose |
-|---|---|---|---|
+| Table      | Column                   | Type                  | Purpose                                                                                         |
+| ---------- | ------------------------ | --------------------- | ----------------------------------------------------------------------------------------------- |
 | `expenses` | `is_capital_expenditure` | boolean DEFAULT false | Flags equipment/asset purchases for the Investing Activities section of the cash flow statement |
 
 ---
@@ -162,49 +163,45 @@ Jacob reconciles with his actual bank statement. This keeps the system simple -
 it does not attempt to be a full bank ledger.
 
 ```ts
-import {
-  boolean, date, index, numeric, pgTable,
-  text, timestamp, uuid
-} from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import { boolean, date, index, numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 export const bankAccounts = pgTable(
-  "bank_accounts",
+  'bank_accounts',
   {
-    id:           uuid("id").primaryKey().defaultRandom(),
+    id: uuid('id').primaryKey().defaultRandom(),
 
     // Account identity
-    name:         text("name").notNull(),
+    name: text('name').notNull(),
     // e.g. "PMG FNB Cheque Account", "Apex Web Solutions Savings"
-    bankName:     text("bank_name").notNull(),
+    bankName: text('bank_name').notNull(),
     // e.g. "FNB", "Standard Bank", "Capitec"
-    accountNo:    text("account_no"),
-    accountType:  text("account_type"),
+    accountNo: text('account_no'),
+    accountType: text('account_type'),
     // e.g. "Cheque", "Savings", "Business Current"
-    branchCode:   text("branch_code"),
+    branchCode: text('branch_code'),
 
     // Balance tracking - manually updated on reconciliation
-    currentBalance:    numeric("current_balance", { precision: 12, scale: 2 })
-                         .notNull().default("0"),
-    lastReconciledDate: date("last_reconciled_date"),
+    currentBalance: numeric('current_balance', { precision: 12, scale: 2 }).notNull().default('0'),
+    lastReconciledDate: date('last_reconciled_date'),
     // The date Jacob last checked this balance against his bank statement
 
     // Flags
-    isActive:     boolean("is_active").notNull().default(true),
-    isPrimary:    boolean("is_primary").notNull().default(false),
+    isActive: boolean('is_active').notNull().default(true),
+    isPrimary: boolean('is_primary').notNull().default(false),
     // isPrimary marks the main operating account used in the cash flow statement
 
     // Audit
-    createdAt:    timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updatedAt:    timestamp("updated_at", { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }),
   },
   (t) => [
-    index("bank_accounts_name_idx").on(t.name),
-    index("bank_accounts_is_active_idx").on(t.isActive),
+    index('bank_accounts_name_idx').on(t.name),
+    index('bank_accounts_is_active_idx').on(t.isActive),
   ],
 );
 
-export type BankAccount    = typeof bankAccounts.$inferSelect;
+export type BankAccount = typeof bankAccounts.$inferSelect;
 export type NewBankAccount = typeof bankAccounts.$inferInsert;
 ```
 
@@ -217,62 +214,69 @@ Sheet under Current Assets or Fixed Assets depending on their type.
 
 ```ts
 import {
-  boolean, check, date, index, numeric, pgEnum,
-  pgTable, text, timestamp, uuid
-} from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
-import { divisions } from "./divisions";
+  boolean,
+  check,
+  date,
+  index,
+  numeric,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { divisions } from './divisions';
 
-export const assetTypeEnum = pgEnum("asset_type", [
-  "fixed",    // long-term: equipment, vehicles, computers, furniture
-  "current",  // short-term: cash equivalents, prepaid expenses
+export const assetTypeEnum = pgEnum('asset_type', [
+  'fixed', // long-term: equipment, vehicles, computers, furniture
+  'current', // short-term: cash equivalents, prepaid expenses
 ]);
 
 export const assets = pgTable(
-  "assets",
+  'assets',
   {
-    id:            uuid("id").primaryKey().defaultRandom(),
+    id: uuid('id').primaryKey().defaultRandom(),
 
     // Identity
-    name:          text("name").notNull(),
+    name: text('name').notNull(),
     // e.g. "MacBook Pro 14-inch", "Canon EOS Camera", "Company Vehicle"
-    description:   text("description"),
-    category:      text("category").notNull(),
+    description: text('description'),
+    category: text('category').notNull(),
     // Freeform: "Computer Equipment", "Camera & Lenses", "Furniture", "Software Licence"
-    type:          assetTypeEnum("type").notNull().default("fixed"),
+    type: assetTypeEnum('type').notNull().default('fixed'),
 
     // Division ownership - which division this asset primarily serves
-    divisionId:    uuid("division_id")
-                     .references(() => divisions.id, { onDelete: "set null" }),
+    divisionId: uuid('division_id').references(() => divisions.id, { onDelete: 'set null' }),
 
     // Values
-    purchaseDate:  date("purchase_date").notNull(),
-    purchaseValue: numeric("purchase_value", { precision: 12, scale: 2 }).notNull(),
+    purchaseDate: date('purchase_date').notNull(),
+    purchaseValue: numeric('purchase_value', { precision: 12, scale: 2 }).notNull(),
     // Original cost paid - never changes after entry
-    currentValue:  numeric("current_value",  { precision: 12, scale: 2 }).notNull(),
+    currentValue: numeric('current_value', { precision: 12, scale: 2 }).notNull(),
     // Updated manually when Jacob estimates current worth (depreciation)
 
     // Disposal
-    isDisposed:    boolean("is_disposed").notNull().default(false),
-    disposalDate:  date("disposal_date"),
-    disposalValue: numeric("disposal_value", { precision: 12, scale: 2 }),
+    isDisposed: boolean('is_disposed').notNull().default(false),
+    disposalDate: date('disposal_date'),
+    disposalValue: numeric('disposal_value', { precision: 12, scale: 2 }),
     // If the asset was sold, the amount received
 
     // Audit
-    createdAt:     timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updatedAt:     timestamp("updated_at", { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }),
   },
   (t) => [
-    check("assets_purchase_value_positive", sql`${t.purchaseValue} > 0`),
-    check("assets_current_value_non_negative", sql`${t.currentValue} >= 0`),
-    index("assets_type_idx").on(t.type),
-    index("assets_division_id_idx").on(t.divisionId),
-    index("assets_is_disposed_idx").on(t.isDisposed),
-    index("assets_purchase_date_idx").on(t.purchaseDate),
+    check('assets_purchase_value_positive', sql`${t.purchaseValue} > 0`),
+    check('assets_current_value_non_negative', sql`${t.currentValue} >= 0`),
+    index('assets_type_idx').on(t.type),
+    index('assets_division_id_idx').on(t.divisionId),
+    index('assets_is_disposed_idx').on(t.isDisposed),
+    index('assets_purchase_date_idx').on(t.purchaseDate),
   ],
 );
 
-export type Asset    = typeof assets.$inferSelect;
+export type Asset = typeof assets.$inferSelect;
 export type NewAsset = typeof assets.$inferInsert;
 ```
 
@@ -285,60 +289,68 @@ net worth (equity).
 
 ```ts
 import {
-  boolean, check, date, index, numeric, pgEnum,
-  pgTable, text, timestamp, uuid
-} from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+  boolean,
+  check,
+  date,
+  index,
+  numeric,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
-export const liabilityTypeEnum = pgEnum("liability_type", [
-  "short_term",  // due within 12 months: supplier invoices, credit card balance
-  "long_term",   // due beyond 12 months: business loans, equipment finance
+export const liabilityTypeEnum = pgEnum('liability_type', [
+  'short_term', // due within 12 months: supplier invoices, credit card balance
+  'long_term', // due beyond 12 months: business loans, equipment finance
 ]);
 
 export const liabilities = pgTable(
-  "liabilities",
+  'liabilities',
   {
-    id:              uuid("id").primaryKey().defaultRandom(),
+    id: uuid('id').primaryKey().defaultRandom(),
 
     // Identity
-    name:            text("name").notNull(),
+    name: text('name').notNull(),
     // e.g. "FNB Business Loan", "Adobe CC Outstanding Invoice", "Equipment Finance"
-    description:     text("description"),
-    creditor:        text("creditor").notNull(),
+    description: text('description'),
+    creditor: text('creditor').notNull(),
     // Who PMG owes the money to: "FNB Bank", "Adobe Inc", "Capitec"
-    type:            liabilityTypeEnum("type").notNull().default("short_term"),
+    type: liabilityTypeEnum('type').notNull().default('short_term'),
 
     // Amounts
-    originalAmount:  numeric("original_amount",  { precision: 12, scale: 2 }).notNull(),
+    originalAmount: numeric('original_amount', { precision: 12, scale: 2 }).notNull(),
     // The full amount when the liability was first recorded
-    currentBalance:  numeric("current_balance",  { precision: 12, scale: 2 }).notNull(),
+    currentBalance: numeric('current_balance', { precision: 12, scale: 2 }).notNull(),
     // What is still owed - updated manually as payments are made
-    interestRate:    numeric("interest_rate",     { precision: 5, scale: 2 }),
+    interestRate: numeric('interest_rate', { precision: 5, scale: 2 }),
     // Annual interest rate as a percentage, if applicable
 
     // Dates
-    startDate:       date("start_date").notNull(),
-    dueDate:         date("due_date"),
+    startDate: date('start_date').notNull(),
+    dueDate: date('due_date'),
     // For short-term: when payment is due. For loans: final repayment date.
 
     // Status
-    isSettled:       boolean("is_settled").notNull().default(false),
-    settledDate:     date("settled_date"),
+    isSettled: boolean('is_settled').notNull().default(false),
+    settledDate: date('settled_date'),
 
     // Audit
-    createdAt:       timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updatedAt:       timestamp("updated_at", { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }),
   },
   (t) => [
-    check("liabilities_original_amount_positive",  sql`${t.originalAmount} > 0`),
-    check("liabilities_current_balance_non_negative", sql`${t.currentBalance} >= 0`),
-    index("liabilities_type_idx").on(t.type),
-    index("liabilities_is_settled_idx").on(t.isSettled),
-    index("liabilities_due_date_idx").on(t.dueDate),
+    check('liabilities_original_amount_positive', sql`${t.originalAmount} > 0`),
+    check('liabilities_current_balance_non_negative', sql`${t.currentBalance} >= 0`),
+    index('liabilities_type_idx').on(t.type),
+    index('liabilities_is_settled_idx').on(t.isSettled),
+    index('liabilities_due_date_idx').on(t.dueDate),
   ],
 );
 
-export type Liability    = typeof liabilities.$inferSelect;
+export type Liability = typeof liabilities.$inferSelect;
 export type NewLiability = typeof liabilities.$inferInsert;
 ```
 
@@ -361,16 +373,16 @@ isCapitalExpenditure: boolean("is_capital_expenditure").notNull().default(false)
 ### Barrel Export - Update `packages/db/src/schema/index.ts`
 
 ```ts
-export * from "./aws";
-export * from "./divisions";
-export * from "./clients";
-export * from "./income";
-export * from "./expenses";
-export * from "./leads";
-export * from "./withdrawals";
-export * from "./bank_accounts";  // NEW
-export * from "./assets";         // NEW
-export * from "./liabilities";    // NEW
+export * from './aws';
+export * from './divisions';
+export * from './clients';
+export * from './income';
+export * from './expenses';
+export * from './leads';
+export * from './withdrawals';
+export * from './bank_accounts'; // NEW
+export * from './assets'; // NEW
+export * from './liabilities'; // NEW
 ```
 
 ### Migration Note
@@ -745,23 +757,26 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
 const BankAccountSchema = z.object({
-  name:        z.string().min(1).max(100),
-  bankName:    z.string().min(1).max(100),
-  accountNo:   z.string().optional(),
+  name: z.string().min(1).max(100),
+  bankName: z.string().min(1).max(100),
+  accountNo: z.string().optional(),
   accountType: z.string().optional(),
-  branchCode:  z.string().optional(),
-  isPrimary:   z.coerce.boolean().default(false),
+  branchCode: z.string().optional(),
+  isPrimary: z.coerce.boolean().default(false),
 });
 
 export async function createBankAccount(formData: FormData): Promise<{ error?: string }> {}
-export async function updateBankAccount(id: string, formData: FormData): Promise<{ error?: string }> {}
+export async function updateBankAccount(
+  id: string,
+  formData: FormData,
+): Promise<{ error?: string }> {}
 export async function deleteBankAccount(id: string): Promise<{ error?: string }> {}
 
 // Called when Jacob reconciles against his actual bank statement
 export async function reconcileBankAccount(
   id: string,
   balance: number,
-  date: string
+  date: string,
 ): Promise<{ error?: string }> {}
 ```
 
@@ -774,23 +789,26 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
 const AssetSchema = z.object({
-  name:          z.string().min(1),
-  description:   z.string().optional(),
-  category:      z.string().min(1),
-  type:          z.enum(['fixed', 'current']).default('fixed'),
-  divisionId:    z.string().uuid().optional(),
-  purchaseDate:  z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().optional(),
+  category: z.string().min(1),
+  type: z.enum(['fixed', 'current']).default('fixed'),
+  divisionId: z.string().uuid().optional(),
+  purchaseDate: z.string().min(1),
   purchaseValue: z.coerce.number().positive(),
-  currentValue:  z.coerce.number().min(0),
+  currentValue: z.coerce.number().min(0),
 });
 
 export async function createAsset(formData: FormData): Promise<{ error?: string }> {}
 export async function updateAsset(id: string, formData: FormData): Promise<{ error?: string }> {}
-export async function updateAssetValue(id: string, currentValue: number): Promise<{ error?: string }> {}
+export async function updateAssetValue(
+  id: string,
+  currentValue: number,
+): Promise<{ error?: string }> {}
 export async function disposeAsset(
   id: string,
   disposalDate: string,
-  disposalValue: number
+  disposalValue: number,
 ): Promise<{ error?: string }> {}
 ```
 
@@ -803,24 +821,34 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
 const LiabilitySchema = z.object({
-  name:           z.string().min(1),
-  description:    z.string().optional(),
-  creditor:       z.string().min(1),
-  type:           z.enum(['short_term', 'long_term']).default('short_term'),
+  name: z.string().min(1),
+  description: z.string().optional(),
+  creditor: z.string().min(1),
+  type: z.enum(['short_term', 'long_term']).default('short_term'),
   originalAmount: z.coerce.number().positive(),
   currentBalance: z.coerce.number().min(0),
-  interestRate:   z.coerce.number().min(0).optional(),
-  startDate:      z.string().min(1),
-  dueDate:        z.string().optional(),
+  interestRate: z.coerce.number().min(0).optional(),
+  startDate: z.string().min(1),
+  dueDate: z.string().optional(),
 });
 
 export async function createLiability(formData: FormData): Promise<{ error?: string }> {}
-export async function updateLiability(id: string, formData: FormData): Promise<{ error?: string }> {}
-export async function updateLiabilityBalance(id: string, currentBalance: number): Promise<{ error?: string }> {}
-export async function settleLiability(id: string, settledDate: string): Promise<{ error?: string }> {}
+export async function updateLiability(
+  id: string,
+  formData: FormData,
+): Promise<{ error?: string }> {}
+export async function updateLiabilityBalance(
+  id: string,
+  currentBalance: number,
+): Promise<{ error?: string }> {}
+export async function settleLiability(
+  id: string,
+  settledDate: string,
+): Promise<{ error?: string }> {}
 ```
 
 **All actions must:**
+
 - Return `Promise<{ error?: string }>` - never throw
 - Call `revalidatePath` on success only, inside the `try` block, never in `catch`
 - Validate with Zod before any DB operation
@@ -836,47 +864,47 @@ export async function settleLiability(id: string, settledDate: string): Promise<
 Each report page is an async Server Component that fetches data and passes it to
 a client shell component for period switching (same pattern as the dashboard).
 
-| Page | File | Description |
-|---|---|---|
+| Page             | File                                | Description                                                     |
+| ---------------- | ----------------------------------- | --------------------------------------------------------------- |
 | Income Statement | `reports/income-statement/page.tsx` | Period selector + fetches data + renders `IncomeStatementShell` |
-| Cash Flow | `reports/cash-flow/page.tsx` | Period selector + fetches data + renders `CashFlowShell` |
-| Balance Sheet | `reports/balance-sheet/page.tsx` | Date picker + fetches data + renders `BalanceSheetShell` |
+| Cash Flow        | `reports/cash-flow/page.tsx`        | Period selector + fetches data + renders `CashFlowShell`        |
+| Balance Sheet    | `reports/balance-sheet/page.tsx`    | Date picker + fetches data + renders `BalanceSheetShell`        |
 
 ### Report Components
 
-| Component | File | Description |
-|---|---|---|
+| Component              | File                                            | Description                                                  |
+| ---------------------- | ----------------------------------------------- | ------------------------------------------------------------ |
 | `IncomeStatementShell` | `components/reports/income-statement-shell.tsx` | Client - period tab switcher, renders `IncomeStatementTable` |
-| `IncomeStatementTable` | `components/reports/income-statement-table.tsx` | Server-safe - the actual formatted P&L with all line items |
-| `CashFlowShell` | `components/reports/cash-flow-shell.tsx` | Client - period tab switcher, renders `CashFlowTable` |
-| `CashFlowTable` | `components/reports/cash-flow-table.tsx` | The three-section cash flow layout |
-| `BalanceSheetTable` | `components/reports/balance-sheet-table.tsx` | Assets / Liabilities / Equity layout with balance check |
-| `ReportPeriodSelector` | `components/reports/report-period-selector.tsx` | Reusable date range picker used across all three reports |
+| `IncomeStatementTable` | `components/reports/income-statement-table.tsx` | Server-safe - the actual formatted P&L with all line items   |
+| `CashFlowShell`        | `components/reports/cash-flow-shell.tsx`        | Client - period tab switcher, renders `CashFlowTable`        |
+| `CashFlowTable`        | `components/reports/cash-flow-table.tsx`        | The three-section cash flow layout                           |
+| `BalanceSheetTable`    | `components/reports/balance-sheet-table.tsx`    | Assets / Liabilities / Equity layout with balance check      |
+| `ReportPeriodSelector` | `components/reports/report-period-selector.tsx` | Reusable date range picker used across all three reports     |
 
 ### Management Pages - follow income management pattern exactly
 
-| Page | Components | Notes |
-|---|---|---|
-| `/bank-accounts` | `BankAccountList`, `BankAccountAddForm` | Same pattern as `/income` |
-| `/bank-accounts/[id]` | `BankAccountEditForm`, `ReconcileButton` | Edit + reconcile balance |
-| `/assets` | `AssetList`, `AssetAddForm` | Filter by type, division, category |
-| `/assets/[id]` | `AssetEditForm`, `UpdateValueButton`, `DisposeButton` | |
-| `/liabilities` | `LiabilityList`, `LiabilityAddForm` | Filter by type, settled/active |
-| `/liabilities/[id]` | `LiabilityEditForm`, `UpdateBalanceButton`, `SettleButton` | |
+| Page                  | Components                                                 | Notes                              |
+| --------------------- | ---------------------------------------------------------- | ---------------------------------- |
+| `/bank-accounts`      | `BankAccountList`, `BankAccountAddForm`                    | Same pattern as `/income`          |
+| `/bank-accounts/[id]` | `BankAccountEditForm`, `ReconcileButton`                   | Edit + reconcile balance           |
+| `/assets`             | `AssetList`, `AssetAddForm`                                | Filter by type, division, category |
+| `/assets/[id]`        | `AssetEditForm`, `UpdateValueButton`, `DisposeButton`      |                                    |
+| `/liabilities`        | `LiabilityList`, `LiabilityAddForm`                        | Filter by type, settled/active     |
+| `/liabilities/[id]`   | `LiabilityEditForm`, `UpdateBalanceButton`, `SettleButton` |                                    |
 
 ### Period Selector Logic
 
 The Income Statement and Cash Flow Statement use the same period presets as the
 dashboard, plus a custom date range option:
 
-| Preset | Date range |
-|---|---|
-| This Month | `DATE_TRUNC('month', NOW())` → now |
-| Last Month | Previous calendar month |
-| This Quarter | Q1/Q2/Q3/Q4 of current year |
-| Year to Date | Jan 1 → now |
-| Last Year | Full previous financial year |
-| Custom | User picks from/to date |
+| Preset       | Date range                         |
+| ------------ | ---------------------------------- |
+| This Month   | `DATE_TRUNC('month', NOW())` → now |
+| Last Month   | Previous calendar month            |
+| This Quarter | Q1/Q2/Q3/Q4 of current year        |
+| Year to Date | Jan 1 → now                        |
+| Last Year    | Full previous financial year       |
+| Custom       | User picks from/to date            |
 
 ---
 
@@ -1009,7 +1037,7 @@ These rules govern how financial statements work and must not be violated:
    pool.
 
 2. **Bank balance is manually reconciled, not auto-calculated.** The system
-   calculates what the bank balance *should* be from transactions. The actual
+   calculates what the bank balance _should_ be from transactions. The actual
    balance is what Jacob enters after checking his bank statement. The variance
    between these two is the integrity check. A variance of R0 means the books
    are clean.
@@ -1056,9 +1084,9 @@ handles the formal financial statement documents.
 
 **Add Phase 11 - Financial Statements** (this document) to the phase table:
 
-| Phase | Name | Summary |
-|---|---|---|
-| 11 | Financial Statements | Income Statement, Cash Flow Statement, Balance Sheet - with PDF export |
+| Phase | Name                 | Summary                                                                |
+| ----- | -------------------- | ---------------------------------------------------------------------- |
+| 11    | Financial Statements | Income Statement, Cash Flow Statement, Balance Sheet - with PDF export |
 
 **Add to Admin URL Structure** (`docs/pmg-admin-specification.md`):
 
@@ -1126,6 +1154,6 @@ minus all withdrawals, expressed as assets minus liabilities).
 
 ---
 
-*Last updated: March 2026 · Playhouse Media Group (PTY) Ltd*
-*Jacob Chademwiri · 285 Erasmus Ave, Raslouw AH, Centurion, 0157*
-*"Every rand has a job. Every statement tells the truth about the work."*
+_Last updated: March 2026 · Playhouse Media Group (PTY) Ltd_
+_Jacob Chademwiri · 285 Erasmus Ave, Raslouw AH, Centurion, 0157_
+_"Every rand has a job. Every statement tells the truth about the work."_

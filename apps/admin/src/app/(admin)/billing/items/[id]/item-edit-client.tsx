@@ -29,8 +29,14 @@ export function ItemEditClient({ item }: ItemEditClientProps) {
 
   function handleSave() {
     setError(null);
-    if (!name.trim()) { setError('Name is required.'); return; }
-    if (!unitPrice || parseFloat(unitPrice) < 0) { setError('A valid unit price is required.'); return; }
+    if (!name.trim()) {
+      setError('Name is required.');
+      return;
+    }
+    if (!unitPrice || parseFloat(unitPrice) < 0) {
+      setError('A valid unit price is required.');
+      return;
+    }
 
     setIsSubmitting(true);
     startTransition(async () => {
@@ -54,7 +60,10 @@ export function ItemEditClient({ item }: ItemEditClientProps) {
     startTransition(async () => {
       const result = await archiveItem(item.id);
       if (result.error) toast.error(result.error);
-      else { toast.success('Item archived.'); router.refresh(); }
+      else {
+        toast.success('Item archived.');
+        router.refresh();
+      }
     });
   }
 
@@ -62,7 +71,10 @@ export function ItemEditClient({ item }: ItemEditClientProps) {
     startTransition(async () => {
       const result = await unarchiveItem(item.id);
       if (result.error) toast.error(result.error);
-      else { toast.success('Item restored.'); router.refresh(); }
+      else {
+        toast.success('Item restored.');
+        router.refresh();
+      }
     });
   }
 
@@ -91,11 +103,7 @@ export function ItemEditClient({ item }: ItemEditClientProps) {
         <label className="text-sm font-medium">
           Name <span className="text-destructive">*</span>
         </label>
-        <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          disabled={isSubmitting}
-        />
+        <Input value={name} onChange={(e) => setName(e.target.value)} disabled={isSubmitting} />
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -111,7 +119,9 @@ export function ItemEditClient({ item }: ItemEditClientProps) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium">Unit Price (excl. VAT) <span className="text-destructive">*</span></label>
+          <label className="text-sm font-medium">
+            Unit Price (excl. VAT) <span className="text-destructive">*</span>
+          </label>
           <Input
             type="number"
             min="0"
@@ -137,7 +147,11 @@ export function ItemEditClient({ item }: ItemEditClientProps) {
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="fixed md:relative bottom-0 left-0 right-0 p-4 md:p-0 bg-card/95 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border-t md:border-none z-50 flex gap-2 pb-[max(env(safe-area-inset-bottom),16px)] md:pb-0 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] md:shadow-none dark:shadow-[0_-4px_12px_rgba(0,0,0,0.2)]">
-        <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSave} disabled={isSubmitting}>
+        <Button
+          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={handleSave}
+          disabled={isSubmitting}
+        >
           {isSubmitting ? 'Saving…' : 'Save Changes'}
         </Button>
         {item.status === 'active' ? (

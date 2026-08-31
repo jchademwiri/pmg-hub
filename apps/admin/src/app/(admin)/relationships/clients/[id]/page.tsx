@@ -49,31 +49,39 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
     monthPeriodParam === 'past6';
 
   // Default to 'current' monthPeriod if neither monthPeriod nor year filter is specified in URL
-  const monthPeriod = isMonthPeriodValid
-    ? monthPeriodParam
-    : !yearParam
-    ? 'current'
-    : undefined;
+  const monthPeriod = isMonthPeriodValid ? monthPeriodParam : !yearParam ? 'current' : undefined;
 
   // Mutual exclusivity
   const year = monthPeriod ? undefined : yearParam ? parseInt(yearParam, 10) : undefined;
 
   // Parallel server data fetching
-  const [client, incomeEntries, quotesList, invoicesList, statement, availableYears, creditSummary, creditHistory, divisions, orgSettings, projects, complianceRecords] =
-    await Promise.all([
-      getClientById(id),
-      getAllIncome({ clientId: id }),
-      getAllQuotations({ clientId: id }),
-      getAllInvoices({ clientId: id }),
-      getClientStatement(id, monthPeriod ? { monthPeriod } : year ? { year } : undefined),
-      getStatementYears(id),
-      getClientCreditSummary(id),
-      getClientCreditHistory(id),
-      getAllDivisions(),
-      getOrganisationSettings(),
-      getAllProjectScheduleEntries({ clientId: id }),
-      getComplianceRecordsByClient(id),
-    ]);
+  const [
+    client,
+    incomeEntries,
+    quotesList,
+    invoicesList,
+    statement,
+    availableYears,
+    creditSummary,
+    creditHistory,
+    divisions,
+    orgSettings,
+    projects,
+    complianceRecords,
+  ] = await Promise.all([
+    getClientById(id),
+    getAllIncome({ clientId: id }),
+    getAllQuotations({ clientId: id }),
+    getAllInvoices({ clientId: id }),
+    getClientStatement(id, monthPeriod ? { monthPeriod } : year ? { year } : undefined),
+    getStatementYears(id),
+    getClientCreditSummary(id),
+    getClientCreditHistory(id),
+    getAllDivisions(),
+    getOrganisationSettings(),
+    getAllProjectScheduleEntries({ clientId: id }),
+    getComplianceRecordsByClient(id),
+  ]);
 
   if (!client) notFound();
 
@@ -88,7 +96,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
           ...pay,
           allocations,
         };
-      })
+      }),
     ),
   ]);
 
@@ -101,7 +109,8 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
   };
 
   // If client has a linked division, use that for branding, otherwise use first invoice's
-  const primaryDivisionId = client.divisionId ?? cleanInvoices[0]?.divisionId ?? cleanQuotes[0]?.divisionId;
+  const primaryDivisionId =
+    client.divisionId ?? cleanInvoices[0]?.divisionId ?? cleanQuotes[0]?.divisionId;
   const divSettings = primaryDivisionId
     ? await getDivisionBillingSettings(primaryDivisionId)
     : null;

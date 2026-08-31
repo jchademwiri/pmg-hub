@@ -20,18 +20,18 @@ Recommended approach: use `01` and `03` as the baseline policy and scope documen
 
 ## Comparison Matrix
 
-| Area | Document 01 | Document 02 | Document 03 | Recommended Position |
-| --- | --- | --- | --- | --- |
-| Overall readiness | Clear that app is not ready for accounting yet | Clear that app needs cleanup first | Same as 01 | Adopt the shared conclusion |
-| Billing/accounting boundary | Strong separation between billing operations and accounting | Sometimes blends billing with ledger/accounting behavior | Same as 01 | Preserve separation |
-| Accounting basis | Favors cash-basis operational readiness | Includes accrual-style invoice issue postings | Same as 01 | Keep cash-basis MVP unless accrual is approved |
-| VAT/tax | Correctly flags VAT assumptions as a blocker | Also flags VAT/tax assumptions | Same as 01 | Hard-disable or isolate VAT until tax settings exist |
-| Render-time mutation | Flags invoice page payment backfill as critical | Mentions self-healing/backfill patterns and also flags runtime mutation risk | Same as 01 | Treat render-time writes as a critical blocker |
-| Permissions | Flags missing finance-specific RBAC | Adds more security/access-control detail | Same as 01 | Combine both sets of recommendations |
-| Schema | Focused on accounting readiness gaps | More complete table/field-level schema commentary | Same as 01 | Use 02 detail, filtered through 01 scope |
-| UI/UX | Practical high-level UI fixes | More granular UI/state/navigation findings | Same as 01 | Merge details from 02 after validating route-by-route |
-| Reporting | Correctly says current reporting is operational, not accounting | Adds missing report inventory and export gaps | Same as 01 | Adopt both |
-| Implementation plan | Clear priority buckets | More expansive action list | Same as 01 | Use 01 as priority spine and 02 as detail source |
+| Area                        | Document 01                                                     | Document 02                                                                  | Document 03 | Recommended Position                                  |
+| --------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------- | ----------------------------------------------------- |
+| Overall readiness           | Clear that app is not ready for accounting yet                  | Clear that app needs cleanup first                                           | Same as 01  | Adopt the shared conclusion                           |
+| Billing/accounting boundary | Strong separation between billing operations and accounting     | Sometimes blends billing with ledger/accounting behavior                     | Same as 01  | Preserve separation                                   |
+| Accounting basis            | Favors cash-basis operational readiness                         | Includes accrual-style invoice issue postings                                | Same as 01  | Keep cash-basis MVP unless accrual is approved        |
+| VAT/tax                     | Correctly flags VAT assumptions as a blocker                    | Also flags VAT/tax assumptions                                               | Same as 01  | Hard-disable or isolate VAT until tax settings exist  |
+| Render-time mutation        | Flags invoice page payment backfill as critical                 | Mentions self-healing/backfill patterns and also flags runtime mutation risk | Same as 01  | Treat render-time writes as a critical blocker        |
+| Permissions                 | Flags missing finance-specific RBAC                             | Adds more security/access-control detail                                     | Same as 01  | Combine both sets of recommendations                  |
+| Schema                      | Focused on accounting readiness gaps                            | More complete table/field-level schema commentary                            | Same as 01  | Use 02 detail, filtered through 01 scope              |
+| UI/UX                       | Practical high-level UI fixes                                   | More granular UI/state/navigation findings                                   | Same as 01  | Merge details from 02 after validating route-by-route |
+| Reporting                   | Correctly says current reporting is operational, not accounting | Adds missing report inventory and export gaps                                | Same as 01  | Adopt both                                            |
+| Implementation plan         | Clear priority buckets                                          | More expansive action list                                                   | Same as 01  | Use 01 as priority spine and 02 as detail source      |
 
 ## Duplicate Assessment
 
@@ -166,42 +166,42 @@ The final canonical report should be built from the three drafts as follows:
 
 ### Critical Before Accounting
 
-| Priority | Problem | Why It Matters | Proposed Solution | Likely Affected Areas | Risk If Ignored |
-| --- | --- | --- | --- | --- | --- |
-| P0 | Invoice detail pages can trigger payment/invoice backfill from read paths | Accounting cannot rely on financial data that changes during page rendering | Move backfill to migrations or admin repair jobs | Invoice detail routes, billing actions, payment allocation utilities | Hidden balance changes and non-repeatable reports |
-| P0 | Financial mutations are not consistently transactional | Partial writes can corrupt invoice, payment, income, expense, and allocation state | Wrap create/update/delete/void/payment allocation flows in DB transactions | Billing actions, payment actions, expense actions, allocation services | Broken balances, orphan records, incorrect statements |
-| P0 | Finance permissions are too broad or implicit | Accounting data is sensitive and requires stricter access control | Add finance-specific permissions and enforce them in server actions/routes | Auth permissions, billing actions, reports, admin routes | Unauthorized financial changes or visibility |
-| P0 | VAT assumptions exist in billing models/UI | The requested accounting scope is non-VAT | Disable VAT UI/logic or isolate behind explicit tax settings | Quote/invoice forms, document preview, billing schema | Incorrect totals and misleading documents |
-| P0 | No reliable audit trail for financial actions | Accounting requires traceability for changes, voids, approvals, and reversals | Add activity/audit events for invoice, payment, expense, allocation, and settings changes | New audit table/service, financial server actions | No defensible change history |
+| Priority | Problem                                                                   | Why It Matters                                                                     | Proposed Solution                                                                         | Likely Affected Areas                                                  | Risk If Ignored                                       |
+| -------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------- |
+| P0       | Invoice detail pages can trigger payment/invoice backfill from read paths | Accounting cannot rely on financial data that changes during page rendering        | Move backfill to migrations or admin repair jobs                                          | Invoice detail routes, billing actions, payment allocation utilities   | Hidden balance changes and non-repeatable reports     |
+| P0       | Financial mutations are not consistently transactional                    | Partial writes can corrupt invoice, payment, income, expense, and allocation state | Wrap create/update/delete/void/payment allocation flows in DB transactions                | Billing actions, payment actions, expense actions, allocation services | Broken balances, orphan records, incorrect statements |
+| P0       | Finance permissions are too broad or implicit                             | Accounting data is sensitive and requires stricter access control                  | Add finance-specific permissions and enforce them in server actions/routes                | Auth permissions, billing actions, reports, admin routes               | Unauthorized financial changes or visibility          |
+| P0       | VAT assumptions exist in billing models/UI                                | The requested accounting scope is non-VAT                                          | Disable VAT UI/logic or isolate behind explicit tax settings                              | Quote/invoice forms, document preview, billing schema                  | Incorrect totals and misleading documents             |
+| P0       | No reliable audit trail for financial actions                             | Accounting requires traceability for changes, voids, approvals, and reversals      | Add activity/audit events for invoice, payment, expense, allocation, and settings changes | New audit table/service, financial server actions                      | No defensible change history                          |
 
 ### Important Before Accounting
 
-| Priority | Problem | Why It Matters | Proposed Solution | Likely Affected Areas | Risk If Ignored |
-| --- | --- | --- | --- | --- | --- |
-| P1 | Allocation ledger naming overlaps with accounting General Ledger | Users and developers may confuse operational allocations with formal accounting entries | Rename to `allocationLedger` or `divisionAllocationLedger` | DB schema, queries, reports, UI labels | Misdesigned GL implementation |
-| P1 | Payment allocation/status rules are spread across views/actions | Multiple code paths can calculate different invoice states | Create one payment allocation and invoice status service | Billing actions, invoice views, reports | Inconsistent paid/partial/overdue status |
-| P1 | Expense categories are not mapped to accounting accounts | AP/P&L cannot be generated cleanly later | Add account-mapping-ready category metadata | Expense schema, category settings, future COA mapping | Manual cleanup before P&L/AP |
-| P1 | Reports are operational summaries only | Accounting reports need reliable period filters and source-of-truth totals | Add shared financial period/date filtering and export-ready query helpers | Dashboard, reports, financial queries | Reports disagree after accounting is added |
-| P1 | Settings and financial configuration lack strict constraints | Singleton/multi-tenant settings can drift | Enforce uniqueness and clear organization/division ownership | Settings schema/actions | Ambiguous accounting configuration |
+| Priority | Problem                                                          | Why It Matters                                                                          | Proposed Solution                                                         | Likely Affected Areas                                 | Risk If Ignored                            |
+| -------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------ |
+| P1       | Allocation ledger naming overlaps with accounting General Ledger | Users and developers may confuse operational allocations with formal accounting entries | Rename to `allocationLedger` or `divisionAllocationLedger`                | DB schema, queries, reports, UI labels                | Misdesigned GL implementation              |
+| P1       | Payment allocation/status rules are spread across views/actions  | Multiple code paths can calculate different invoice states                              | Create one payment allocation and invoice status service                  | Billing actions, invoice views, reports               | Inconsistent paid/partial/overdue status   |
+| P1       | Expense categories are not mapped to accounting accounts         | AP/P&L cannot be generated cleanly later                                                | Add account-mapping-ready category metadata                               | Expense schema, category settings, future COA mapping | Manual cleanup before P&L/AP               |
+| P1       | Reports are operational summaries only                           | Accounting reports need reliable period filters and source-of-truth totals              | Add shared financial period/date filtering and export-ready query helpers | Dashboard, reports, financial queries                 | Reports disagree after accounting is added |
+| P1       | Settings and financial configuration lack strict constraints     | Singleton/multi-tenant settings can drift                                               | Enforce uniqueness and clear organization/division ownership              | Settings schema/actions                               | Ambiguous accounting configuration         |
 
 ### Nice-To-Have Polish
 
-| Priority | Problem | Why It Matters | Proposed Solution | Likely Affected Areas | Risk If Ignored |
-| --- | --- | --- | --- | --- | --- |
-| P2 | UI states are inconsistent across finance pages | Users need predictable workflows for sensitive financial records | Add route-level matrix for loading, empty, error, mobile, confirmation, and export states | Billing, clients, divisions, reports, dashboard | Slower adoption and support friction |
-| P2 | Naming differs across income, payments, billing, and ledger views | Accounting concepts require precise language | Standardize labels: payment, receipt, allocation, invoice, income, expense, ledger | UI copy, routes, schema comments, docs | User confusion |
-| P2 | Export behavior is incomplete | Finance users expect CSV/PDF exports for audits and reconciliation | Add exports to invoices, payments, expenses, client statements, operational reports | Report routes, table components | Manual reporting work |
-| P2 | Related-record navigation is uneven | Users need to move between client, invoice, payment, quote, division, and report records | Add consistent backlinks and related-record panels | Detail pages, table row actions | Inefficient finance review workflows |
+| Priority | Problem                                                           | Why It Matters                                                                           | Proposed Solution                                                                         | Likely Affected Areas                           | Risk If Ignored                      |
+| -------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------ |
+| P2       | UI states are inconsistent across finance pages                   | Users need predictable workflows for sensitive financial records                         | Add route-level matrix for loading, empty, error, mobile, confirmation, and export states | Billing, clients, divisions, reports, dashboard | Slower adoption and support friction |
+| P2       | Naming differs across income, payments, billing, and ledger views | Accounting concepts require precise language                                             | Standardize labels: payment, receipt, allocation, invoice, income, expense, ledger        | UI copy, routes, schema comments, docs          | User confusion                       |
+| P2       | Export behavior is incomplete                                     | Finance users expect CSV/PDF exports for audits and reconciliation                       | Add exports to invoices, payments, expenses, client statements, operational reports       | Report routes, table components                 | Manual reporting work                |
+| P2       | Related-record navigation is uneven                               | Users need to move between client, invoice, payment, quote, division, and report records | Add consistent backlinks and related-record panels                                        | Detail pages, table row actions                 | Inefficient finance review workflows |
 
 ### Future After Accounting Foundation
 
-| Priority | Problem | Why It Matters | Proposed Solution | Likely Affected Areas | Risk If Ignored |
-| --- | --- | --- | --- | --- | --- |
-| P3 | No Chart of Accounts | Required for formal accounting | Add COA after billing cleanup and settings decisions | New accounting schema/routes/actions | Cannot build GL or statements |
-| P3 | No journal entry engine | Required for auditable double-entry accounting | Add journal batches, lines, posting states, reversals, and source references | New accounting module | No formal ledger |
-| P3 | No Trial Balance/P&L/Balance Sheet | Required for accounting reporting | Build from posted journal entries only | Accounting reports | Reports remain operational only |
-| P3 | No AP/AR subledger design | Required for payable/receivable tracking | Add AP/AR after invoice/payment/expense semantics are stable | Accounting + billing integration | Rework of billing and expense flows |
-| P3 | No bank reconciliation or loan tracking | Required for mature accounting controls | Add after cash/bank account model is defined | Accounting, payments, bank accounts, loans | Cash reports remain incomplete |
+| Priority | Problem                                 | Why It Matters                                 | Proposed Solution                                                            | Likely Affected Areas                      | Risk If Ignored                     |
+| -------- | --------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------ | ----------------------------------- |
+| P3       | No Chart of Accounts                    | Required for formal accounting                 | Add COA after billing cleanup and settings decisions                         | New accounting schema/routes/actions       | Cannot build GL or statements       |
+| P3       | No journal entry engine                 | Required for auditable double-entry accounting | Add journal batches, lines, posting states, reversals, and source references | New accounting module                      | No formal ledger                    |
+| P3       | No Trial Balance/P&L/Balance Sheet      | Required for accounting reporting              | Build from posted journal entries only                                       | Accounting reports                         | Reports remain operational only     |
+| P3       | No AP/AR subledger design               | Required for payable/receivable tracking       | Add AP/AR after invoice/payment/expense semantics are stable                 | Accounting + billing integration           | Rework of billing and expense flows |
+| P3       | No bank reconciliation or loan tracking | Required for mature accounting controls        | Add after cash/bank account model is defined                                 | Accounting, payments, bank accounts, loans | Cash reports remain incomplete      |
 
 ## Best Implementation Sequence
 

@@ -142,43 +142,47 @@ export function QuotesTable({
             </TableRow>
           ) : (
             entries.map((quote) => (
-            <TableRow 
-              key={quote.id}
-              className="hover:bg-muted/40 transition-colors border-b border-border relative cursor-pointer"
-            >
-              <TableCell className="font-medium">
-                <Link
-                  href={`/billing/quotes/${quote.id}`}
-                  className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
-                  aria-label={`View quote ${quote.documentNumber}`}
-                />
-                <span className="hover:underline text-primary font-semibold relative z-10">
-                  {quote.documentNumber}
-                </span>
-              </TableCell>
-              <TableCell>
-                {quote.reference ? (
-                  <span className="text-muted-foreground">{quote.reference.length > 30 ? quote.reference.slice(0, 30) + '...' : quote.reference}</span>
-                ) : (
-                  <span className="italic text-muted-foreground/50">None</span>
-                )}
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {quote.clientName ?? <span className="italic">No client</span>}
-              </TableCell>
-              <TableCell className="tabular-nums text-sm">
-                {fmtDate(quote.quoteDate)}
-              </TableCell>
-              <TableCell className="tabular-nums text-sm text-muted-foreground">
-                {fmtDate(quote.expiryDate)}
-              </TableCell>
-              <TableCell className={`text-right tabular-nums text-sm font-medium ${QUOTE_STATUS_COLORS[quote.status] || ''}`}>
-                {formatZAR(Number(quote.total))}
-              </TableCell>
-              <TableCell>
-                <BillingStatusBadge status={quote.status} />
-              </TableCell>
-            </TableRow>
+              <TableRow
+                key={quote.id}
+                className="hover:bg-muted/40 transition-colors border-b border-border relative cursor-pointer"
+              >
+                <TableCell className="font-medium">
+                  <Link
+                    href={`/billing/quotes/${quote.id}`}
+                    className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
+                    aria-label={`View quote ${quote.documentNumber}`}
+                  />
+                  <span className="hover:underline text-primary font-semibold relative z-10">
+                    {quote.documentNumber}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  {quote.reference ? (
+                    <span className="text-muted-foreground">
+                      {quote.reference.length > 30
+                        ? quote.reference.slice(0, 30) + '...'
+                        : quote.reference}
+                    </span>
+                  ) : (
+                    <span className="italic text-muted-foreground/50">None</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {quote.clientName ?? <span className="italic">No client</span>}
+                </TableCell>
+                <TableCell className="tabular-nums text-sm">{fmtDate(quote.quoteDate)}</TableCell>
+                <TableCell className="tabular-nums text-sm text-muted-foreground">
+                  {fmtDate(quote.expiryDate)}
+                </TableCell>
+                <TableCell
+                  className={`text-right tabular-nums text-sm font-medium ${QUOTE_STATUS_COLORS[quote.status] || ''}`}
+                >
+                  {formatZAR(Number(quote.total))}
+                </TableCell>
+                <TableCell>
+                  <BillingStatusBadge status={quote.status} />
+                </TableCell>
+              </TableRow>
             ))
           )}
         </TableBody>
@@ -207,7 +211,5 @@ export function QuotesTable({
     </>
   );
 
-  return (
-    <DataList desktop={desktopView} mobile={mobileView} />
-  );
+  return <DataList desktop={desktopView} mobile={mobileView} />;
 }

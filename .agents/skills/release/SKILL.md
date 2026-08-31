@@ -16,6 +16,7 @@ Promotes `dev` → `master` via release PR.
 ### 1. Check & Merge Open Feature PRs (if applicable)
 
 If there is an open PR targeting `dev` from the working branch or recent task:
+
 1. Verify its CI checks pass:
    ```bash
    gh pr checks <pr-number>
@@ -59,6 +60,7 @@ gh pr checks
 ### 6. Summary & Next Step Guidance
 
 Present the release summary and next step reminder:
+
 ```
 📦 Release PR #<number> created: <url>
 CI checks passing!

@@ -1,6 +1,7 @@
 # Product Requirements Document (PRD)
 
 ## PMG Financial System: Allocation Routing Update
+
 **Version:** 3.0 (Consolidated)
 **Status:** Approved
 **Product:** PMG Control Center
@@ -28,11 +29,11 @@ Gross Revenue − PMG Share (25%) − Expenses = Profit Pool
 The Profit Pool is then split:
 
 | Bucket   | Rate |
-|----------|------|
+| -------- | ---- |
 | Salary   | 35%  |
 | Reinvest | 30%  |
 | Reserve  | 30%  |
-| Flex     |  5%  |
+| Flex     | 5%   |
 
 ### Core Flaw
 
@@ -69,23 +70,23 @@ The existing `/accounts` page and `recordAccountWithdrawal` server action both c
 
 ### Definitions
 
-| Term | Formula |
-|---|---|
-| Net Revenue | Gross Revenue − PMG Share (25%) |
-| Profit Pool | Net Revenue − Expenses |
-| Expected Bucket Allocation | Cumulative All-Time Profit Pool × Bucket % |
-| Available Bucket Balance | Expected Allocation − Sum of Ledger entries for that bucket |
+| Term                       | Formula                                                     |
+| -------------------------- | ----------------------------------------------------------- |
+| Net Revenue                | Gross Revenue − PMG Share (25%)                             |
+| Profit Pool                | Net Revenue − Expenses                                      |
+| Expected Bucket Allocation | Cumulative All-Time Profit Pool × Bucket %                  |
+| Available Bucket Balance   | Expected Allocation − Sum of Ledger entries for that bucket |
 
 ### Allocation Percentages
 
 Must always sum to **100%**.
 
 | Bucket   | Rate |
-|----------|------|
+| -------- | ---- |
 | Salary   | 35%  |
 | Reinvest | 30%  |
 | Reserve  | 30%  |
-| Flex     |  5%  |
+| Flex     | 5%   |
 
 ### Important Note on "All-Time Profit Pool"
 
@@ -97,19 +98,21 @@ The balance formula uses the cumulative all-time Profit Pool (i.e. summed direct
 
 ### Decision Rule
 
-| Situation | Action | Where it goes |
-|---|---|---|
-| Cost required to **deliver an existing obligation** | "Add Expense" | `expenses` table - reduces Profit Pool |
+| Situation                                                          | Action             | Where it goes                                      |
+| ------------------------------------------------------------------ | ------------------ | -------------------------------------------------- |
+| Cost required to **deliver an existing obligation**                | "Add Expense"      | `expenses` table - reduces Profit Pool             |
 | Cost funded by **saved profits** (growth, salary draw, investment) | "Add Ledger Entry" | `ledger` table - deducts from selected bucket only |
 
 ### Examples
 
 **Pre-Profit Expenses:**
+
 - AWS client domain hosting
 - TES stationery and printing
 - Server/infrastructure costs
 
 **Post-Profit Ledger Entries:**
+
 - PMG Facebook/Google Ads campaigns (paid from Reinvest)
 - Personal salary withdrawals (paid from Salary)
 - New business equipment (paid from Reinvest or Reserve)
@@ -126,26 +129,29 @@ The balance formula uses the cumulative all-time Profit Pool (i.e. summed direct
 #### File: `packages/db/src/schema/ledger.ts` (renamed from `withdrawals.ts`)
 
 ```typescript
-import { pgEnum, pgTable, uuid, date, numeric, text, timestamp, check, index } from 'drizzle-orm/pg-core';
+import {
+  pgEnum,
+  pgTable,
+  uuid,
+  date,
+  numeric,
+  text,
+  timestamp,
+  check,
+  index,
+} from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
-export const allocationEnum = pgEnum('allocation_type', [
-  'salary',
-  'reinvest',
-  'reserve',
-  'flex',
-]);
+export const allocationEnum = pgEnum('allocation_type', ['salary', 'reinvest', 'reserve', 'flex']);
 
-export const entryTypeEnum = pgEnum('entry_type', [
-  'spend',
-  'transfer',
-  'adjustment',
-]);
+export const entryTypeEnum = pgEnum('entry_type', ['spend', 'transfer', 'adjustment']);
 
 export const ledger = pgTable(
   'ledger',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     date: date('date').notNull(),
     amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
     allocationType: allocationEnum('allocation_type').notNull().default('salary'),
@@ -235,6 +241,7 @@ export async function getLedgerBalances(): Promise<BucketBalances> {
 **Remove:** All `withdrawal`-related query functions (`getAllWithdrawals`, `getWithdrawalById`, `getWithdrawalsByAccount`, `getWithdrawalsByAccountYTD`, `getWithdrawalsByAccountYTDSpecific`, `getWithdrawalsCurrentMonth`, `getWithdrawalsPreviousMonth`, `getWithdrawalsYTDFull`, `getTotalWithdrawalsYTD`, `insertWithdrawal`).
 
 **Add:**
+
 - `getAllLedgerEntries(filters?, pageObj?)` - paginated, filterable by `allocationType` and `entryType`
 - `getLedgerById(id)`
 - `insertLedgerEntry(data)`
@@ -281,6 +288,7 @@ Remove all `withdrawals`-related exports. Export all new `ledger` query function
 #### Accounts Page: `apps/admin/src/app/(admin)/accounts/`
 
 The "Record Withdrawal" button on each `AccountCard` currently opens an inline form that calls `recordAccountWithdrawal`. After this update:
+
 - The form must open the Ledger Form with the corresponding `allocationType` pre-selected
 - The action must route through `createLedgerEntry` (not `insertWithdrawal`)
 - Balance checks must query the `ledger` table
@@ -344,6 +352,7 @@ The "All-Time Profit Pool" is computed live from `income` and `expenses` tables,
 ### Bucket Jumping
 
 If a bucket has insufficient funds:
+
 - User manually selects an alternative bucket in the form dropdown
 - System allows this and logs the entry against the selected bucket
 - No automatic inter-bucket transfers in this version (see Future Enhancements)
@@ -353,15 +362,15 @@ If a bucket has insufficient funds:
 
 ## 9. Constraints & Validation Rules
 
-| Rule | Enforcement |
-|---|---|
-| Ledger amount must be > 0 | DB check constraint + Zod |
-| Ledger amount must not exceed available bucket balance | Server action guard |
-| `allocationType` must match enum exactly | DB enum + Zod |
-| `entryType` must match enum exactly | DB enum + Zod |
-| Expenses must be positive | Existing - unchanged |
-| Allocation percentages must equal 100% | Compile-time constant - unchanged |
-| Date cannot be in the future | Server action guard |
+| Rule                                                   | Enforcement                       |
+| ------------------------------------------------------ | --------------------------------- |
+| Ledger amount must be > 0                              | DB check constraint + Zod         |
+| Ledger amount must not exceed available bucket balance | Server action guard               |
+| `allocationType` must match enum exactly               | DB enum + Zod                     |
+| `entryType` must match enum exactly                    | DB enum + Zod                     |
+| Expenses must be positive                              | Existing - unchanged              |
+| Allocation percentages must equal 100%                 | Compile-time constant - unchanged |
+| Date cannot be in the future                           | Server action guard               |
 
 ---
 
@@ -370,6 +379,7 @@ If a bucket has insufficient funds:
 ### Negative Profit Pool
 
 If Expenses exceed Net Revenue:
+
 - Profit Pool = 0
 - Expected allocations for all buckets = 0
 - No Ledger entries should be permitted
@@ -390,52 +400,64 @@ Every file that currently imports from `packages/db/src/schema/withdrawals.ts` o
 ## 11. User Stories & Acceptance Criteria
 
 ### Story 1: Log an Operational Expense
+
 As an agency owner, I want to log costs required to deliver client work so that profit is calculated correctly.
 
 **AC:**
+
 - Expense reduces Net Revenue before Profit Pool split
 - Bucket balances are unaffected
 - Expense appears on the Expenses page
 
 ### Story 2: Record a Salary Withdrawal
+
 As an agency owner, I want to draw my salary from the Salary bucket without affecting other buckets.
 
 **AC:**
+
 - User selects "Salary" as `allocationType` (or uses the Accounts page button which pre-selects it)
 - Salary bucket balance decreases by the withdrawal amount
 - Profit Pool is unchanged
 - Reinvest, Reserve, and Flex balances are unchanged
 
 ### Story 3: Spend from Reinvest on Advertising
+
 As an agency owner, I want to run a Facebook ad campaign paid from saved Reinvest capital without reducing my Salary.
 
 **AC:**
+
 - User selects "Reinvest" as `allocationType`, "Spend" as `entryType`
 - Reinvest balance decreases correctly
 - Salary balance is unchanged
 - Profit Pool is unchanged
 
 ### Story 4: Emergency Bucket Jump (Reserve to cover Reinvest shortfall)
+
 As an agency owner, when my Reinvest bucket runs low, I want to draw from Reserve instead.
 
 **AC:**
+
 - User selects "Reserve" in the dropdown (overriding the default)
 - Reserve balance decreases
 - Reinvest balance is unchanged
 - Entry is logged with correct `allocationType = 'reserve'`
 
 ### Story 5: View All Bucket Balances
+
 As an agency owner, I want a real-time view of all four bucket balances on the dashboard.
 
 **AC:**
+
 - Dashboard shows Salary, Reinvest, Reserve, Flex available balances
 - Values update after any new income, expense, or ledger entry
 - Negative balances shown in red
 
 ### Story 6: View Ledger History
+
 As an agency owner, I want a full audit trail of all post-profit spending.
 
 **AC:**
+
 - `/ledger` page shows all entries with date, bucket, entry type, amount, description
 - Entries can be filtered by bucket
 - Page total shows all-time ledger spend
@@ -479,25 +501,27 @@ Since there is no historical data to preserve:
 
 ## 15. Risks & Mitigation
 
-| Risk | Mitigation |
-|---|---|
-| Misclassification (expense logged as ledger or vice versa) | Clear decision rule surfaced in both form UIs with examples |
-| Incorrect balance calculations | Centralise all logic in `getLedgerBalances()` - no inline calculations in components |
-| Data pollution in Salary dashboard card | Strict `WHERE allocationType = 'salary'` filter on every query feeding that card |
-| Orphaned imports breaking the build | Search codebase for all references to `withdrawals` before final deployment |
-| `account-withdrawal.ts` bypassing the new system | Explicitly redirect this action through `createLedgerEntry` in Phase 2 |
+| Risk                                                       | Mitigation                                                                           |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Misclassification (expense logged as ledger or vice versa) | Clear decision rule surfaced in both form UIs with examples                          |
+| Incorrect balance calculations                             | Centralise all logic in `getLedgerBalances()` - no inline calculations in components |
+| Data pollution in Salary dashboard card                    | Strict `WHERE allocationType = 'salary'` filter on every query feeding that card     |
+| Orphaned imports breaking the build                        | Search codebase for all references to `withdrawals` before final deployment          |
+| `account-withdrawal.ts` bypassing the new system           | Explicitly redirect this action through `createLedgerEntry` in Phase 2               |
 
 ---
 
 ## 16. Implementation Phases
 
 ### Phase 1: Database Schema
+
 - Create `packages/db/src/schema/ledger.ts` with both enums and the new table
 - Update `packages/db/src/schema/index.ts`
 - Run Drizzle migrations
 - **Gate:** Confirm migration succeeds and DB reflects new schema before Phase 2
 
 ### Phase 2: Server Actions & Backend Logic
+
 - Create `apps/admin/src/app/actions/ledger.ts`
 - Update `apps/admin/src/app/actions/account-withdrawal.ts` to use the Ledger
 - Add `getLedgerBalances()` and all new query functions to `financial.ts` and `queries.ts`
@@ -505,11 +529,13 @@ Since there is no historical data to preserve:
 - **Gate:** All TypeScript compiles with no errors. No orphaned imports.
 
 ### Phase 3: UI - Forms & Ledger Page
+
 - Create `apps/admin/src/components/ledger/` folder with add and edit forms
 - Create `apps/admin/src/app/(admin)/ledger/page.tsx`
 - Add bucket dropdown and real-time balance display to forms
 
 ### Phase 4: Navigation, Dashboard & Accounts
+
 - Update sidebar href and label
 - Update `top-nav.tsx` route labels
 - Update `salary-card.tsx` to consume `BucketBalances.salary`

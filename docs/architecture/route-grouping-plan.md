@@ -1,4 +1,5 @@
 # Route Grouping Refactor Plan
+
 ## Align URL structure with navigation groups
 
 **Date:** May 2026  
@@ -10,14 +11,14 @@
 
 ## Current vs Target URL Structure
 
-| Group | Current URLs | Target URLs |
-|---|---|---|
-| Finance | `/income`, `/expenses`, `/expense-categories`, `/ledger`, `/accounts` | `/finance/income`, `/finance/expenses`, `/finance/categories`, `/finance/ledger`, `/finance/accounts` |
-| Billing | `/billing/quotes`, `/billing/invoices`, `/billing/statements`, `/billing/items` | unchanged - already grouped |
-| Relationships | `/clients`, `/leads`, `/divisions` | `/relationships/clients`, `/relationships/leads`, `/relationships/divisions` |
-| Insights | `/snapshots`, `/reports` | `/insights/snapshots`, `/insights/reports` |
-| System | `/settings`, `/settings/*` | unchanged - already grouped |
-| Overview | `/dashboard` | unchanged |
+| Group         | Current URLs                                                                    | Target URLs                                                                                           |
+| ------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Finance       | `/income`, `/expenses`, `/expense-categories`, `/ledger`, `/accounts`           | `/finance/income`, `/finance/expenses`, `/finance/categories`, `/finance/ledger`, `/finance/accounts` |
+| Billing       | `/billing/quotes`, `/billing/invoices`, `/billing/statements`, `/billing/items` | unchanged - already grouped                                                                           |
+| Relationships | `/clients`, `/leads`, `/divisions`                                              | `/relationships/clients`, `/relationships/leads`, `/relationships/divisions`                          |
+| Insights      | `/snapshots`, `/reports`                                                        | `/insights/snapshots`, `/insights/reports`                                                            |
+| System        | `/settings`, `/settings/*`                                                      | unchanged - already grouped                                                                           |
+| Overview      | `/dashboard`                                                                    | unchanged                                                                                             |
 
 ---
 
@@ -28,6 +29,7 @@
 Next.js App Router maps the file path directly to the URL. Moving a folder = changing the URL.
 
 **Finance group** - create `(admin)/finance/` route group:
+
 ```
 (admin)/income/           →  (admin)/finance/income/
 (admin)/expenses/         →  (admin)/finance/expenses/
@@ -39,6 +41,7 @@ Next.js App Router maps the file path directly to the URL. Moving a folder = cha
 Note: `expense-categories` → `categories` (shorter, cleaner URL).
 
 **Relationships group** - create `(admin)/relationships/` route group:
+
 ```
 (admin)/clients/          →  (admin)/relationships/clients/
 (admin)/leads/            →  (admin)/relationships/leads/
@@ -46,6 +49,7 @@ Note: `expense-categories` → `categories` (shorter, cleaner URL).
 ```
 
 **Insights group** - create `(admin)/insights/` route group:
+
 ```
 (admin)/snapshots/        →  (admin)/insights/snapshots/
 (admin)/reports/          →  (admin)/insights/reports/
@@ -60,6 +64,7 @@ Every `url` in `GROUPS` must be updated to the new paths. This is the single sou
 Every `revalidatePath('/income')` becomes `revalidatePath('/finance/income')`, etc.
 
 **Files to update:**
+
 - `actions/income.ts` - `/income` → `/finance/income`
 - `actions/expenses.ts` - `/expenses` → `/finance/expenses`
 - `actions/expense-categories.ts` - `/expense-categories` → `/finance/categories`, `/expenses` → `/finance/expenses`
@@ -73,6 +78,7 @@ Every `revalidatePath('/income')` becomes `revalidatePath('/finance/income')`, e
 ### 4. Hardcoded href links in page components
 
 **Files to update:**
+
 - `clients/[id]/page.tsx` - `href="/clients"` → `/relationships/clients`
 - `leads/[id]/page.tsx` - `href="/leads"` → `/relationships/leads`
 - `divisions/[id]/page.tsx` - `href="/divisions"` → `/relationships/divisions`
@@ -103,23 +109,29 @@ No middleware file found - no changes needed here.
 The key constraint: **do not break the running app mid-refactor**. Each step should leave the app in a buildable state.
 
 ### Step 1 - Update nav-data.ts first
+
 Update all URLs in `GROUPS`. The sidebar will show broken links temporarily, but the app still builds. This is the anchor - everything else follows from it.
 
 ### Step 2 - Move Finance routes
+
 Move all 5 finance route directories. Update their internal back-links and revalidatePath calls in the same commit.
 
 ### Step 3 - Move Relationships routes
+
 Move clients, leads, divisions. Update internal links and actions.
 
 ### Step 4 - Move Insights routes
+
 Move snapshots, reports.
 
 ### Step 5 - Update all remaining cross-references
+
 - `billing-invoices.ts` revalidatePath for `/income`
 - Global `not-found.tsx` quick links
 - All scoped `not-found.tsx` files
 
 ### Step 6 - Build + verify
+
 Run `bun run build` - must pass with zero errors.
 
 ### Step 7 - Update TASK-LIST.md
@@ -128,19 +140,20 @@ Run `bun run build` - must pass with zero errors.
 
 ## Risk Assessment
 
-| Risk | Likelihood | Mitigation |
-|---|---|---|
-| Broken internal links | High | Grep for all old paths before finishing |
-| revalidatePath misses | Medium | Grep for every old path string in actions/ |
-| Test failures | Medium | Update test route strings; tests mock actions so URL changes are isolated |
-| `expense-categories` → `categories` rename confusion | Low | Clear naming, update all references |
-| Middleware/auth redirect loops | None | No middleware file exists; auth redirects use `/login` which doesn't move |
+| Risk                                                 | Likelihood | Mitigation                                                                |
+| ---------------------------------------------------- | ---------- | ------------------------------------------------------------------------- |
+| Broken internal links                                | High       | Grep for all old paths before finishing                                   |
+| revalidatePath misses                                | Medium     | Grep for every old path string in actions/                                |
+| Test failures                                        | Medium     | Update test route strings; tests mock actions so URL changes are isolated |
+| `expense-categories` → `categories` rename confusion | Low        | Clear naming, update all references                                       |
+| Middleware/auth redirect loops                       | None       | No middleware file exists; auth redirects use `/login` which doesn't move |
 
 ---
 
 ## Files Inventory
 
 ### Route directories to move (13 total)
+
 ```
 (admin)/income/
 (admin)/expenses/
@@ -155,6 +168,7 @@ Run `bun run build` - must pass with zero errors.
 ```
 
 ### Action files to update (9 total)
+
 ```
 actions/income.ts
 actions/expenses.ts
@@ -168,6 +182,7 @@ actions/billing-invoices.ts
 ```
 
 ### Component/page files with hardcoded hrefs (6 total)
+
 ```
 clients/[id]/page.tsx
 leads/[id]/page.tsx
@@ -178,6 +193,7 @@ app/not-found.tsx
 ```
 
 ### not-found files to update (10 total)
+
 ```
 (admin)/income/not-found.tsx
 (admin)/expenses/not-found.tsx
@@ -192,6 +208,7 @@ app/not-found.tsx
 ```
 
 ### nav-data.ts (1 file - the anchor)
+
 ```
 components/navigation/nav-data.ts
 ```
@@ -255,4 +272,4 @@ async redirects() {
 
 ---
 
-*Created: May 2026 - Review decisions section before executing.*
+_Created: May 2026 - Review decisions section before executing._

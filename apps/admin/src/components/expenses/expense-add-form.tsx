@@ -264,7 +264,8 @@ export function ExpenseAddForm({
             >
               <UploadCloud className="size-8 mb-2 text-primary/70" />
               <p className="text-xs font-semibold text-foreground">
-                Drag & drop receipt file here, or <span className="text-primary underline">browse</span>
+                Drag & drop receipt file here, or{' '}
+                <span className="text-primary underline">browse</span>
               </p>
               <p className="text-[10px] text-muted-foreground mt-1">
                 Supports PDF, PNG, JPG, JPEG (Max 10MB) for SARS audit proof
@@ -281,7 +282,10 @@ export function ExpenseAddForm({
                   )}
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-semibold text-foreground truncate" title={selectedFile.name}>
+                  <span
+                    className="text-xs font-semibold text-foreground truncate"
+                    title={selectedFile.name}
+                  >
                     {selectedFile.name}
                   </span>
                   <span className="text-[10px] text-muted-foreground">
@@ -307,13 +311,7 @@ export function ExpenseAddForm({
 
       <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4 mt-2">
         {onCancel && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isPending}
-            size="sm"
-          >
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isPending} size="sm">
             Cancel
           </Button>
         )}

@@ -3,7 +3,15 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { CalendarClock, AlertTriangle, ListOrdered, Flame, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  CalendarClock,
+  AlertTriangle,
+  ListOrdered,
+  Flame,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { confirm } from '@/components/ui/confirm-dialog';
@@ -96,7 +104,11 @@ function SchedulingSummaryCards({
       {cards.map((card) => {
         const Icon = card.icon;
         return (
-          <Card key={card.label} size="sm" className="hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+          <Card
+            key={card.label}
+            size="sm"
+            className="hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+          >
             <CardContent className="flex items-center justify-between gap-3 p-4">
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -125,7 +137,12 @@ interface CurrentWorkloadCardProps {
   progressMap: Record<string, { total: number; completed: number }>;
 }
 
-function CurrentWorkloadCard({ tenders, clients, onStatusChange, progressMap }: CurrentWorkloadCardProps) {
+function CurrentWorkloadCard({
+  tenders,
+  clients,
+  onStatusChange,
+  progressMap,
+}: CurrentWorkloadCardProps) {
   const [showOthers, setShowOthers] = React.useState(false);
   const clientMap = React.useMemo(() => new Map(clients.map((c) => [c.id, c])), [clients]);
 
@@ -155,7 +172,10 @@ function CurrentWorkloadCard({ tenders, clients, onStatusChange, progressMap }: 
   );
 
   const primaryProgress = progressMap[primaryTender.id] || { total: 0, completed: 0 };
-  const primaryPercent = primaryProgress.total > 0 ? Math.round((primaryProgress.completed / primaryProgress.total) * 100) : 0;
+  const primaryPercent =
+    primaryProgress.total > 0
+      ? Math.round((primaryProgress.completed / primaryProgress.total) * 100)
+      : 0;
 
   return (
     <Card className="border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.05)]">
@@ -180,7 +200,9 @@ function CurrentWorkloadCard({ tenders, clients, onStatusChange, progressMap }: 
         <div className="space-y-3">
           <div className="min-w-0">
             <Link href={`/projects/${primaryTender.id}`} className="hover:underline">
-              <h3 className="font-semibold text-base tracking-tight truncate">{primaryTender.projectReference}</h3>
+              <h3 className="font-semibold text-base tracking-tight truncate">
+                {primaryTender.projectReference}
+              </h3>
             </Link>
             {primaryClient && (
               <p className="text-xs text-muted-foreground mt-0.5 truncate">{primaryClient.name}</p>
@@ -191,7 +213,9 @@ function CurrentWorkloadCard({ tenders, clients, onStatusChange, progressMap }: 
             <div className="flex flex-col gap-1.5">
               <div className="flex justify-between text-[11px] font-medium text-muted-foreground">
                 <span>Task Progress</span>
-                <span>{primaryProgress.completed}/{primaryProgress.total} completed ({primaryPercent}%)</span>
+                <span>
+                  {primaryProgress.completed}/{primaryProgress.total} completed ({primaryPercent}%)
+                </span>
               </div>
               <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
                 <div
@@ -210,7 +234,7 @@ function CurrentWorkloadCard({ tenders, clients, onStatusChange, progressMap }: 
                 ? 'Closing today'
                 : `Overdue by ${Math.abs(daysToClosing)} day${Math.abs(daysToClosing) !== 1 ? 's' : ''}`}
           </div>
-          
+
           {primaryTender.blockers && (
             <div className="flex items-start gap-1.5 rounded-md bg-amber-500/10 p-2">
               <AlertTriangle className="mt-0.5 size-3 shrink-0 text-amber-500" />
@@ -261,10 +285,10 @@ function CurrentWorkloadCard({ tenders, clients, onStatusChange, progressMap }: 
               variant="ghost"
               size="sm"
               className="w-full justify-between h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 px-2"
-              onClick={() => setShowOthers(s => !s)}
+              onClick={() => setShowOthers((s) => !s)}
             >
               <span className="font-medium">
-                {showOthers ? "Hide" : "Show"} other active projects ({tenders.length - 1})
+                {showOthers ? 'Hide' : 'Show'} other active projects ({tenders.length - 1})
               </span>
               {showOthers ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
             </Button>
@@ -274,20 +298,31 @@ function CurrentWorkloadCard({ tenders, clients, onStatusChange, progressMap }: 
                 {tenders.slice(1).map((tender) => {
                   const client = clientMap.get(tender.clientId) || null;
                   const progress = progressMap[tender.id] || { total: 0, completed: 0 };
-                  const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+                  const percent =
+                    progress.total > 0
+                      ? Math.round((progress.completed / progress.total) * 100)
+                      : 0;
                   const daysLeft = Math.ceil(
-                    (new Date(tender.closingDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
+                    (new Date(tender.closingDate).getTime() - new Date().getTime()) /
+                      (1000 * 60 * 60 * 24),
                   );
 
                   return (
-                    <div key={tender.id} className="p-3 rounded-lg border border-border/65 bg-muted/25 space-y-2.5">
+                    <div
+                      key={tender.id}
+                      className="p-3 rounded-lg border border-border/65 bg-muted/25 space-y-2.5"
+                    >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <Link href={`/projects/${tender.id}`} className="hover:underline">
-                            <h4 className="font-semibold text-sm truncate">{tender.projectReference}</h4>
+                            <h4 className="font-semibold text-sm truncate">
+                              {tender.projectReference}
+                            </h4>
                           </Link>
                           {client && (
-                            <p className="text-[11px] text-muted-foreground truncate mt-0.5">{client.name}</p>
+                            <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                              {client.name}
+                            </p>
                           )}
                         </div>
                         <ProjectRiskBadge tender={tender} />
@@ -297,7 +332,9 @@ function CurrentWorkloadCard({ tenders, clients, onStatusChange, progressMap }: 
                         <div className="flex flex-col gap-1">
                           <div className="flex justify-between text-[10px] text-muted-foreground">
                             <span>Progress</span>
-                            <span>{progress.completed}/{progress.total} ({percent}%)</span>
+                            <span>
+                              {progress.completed}/{progress.total} ({percent}%)
+                            </span>
                           </div>
                           <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
                             <div
@@ -310,7 +347,8 @@ function CurrentWorkloadCard({ tenders, clients, onStatusChange, progressMap }: 
 
                       <div className="flex items-center justify-between gap-4 pt-1.5 border-t border-border/30">
                         <span className="text-[10px] text-muted-foreground">
-                          Closes: {formatDate(tender.closingDate)} ({daysLeft > 0 ? `${daysLeft}d left` : "Closing today"})
+                          Closes: {formatDate(tender.closingDate)} (
+                          {daysLeft > 0 ? `${daysLeft}d left` : 'Closing today'})
                         </span>
                         <div className="flex items-center gap-1.5">
                           <Button
@@ -452,9 +490,13 @@ function WarningsPanel({
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               {expanded ? (
-                <><ChevronUp className="size-3" /> Show less</>
+                <>
+                  <ChevronUp className="size-3" /> Show less
+                </>
               ) : (
-                <><ChevronDown className="size-3" /> +{hidden} more</>
+                <>
+                  <ChevronDown className="size-3" /> +{hidden} more
+                </>
               )}
             </button>
           )}
@@ -498,10 +540,7 @@ export function ProjectOverviewClient({
   const router = useRouter();
   const clientMap = React.useMemo(() => new Map(clients.map((c) => [c.id, c])), [clients]);
 
-  const activeEntries = React.useMemo(
-    () => [...inProgress, ...planned],
-    [inProgress, planned],
-  );
+  const activeEntries = React.useMemo(() => [...inProgress, ...planned], [inProgress, planned]);
 
   async function handleStatusChange(id: string, newStatus: string): Promise<string | undefined> {
     const result = await transitionProjectStatusAction(id, newStatus);
@@ -559,13 +598,18 @@ export function ProjectOverviewClient({
             </CardHeader>
             <CardContent className="pt-0">
               {upcomingTenders.length === 0 ? (
-                <p className="text-xs text-muted-foreground py-4 text-center">No upcoming deadlines.</p>
+                <p className="text-xs text-muted-foreground py-4 text-center">
+                  No upcoming deadlines.
+                </p>
               ) : (
                 <ul className="flex flex-col divide-y divide-border/50">
                   {upcomingTenders.map((t) => {
                     const client = clientMap.get(t.clientId);
                     return (
-                      <li key={t.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                      <li
+                        key={t.id}
+                        className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0"
+                      >
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-medium truncate">{t.projectReference}</p>
                           {client && (
@@ -575,7 +619,9 @@ export function ProjectOverviewClient({
                           )}
                         </div>
                         <div className="flex flex-col items-end gap-1 shrink-0 text-right">
-                          <p className="text-[11px] font-semibold text-foreground">Closes {formatDate(t.closingDate)}</p>
+                          <p className="text-[11px] font-semibold text-foreground">
+                            Closes {formatDate(t.closingDate)}
+                          </p>
                           <p className="text-[10px] text-muted-foreground">
                             Target: {formatDate(t.targetCompletionDate)}
                           </p>

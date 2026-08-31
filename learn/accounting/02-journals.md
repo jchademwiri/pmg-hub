@@ -19,25 +19,25 @@ Think of a journal entry as a **receipt with two sides**. When you record a tran
 
 Every journal entry has:
 
-| Field | What It Means |
-|-------|---------------|
-| **Entry Number** | Auto-generated unique ID (e.g., JE-2026-0001) |
-| **Date** | When the transaction happened |
-| **Description** | Plain-English explanation of the transaction |
-| **Status** | Draft (not final) or Posted (final, affects reports) |
-| **Lines** | The individual debit/credit rows (minimum 2) |
+| Field             | What It Means                                              |
+| ----------------- | ---------------------------------------------------------- |
+| **Entry Number**  | Auto-generated unique ID (e.g., JE-2026-0001)              |
+| **Date**          | When the transaction happened                              |
+| **Description**   | Plain-English explanation of the transaction               |
+| **Status**        | Draft (not final) or Posted (final, affects reports)       |
+| **Lines**         | The individual debit/credit rows (minimum 2)               |
 | **Source Module** | Where this entry came from (manual, income, expense, etc.) |
 
 ### Journal Lines (the details)
 
 Each line in a journal entry has:
 
-| Field | What It Means |
-|-------|---------------|
-| **Account** | Which chart account this line affects |
-| **Debit** | Amount on the debit side (enter this OR credit, not both) |
-| **Credit** | Amount on the credit side (enter this OR debit, not both) |
-| **Description** | What specifically this line is for |
+| Field           | What It Means                                             |
+| --------------- | --------------------------------------------------------- |
+| **Account**     | Which chart account this line affects                     |
+| **Debit**       | Amount on the debit side (enter this OR credit, not both) |
+| **Credit**      | Amount on the credit side (enter this OR debit, not both) |
+| **Description** | What specifically this line is for                        |
 
 ---
 
@@ -108,25 +108,29 @@ Description: "Uber to meet a client"
 ## The Rules of Journal Entries
 
 ### Rule 1: Debits MUST Equal Credits
+
 Every journal entry **must balance**. The system will not let you save if the total debits don't equal the total credits. This is the most important rule in accounting.
 
 ### Rule 2: Every Entry Needs At Least 2 Lines
+
 You can't have a one-sided entry. There must be at least a debit and a credit.
 
 ### Rule 3: One Line = One Account
+
 Each line affects exactly one chart account. If a transaction affects multiple accounts, add multiple lines.
 
 ### Rule 4: Each Line Has Either a Debit OR a Credit (not both)
+
 A single line cannot have amounts in both the debit and credit columns.
 
 ---
 
 ## Draft vs Posted
 
-| Status | What It Means | Affects Reports? | Can You Edit? |
-|--------|---------------|------------------|---------------|
-| **Draft** | Entry saved but not finalised | ❌ No | ✅ Yes |
-| **Posted** | Entry is final and permanent | ✅ Yes | ❌ No (you'd need to reverse it) |
+| Status     | What It Means                 | Affects Reports? | Can You Edit?                    |
+| ---------- | ----------------------------- | ---------------- | -------------------------------- |
+| **Draft**  | Entry saved but not finalised | ❌ No            | ✅ Yes                           |
+| **Posted** | Entry is final and permanent  | ✅ Yes           | ❌ No (you'd need to reverse it) |
 
 **Best practice:** Save as Draft first, review it, then Post when you're confident it's correct.
 
@@ -136,10 +140,10 @@ A single line cannot have amounts in both the debit and credit columns.
 
 The system tracks WHERE each journal entry came from:
 
-| Source | What It Means |
-|--------|---------------|
-| `manual` | You created it manually via the Journals page |
-| `income` | Automatically created when you record income |
+| Source    | What It Means                                    |
+| --------- | ------------------------------------------------ |
+| `manual`  | You created it manually via the Journals page    |
+| `income`  | Automatically created when you record income     |
 | `expense` | Automatically created when you record an expense |
 
 This is useful for auditing — you can trace any journal entry back to its origin.
@@ -159,6 +163,7 @@ This is useful for auditing — you can trace any journal entry back to its orig
 ## When to Create Manual Journal Entries
 
 You'll create manual journal entries when:
+
 - Recording a bank transfer between your own accounts
 - Adjusting for errors in previously posted entries
 - Recording depreciation on equipment

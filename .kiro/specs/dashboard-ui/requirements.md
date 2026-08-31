@@ -274,17 +274,16 @@ are handled by a proven composition.
    Requirement 21 depends on.
 2. THE scaffolded sidebar block SHALL be customised to:
    (a) replace placeholder nav items with the five PMG admin routes:
-       `/dashboard` (LayoutDashboard icon), `/income` (TrendingUp),
-       `/expenses` (TrendingDown), `/leads` (Users), `/divisions` (Layers)
-       - all from `lucide-react`
+   `/dashboard` (LayoutDashboard icon), `/income` (TrendingUp),
+   `/expenses` (TrendingDown), `/leads` (Users), `/divisions` (Layers) - all from `lucide-react`
    (b) replace the brand label with "PMG / Control Center" in the sidebar header, with
-       "PMG" in `text-sidebar-foreground/50 text-xs uppercase tracking-widest` and
-       "Control Center" in `text-sidebar-foreground text-sm font-semibold`
+   "PMG" in `text-sidebar-foreground/50 text-xs uppercase tracking-widest` and
+   "Control Center" in `text-sidebar-foreground text-sm font-semibold`
    (c) remove or replace the user footer section with a minimal
-       `text-sidebar-foreground/50 text-xs` "PMG Admin" label
+   `text-sidebar-foreground/50 text-xs` "PMG Admin" label
    (d) sidebar background uses `bg-sidebar` and border uses `border-sidebar-border` -
-       these are already correctly set by the `.dark` CSS variables in `globals.css` and
-       require no additional `className` overrides
+   these are already correctly set by the `.dark` CSS variables in `globals.css` and
+   require no additional `className` overrides
 3. THE sidebar block installs the following shadcn primitives automatically - the developer
    SHALL NOT install these separately: `sidebar`, `button`, `separator`, `skeleton`,
    `sheet`, `tooltip`, `input`, `avatar`.
@@ -335,11 +334,13 @@ interruptions.
    code, in this order:
 
    **Step 1 - Sidebar block (installs sidebar + its dependencies automatically):**
+
    ```
    npx shadcn@latest add sidebar-08 --cwd apps/admin
    ```
 
    **Step 2 - Remaining components not covered by the sidebar block:**
+
    ```
    npx shadcn@latest add progress --cwd apps/admin
    npx shadcn@latest add scroll-area --cwd apps/admin
@@ -494,16 +495,16 @@ that status labels are styled as badges and bars are accessible.
    `className="max-h-64"`.
 4. EACH status row SHALL render:
    (a) A `Badge` component with `variant="secondary"` and `className` overridden per
-       status: `new` → `"bg-chart-2/20 text-chart-2 border-chart-2/30"`,
-       `contacted` → `"bg-chart-1/20 text-chart-1 border-chart-1/30"`,
-       `converted` → `"bg-chart-3/20 text-chart-3 border-chart-3/30"`,
-       `lost` → `"bg-muted text-muted-foreground border-border"`,
-       displaying the capitalised status string.
+   status: `new` → `"bg-chart-2/20 text-chart-2 border-chart-2/30"`,
+   `contacted` → `"bg-chart-1/20 text-chart-1 border-chart-1/30"`,
+   `converted` → `"bg-chart-3/20 text-chart-3 border-chart-3/30"`,
+   `lost` → `"bg-muted text-muted-foreground border-border"`,
+   displaying the capitalised status string.
    (b) A `Progress` component with `value = (count / total) * 100` and `className` per
-       status: `new` → `"[&>div]:bg-chart-2 bg-muted h-1.5"`,
-       `contacted` → `"[&>div]:bg-chart-1 bg-muted h-1.5"`,
-       `converted` → `"[&>div]:bg-chart-3 bg-muted h-1.5"`,
-       `lost` → `"[&>div]:bg-muted-foreground/30 bg-muted h-1.5"`.
+   status: `new` → `"[&>div]:bg-chart-2 bg-muted h-1.5"`,
+   `contacted` → `"[&>div]:bg-chart-1 bg-muted h-1.5"`,
+   `converted` → `"[&>div]:bg-chart-3 bg-muted h-1.5"`,
+   `lost` → `"[&>div]:bg-muted-foreground/30 bg-muted h-1.5"`.
    (c) The count as a `text-muted-foreground text-xs` string, right-aligned.
 5. WHEN the leads array is empty, THE component SHALL render "No leads yet." in
    `text-muted-foreground/50 text-xs` inside `CardContent`.
@@ -650,7 +651,7 @@ metadata, and the title template so that every admin page inherits the correct s
 5. THE root layout SHALL import `globals.css` to apply the Tailwind base styles and CSS
    variable declarations.
 6. THE `<body>` element SHALL have `className` including `font-sans antialiased
-   bg-background text-foreground` to apply the base theme.
+bg-background text-foreground` to apply the base theme.
 7. THE existing `apps/admin/src/app/layout.tsx` SHALL be updated to add `"dark"` to the
    `<html>` element's `className`. The current file does NOT include the `dark` class.
    This is a change to an existing file, not a new file. The resulting `<html>` element
@@ -675,7 +676,7 @@ target resolves to a valid page rather than a 404.
    - A placeholder paragraph: "Authentication coming in a future phase." in
      `text-muted-foreground text-sm`
    - The page container SHALL use `className="min-h-screen flex items-center
-     justify-center bg-background"`
+justify-center bg-background"`
 4. THE login page SHALL export `metadata: Metadata = { title: 'Login' }`.
 5. THE login page SHALL NOT implement any auth form, magic link input, or Better Auth
    integration in Phase 2 - that is Phase 2.5 / auth setup. Its sole purpose is to

@@ -5,8 +5,8 @@ export default function ClientsNotFound() {
     <NotFoundView
       noun="client"
       links={[
-        { label: 'Clients',   href: '/relationships/clients'   },
-        { label: 'Leads',     href: '/relationships/leads'     },
+        { label: 'Clients', href: '/relationships/clients' },
+        { label: 'Leads', href: '/relationships/leads' },
         { label: 'Divisions', href: '/relationships/divisions' },
       ]}
     />

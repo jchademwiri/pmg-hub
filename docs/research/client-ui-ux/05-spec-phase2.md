@@ -1,5 +1,6 @@
 # Implementation Spec — Phase 2: Layout Reorganisation
-*PMG Hub | Client Detail Page Redesign*
+
+_PMG Hub | Client Detail Page Redesign_
 
 > **Prerequisite:** Phase 1 must be complete before starting Phase 2.
 
@@ -30,6 +31,7 @@ Phase 2 restructures the page layout without changing any core logic. The financ
 This component receives pre-computed values and renders the 4 KPI tiles plus the info row. It has no internal state — all values are computed by the parent workspace.
 
 **Full component:**
+
 ```tsx
 'use client';
 
@@ -44,7 +46,7 @@ interface ClientMetricStripProps {
   totalPaid: number;
   outstandingBalance: number;
   overdueBalance: number;
-  healthScore: string;          // 'Excellent' | 'Good' | 'At Risk' | 'Critical'
+  healthScore: string; // 'Excellent' | 'Good' | 'At Risk' | 'Critical'
   avgDaysToPay: number;
   lastPaymentDate: string | null;
   lastPaymentAmount: number | null;
@@ -95,12 +97,13 @@ export function ClientMetricStrip({
     },
   ];
 
-  const healthBadgeClass = {
-    'Excellent': 'bg-green-500 text-white',
-    'Good': 'bg-blue-500 text-white',
-    'At Risk': 'bg-orange-500 text-white',
-    'Critical': 'bg-red-500 text-white',
-  }[healthScore] ?? 'bg-muted text-muted-foreground';
+  const healthBadgeClass =
+    {
+      Excellent: 'bg-green-500 text-white',
+      Good: 'bg-blue-500 text-white',
+      'At Risk': 'bg-orange-500 text-white',
+      Critical: 'bg-red-500 text-white',
+    }[healthScore] ?? 'bg-muted text-muted-foreground';
 
   return (
     <div className="flex flex-col gap-3">
@@ -140,7 +143,8 @@ export function ClientMetricStrip({
         </span>
         <span className="text-muted-foreground/40">·</span>
         <span>
-          Avg Pay: <span className="font-semibold text-foreground">
+          Avg Pay:{' '}
+          <span className="font-semibold text-foreground">
             {avgDaysToPay > 0 ? `${avgDaysToPay} days` : 'Immediate'}
           </span>
         </span>
@@ -168,6 +172,7 @@ export function ClientMetricStrip({
 The workspace already imports `getSASTToday` and `formatZAR`. Add the missing imports and compute the values that `ClientMetricStrip` needs.
 
 **Add to imports:**
+
 ```typescript
 import { ClientMetricStrip } from './client-metric-strip';
 import { calculateClientHealth, calculateAverageDaysToPay } from '@/lib/client-billing-helpers';
@@ -179,32 +184,36 @@ import { calculateClientHealth, calculateAverageDaysToPay } from '@/lib/client-b
 // ── Metric Strip Computations ──────────────────────────────────────────────
 const todayStrWS = getSASTToday();
 const activeInvoicesWS = invoices.filter(
-  (inv) => inv.status !== 'void' && inv.status !== 'draft' && inv.invoiceDate <= todayStrWS
+  (inv) => inv.status !== 'void' && inv.status !== 'draft' && inv.invoiceDate <= todayStrWS,
 );
 const totalInvoicedWS = activeInvoicesWS.reduce((sum, inv) => sum + Number(inv.total), 0);
-const totalPaidWS = (payments?.data ?? []).reduce((sum: number, pay: any) => sum + Number(pay.amount), 0);
+const totalPaidWS = (payments?.data ?? []).reduce(
+  (sum: number, pay: any) => sum + Number(pay.amount),
+  0,
+);
 const outstandingBalanceWS = activeInvoicesWS.reduce(
   (sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)),
-  0
+  0,
 );
 const overdueBalanceWS = activeInvoicesWS
   .filter(
     (inv) =>
       (inv.status === 'overdue' || inv.status === 'issued' || inv.status === 'partially_paid') &&
       inv.dueDate &&
-      inv.dueDate < todayStrWS
+      inv.dueDate < todayStrWS,
   )
   .reduce((sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)), 0);
 
 const healthWS = calculateClientHealth(invoices, outstandingBalanceWS, overdueBalanceWS);
 const avgDaysToPayWS = calculateAverageDaysToPay(invoices);
 const sortedPaymentsWS = [...(payments?.data ?? [])].sort((a: any, b: any) =>
-  b.date.localeCompare(a.date)
+  b.date.localeCompare(a.date),
 );
 const lastPaymentWS = sortedPaymentsWS[0] ?? null;
 ```
 
 **Add metric strip filter state** with the other `useState` declarations:
+
 ```typescript
 const [metricFilter, setMetricFilter] = useState<'all' | 'paid' | 'outstanding' | 'overdue'>('all');
 ```
@@ -216,6 +225,7 @@ const [metricFilter, setMetricFilter] = useState<'all' | 'paid' | 'outstanding' 
 **File:** `apps/admin/src/app/(admin)/relationships/clients/[id]/client-billing-workspace.tsx`
 
 The current main `return` renders in this order:
+
 1. Off-screen container
 2. Header panel
 3. Collapsible edit form
@@ -228,8 +238,11 @@ The current main `return` renders in this order:
 **Remove the existing quick action buttons strip** (the `<div className="flex flex-wrap gap-2 items-center">` containing the three Link buttons). It will be re-added inside the header area.
 
 **After the Collapsible edit form block and before the `<Tabs>` block, insert:**
+
 ```tsx
-{/* Metric Strip */}
+{
+  /* Metric Strip */
+}
 <ClientMetricStrip
   totalInvoiced={totalInvoicedWS}
   totalPaid={totalPaidWS}
@@ -241,9 +254,11 @@ The current main `return` renders in this order:
   lastPaymentAmount={lastPaymentWS ? Number(lastPaymentWS.amount) : null}
   onFilterChange={setMetricFilter}
   activeFilter={metricFilter}
-/>
+/>;
 
-{/* Quick Actions */}
+{
+  /* Quick Actions */
+}
 <div className="flex flex-wrap gap-2 items-center">
   <Button asChild size="sm" variant="default" className="shadow-sm">
     <Link href="/billing/invoices/new">
@@ -255,12 +270,17 @@ The current main `return` renders in this order:
       <Plus className="size-4 mr-1" /> New Quote
     </Link>
   </Button>
-  <Button asChild size="sm" variant="outline" className="border-green-200 hover:bg-green-50/50 dark:border-green-900/50 dark:hover:bg-green-950/20">
+  <Button
+    asChild
+    size="sm"
+    variant="outline"
+    className="border-green-200 hover:bg-green-50/50 dark:border-green-900/50 dark:hover:bg-green-950/20"
+  >
     <Link href={`/billing/payments/add?clientId=${client.id}`}>
       <Plus className="size-4 mr-1 text-green-600 dark:text-green-400" /> Record Payment
     </Link>
   </Button>
-</div>
+</div>;
 ```
 
 ---
@@ -270,13 +290,18 @@ The current main `return` renders in this order:
 **File:** `apps/admin/src/app/(admin)/relationships/clients/[id]/client-billing-workspace.tsx`
 
 **In the `<TabsList>` block**, add a fifth tab trigger after "Statement":
+
 ```tsx
-<TabsTrigger value="analytics" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">
+<TabsTrigger
+  value="analytics"
+  className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium"
+>
   Analytics
 </TabsTrigger>
 ```
 
 **In the `<CardHeader>` of the document browser card**, update the `CardTitle` text to handle the analytics tab:
+
 ```tsx
 <CardTitle className="text-sm font-semibold capitalize">
   {activeTab === 'analytics' ? 'Client Analytics' : activeTab}
@@ -291,18 +316,18 @@ The current main `return` renders in this order:
 ```
 
 **In the `<CardContent>` block, after the Statement `TabsContent` and before the closing `</CardContent>`, add:**
+
 ```tsx
-{/* ANALYTICS TAB */}
+{
+  /* ANALYTICS TAB */
+}
 <TabsContent value="analytics" className="m-0 p-4">
-  <ClientFinancialDashboard
-    invoices={invoices}
-    quotes={quotes}
-    payments={payments.data}
-  />
-</TabsContent>
+  <ClientFinancialDashboard invoices={invoices} quotes={quotes} payments={payments.data} />
+</TabsContent>;
 ```
 
 **Update the `onValueChange` handler on `<Tabs>`** to handle the new tab value. In the existing switch-like logic inside `onValueChange`, add a case for `analytics`:
+
 ```typescript
 } else if (val === 'analytics') {
   // No document selection change needed for analytics tab
@@ -319,11 +344,13 @@ The current main `return` renders in this order:
 **File:** `apps/admin/src/app/(admin)/relationships/clients/[id]/client-financial-dashboard.tsx`
 
 **Locate the `useState` for activity expansion:**
+
 ```typescript
 const [isActivityExpanded, setIsActivityExpanded] = useState(false);
 ```
 
 **Change the default to `true`:**
+
 ```typescript
 const [isActivityExpanded, setIsActivityExpanded] = useState(true);
 ```
@@ -331,11 +358,13 @@ const [isActivityExpanded, setIsActivityExpanded] = useState(true);
 **Locate the `activityEvents.map(...)` block** inside the expanded content. Currently it maps all events. Slice to the first 5 by default, with a "show all" toggle:
 
 Add a second state variable:
+
 ```typescript
 const [showAllActivity, setShowAllActivity] = useState(false);
 ```
 
 **Modify the map to respect the limit:**
+
 ```tsx
 {(showAllActivity ? activityEvents : activityEvents.slice(0, 5)).map((evt) => (
   // ... existing event row JSX unchanged ...

@@ -33,9 +33,7 @@ export function MobileItemCard({
               <span className="font-semibold text-foreground truncate">{name}</span>
             </div>
             {description && (
-              <span className="text-xs text-muted-foreground line-clamp-2">
-                {description}
-              </span>
+              <span className="text-xs text-muted-foreground line-clamp-2">{description}</span>
             )}
           </div>
           <BillingStatusBadge status={status} />

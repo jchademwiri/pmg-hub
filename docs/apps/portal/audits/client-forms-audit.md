@@ -9,14 +9,14 @@
 
 ### Files audited (6)
 
-| File | Role | Lines |
-|------|------|-------|
-| `apps/admin/src/components/clients/client-add-form.tsx` | Add client form component | 120 |
-| `apps/admin/src/components/clients/client-edit-form.tsx` | Edit client form component | 106 |
-| `apps/admin/src/app/actions/clients.ts` | Server actions (CRUD + toggle/delete) | 97 |
-| `packages/db/src/schema/clients.ts` | DB schema + relations | 53 |
-| `packages/db/src/queries/clients.ts` | Query helpers | 68 |
-| `packages/db/src/index.ts` | Barrel exports | — |
+| File                                                     | Role                                  | Lines |
+| -------------------------------------------------------- | ------------------------------------- | ----- |
+| `apps/admin/src/components/clients/client-add-form.tsx`  | Add client form component             | 120   |
+| `apps/admin/src/components/clients/client-edit-form.tsx` | Edit client form component            | 106   |
+| `apps/admin/src/app/actions/clients.ts`                  | Server actions (CRUD + toggle/delete) | 97    |
+| `packages/db/src/schema/clients.ts`                      | DB schema + relations                 | 53    |
+| `packages/db/src/queries/clients.ts`                     | Query helpers                         | 68    |
+| `packages/db/src/index.ts`                               | Barrel exports                        | —     |
 
 ### Data flow
 
@@ -31,28 +31,28 @@ Form (client-side)
 
 ### Schema (`clients` table)
 
-| Column | Type | Constraints |
-|--------|------|-------------|
-| `id` | `uuid` | PK, defaultRandom |
-| `name` | `text` | NOT NULL |
-| `businessName` | `text` | nullable |
-| `email` | `text` | nullable, unique index |
-| `phone` | `text` | nullable |
-| `divisionId` | `uuid` | FK → divisions.id, nullable |
-| `isActive` | `boolean` | NOT NULL, default true |
-| `createdAt` | `timestamp` | NOT NULL, defaultNow |
-| `updatedAt` | `timestamp` | nullable |
+| Column         | Type        | Constraints                 |
+| -------------- | ----------- | --------------------------- |
+| `id`           | `uuid`      | PK, defaultRandom           |
+| `name`         | `text`      | NOT NULL                    |
+| `businessName` | `text`      | nullable                    |
+| `email`        | `text`      | nullable, unique index      |
+| `phone`        | `text`      | nullable                    |
+| `divisionId`   | `uuid`      | FK → divisions.id, nullable |
+| `isActive`     | `boolean`   | NOT NULL, default true      |
+| `createdAt`    | `timestamp` | NOT NULL, defaultNow        |
+| `updatedAt`    | `timestamp` | nullable                    |
 
 Indexes: `clients_name_idx`, `clients_email_unique_idx` (partial on non-null)
 
 ### Server actions (4)
 
-| Action | Method | Returns |
-|--------|--------|---------|
-| `createClient` | POST via FormData | `{ error?: string }` |
-| `updateClient` | POST via FormData | `{ error?: string }` |
-| `toggleClientActive` | By id + bool | `{ error?: string }` |
-| `deleteClient` | By id | `{ error?: string }` |
+| Action               | Method            | Returns              |
+| -------------------- | ----------------- | -------------------- |
+| `createClient`       | POST via FormData | `{ error?: string }` |
+| `updateClient`       | POST via FormData | `{ error?: string }` |
+| `toggleClientActive` | By id + bool      | `{ error?: string }` |
+| `deleteClient`       | By id             | `{ error?: string }` |
 
 ---
 
@@ -99,6 +99,7 @@ if (incomeCount) {
 ```
 
 But it does **not** check for:
+
 - Quotes (`billingQuotations`)
 - Invoices (`billingInvoices`)
 - Tender schedule entries (`tenderScheduleEntries`)
@@ -174,8 +175,8 @@ Unlike the scheduling module (54 tests), the client forms have **zero** test fil
 
 ## Summary
 
-| Severity | Count | Items |
-|----------|-------|-------|
-| 🔴 High | 0 | — |
-| 🟡 Medium | 2 | Bare catch blocks (M1), incomplete delete guard (M2) |
-| 🟢 Low | 5 | Form reset state (L1), uncontrolled Select (L2), bare catches (L3), email validation (L4), no tests (L5) |
+| Severity  | Count | Items                                                                                                    |
+| --------- | ----- | -------------------------------------------------------------------------------------------------------- |
+| 🔴 High   | 0     | —                                                                                                        |
+| 🟡 Medium | 2     | Bare catch blocks (M1), incomplete delete guard (M2)                                                     |
+| 🟢 Low    | 5     | Form reset state (L1), uncontrolled Select (L2), bare catches (L3), email validation (L4), no tests (L5) |

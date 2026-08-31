@@ -1,36 +1,42 @@
-'use client'
+'use client';
 
-import { useRouter } from 'next/navigation'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useRouter } from 'next/navigation';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface StatusFilterProps {
   /** Current status value from URL params */
-  status?: string
+  status?: string;
   /** Base URL path (e.g. /billing/invoices) */
-  basePath: string
+  basePath: string;
   /** Existing query params to preserve (divisionId, page, etc.) */
-  preserveParams?: Record<string, string | undefined>
+  preserveParams?: Record<string, string | undefined>;
   /** Available status options */
-  options: { value: string; label: string }[]
+  options: { value: string; label: string }[];
 }
 
 export function StatusFilter({ status, basePath, preserveParams, options }: StatusFilterProps) {
-  const router = useRouter()
+  const router = useRouter();
 
   function handleChange(value: string) {
-    const params = new URLSearchParams()
+    const params = new URLSearchParams();
     if (preserveParams) {
       for (const [key, val] of Object.entries(preserveParams)) {
-        if (val) params.set(key, val)
+        if (val) params.set(key, val);
       }
     }
     // Always reset to page 1 when filter changes
-    params.delete('page')
+    params.delete('page');
     if (value && value !== 'all') {
-      params.set('status', value)
+      params.set('status', value);
     }
-    const qs = params.toString()
-    router.push(`${basePath}${qs ? `?${qs}` : ''}`)
+    const qs = params.toString();
+    router.push(`${basePath}${qs ? `?${qs}` : ''}`);
   }
 
   return (
@@ -47,5 +53,5 @@ export function StatusFilter({ status, basePath, preserveParams, options }: Stat
         ))}
       </SelectContent>
     </Select>
-  )
+  );
 }

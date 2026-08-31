@@ -1,18 +1,18 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { LeadStatusTabs } from '@/components/leads/lead-status-tabs'
-import { LeadsTable } from '@/components/leads/leads-table'
-import { LeadStatusForm } from '@/components/leads/lead-status-form'
-import { LeadNotesForm } from '@/components/leads/lead-notes-form'
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { LeadStatusTabs } from '@/components/leads/lead-status-tabs';
+import { LeadsTable } from '@/components/leads/leads-table';
+import { LeadStatusForm } from '@/components/leads/lead-status-form';
+import { LeadNotesForm } from '@/components/leads/lead-notes-form';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
-const mockPush = vi.fn()
+const mockPush = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
-}))
+}));
 
 vi.mock('@/components/ui/select', () => ({
   Select: ({ children, value, onValueChange, disabled }: any) => (
@@ -29,7 +29,7 @@ vi.mock('@/components/ui/select', () => ({
   SelectContent: ({ children }: any) => <>{children}</>,
   SelectItem: ({ value, children }: any) => <option value={value}>{children}</option>,
   SelectValue: ({ placeholder }: any) => <span>{placeholder}</span>,
-}))
+}));
 
 vi.mock('next/link', () => ({
   default: ({ href, children, ...props }: any) => (
@@ -37,39 +37,39 @@ vi.mock('next/link', () => ({
       {children}
     </a>
   ),
-}))
+}));
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const defaultCounts = { all: 10, new: 3, contacted: 4, converted: 2, lost: 1 }
+const defaultCounts = { all: 10, new: 3, contacted: 4, converted: 2, lost: 1 };
 
 // ─── LeadStatusTabs unit tests ───────────────────────────────────────────────
 
 describe('LeadStatusTabs', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    mockPush.mockReset()
-  })
+    vi.clearAllMocks();
+    mockPush.mockReset();
+  });
 
   it('renders the correct tab as active based on currentStatus prop', () => {
     // Validates: Requirements 2.3, 2.5
-    render(<LeadStatusTabs counts={defaultCounts} currentStatus="contacted" />)
+    render(<LeadStatusTabs counts={defaultCounts} currentStatus="contacted" />);
 
-    expect(screen.getByRole('tab', { name: /contacted/i })).toHaveAttribute('data-state', 'active')
-    expect(screen.getByRole('tab', { name: /^new/i })).toHaveAttribute('data-state', 'inactive')
-  })
+    expect(screen.getByRole('tab', { name: /contacted/i })).toHaveAttribute('data-state', 'active');
+    expect(screen.getByRole('tab', { name: /^new/i })).toHaveAttribute('data-state', 'inactive');
+  });
 
   it('defaults to "all" tab when currentStatus is undefined', () => {
     // Validates: Requirements 2.3, 2.5
-    render(<LeadStatusTabs counts={defaultCounts} />)
+    render(<LeadStatusTabs counts={defaultCounts} />);
 
-    expect(screen.getByRole('tab', { name: /^all/i })).toHaveAttribute('data-state', 'active')
-    expect(screen.getByRole('tab', { name: /^new/i })).toHaveAttribute('data-state', 'inactive')
-  })
+    expect(screen.getByRole('tab', { name: /^all/i })).toHaveAttribute('data-state', 'active');
+    expect(screen.getByRole('tab', { name: /^new/i })).toHaveAttribute('data-state', 'inactive');
+  });
 
   it('tab change preserves currentDivisionId and currentSource in URL', async () => {
     // Validates: Requirements 2.3, 2.5
-    const user = userEvent.setup()
+    const user = userEvent.setup();
 
     render(
       <LeadStatusTabs
@@ -77,45 +77,39 @@ describe('LeadStatusTabs', () => {
         currentStatus="new"
         currentDivisionId="div-123"
         currentSource="website"
-      />
-    )
+      />,
+    );
 
-    await user.click(screen.getByRole('tab', { name: /contacted/i }))
+    await user.click(screen.getByRole('tab', { name: /contacted/i }));
 
-    expect(mockPush).toHaveBeenCalledWith(
-      expect.stringContaining('status=contacted')
-    )
-    expect(mockPush).toHaveBeenCalledWith(
-      expect.stringContaining('divisionId=div-123')
-    )
-    expect(mockPush).toHaveBeenCalledWith(
-      expect.stringContaining('source=website')
-    )
-  })
+    expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('status=contacted'));
+    expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('divisionId=div-123'));
+    expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('source=website'));
+  });
 
   it('tab change to "all" omits status param from URL', async () => {
     // Validates: Requirements 2.3, 2.5
-    const user = userEvent.setup()
+    const user = userEvent.setup();
 
-    render(<LeadStatusTabs counts={defaultCounts} currentStatus="new" />)
+    render(<LeadStatusTabs counts={defaultCounts} currentStatus="new" />);
 
-    await user.click(screen.getByRole('tab', { name: /^all/i }))
+    await user.click(screen.getByRole('tab', { name: /^all/i }));
 
-    const calledWith: string = mockPush.mock.calls[0][0]
-    expect(calledWith).not.toContain('status=')
-  })
-})
+    const calledWith: string = mockPush.mock.calls[0][0];
+    expect(calledWith).not.toContain('status=');
+  });
+});
 
 // ─── LeadsTable unit tests ────────────────────────────────────────────────────
 
 describe('LeadsTable', () => {
   it('renders no rows when entries is empty', () => {
     // Validates: Requirements 1.3
-    render(<LeadsTable entries={[]} deleteAction={vi.fn()} />)
+    render(<LeadsTable entries={[]} deleteAction={vi.fn()} />);
 
-    const links = screen.queryAllByRole('link', { name: /view/i })
-    expect(links).toHaveLength(0)
-  })
+    const links = screen.queryAllByRole('link', { name: /view/i });
+    expect(links).toHaveLength(0);
+  });
 
   it('renders detail links with correct /relationships/leads/<id> hrefs', () => {
     // Validates: Requirements 1.4
@@ -150,125 +144,129 @@ describe('LeadsTable', () => {
         createdAt: new Date('2024-01-02'),
         updatedAt: null,
       },
-    ]
+    ];
 
-    render(<LeadsTable entries={entries} deleteAction={vi.fn()} />)
+    render(<LeadsTable entries={entries} deleteAction={vi.fn()} />);
 
-    const links = screen.getAllByRole('link', { name: /view/i })
-    expect(links).toHaveLength(2)
-    expect(links[0]).toHaveAttribute('href', '/relationships/leads/lead-1')
-    expect(links[1]).toHaveAttribute('href', '/relationships/leads/lead-2')
-  })
-})
+    const links = screen.getAllByRole('link', { name: /view/i });
+    expect(links).toHaveLength(2);
+    expect(links[0]).toHaveAttribute('href', '/relationships/leads/lead-1');
+    expect(links[1]).toHaveAttribute('href', '/relationships/leads/lead-2');
+  });
+});
 
 // ─── LeadStatusForm unit tests ────────────────────────────────────────────────
 
 describe('LeadStatusForm', () => {
   it('renders the select with the current status', () => {
     // Validates: Requirements 5.1, 5.2
-    const mockAction = vi.fn().mockResolvedValue({})
-    render(<LeadStatusForm currentStatus="new" updateAction={mockAction} />)
+    const mockAction = vi.fn().mockResolvedValue({});
+    render(<LeadStatusForm currentStatus="new" updateAction={mockAction} />);
 
-    const select = screen.getByTestId('select-wrapper') as HTMLSelectElement
-    expect(select.value).toBe('new')
-    expect(select).not.toBeDisabled()
-  })
+    const select = screen.getByTestId('select-wrapper') as HTMLSelectElement;
+    expect(select.value).toBe('new');
+    expect(select).not.toBeDisabled();
+  });
 
   it('applies optimistic update immediately on status change - Validates: Requirements 5.1, 5.2', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup();
     // Action that never resolves during the test (simulates pending)
-    let resolveAction!: (v: { error?: string }) => void
+    let resolveAction!: (v: { error?: string }) => void;
     const updateAction = vi.fn().mockReturnValue(
-      new Promise<{ error?: string }>((res) => { resolveAction = res })
-    )
+      new Promise<{ error?: string }>((res) => {
+        resolveAction = res;
+      }),
+    );
 
-    render(<LeadStatusForm currentStatus="new" updateAction={updateAction} />)
+    render(<LeadStatusForm currentStatus="new" updateAction={updateAction} />);
 
-    const select = screen.getByTestId('select-wrapper') as HTMLSelectElement
-    expect(select.value).toBe('new')
+    const select = screen.getByTestId('select-wrapper') as HTMLSelectElement;
+    expect(select.value).toBe('new');
 
-    await user.selectOptions(select, 'contacted')
+    await user.selectOptions(select, 'contacted');
 
     // Optimistic update: UI shows 'contacted' immediately
-    expect(select.value).toBe('contacted')
-    expect(updateAction).toHaveBeenCalledOnce()
+    expect(select.value).toBe('contacted');
+    expect(updateAction).toHaveBeenCalledOnce();
 
     // Clean up
-    resolveAction({})
-  })
+    resolveAction({});
+  });
 
   it('selector is disabled while action is pending - Validates: Requirements 5.6', async () => {
-    const user = userEvent.setup()
-    let resolveAction!: (v: { error?: string }) => void
+    const user = userEvent.setup();
+    let resolveAction!: (v: { error?: string }) => void;
     const updateAction = vi.fn().mockReturnValue(
-      new Promise<{ error?: string }>((res) => { resolveAction = res })
-    )
+      new Promise<{ error?: string }>((res) => {
+        resolveAction = res;
+      }),
+    );
 
-    render(<LeadStatusForm currentStatus="new" updateAction={updateAction} />)
+    render(<LeadStatusForm currentStatus="new" updateAction={updateAction} />);
 
-    const select = screen.getByTestId('select-wrapper') as HTMLSelectElement
-    await user.selectOptions(select, 'contacted')
+    const select = screen.getByTestId('select-wrapper') as HTMLSelectElement;
+    await user.selectOptions(select, 'contacted');
 
     // While pending, selector should be disabled
-    expect(select).toBeDisabled()
+    expect(select).toBeDisabled();
 
-    resolveAction({})
-  })
+    resolveAction({});
+  });
 
   it('shows error and reverts on action failure - Validates: Requirements 5.4, 5.5', async () => {
-    const user = userEvent.setup()
-    const updateAction = vi.fn().mockResolvedValue({ error: 'Update failed.' })
+    const user = userEvent.setup();
+    const updateAction = vi.fn().mockResolvedValue({ error: 'Update failed.' });
 
-    render(<LeadStatusForm currentStatus="new" updateAction={updateAction} />)
+    render(<LeadStatusForm currentStatus="new" updateAction={updateAction} />);
 
-    const select = screen.getByTestId('select-wrapper') as HTMLSelectElement
-    await user.selectOptions(select, 'contacted')
+    const select = screen.getByTestId('select-wrapper') as HTMLSelectElement;
+    await user.selectOptions(select, 'contacted');
 
     // Error message appears
-    expect(await screen.findByText('Update failed.')).toBeDefined()
+    expect(await screen.findByText('Update failed.')).toBeDefined();
     // Optimistic state reverts to currentStatus ('new')
-    expect(select.value).toBe('new')
-  })
+    expect(select.value).toBe('new');
+  });
 
   it('retains updated status on successful action - Validates: Requirements 5.3', async () => {
-    const user = userEvent.setup()
-    const updateAction = vi.fn().mockResolvedValue({})
+    const user = userEvent.setup();
+    const updateAction = vi.fn().mockResolvedValue({});
 
-    render(<LeadStatusForm currentStatus="new" updateAction={updateAction} />)
+    render(<LeadStatusForm currentStatus="new" updateAction={updateAction} />);
 
-    const select = screen.getByTestId('select-wrapper') as HTMLSelectElement
-    await user.selectOptions(select, 'contacted')
+    const select = screen.getByTestId('select-wrapper') as HTMLSelectElement;
+    await user.selectOptions(select, 'contacted');
 
     // Action was called with the new status
-    expect(updateAction).toHaveBeenCalledOnce()
-    const formData: FormData = updateAction.mock.calls[0][0]
-    expect(formData.get('status')).toBe('contacted')
+    expect(updateAction).toHaveBeenCalledOnce();
+    const formData: FormData = updateAction.mock.calls[0][0];
+    expect(formData.get('status')).toBe('contacted');
 
     // No error shown - action succeeded
     await vi.waitFor(() => {
-      expect(screen.queryByText(/error/i)).toBeNull()
-    })
-  })
-})
+      expect(screen.queryByText(/error/i)).toBeNull();
+    });
+  });
+});
 
 // ─── LeadNotesForm unit tests ─────────────────────────────────────────────────
 
 describe('LeadNotesForm', () => {
   it('pre-populates textarea with existing notes value', () => {
     // Validates: Requirements 7.1, 7.5
-    const mockAction = vi.fn().mockResolvedValue({})
-    render(<LeadNotesForm currentNotes="Some existing notes" updateAction={mockAction} />)
+    const mockAction = vi.fn().mockResolvedValue({});
+    render(<LeadNotesForm currentNotes="Some existing notes" updateAction={mockAction} />);
 
-    const textarea = screen.getByRole('textbox', { name: /notes/i })
-    expect(textarea).toHaveValue('Some existing notes')
-  })
+    const textarea = screen.getByRole('textbox', { name: /notes/i });
+    expect(textarea).toHaveValue('Some existing notes');
+  });
 
   it('renders empty textarea when currentNotes is null', () => {
     // Validates: Requirements 7.1
-    const mockAction = vi.fn().mockResolvedValue({})
-    render(<LeadNotesForm currentNotes={null} updateAction={mockAction} />)
+    const mockAction = vi.fn().mockResolvedValue({});
+    render(<LeadNotesForm currentNotes={null} updateAction={mockAction} />);
 
-    const textarea = screen.getByRole('textbox', { name: /notes/i })
-    expect(textarea).toHaveValue('')
-  })
-})
+    const textarea = screen.getByRole('textbox', { name: /notes/i });
+    expect(textarea).toHaveValue('');
+  });
+});

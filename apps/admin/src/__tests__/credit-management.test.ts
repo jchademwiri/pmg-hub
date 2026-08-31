@@ -104,7 +104,7 @@ vi.mock('@pmg/db', () => ({
   and: vi.fn(),
   sql: Object.assign(
     (strings: TemplateStringsArray, ...values: unknown[]) => ({ strings, values }),
-    { raw: (s: string) => s }
+    { raw: (s: string) => s },
   ),
   desc: vi.fn(),
   asc: vi.fn(),
@@ -215,21 +215,23 @@ describe('Credit Management Server Actions', () => {
   describe('createCreditNote', () => {
     it('creates credit note successfully when parameters are valid', async () => {
       // Setup sequence mock
-      mockDbSelect.mockImplementationOnce(() => ({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ name: 'Playhouse Media Group' }]),
-          }),
-        }),
-      })).mockImplementationOnce(() => ({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            orderBy: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue([{ documentNumber: 'CN-2026-0001' }]),
+      mockDbSelect
+        .mockImplementationOnce(() => ({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([{ name: 'Playhouse Media Group' }]),
             }),
           }),
-        }),
-      }));
+        }))
+        .mockImplementationOnce(() => ({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue([{ documentNumber: 'CN-2026-0001' }]),
+              }),
+            }),
+          }),
+        }));
 
       const res = await createCreditNote({
         clientId: 'client-1',
@@ -263,7 +265,12 @@ describe('Credit Management Server Actions', () => {
       // summed together for the same invoice/client. Assert only the
       // creditApplications insert happens now — no income insert.
       const invoiceRow = { id: 'inv-1', status: 'issued', clientId: 'client-1', total: '500.00' };
-      const creditNoteRow = { id: 'cn-1', amountRemaining: '500.00', amount: '500.00', status: 'active' };
+      const creditNoteRow = {
+        id: 'cn-1',
+        amountRemaining: '500.00',
+        amount: '500.00',
+        status: 'active',
+      };
 
       // Call order: (1) outer invoice fetch, (2) outer allocAgg, (3) outer
       // creditAllocAgg, (4-6) getClientCreditBalanceV2's 3 selects, (7) outer
@@ -274,19 +281,32 @@ describe('Credit Management Server Actions', () => {
       mockDbSelect.mockImplementation(() => {
         selectCount++;
         switch (selectCount) {
-          case 1: return chain([invoiceRow]);
-          case 2: return chain([{ total: '0' }]);
-          case 3: return chain([{ total: '0' }]);
-          case 4: return chain([{ total: '500.00' }]); // creditNotes.amountRemaining sum
-          case 5: return chain([{ totalPaid: '0' }]);
-          case 6: return chain([{ totalAllocated: '0' }]);
-          case 7: return chain([creditNoteRow]);
-          case 8: return chain([invoiceRow]);
-          case 9: return chain([creditNoteRow]);
-          case 10: return chain([{ total: '0' }]);
-          case 11: return chain([{ total: '0' }]);
-          case 12: return chain([{ total: '0' }]);
-          default: return chain([{ total: '200.00' }]);
+          case 1:
+            return chain([invoiceRow]);
+          case 2:
+            return chain([{ total: '0' }]);
+          case 3:
+            return chain([{ total: '0' }]);
+          case 4:
+            return chain([{ total: '500.00' }]); // creditNotes.amountRemaining sum
+          case 5:
+            return chain([{ totalPaid: '0' }]);
+          case 6:
+            return chain([{ totalAllocated: '0' }]);
+          case 7:
+            return chain([creditNoteRow]);
+          case 8:
+            return chain([invoiceRow]);
+          case 9:
+            return chain([creditNoteRow]);
+          case 10:
+            return chain([{ total: '0' }]);
+          case 11:
+            return chain([{ total: '0' }]);
+          case 12:
+            return chain([{ total: '0' }]);
+          default:
+            return chain([{ total: '200.00' }]);
         }
       });
 
@@ -301,11 +321,20 @@ describe('Credit Management Server Actions', () => {
   describe('applyCreditToInvoices (bulk)', () => {
     it('skips an invoice that belongs to a different client than the credit being spent', async () => {
       mockDbSelect.mockImplementation(() =>
-        chain([{ id: 'inv-other-client', status: 'issued', clientId: 'a-different-client', total: '500.00' }]),
+        chain([
+          {
+            id: 'inv-other-client',
+            status: 'issued',
+            clientId: 'a-different-client',
+            total: '500.00',
+          },
+        ]),
       );
       mockGetMinAllowedDate.mockResolvedValue('2026-01-01');
 
-      const res = await applyCreditToInvoices('client-1', [{ invoiceId: 'inv-other-client', amount: 100 }]);
+      const res = await applyCreditToInvoices('client-1', [
+        { invoiceId: 'inv-other-client', amount: 100 },
+      ]);
 
       // No allocation should have been recorded for the mismatched invoice.
       expect(res.totalApplied ?? 0).toBe(0);
@@ -354,7 +383,9 @@ describe('Credit Management Server Actions', () => {
     it('returns error if credit note is voided', async () => {
       mockDbSelect.mockReturnValue({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ id: 'cn-1', status: 'void', amountRemaining: '500.00' }]),
+          where: vi
+            .fn()
+            .mockResolvedValue([{ id: 'cn-1', status: 'void', amountRemaining: '500.00' }]),
         }),
       });
 
@@ -370,7 +401,9 @@ describe('Credit Management Server Actions', () => {
     it('returns error if credit note is expired', async () => {
       mockDbSelect.mockReturnValue({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ id: 'cn-1', status: 'expired', amountRemaining: '500.00' }]),
+          where: vi
+            .fn()
+            .mockResolvedValue([{ id: 'cn-1', status: 'expired', amountRemaining: '500.00' }]),
         }),
       });
 
@@ -386,7 +419,9 @@ describe('Credit Management Server Actions', () => {
     it('returns error if amount exceeds available credit', async () => {
       mockDbSelect.mockReturnValue({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ id: 'cn-1', status: 'active', amountRemaining: '50.00' }]),
+          where: vi
+            .fn()
+            .mockResolvedValue([{ id: 'cn-1', status: 'active', amountRemaining: '50.00' }]),
         }),
       });
 
@@ -402,7 +437,11 @@ describe('Credit Management Server Actions', () => {
     it('creates refund record and updates credit note successfully', async () => {
       mockDbSelect.mockReturnValue({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ id: 'cn-1', clientId: 'client-1', status: 'active', amountRemaining: '500.00' }]),
+          where: vi
+            .fn()
+            .mockResolvedValue([
+              { id: 'cn-1', clientId: 'client-1', status: 'active', amountRemaining: '500.00' },
+            ]),
         }),
       });
 
@@ -423,9 +462,9 @@ describe('Credit Management Server Actions', () => {
     it('expires expired credit notes successfully', async () => {
       mockDbSelect.mockReturnValue({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([
-            { id: 'cn-expired', status: 'active', amountRemaining: '100.00' },
-          ]),
+          where: vi
+            .fn()
+            .mockResolvedValue([{ id: 'cn-expired', status: 'active', amountRemaining: '100.00' }]),
         }),
       });
 

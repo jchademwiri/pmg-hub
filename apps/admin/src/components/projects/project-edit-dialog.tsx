@@ -304,7 +304,8 @@ export function ProjectEditDialog({
       // Then update tracking-only fields via JSON action
       const trackingUpdates: Record<string, unknown> = {};
       if (editOutcome && editOutcome !== '__none__') trackingUpdates.outcome = editOutcome;
-      if (editActualEffortDays) trackingUpdates.actualEffortDays = parseInt(editActualEffortDays, 10);
+      if (editActualEffortDays)
+        trackingUpdates.actualEffortDays = parseInt(editActualEffortDays, 10);
 
       if (Object.keys(trackingUpdates).length > 0) {
         const trackResult = await updateProjectScheduleEntryJson(tender.id, trackingUpdates);
@@ -350,11 +351,15 @@ export function ProjectEditDialog({
 
         <Tabs defaultValue="details" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="details" className="text-xs">Details</TabsTrigger>
+            <TabsTrigger value="details" className="text-xs">
+              Details
+            </TabsTrigger>
             <TabsTrigger value="checklist" className="text-xs">
               Checklist {totalItems > 0 && `(${progressPercent}%)`}
             </TabsTrigger>
-            <TabsTrigger value="tracking" className="text-xs">Tracking & Outcome</TabsTrigger>
+            <TabsTrigger value="tracking" className="text-xs">
+              Tracking & Outcome
+            </TabsTrigger>
           </TabsList>
 
           {/* Checklist Tab Content */}
@@ -385,7 +390,10 @@ export function ProjectEditDialog({
                 {/* Sections List */}
                 <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-1">
                   {checklist.map((section) => (
-                    <div key={section.id} className="border border-border/50 rounded-md p-3 space-y-3 bg-card">
+                    <div
+                      key={section.id}
+                      className="border border-border/50 rounded-md p-3 space-y-3 bg-card"
+                    >
                       {/* Section Header */}
                       <div className="flex items-center justify-between gap-2 border-b border-border/50 pb-2">
                         {editingSectionId === section.id ? (
@@ -399,7 +407,11 @@ export function ProjectEditDialog({
                             <Button size="xs" onClick={() => handleRenameSection(section.id)}>
                               <Check className="size-3" />
                             </Button>
-                            <Button variant="ghost" size="xs" onClick={() => setEditingSectionId(null)}>
+                            <Button
+                              variant="ghost"
+                              size="xs"
+                              onClick={() => setEditingSectionId(null)}
+                            >
                               <X className="size-3" />
                             </Button>
                           </div>
@@ -595,7 +607,12 @@ export function ProjectEditDialog({
                       ))}
                     </SelectContent>
                   </Select>
-                  <input id="edit-client-hidden" type="hidden" name="clientId" value={editClientId} />
+                  <input
+                    id="edit-client-hidden"
+                    type="hidden"
+                    name="clientId"
+                    value={editClientId}
+                  />
                 </Field>
 
                 {/* Tender Reference */}
@@ -664,7 +681,10 @@ export function ProjectEditDialog({
                 {/* Priority */}
                 <Field>
                   <FieldLabel htmlFor="edit-priority">Priority</FieldLabel>
-                  <Select value={editPriority} onValueChange={(value) => setEditPriority(value as any)}>
+                  <Select
+                    value={editPriority}
+                    onValueChange={(value) => setEditPriority(value as any)}
+                  >
                     <SelectTrigger id="edit-priority" className="text-sm h-9">
                       <SelectValue />
                     </SelectTrigger>
@@ -740,18 +760,26 @@ export function ProjectEditDialog({
                   </div>
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
                     <div>
-                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Start Date</p>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">
+                        Start Date
+                      </p>
                       <p className="font-medium">{formatDate(tender.startDate)}</p>
                     </div>
                     <span className="text-muted-foreground/40">→</span>
                     <div>
-                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Target Completion</p>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">
+                        Target Completion
+                      </p>
                       <p className="font-medium">{formatDate(tender.targetCompletionDate)}</p>
                     </div>
                     <span className="text-muted-foreground/40">→</span>
                     <div>
-                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Closing Date</p>
-                      <p className="font-medium text-muted-foreground">{formatDate(tender.closingDate)}</p>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">
+                        Closing Date
+                      </p>
+                      <p className="font-medium text-muted-foreground">
+                        {formatDate(tender.closingDate)}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -802,7 +830,9 @@ export function ProjectEditDialog({
                     value={editActualEffortDays}
                     onChange={(e) => setEditActualEffortDays(e.target.value)}
                     placeholder="e.g. 4"
-                    disabled={isPending || (editStatus !== 'completed' && editStatus !== 'submitted')}
+                    disabled={
+                      isPending || (editStatus !== 'completed' && editStatus !== 'submitted')
+                    }
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     Enabled only when status is Completed or Submitted
@@ -815,7 +845,9 @@ export function ProjectEditDialog({
                   <Select
                     value={editOutcome}
                     onValueChange={setEditOutcome}
-                    disabled={isPending || (editStatus !== 'completed' && editStatus !== 'submitted')}
+                    disabled={
+                      isPending || (editStatus !== 'completed' && editStatus !== 'submitted')
+                    }
                   >
                     <SelectTrigger id="edit-outcome" className="text-sm h-9">
                       <SelectValue placeholder="Pending" />

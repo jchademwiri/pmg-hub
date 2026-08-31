@@ -131,7 +131,7 @@ spreadsheet.
    Action in `apps/admin/src/app/actions/reports.ts` that returns a CSV string.
 2. WHEN called with a valid four-digit year, THE CSV_Export_Action SHALL return a
    CSV string with a header row: `Month,Revenue,Expenses,PMG Share,Profit Pool,
-   Salary,Reinvest,Reserve,Flex`.
+Salary,Reinvest,Reserve,Flex`.
 3. THE CSV_Export_Action SHALL include one data row per calendar month (January
    through December) for the given year, with revenue and expense totals summed
    from the `income` and `expenses` tables respectively, and all Financial_Model

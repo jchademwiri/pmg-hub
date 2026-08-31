@@ -23,11 +23,7 @@ import {
 } from '@/components/ui/table';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { confirm } from '@/components/ui/confirm-dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const today = new Date().toISOString().split('T')[0]!;
 

@@ -9,11 +9,11 @@
  * - Non-existent entries return "Tender not found."
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
-let mockEntryStatus = 'planned'
+let mockEntryStatus = 'planned';
 
 function makeMockDb(entryStatus: string) {
   return {
@@ -24,50 +24,53 @@ function makeMockDb(entryStatus: string) {
         }),
       }),
     }),
-  }
+  };
 }
 
-const mockGetDb = vi.fn().mockReturnValue(makeMockDb('planned'))
-const mockTransitionStatus = vi.fn()
-const mockRecalculateWaterfall = vi.fn()
-const mockRevalidatePath = vi.fn()
-const mockGetSession = vi.fn().mockResolvedValue({ user: { id: 'user-1' } })
+const mockGetDb = vi.fn().mockReturnValue(makeMockDb('planned'));
+const mockTransitionStatus = vi.fn();
+const mockRecalculateWaterfall = vi.fn();
+const mockRevalidatePath = vi.fn();
+const mockGetSession = vi.fn().mockResolvedValue({ user: { id: 'user-1' } });
 
 vi.mock('@pmg/db', () => ({
   getDb: () => mockGetDb(),
-  projectScheduleEntries: { id: 'tender_schedule_entries_id', status: 'tender_schedule_entries_status' },
+  projectScheduleEntries: {
+    id: 'tender_schedule_entries_id',
+    status: 'tender_schedule_entries_status',
+  },
   eq: vi.fn(),
   transitionProjectStatus: mockTransitionStatus,
   recalculateProjectWaterfall: mockRecalculateWaterfall,
-}))
+}));
 
-vi.mock('next/cache', () => ({ revalidatePath: mockRevalidatePath }))
-vi.mock('@/lib/auth', () => ({ getSessionOrRedirect: mockGetSession }))
+vi.mock('next/cache', () => ({ revalidatePath: mockRevalidatePath }));
+vi.mock('@/lib/auth', () => ({ getSessionOrRedirect: mockGetSession }));
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 async function setupEntryStatus(status: string) {
-  mockGetDb.mockReturnValue(makeMockDb(status))
+  mockGetDb.mockReturnValue(makeMockDb(status));
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe('transitionProjectStatusAction — validation', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    mockGetSession.mockResolvedValue({ user: { id: 'user-1' } })
-    mockRecalculateWaterfall.mockResolvedValue(undefined)
-  })
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ user: { id: 'user-1' } });
+    mockRecalculateWaterfall.mockResolvedValue(undefined);
+  });
 
   it('rejects an invalid status string', async () => {
-    const { transitionProjectStatusAction } = await import('@/app/actions/project-schedule')
-    await setupEntryStatus('planned')
-    const result = await transitionProjectStatusAction('tender-1', 'nonexistent')
-    expect(result.error).toBe('Invalid status transition.')
-  })
+    const { transitionProjectStatusAction } = await import('@/app/actions/project-schedule');
+    await setupEntryStatus('planned');
+    const result = await transitionProjectStatusAction('tender-1', 'nonexistent');
+    expect(result.error).toBe('Invalid status transition.');
+  });
 
   it('returns Tender not found for missing entry', async () => {
-    const { transitionProjectStatusAction } = await import('@/app/actions/project-schedule')
+    const { transitionProjectStatusAction } = await import('@/app/actions/project-schedule');
     mockGetDb.mockReturnValue({
       select: vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
@@ -76,19 +79,19 @@ describe('transitionProjectStatusAction — validation', () => {
           }),
         }),
       }),
-    })
-    const result = await transitionProjectStatusAction('missing-id', 'in_progress')
-    expect(result.error).toBe('Tender not found.')
-  })
-})
+    });
+    const result = await transitionProjectStatusAction('missing-id', 'in_progress');
+    expect(result.error).toBe('Tender not found.');
+  });
+});
 
 describe('transitionProjectStatusAction — allowed transitions', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    mockGetSession.mockResolvedValue({ user: { id: 'user-1' } })
-    mockTransitionStatus.mockResolvedValue({ id: 'tender-1' })
-    mockRecalculateWaterfall.mockResolvedValue(undefined)
-  })
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ user: { id: 'user-1' } });
+    mockTransitionStatus.mockResolvedValue({ id: 'tender-1' });
+    mockRecalculateWaterfall.mockResolvedValue(undefined);
+  });
 
   const allowedCases: [string, string][] = [
     ['planned', 'in_progress'],
@@ -101,24 +104,24 @@ describe('transitionProjectStatusAction — allowed transitions', () => {
     ['completed', 'planned'],
     ['submitted', 'planned'],
     ['cancelled', 'planned'],
-  ]
+  ];
 
   it.each(allowedCases)('allows %s → %s', async (from, to) => {
-    const { transitionProjectStatusAction } = await import('@/app/actions/project-schedule')
-    await setupEntryStatus(from)
+    const { transitionProjectStatusAction } = await import('@/app/actions/project-schedule');
+    await setupEntryStatus(from);
 
-    const result = await transitionProjectStatusAction('tender-1', to)
-    expect(result.error).toBeUndefined()
-    expect(mockTransitionStatus).toHaveBeenCalledWith('tender-1', to)
-    expect(mockRevalidatePath).toHaveBeenCalledWith('/projects')
-  })
-})
+    const result = await transitionProjectStatusAction('tender-1', to);
+    expect(result.error).toBeUndefined();
+    expect(mockTransitionStatus).toHaveBeenCalledWith('tender-1', to);
+    expect(mockRevalidatePath).toHaveBeenCalledWith('/projects');
+  });
+});
 
 describe('transitionProjectStatusAction — blocked transitions', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    mockGetSession.mockResolvedValue({ user: { id: 'user-1' } })
-  })
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ user: { id: 'user-1' } });
+  });
 
   const blockedCases: [string, string, string][] = [
     ['planned', 'completed', "'planned' to 'completed'"],
@@ -127,28 +130,28 @@ describe('transitionProjectStatusAction — blocked transitions', () => {
     ['completed', 'in_progress', "'completed' to 'in_progress'"],
     ['submitted', 'in_progress', "'submitted' to 'in_progress'"],
     ['submitted', 'completed', "'submitted' to 'completed'"],
-  ]
+  ];
 
   it.each(blockedCases)('blocks %s → %s', async (from, to, expected) => {
-    const { transitionProjectStatusAction } = await import('@/app/actions/project-schedule')
-    await setupEntryStatus(from)
+    const { transitionProjectStatusAction } = await import('@/app/actions/project-schedule');
+    await setupEntryStatus(from);
 
-    const result = await transitionProjectStatusAction('tender-1', to)
-    expect(result.error).toContain(expected)
-    expect(mockTransitionStatus).not.toHaveBeenCalled()
-  })
+    const result = await transitionProjectStatusAction('tender-1', to);
+    expect(result.error).toContain(expected);
+    expect(mockTransitionStatus).not.toHaveBeenCalled();
+  });
 
   it('blocks all transitions from cancelled status except planned', async () => {
-    const { transitionProjectStatusAction } = await import('@/app/actions/project-schedule')
-    await setupEntryStatus('cancelled')
+    const { transitionProjectStatusAction } = await import('@/app/actions/project-schedule');
+    await setupEntryStatus('cancelled');
 
-    const result2 = await transitionProjectStatusAction('tender-1', 'in_progress')
-    const result3 = await transitionProjectStatusAction('tender-1', 'completed')
-    const result4 = await transitionProjectStatusAction('tender-1', 'submitted')
+    const result2 = await transitionProjectStatusAction('tender-1', 'in_progress');
+    const result3 = await transitionProjectStatusAction('tender-1', 'completed');
+    const result4 = await transitionProjectStatusAction('tender-1', 'submitted');
 
-    expect(result2.error).toContain("Cannot transition from 'cancelled'")
-    expect(result3.error).toContain("Cannot transition from 'cancelled'")
-    expect(result4.error).toContain("Cannot transition from 'cancelled'")
-    expect(mockTransitionStatus).not.toHaveBeenCalled()
-  })
-})
+    expect(result2.error).toContain("Cannot transition from 'cancelled'");
+    expect(result3.error).toContain("Cannot transition from 'cancelled'");
+    expect(result4.error).toContain("Cannot transition from 'cancelled'");
+    expect(mockTransitionStatus).not.toHaveBeenCalled();
+  });
+});

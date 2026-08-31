@@ -21,16 +21,16 @@ Part of the `pmg-hub` Turborepo monorepo. This app lives at `apps/admin`.
 
 Route groups under `src/app/(admin)`, mirrored in the sidebar config at `src/components/navigation/nav-data.ts`.
 
-| Module | Routes | What it does |
-|---|---|---|
-| **Dashboard** | `/dashboard` | Landing overview after login. |
-| **Billing** | `/billing/*` | Quote-to-cash: accounts, quotations, invoices, payments, credits, statements, aging report, billable items catalogue. |
-| **Projects** | `/projects/*` | Project coordination: schedule list and timeline views. |
-| **Finance** | `/finance/*` | Income, expenses, expense categories, distributions/allocations. |
-| **Accounting** | `/accounting/*` | Double-entry engine: chart of accounts, journals, general ledger, trial balance, profit & loss, period locking, exports. |
-| **Relationships** | `/relationships/*` | CRM: clients, leads, PMG divisions. |
-| **Insights** | `/insights/*` | Snapshots, reports, business analysis. |
-| **System** | `/settings/*` | Organisation profile, Document Defaults (/settings/billing), Banking Accounts (/settings/billing/banking), Email Delivery (/settings/billing/email), Document Templates (/settings/billing/templates), Credit Policy (/settings/billing/credit), Users, Security, Data & Exports. |
+| Module            | Routes             | What it does                                                                                                                                                                                                                                                                      |
+| ----------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Dashboard**     | `/dashboard`       | Landing overview after login.                                                                                                                                                                                                                                                     |
+| **Billing**       | `/billing/*`       | Quote-to-cash: accounts, quotations, invoices, payments, credits, statements, aging report, billable items catalogue.                                                                                                                                                             |
+| **Projects**      | `/projects/*`      | Project coordination: schedule list and timeline views.                                                                                                                                                                                                                           |
+| **Finance**       | `/finance/*`       | Income, expenses, expense categories, distributions/allocations.                                                                                                                                                                                                                  |
+| **Accounting**    | `/accounting/*`    | Double-entry engine: chart of accounts, journals, general ledger, trial balance, profit & loss, period locking, exports.                                                                                                                                                          |
+| **Relationships** | `/relationships/*` | CRM: clients, leads, PMG divisions.                                                                                                                                                                                                                                               |
+| **Insights**      | `/insights/*`      | Snapshots, reports, business analysis.                                                                                                                                                                                                                                            |
+| **System**        | `/settings/*`      | Organisation profile, Document Defaults (/settings/billing), Banking Accounts (/settings/billing/banking), Email Delivery (/settings/billing/email), Document Templates (/settings/billing/templates), Credit Policy (/settings/billing/credit), Users, Security, Data & Exports. |
 
 To add, remove, or rename a route, edit `src/components/navigation/nav-data.ts` — it's the single source of truth for both the sidebar and breadcrumb labels.
 

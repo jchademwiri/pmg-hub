@@ -23,9 +23,6 @@ export async function fetchSystemAuditLogsAction(params: {
   return await getPaginatedSystemAuditLogs(params);
 }
 
-export async function fetchActiveSessionsAction(params: {
-  page?: number;
-  pageSize?: number;
-}) {
+export async function fetchActiveSessionsAction(params: { page?: number; pageSize?: number }) {
   return await getPaginatedActiveSessions(params);
 }

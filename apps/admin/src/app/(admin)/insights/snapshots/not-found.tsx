@@ -6,7 +6,7 @@ export default function SnapshotsNotFound() {
       noun="snapshot"
       links={[
         { label: 'Snapshots', href: '/insights/snapshots' },
-        { label: 'Reports',   href: '/insights/reports'   },
+        { label: 'Reports', href: '/insights/reports' },
       ]}
     />
   );

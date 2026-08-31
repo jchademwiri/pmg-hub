@@ -1,26 +1,31 @@
-'use client'
+'use client';
 
-import { usePathname } from 'next/navigation'
-import { SidebarTrigger } from '@/components/ui/sidebar'
-import { Separator } from '@/components/ui/separator'
-import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { usePathname } from 'next/navigation';
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Separator } from '@/components/ui/separator';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
-  Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
-import { usePageHeader } from '@/components/navigation/page-header-context'
-import { ROUTE_LABELS, GROUPS } from '@/components/navigation/nav-data'
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbPage,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import { usePageHeader } from '@/components/navigation/page-header-context';
+import { ROUTE_LABELS, GROUPS } from '@/components/navigation/nav-data';
 
 /** Find the exact match label, or null if no exact match */
 function getExactLabel(pathname: string): string | null {
-  if (ROUTE_LABELS[pathname]) return ROUTE_LABELS[pathname]
-  return null
+  if (ROUTE_LABELS[pathname]) return ROUTE_LABELS[pathname];
+  return null;
 }
 
 /** Derive the parent group label from the longest matching group URL */
 function getParentGroup(pathname: string): { label: string; href: string } | null {
   // Skip top-level routes — they have no parent group
-  const segments = pathname.split('/').filter(Boolean)
-  if (segments.length <= 1) return null
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length <= 1) return null;
 
   // Check OVERVIEW routes first (they don't have children that need breadcrumbs)
   // Find the group whose items contain the longest matching prefix
@@ -29,36 +34,36 @@ function getParentGroup(pathname: string): { label: string; href: string } | nul
     const matchingItem = group.items
       .filter((item) => item.url !== '/' + segments[0]) // exclude the group root itself
       .filter((item) => pathname.startsWith(item.url))
-      .sort((a, b) => b.url.length - a.url.length)[0]
+      .sort((a, b) => b.url.length - a.url.length)[0];
 
     if (matchingItem) {
-      return { label: group.label, href: group.items[0].url }
+      return { label: group.label, href: group.items[0].url };
     }
   }
-  return null
+  return null;
 }
 
 /** Derive a readable label from the last path segment */
 function deriveLabel(pathname: string): string {
-  const segment = pathname.split('/').filter(Boolean).pop() ?? ''
-  return segment.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+  const segment = pathname.split('/').filter(Boolean).pop() ?? '';
+  return segment.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react';
 
 export function TopNav() {
-  const pathname = usePathname()
-  const { total, totalVariant, customLabel } = usePageHeader()
+  const pathname = usePathname();
+  const { total, totalVariant, customLabel } = usePageHeader();
   // Two-level breadcrumb: parent > child
-  const parent = getParentGroup(pathname)
-  const label = customLabel ?? getExactLabel(pathname) ?? deriveLabel(pathname)
+  const parent = getParentGroup(pathname);
+  const label = customLabel ?? getExactLabel(pathname) ?? deriveLabel(pathname);
 
   const totalColor = {
-    green:   'text-green-500',
-    amber:   'text-amber-500',
-    red:     'text-red-500',
+    green: 'text-green-500',
+    amber: 'text-amber-500',
+    red: 'text-red-500',
     default: 'text-muted-foreground',
-  }[totalVariant]
+  }[totalVariant];
 
   return (
     <header className="sticky top-0 z-40 h-13 flex w-full items-center border-b border-border bg-card px-4 md:px-6 gap-2">
@@ -70,13 +75,19 @@ export function TopNav() {
             {parent && (
               <>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href={parent.href} className="text-muted-foreground hover:text-foreground transition-colors">
+                  <BreadcrumbLink
+                    href={parent.href}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
                     {parent.label}
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem className="md:hidden">
-                  <BreadcrumbLink href={parent.href} className="flex items-center text-muted-foreground hover:text-foreground transition-colors -ml-1">
+                  <BreadcrumbLink
+                    href={parent.href}
+                    className="flex items-center text-muted-foreground hover:text-foreground transition-colors -ml-1"
+                  >
                     <ChevronLeft className="size-5" />
                   </BreadcrumbLink>
                 </BreadcrumbItem>
@@ -90,14 +101,12 @@ export function TopNav() {
           </BreadcrumbList>
         </Breadcrumb>
         {total && (
-          <span className={`text-base font-semibold tabular-nums ${totalColor}`}>
-            {total}
-          </span>
+          <span className={`text-base font-semibold tabular-nums ${totalColor}`}>{total}</span>
         )}
         <div className="ml-auto">
           <ThemeToggle />
         </div>
       </div>
     </header>
-  )
+  );
 }

@@ -11,28 +11,26 @@ These guidelines define the specifications for rendering data and navigation tab
 - **Header Buttons**: Sortable column headers should use a `<button>` wrapper styled with `group inline-flex items-center text-xs font-semibold hover:text-foreground`.
 
 ### Incorrect
+
 ```tsx
 // ❌ WRONG: Nested Link inside a clickable table row creates invalid HTML structure
 <TableRow onClick={() => router.push(`/billing/statements/${client.id}`)}>
   <TableCell>
-    <Link href={`/billing/statements/${client.id}`}>
-      {client.name}
-    </Link>
+    <Link href={`/billing/statements/${client.id}`}>{client.name}</Link>
   </TableCell>
 </TableRow>
 ```
 
 ### Correct
+
 ```tsx
 //   CORRECT: Click handler on TableRow, name styled as a link via span classes
-<TableRow 
+<TableRow
   className="cursor-pointer hover:bg-muted/40 transition-colors border-b border-border"
   onClick={() => router.push(`/billing/statements/${client.id}`)}
 >
   <TableCell className="py-4 text-sm font-medium">
-    <span className="hover:underline hover:text-primary">
-      {client.name}
-    </span>
+    <span className="hover:underline hover:text-primary">{client.name}</span>
   </TableCell>
 </TableRow>
 ```
@@ -46,6 +44,7 @@ These guidelines define the specifications for rendering data and navigation tab
 - **Tabular Data**: Financial amounts, quantities, and dates should always use the `tabular-nums` Tailwind utility for clean vertical alignment.
 
 ### Incorrect
+
 ```tsx
 // ❌ WRONG: Tight spacing, incorrect sizes, and missing tabular numbers alignment
 <TableHead>Amount</TableHead>
@@ -56,6 +55,7 @@ These guidelines define the specifications for rendering data and navigation tab
 ```
 
 ### Correct
+
 ```tsx
 //   CORRECT: Spacious py-4 padding, readable text-sm size, and tabular alignment for figures
 <TableHead className="py-4 text-right">Amount</TableHead>

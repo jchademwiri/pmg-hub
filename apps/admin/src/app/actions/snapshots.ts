@@ -17,9 +17,15 @@ import { getSessionOrRedirect } from '@/lib/auth';
 
 const periodSchema = z.string().regex(/^\d{4}-\d{2}$/);
 
-export async function getPeriodSummary(period: string): Promise<{
-  revenue: number; expenses: number; pmgShare: number; profitPool: number;
-} | { error: string }> {
+export async function getPeriodSummary(period: string): Promise<
+  | {
+      revenue: number;
+      expenses: number;
+      pmgShare: number;
+      profitPool: number;
+    }
+  | { error: string }
+> {
   const parsed = periodSchema.safeParse(period);
   if (!parsed.success) return { error: 'Period must be YYYY-MM' };
   try {
@@ -86,9 +92,9 @@ const ACCOUNTS_RECEIVABLE_CODE = '1100';
  * true outstanding AR balance as of month-end (cumulative since inception,
  * via getTrialBalance with only an end date — no lower bound).
  */
-export async function getSnapshotArSummary(period: string): Promise<
-  { invoiced: number; paid: number; arBalance: number } | { error: string }
-> {
+export async function getSnapshotArSummary(
+  period: string,
+): Promise<{ invoiced: number; paid: number; arBalance: number } | { error: string }> {
   const parsed = periodSchema.safeParse(period);
   if (!parsed.success) return { error: 'Period must be YYYY-MM' };
 

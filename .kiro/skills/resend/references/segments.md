@@ -6,23 +6,23 @@ Group contacts for broadcast targeting. Segments replaced legacy "audiences" - u
 
 ### Node.js
 
-| Operation | Method |
-|-----------|--------|
-| Create | `resend.segments.create(params)` |
-| Get | `resend.segments.get(id)` |
-| List | `resend.segments.list(params?)` |
-| Delete | `resend.segments.remove(id)` - not `.delete()` |
+| Operation | Method                                         |
+| --------- | ---------------------------------------------- |
+| Create    | `resend.segments.create(params)`               |
+| Get       | `resend.segments.get(id)`                      |
+| List      | `resend.segments.list(params?)`                |
+| Delete    | `resend.segments.remove(id)` - not `.delete()` |
 
 No update endpoint - delete and recreate to rename a segment.
 
 ### Python
 
-| Operation | Method |
-|-----------|--------|
-| Create | `resend.Segments.create(params)` |
-| Get | `resend.Segments.get(id)` |
-| List | `resend.Segments.list(params?)` |
-| Delete | `resend.Segments.remove(id)` |
+| Operation | Method                           |
+| --------- | -------------------------------- |
+| Create    | `resend.Segments.create(params)` |
+| Get       | `resend.Segments.get(id)`        |
+| List      | `resend.Segments.list(params?)`  |
+| Delete    | `resend.Segments.remove(id)`     |
 
 ## Create Segment
 
@@ -69,9 +69,9 @@ await resend.broadcasts.create({
 
 ## Common Mistakes
 
-| Mistake | Fix |
-|---------|-----|
-| Using `audienceId` | Audiences are deprecated - use `segmentId` |
-| Calling `.update()` | No update endpoint - `.remove()` then `.create()` to rename |
-| Calling `.delete()` | SDK method is `.remove()` |
+| Mistake                       | Fix                                                             |
+| ----------------------------- | --------------------------------------------------------------- |
+| Using `audienceId`            | Audiences are deprecated - use `segmentId`                      |
+| Calling `.update()`           | No update endpoint - `.remove()` then `.create()` to rename     |
+| Calling `.delete()`           | SDK method is `.remove()`                                       |
 | Expecting contacts auto-added | Contacts must be explicitly added via `contacts.segments.add()` |

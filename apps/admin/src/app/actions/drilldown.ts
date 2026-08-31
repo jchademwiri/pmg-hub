@@ -1,51 +1,51 @@
-'use server'
+'use server';
 
-import { getIncomeByPeriod, getExpensesByPeriod, getLedgerEntriesByPeriod } from '@pmg/db'
+import { getIncomeByPeriod, getExpensesByPeriod, getLedgerEntriesByPeriod } from '@pmg/db';
 
-export type DrilldownType = 'revenue' | 'expenses' | 'pmg_share'
+export type DrilldownType = 'revenue' | 'expenses' | 'pmg_share';
 
 export type IncomeRow = {
-  date: string
-  divisionName: string
-  clientName: string
-  description: string | null
-  amount: number
-}
+  date: string;
+  divisionName: string;
+  clientName: string;
+  description: string | null;
+  amount: number;
+};
 
 export type ExpenseRow = {
-  date: string
-  divisionName: string
-  category: string
-  clientName: string
-  description: string | null
-  amount: number
-}
+  date: string;
+  divisionName: string;
+  category: string;
+  clientName: string;
+  description: string | null;
+  amount: number;
+};
 
 export type LedgerRow = {
-  date: string
-  description: string | null
-  amount: number
-  entryType: string
-}
+  date: string;
+  description: string | null;
+  amount: number;
+  entryType: string;
+};
 
 export type DrilldownResult =
   | { type: 'income'; total: number; rows: IncomeRow[] }
   | { type: 'expense'; total: number; rows: ExpenseRow[] }
-  | { type: 'ledger'; total: number; rows: LedgerRow[] }
+  | { type: 'ledger'; total: number; rows: LedgerRow[] };
 
 export async function getDrilldownData(
   period: string,
   drillType: DrilldownType,
 ): Promise<DrilldownResult> {
   if (drillType === 'revenue') {
-    const rows = await getIncomeByPeriod(period)
-    return { type: 'income', total: rows.reduce((s, r) => s + r.amount, 0), rows }
+    const rows = await getIncomeByPeriod(period);
+    return { type: 'income', total: rows.reduce((s, r) => s + r.amount, 0), rows };
   }
   if (drillType === 'expenses') {
-    const rows = await getExpensesByPeriod(period)
-    return { type: 'expense', total: rows.reduce((s, r) => s + r.amount, 0), rows }
+    const rows = await getExpensesByPeriod(period);
+    return { type: 'expense', total: rows.reduce((s, r) => s + r.amount, 0), rows };
   }
   // drillType === 'pmg_share' → ledger entries
-  const rows = await getLedgerEntriesByPeriod(period, drillType)
-  return { type: 'ledger', total: rows.total, rows: rows.entries }
+  const rows = await getLedgerEntriesByPeriod(period, drillType);
+  return { type: 'ledger', total: rows.total, rows: rows.entries };
 }

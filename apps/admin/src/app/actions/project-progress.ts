@@ -5,9 +5,11 @@ import { projectProgressSections, projectProgressItems } from '@pmg/db';
 import { eq, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { getProjectChecklist } from '@pmg/db';
+import { getSessionOrRedirect } from '@/lib/auth';
 
 export async function getProjectChecklistAction(projectId: string) {
   try {
+    await getSessionOrRedirect();
     if (!projectId) {
       return { error: 'Project ID is required.' };
     }
@@ -19,12 +21,12 @@ export async function getProjectChecklistAction(projectId: string) {
   }
 }
 
-
 export async function addProgressSectionAction(
   projectId: string,
-  title: string
+  title: string,
 ): Promise<{ success: boolean; section?: any; error?: string }> {
   try {
+    await getSessionOrRedirect();
     if (!projectId || !title.trim()) {
       return { success: false, error: 'Project ID and title are required.' };
     }
@@ -34,7 +36,7 @@ export async function addProgressSectionAction(
       .select({ count: sql<number>`count(*)::int` })
       .from(projectProgressSections)
       .where(eq(projectProgressSections.projectId, projectId));
-    
+
     const sortOrder = (countResult?.count ?? 0) + 1;
 
     const [newSection] = await db
@@ -55,9 +57,10 @@ export async function addProgressSectionAction(
 }
 
 export async function deleteProgressSectionAction(
-  sectionId: string
+  sectionId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await getSessionOrRedirect();
     if (!sectionId) {
       return { success: false, error: 'Section ID is required.' };
     }
@@ -74,9 +77,10 @@ export async function deleteProgressSectionAction(
 
 export async function renameProgressSectionAction(
   sectionId: string,
-  title: string
+  title: string,
 ): Promise<{ success: boolean; section?: any; error?: string }> {
   try {
+    await getSessionOrRedirect();
     if (!sectionId || !title.trim()) {
       return { success: false, error: 'Section ID and title are required.' };
     }
@@ -97,9 +101,10 @@ export async function renameProgressSectionAction(
 
 export async function addProgressItemAction(
   sectionId: string,
-  task: string
+  task: string,
 ): Promise<{ success: boolean; item?: any; error?: string }> {
   try {
+    await getSessionOrRedirect();
     if (!sectionId || !task.trim()) {
       return { success: false, error: 'Section ID and task are required.' };
     }
@@ -145,9 +150,10 @@ export async function addProgressItemAction(
 }
 
 export async function deleteProgressItemAction(
-  itemId: string
+  itemId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await getSessionOrRedirect();
     if (!itemId) {
       return { success: false, error: 'Item ID is required.' };
     }
@@ -202,9 +208,10 @@ export async function deleteProgressItemAction(
 
 export async function toggleProgressItemAction(
   itemId: string,
-  isCompleted: boolean
+  isCompleted: boolean,
 ): Promise<{ success: boolean; item?: any; error?: string }> {
   try {
+    await getSessionOrRedirect();
     if (!itemId) {
       return { success: false, error: 'Item ID is required.' };
     }
@@ -260,9 +267,10 @@ export async function toggleProgressItemAction(
 
 export async function updateProgressItemTextAction(
   itemId: string,
-  task: string
+  task: string,
 ): Promise<{ success: boolean; item?: any; error?: string }> {
   try {
+    await getSessionOrRedirect();
     if (!itemId || !task.trim()) {
       return { success: false, error: 'Item ID and task description are required.' };
     }
@@ -283,9 +291,10 @@ export async function updateProgressItemTextAction(
 
 export async function updateProgressSectionStatusAction(
   sectionId: string,
-  status: 'backlog' | 'in_progress' | 'completed'
+  status: 'backlog' | 'in_progress' | 'completed',
 ): Promise<{ success: boolean; section?: any; error?: string }> {
   try {
+    await getSessionOrRedirect();
     if (!sectionId || !status) {
       return { success: false, error: 'Section ID and status are required.' };
     }

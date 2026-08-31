@@ -128,7 +128,11 @@ describe('ReportFilterCard — active filter count and reset', () => {
   });
 
   it('resets every filter to its default when Reset is clicked', async () => {
-    const props = renderCard({ selectedDivisionId: 'div-1', startDate: '2026-01-01', endDate: '2026-01-31' });
+    const props = renderCard({
+      selectedDivisionId: 'div-1',
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+    });
     const user = userEvent.setup();
 
     await user.click(screen.getByRole('button', { name: /reset/i }));

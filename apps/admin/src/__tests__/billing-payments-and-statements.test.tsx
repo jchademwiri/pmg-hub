@@ -9,7 +9,9 @@ vi.mock('server-only', () => ({}));
 // Drizzle query builders are thenable AND support further chaining
 // (.for('update'), .orderBy(), .limit()) after a terminal .where(). This
 // helper produces a value that's both directly awaitable and chainable.
-function selectResult<T>(rows: T): Promise<T> & { for: () => any; orderBy: () => any; limit: () => any } {
+function selectResult<T>(
+  rows: T,
+): Promise<T> & { for: () => any; orderBy: () => any; limit: () => any } {
   const p = Promise.resolve(rows) as any;
   p.for = () => selectResult(rows);
   p.orderBy = () => selectResult(rows);
@@ -37,7 +39,13 @@ const dbMock = {
 
 vi.mock('@pmg/db', () => ({
   getDb: () => dbMock,
-  invoices: { id: 'invoices_id', status: 'status', total: 'total', clientId: 'clientId', divisionId: 'divisionId' },
+  invoices: {
+    id: 'invoices_id',
+    status: 'status',
+    total: 'total',
+    clientId: 'clientId',
+    divisionId: 'divisionId',
+  },
   income: { id: 'income_id', amount: 'amount', clientId: 'clientId' },
   clients: { id: 'clients_id', name: 'name', businessName: 'businessName' },
   paymentAllocations: { id: 'payment_allocations_id', amount: 'amount', invoiceId: 'invoiceId' },
@@ -46,7 +54,7 @@ vi.mock('@pmg/db', () => ({
   and: vi.fn(),
   sql: Object.assign(
     (strings: TemplateStringsArray, ...values: unknown[]) => ({ strings, values }),
-    { raw: (s: string) => s }
+    { raw: (s: string) => s },
   ),
   desc: vi.fn(),
   asc: vi.fn(),
@@ -107,7 +115,7 @@ vi.mock('@/lib/accounting/posting', () => ({
 import {
   getClientOutstandingInvoices,
   getClientCreditBalance,
-  recordClientPayment
+  recordClientPayment,
 } from '@/app/actions/billing-payments';
 import StatementsPage from '@/app/(admin)/billing/statements/page';
 
@@ -214,16 +222,20 @@ describe('Billing Payments and Statements Module', () => {
         return {
           from: () => ({
             where: () => {
-              if (selectCount === 1) return selectResult([{ name: 'Client A', businessName: 'Client Business' }]);
-              if (selectCount === 2) return selectResult([{ id: 'inv-1', documentNumber: 'INV-001' }]);
+              if (selectCount === 1)
+                return selectResult([{ name: 'Client A', businessName: 'Client Business' }]);
+              if (selectCount === 2)
+                return selectResult([{ id: 'inv-1', documentNumber: 'INV-001' }]);
               if (selectCount === 3) {
-                return selectResult([{
-                  total: '1000.00',
-                  writeOffAmount: '0',
-                  documentNumber: 'INV-001',
-                  clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
-                  divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
-                }]);
+                return selectResult([
+                  {
+                    total: '1000.00',
+                    writeOffAmount: '0',
+                    documentNumber: 'INV-001',
+                    clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
+                    divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
+                  },
+                ]);
               }
               if (selectCount === 4) return selectResult([{ sum: '0.00' }]); // before this allocation
               return selectResult([{ sum: '1000.00' }]); // after this allocation — fully paid
@@ -239,9 +251,7 @@ describe('Billing Payments and Statements Module', () => {
         date: '2026-05-01',
         description: 'Monthly Payment',
         amount: 1000,
-        allocations: [
-          { invoiceId: 'inv-1', amount: 1000 },
-        ],
+        allocations: [{ invoiceId: 'inv-1', amount: 1000 }],
       });
 
       expect(res).toEqual({ success: true });

@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { db, leads, clients, eq } from '@pmg/db';
+import { getSessionOrRedirect } from '@/lib/auth';
 
 const LeadStatusSchema = z.object({
   status: z.enum(['new', 'contacted', 'converted', 'lost'], {
@@ -10,14 +11,19 @@ const LeadStatusSchema = z.object({
   }),
 });
 
-export async function updateLeadStatus(id: string, formData: FormData): Promise<{ error?: string }> {
-  const raw = Object.fromEntries(formData);
-  const result = LeadStatusSchema.safeParse(raw);
-  if (!result.success) {
-    return { error: result.error.issues[0]?.message ?? 'Validation error' };
-  }
+export async function updateLeadStatus(
+  id: string,
+  formData: FormData,
+): Promise<{ error?: string }> {
   try {
-    await db.update(leads)
+    await getSessionOrRedirect();
+    const raw = Object.fromEntries(formData);
+    const result = LeadStatusSchema.safeParse(raw);
+    if (!result.success) {
+      return { error: result.error.issues[0]?.message ?? 'Validation error' };
+    }
+    await db
+      .update(leads)
       .set({ status: result.data.status, updatedAt: new Date() })
       .where(eq(leads.id, id));
     revalidatePath('/relationships/leads');
@@ -32,13 +38,15 @@ export async function updateLeadStatus(id: string, formData: FormData): Promise<
 const LeadNotesSchema = z.object({ notes: z.string().optional() });
 
 export async function updateLeadNotes(id: string, formData: FormData): Promise<{ error?: string }> {
-  const raw = Object.fromEntries(formData);
-  const result = LeadNotesSchema.safeParse(raw);
-  if (!result.success) {
-    return { error: result.error.issues[0]?.message ?? 'Validation error' };
-  }
   try {
-    await db.update(leads)
+    await getSessionOrRedirect();
+    const raw = Object.fromEntries(formData);
+    const result = LeadNotesSchema.safeParse(raw);
+    if (!result.success) {
+      return { error: result.error.issues[0]?.message ?? 'Validation error' };
+    }
+    await db
+      .update(leads)
       .set({ notes: result.data.notes ?? null, updatedAt: new Date() })
       .where(eq(leads.id, id));
     revalidatePath(`/relationships/leads/${id}`);
@@ -65,6 +73,7 @@ const CreateLeadSchema = z
 
 export async function createLead(formData: FormData): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
     const raw = Object.fromEntries(formData);
     const result = CreateLeadSchema.safeParse(raw);
     if (!result.success) {
@@ -92,6 +101,7 @@ export async function createLead(formData: FormData): Promise<{ error?: string }
 
 export async function deleteLead(id: string): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
     await db.delete(leads).where(eq(leads.id, id));
     revalidatePath('/relationships/leads');
     revalidatePath('/dashboard');
@@ -101,17 +111,21 @@ export async function deleteLead(id: string): Promise<{ error?: string }> {
   }
 }
 
-export async function convertLeadToClient(id: string): Promise<{ error?: string; clientId?: string }> {
+export async function convertLeadToClient(
+  id: string,
+): Promise<{ error?: string; clientId?: string }> {
   try {
-    const lead = await db.select().from(leads).where(eq(leads.id, id)).then(rows => rows[0]);
+    await getSessionOrRedirect();
+    const lead = await db
+      .select()
+      .from(leads)
+      .where(eq(leads.id, id))
+      .then((rows) => rows[0]);
     if (!lead) return { error: 'Lead not found.' };
     if (lead.status === 'converted') return { error: 'Lead is already converted.' };
 
     if (lead.email) {
-      const [existingClient] = await db
-        .select()
-        .from(clients)
-        .where(eq(clients.email, lead.email));
+      const [existingClient] = await db.select().from(clients).where(eq(clients.email, lead.email));
       if (existingClient) {
         return { error: `A client with the email "${lead.email}" already exists.` };
       }
@@ -121,11 +135,7 @@ export async function convertLeadToClient(id: string): Promise<{ error?: string;
     // Insert client and update lead status atomically
     const inserted = await db.transaction(async (tx) => {
       // 1. Lock the lead row to prevent concurrent status updates
-      const [leadRow] = await tx
-        .select()
-        .from(leads)
-        .where(eq(leads.id, id))
-        .for('update');
+      const [leadRow] = await tx.select().from(leads).where(eq(leads.id, id)).for('update');
 
       if (!leadRow) throw new Error('Lead not found.');
       if (leadRow.status === 'converted') throw new Error('Lead is already converted.');
@@ -142,27 +152,29 @@ export async function convertLeadToClient(id: string): Promise<{ error?: string;
         }
       }
 
-
-      const [client] = await tx.insert(clients).values({
-        name: leadRow.name || 'Converted Lead',
-        businessName: leadRow.companyName ?? null,
-        email: leadRow.email ?? null,
-        phone: leadRow.phone ?? null,
-        divisionId: leadRow.divisionId ?? null,
-        isActive: true,
-      }).returning({ id: clients.id });
+      const [client] = await tx
+        .insert(clients)
+        .values({
+          name: leadRow.name || 'Converted Lead',
+          businessName: leadRow.companyName ?? null,
+          email: leadRow.email ?? null,
+          phone: leadRow.phone ?? null,
+          divisionId: leadRow.divisionId ?? null,
+          isActive: true,
+        })
+        .returning({ id: clients.id });
 
       if (!client) {
         throw new Error('Failed to create client record.');
       }
 
-      await tx.update(leads)
+      await tx
+        .update(leads)
         .set({ status: 'converted', updatedAt: new Date() })
         .where(eq(leads.id, id));
 
       return client;
     });
-
 
     if (!inserted) {
       return { error: 'Failed to create client record.' };

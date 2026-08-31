@@ -44,14 +44,15 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
   const { currentMonths, previousYearGroup } = generateFinancialYearGroups();
   const [currentYear, currentMonth] = currentMonthStr.split('-').map(Number);
 
-  const [currentMonthResult, divisions, categoryObjects, months, clients, minDate] = await Promise.all([
-    getAllExpenses({ month: currentMonthStr, ...filters }, { page: 1, pageSize: 5000 }),
-    getAllDivisions(),
-    getAllExpenseCategories(),
-    getDistinctExpenseMonths(),
-    getAllClients(),
-    getMinAllowedDate(),
-  ]);
+  const [currentMonthResult, divisions, categoryObjects, months, clients, minDate] =
+    await Promise.all([
+      getAllExpenses({ month: currentMonthStr, ...filters }, { page: 1, pageSize: 5000 }),
+      getAllDivisions(),
+      getAllExpenseCategories(),
+      getDistinctExpenseMonths(),
+      getAllClients(),
+      getMinAllowedDate(),
+    ]);
 
   const categories = categoryObjects.map((c) => c.name);
   const closedPeriods = await getClosedPeriodsFromDates(currentMonthResult.data.map((r) => r.date));
@@ -60,7 +61,11 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
   const currentCalendarYear = new Date().getFullYear();
   const fyStartYear = currentMonthIdx < 2 ? currentCalendarYear - 1 : currentCalendarYear;
 
-  const monthlySummaries = await getExpenseMonthlySummaries(fyStartYear, filters.divisionId, filters.category);
+  const monthlySummaries = await getExpenseMonthlySummaries(
+    fyStartYear,
+    filters.divisionId,
+    filters.category,
+  );
   const globalTotal = monthlySummaries.reduce((sum, m) => sum + m.totalExpenses, 0);
   const globalCategorized = monthlySummaries.reduce((sum, m) => sum + m.totalCategorized, 0);
   const globalUncategorized = monthlySummaries.reduce((sum, m) => sum + m.totalUncategorized, 0);
@@ -85,7 +90,9 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Expenses</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Expenses
+            </CardTitle>
             <Receipt className="size-4 text-primary" />
           </CardHeader>
           <CardContent>
@@ -99,17 +106,25 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
             <CheckCircle2 className="size-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formatZAR(globalCategorized)}</div>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+              {formatZAR(globalCategorized)}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">Valid expense categories</p>
           </CardContent>
         </Card>
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Uncategorized</CardTitle>
-            <AlertCircle className={`size-4 ${globalUncategorized > 0 ? 'text-amber-500' : 'text-muted-foreground'}`} />
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Uncategorized
+            </CardTitle>
+            <AlertCircle
+              className={`size-4 ${globalUncategorized > 0 ? 'text-amber-500' : 'text-muted-foreground'}`}
+            />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${globalUncategorized > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+            <div
+              className={`text-2xl font-bold ${globalUncategorized > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}
+            >
               {formatZAR(globalUncategorized)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Requires review</p>
@@ -117,17 +132,27 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
         </Card>
       </div>
 
-      <Accordion type="single" collapsible defaultValue="current-month" className="w-full space-y-4">
+      <Accordion
+        type="single"
+        collapsible
+        defaultValue="current-month"
+        className="w-full space-y-4"
+      >
         {/* CURRENT MONTH */}
         <AccordionItem value="current-month" className="border rounded-lg bg-card px-4">
           <AccordionTrigger className="flex items-center w-full pr-4 hover:no-underline group/trigger py-4">
             <span className="flex-1 text-left text-lg font-medium text-muted-foreground group-data-[state=open]/trigger:text-foreground transition-colors">
-              Current Month ({new Date(currentYear, currentMonth - 1).toLocaleString('default', { month: 'long', year: 'numeric' })})
+              Current Month (
+              {new Date(currentYear, currentMonth - 1).toLocaleString('default', {
+                month: 'long',
+                year: 'numeric',
+              })}
+              )
             </span>
-            
+
             {/* Summary Badges */}
             {(() => {
-              const summary = monthlySummaries.find(s => s.month === currentMonthStr);
+              const summary = monthlySummaries.find((s) => s.month === currentMonthStr);
               if (!summary) return null;
               return (
                 <div className="flex items-center gap-3 pr-2">
@@ -169,7 +194,7 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
         {/* PREVIOUS MONTHS OF CURRENT FY */}
         {currentMonths.map((m) => {
           if (m.year === currentYear && m.month === currentMonth) return null;
-          
+
           const val = m.value;
           return (
             <AccordionItem key={val} value={val} className="border rounded-lg bg-card px-4">
@@ -180,7 +205,7 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
 
                 {/* Summary Badges */}
                 {(() => {
-                  const summary = monthlySummaries.find(s => s.month === val);
+                  const summary = monthlySummaries.find((s) => s.month === val);
                   if (!summary) return null;
                   return (
                     <div className="flex items-center gap-3 pr-2">
@@ -223,7 +248,8 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
           <AccordionItem value="previous-fy" className="border rounded-lg bg-card px-4">
             <AccordionTrigger className="flex items-center w-full pr-4 hover:no-underline group/trigger py-4">
               <span className="flex-1 text-left text-lg font-medium text-muted-foreground group-data-[state=open]/trigger:text-foreground transition-colors">
-                Previous Financial Year (Mar {previousYearGroup.year} - Feb {previousYearGroup.year + 1})
+                Previous Financial Year (Mar {previousYearGroup.year} - Feb{' '}
+                {previousYearGroup.year + 1})
               </span>
             </AccordionTrigger>
             <AccordionContent className="pt-2 pb-6">

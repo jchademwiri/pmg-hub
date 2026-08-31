@@ -10,8 +10,10 @@ export default async function PortalLayout({ children }: { children: React.React
   const cookieStore = await cookies();
   const isImpersonating =
     isAdmin &&
-    !!(cookieStore.get('impersonate_client_id')?.value ||
-      cookieStore.get('dev_impersonate_client_id')?.value);
+    !!(
+      cookieStore.get('impersonate_client_id')?.value ||
+      cookieStore.get('dev_impersonate_client_id')?.value
+    );
 
   return (
     <>

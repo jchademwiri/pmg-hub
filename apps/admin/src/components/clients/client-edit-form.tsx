@@ -1,41 +1,47 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { useRouter } from 'next/navigation'
-import type { Client } from '@pmg/db'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Field, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import * as React from 'react';
+import { useRouter } from 'next/navigation';
+import type { Client } from '@pmg/db';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface ClientEditFormProps {
-  client: Client
-  divisions: { id: string; name: string }[]
-  updateAction: (formData: FormData) => Promise<{ error?: string }>
-  onCancel?: () => void
+  client: Client;
+  divisions: { id: string; name: string }[];
+  updateAction: (formData: FormData) => Promise<{ error?: string }>;
+  onCancel?: () => void;
 }
 
 export function ClientEditForm({ client, divisions, updateAction, onCancel }: ClientEditFormProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = React.useTransition()
-  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
-  const [divisionId, setDivisionId] = React.useState(client.divisionId ?? '')
+  const router = useRouter();
+  const [isPending, startTransition] = React.useTransition();
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [divisionId, setDivisionId] = React.useState(client.divisionId ?? '');
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setErrorMessage(null)
+    e.preventDefault();
+    setErrorMessage(null);
 
     startTransition(async () => {
-      const fd = new FormData(e.currentTarget)
-      const result = await updateAction(fd)
+      const fd = new FormData(e.currentTarget);
+      const result = await updateAction(fd);
       if (result.error) {
-        setErrorMessage(result.error)
+        setErrorMessage(result.error);
       } else {
-        router.refresh()
-        if (onCancel) onCancel()
+        router.refresh();
+        if (onCancel) onCancel();
       }
-    })
+    });
   }
 
   return (
@@ -103,7 +109,9 @@ export function ClientEditForm({ client, divisions, updateAction, onCancel }: Cl
               <SelectValue placeholder="No division linked (auto-detect)" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__none__" className="text-xs text-muted-foreground">No division linked</SelectItem>
+              <SelectItem value="__none__" className="text-xs text-muted-foreground">
+                No division linked
+              </SelectItem>
               {divisions.map((d) => (
                 <SelectItem key={d.id} value={d.id} className="text-xs">
                   {d.name}
@@ -112,14 +120,10 @@ export function ClientEditForm({ client, divisions, updateAction, onCancel }: Cl
             </SelectContent>
           </Select>
           {/* Hidden input to carry the value in FormData */}
-          <input
-            id="client-division-hidden"
-            type="hidden"
-            name="divisionId"
-            value={divisionId}
-          />
+          <input id="client-division-hidden" type="hidden" name="divisionId" value={divisionId} />
           <p className="text-xs text-muted-foreground mt-1">
-            When set, statements will use this division&apos;s branding. If unset, the first invoice&apos;s division is used.
+            When set, statements will use this division&apos;s branding. If unset, the first
+            invoice&apos;s division is used.
           </p>
         </Field>
 
@@ -152,23 +156,20 @@ export function ClientEditForm({ client, divisions, updateAction, onCancel }: Cl
               disabled={isPending}
               className="rounded border-input text-brand focus:ring-brand h-4 w-4"
             />
-            <span className="text-sm font-medium">Exclude this client from global automated statements</span>
+            <span className="text-sm font-medium">
+              Exclude this client from global automated statements
+            </span>
           </label>
           <p className="text-xs text-muted-foreground mt-1">
-            Check this if this is a VIP or edge-case client who should not receive automated monthly sweeps.
+            Check this if this is a VIP or edge-case client who should not receive automated monthly
+            sweeps.
           </p>
         </Field>
       </div>
 
       <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4 mt-2">
         {onCancel && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isPending}
-            size="sm"
-          >
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isPending} size="sm">
             Cancel
           </Button>
         )}
@@ -183,5 +184,5 @@ export function ClientEditForm({ client, divisions, updateAction, onCancel }: Cl
         </Alert>
       )}
     </form>
-  )
+  );
 }

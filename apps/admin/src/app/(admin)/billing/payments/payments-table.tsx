@@ -15,12 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { confirm } from '@/components/ui/confirm-dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export interface PaymentEntry {
   id: string;
@@ -58,7 +53,7 @@ function PaymentRow({
   const handleDeleteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isDeleting) return;
-    
+
     const confirmed = await confirm({
       title: 'Delete payment record?',
       description: 'This action cannot be undone and will revert all allocations to invoices.',
@@ -70,7 +65,7 @@ function PaymentRow({
       setIsDeleting(true);
       const result = await deleteAction(entry.id);
       setIsDeleting(false);
-      
+
       if (result.error) {
         toast.error(result.error);
       } else {
@@ -81,7 +76,7 @@ function PaymentRow({
   };
 
   return (
-    <TableRow 
+    <TableRow
       className="cursor-pointer hover:bg-muted/40 transition-colors border-b border-border"
       onClick={() => router.push(`/billing/payments/${entry.id}`)}
     >
@@ -91,9 +86,7 @@ function PaymentRow({
           {fmtDate(entry.date)}
         </div>
       </TableCell>
-      <TableCell className="text-xs py-3">
-        {entry.clientName}
-      </TableCell>
+      <TableCell className="text-xs py-3">{entry.clientName}</TableCell>
       <TableCell className="py-3">
         <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-secondary text-secondary-foreground">
           {entry.divisionName}
@@ -126,10 +119,10 @@ function PaymentRow({
               <TooltipContent>Period is closed</TooltipContent>
             </Tooltip>
           ) : (
-            <Button 
-              variant="ghost" 
-              size="icon-sm" 
-              onClick={handleDeleteClick} 
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleDeleteClick}
               disabled={isDeleting}
               title="Delete"
             >
@@ -160,7 +153,7 @@ function MobilePaymentCard({
   const handleDeleteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isDeleting) return;
-    
+
     const confirmed = await confirm({
       title: 'Delete payment record?',
       description: 'This action cannot be undone and will revert all allocations to invoices.',
@@ -172,7 +165,7 @@ function MobilePaymentCard({
       setIsDeleting(true);
       const result = await deleteAction(entry.id);
       setIsDeleting(false);
-      
+
       if (result.error) {
         toast.error(result.error);
       } else {
@@ -183,7 +176,7 @@ function MobilePaymentCard({
   };
 
   return (
-    <div 
+    <div
       className="bg-card border rounded-lg p-4 flex flex-col gap-3 cursor-pointer hover:border-primary/50 transition-colors shadow-sm"
       onClick={() => router.push(`/billing/payments/${entry.id}`)}
     >
@@ -191,9 +184,13 @@ function MobilePaymentCard({
         <div className="flex flex-col gap-1 min-w-0">
           <div className="font-semibold text-sm truncate">{entry.clientName}</div>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1 whitespace-nowrap"><Calendar className="size-3" /> {fmtDate(entry.date)}</span>
+            <span className="flex items-center gap-1 whitespace-nowrap">
+              <Calendar className="size-3" /> {fmtDate(entry.date)}
+            </span>
             <span className="hidden sm:inline">•</span>
-            <span className="truncate max-w-[120px] bg-secondary text-secondary-foreground px-1.5 rounded">{entry.divisionName}</span>
+            <span className="truncate max-w-[120px] bg-secondary text-secondary-foreground px-1.5 rounded">
+              {entry.divisionName}
+            </span>
           </div>
         </div>
         <div className="text-right flex flex-col items-end gap-1 shrink-0">
@@ -205,23 +202,31 @@ function MobilePaymentCard({
           )}
         </div>
       </div>
-      
+
       {entry.description && (
         <div className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded border border-border/40 line-clamp-2">
           {entry.description}
         </div>
       )}
 
-      <div className="flex justify-end pt-2 border-t border-border/40 mt-1" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="flex justify-end pt-2 border-t border-border/40 mt-1"
+        onClick={(e) => e.stopPropagation()}
+      >
         {isLocked ? (
-          <Button variant="ghost" size="sm" disabled className="h-7 px-2 text-xs text-muted-foreground/50">
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled
+            className="h-7 px-2 text-xs text-muted-foreground/50"
+          >
             <Lock className="size-3 mr-1.5" /> Locked
           </Button>
         ) : (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleDeleteClick} 
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDeleteClick}
             disabled={isDeleting}
             className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
           >
@@ -233,11 +238,7 @@ function MobilePaymentCard({
   );
 }
 
-export function PaymentsTable({
-  entries,
-  closedPeriods,
-  deleteAction,
-}: PaymentsTableProps) {
+export function PaymentsTable({ entries, closedPeriods, deleteAction }: PaymentsTableProps) {
   if (entries.length === 0) {
     return (
       <div className="text-center text-muted-foreground text-sm py-8 px-4 border rounded-lg bg-card border-dashed">

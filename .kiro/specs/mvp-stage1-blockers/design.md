@@ -6,13 +6,13 @@ This document covers the technical design for the five Stage 1 blockers that mus
 resolved before the PMG Control Center handles real financial data. They are implemented
 in strict dependency order: **B2 → B1 → B3 → B4 → B5**.
 
-| Blocker | Summary | Dependencies |
-|---------|---------|--------------|
-| B2 | Full CRUD for `/clients` | None |
-| B1 | Enforce `clientId` required on income | B2 (clients must exist first) |
-| B3 | Managed `expense_categories` table | None |
-| B4 | Fix hardcoded breadcrumb in `top-nav.tsx` | None |
-| B5 | Apply `formatZAR` to income table | None |
+| Blocker | Summary                                   | Dependencies                  |
+| ------- | ----------------------------------------- | ----------------------------- |
+| B2      | Full CRUD for `/clients`                  | None                          |
+| B1      | Enforce `clientId` required on income     | B2 (clients must exist first) |
+| B3      | Managed `expense_categories` table        | None                          |
+| B4      | Fix hardcoded breadcrumb in `top-nav.tsx` | None                          |
+| B5      | Apply `formatZAR` to income table         | None                          |
 
 All five blockers follow the established patterns in `/income`, `/expenses`, and
 `/divisions`: Zod validation, `revalidatePath`, `useTransition`, sonner toasts,
@@ -94,14 +94,14 @@ apps/admin/src/components/layout/app-sidebar.tsx
 
 ```typescript
 type ClientWithIncomeCount = {
-  id: string
-  name: string
-  businessName: string | null
-  email: string | null
-  phone: string | null
-  createdAt: Date
-  incomeCount: number
-}
+  id: string;
+  name: string;
+  businessName: string | null;
+  email: string | null;
+  phone: string | null;
+  createdAt: Date;
+  incomeCount: number;
+};
 ```
 
 #### ClientsActions interface
@@ -114,13 +114,14 @@ deleteClient(id: string): Promise<{ error?: string }>
 ```
 
 Zod schema:
+
 ```typescript
 const ClientSchema = z.object({
-  name:         z.string().min(1),
+  name: z.string().min(1),
   businessName: z.string().optional(),
-  email:        z.string().email().optional(),
-  phone:        z.string().optional(),
-})
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+});
 ```
 
 Empty string normalisation: before parsing, delete any key whose value is `''`
@@ -131,7 +132,7 @@ correctly with FormData.
 
 ```typescript
 interface ClientAddFormProps {
-  createAction: (formData: FormData) => Promise<{ error?: string }>
+  createAction: (formData: FormData) => Promise<{ error?: string }>;
 }
 ```
 
@@ -142,8 +143,8 @@ On error: inline `<p className="w-full text-sm text-destructive">`.
 
 ```typescript
 interface ClientsTableProps {
-  clients: ClientWithIncomeCount[]
-  deleteAction: (id: string) => Promise<{ error?: string }>
+  clients: ClientWithIncomeCount[];
+  deleteAction: (id: string) => Promise<{ error?: string }>;
 }
 ```
 
@@ -155,8 +156,8 @@ Income Count, Actions. Edit link → `/clients/[id]`. Delete: inline Confirm/Can
 
 ```typescript
 interface ClientEditFormProps {
-  client: Client
-  updateAction: (formData: FormData) => Promise<{ error?: string }>
+  client: Client;
+  updateAction: (formData: FormData) => Promise<{ error?: string }>;
 }
 ```
 
@@ -265,10 +266,10 @@ apps/admin/src/components/layout/app-sidebar.tsx
 ```typescript
 // packages/db/src/schema/expense-categories.ts
 export const expenseCategories = pgTable('expense_categories', {
-  id:        uuid('id').primaryKey().defaultRandom(),
-  name:      text('name').notNull().unique(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull().unique(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-})
+});
 ```
 
 #### ExpenseCategoriesActions interface
@@ -333,27 +334,27 @@ apps/admin/src/components/layout/top-nav.tsx
 
 ```typescript
 const ROUTE_LABELS: Record<string, string> = {
-  dashboard:          'Dashboard',
-  income:             'Income',
-  expenses:           'Expenses',
-  leads:              'Leads',
-  divisions:          'Divisions',
-  clients:            'Clients',
-  withdrawals:        'Withdrawals',
-  snapshots:          'Snapshots',
-  reports:            'Reports',
+  dashboard: 'Dashboard',
+  income: 'Income',
+  expenses: 'Expenses',
+  leads: 'Leads',
+  divisions: 'Divisions',
+  clients: 'Clients',
+  withdrawals: 'Withdrawals',
+  snapshots: 'Snapshots',
+  reports: 'Reports',
   'expense-categories': 'Expense Categories',
-}
+};
 ```
 
 #### Breadcrumb rendering logic
 
 ```typescript
-const pathname = usePathname()
-const segments = pathname.split('/').filter(Boolean)
-const firstSegment = segments[0] ?? ''
-const label = ROUTE_LABELS[firstSegment] ?? capitalize(firstSegment)
-const isDetailPage = segments.length >= 2
+const pathname = usePathname();
+const segments = pathname.split('/').filter(Boolean);
+const firstSegment = segments[0] ?? '';
+const label = ROUTE_LABELS[firstSegment] ?? capitalize(firstSegment);
+const isDetailPage = segments.length >= 2;
 ```
 
 - Single segment → one `BreadcrumbItem` with `BreadcrumbPage`
@@ -393,10 +394,12 @@ Single change: import `formatZAR` from `'@/lib/format'` and wrap the amount cell
 ```typescript
 // packages/db/src/schema/income.ts - clientId column
 // Before:
-clientId: uuid("client_id").references(() => clients.id, { onDelete: "set null" })
+clientId: uuid('client_id').references(() => clients.id, { onDelete: 'set null' });
 
 // After:
-clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "restrict" })
+clientId: uuid('client_id')
+  .notNull()
+  .references(() => clients.id, { onDelete: 'restrict' });
 ```
 
 ### New schema (B3)
@@ -404,13 +407,13 @@ clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "
 ```typescript
 // packages/db/src/schema/expense-categories.ts
 export const expenseCategories = pgTable('expense_categories', {
-  id:        uuid('id').primaryKey().defaultRandom(),
-  name:      text('name').notNull().unique(),
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull().unique(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-})
+});
 
-export type ExpenseCategory = typeof expenseCategories.$inferSelect
-export type NewExpenseCategory = typeof expenseCategories.$inferInsert
+export type ExpenseCategory = typeof expenseCategories.$inferSelect;
+export type NewExpenseCategory = typeof expenseCategories.$inferInsert;
 ```
 
 ### New query return types
@@ -420,14 +423,14 @@ export type NewExpenseCategory = typeof expenseCategories.$inferInsert
 
 // B2
 type ClientWithIncomeCount = {
-  id: string
-  name: string
-  businessName: string | null
-  email: string | null
-  phone: string | null
-  createdAt: Date
-  incomeCount: number
-}
+  id: string;
+  name: string;
+  businessName: string | null;
+  email: string | null;
+  phone: string | null;
+  createdAt: Date;
+  incomeCount: number;
+};
 
 // B3
 // getAllExpenseCategories returns { id: string; name: string }[]
@@ -437,6 +440,7 @@ type ClientWithIncomeCount = {
 ### Migration files
 
 **B1 migration** (`000X_enforce_income_client_id.sql`):
+
 ```sql
 UPDATE income
 SET client_id = (SELECT id FROM clients LIMIT 1)
@@ -446,6 +450,7 @@ ALTER TABLE income ALTER COLUMN client_id SET NOT NULL;
 ```
 
 **B3 migration** (`000Y_expense_categories.sql`):
+
 ```sql
 CREATE TABLE IF NOT EXISTS expense_categories (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -465,14 +470,14 @@ ON CONFLICT (name) DO NOTHING;
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid
+_A property is a characteristic or behavior that should hold true across all valid
 executions of a system - essentially, a formal statement about what the system should
 do. Properties serve as the bridge between human-readable specifications and
-machine-verifiable correctness guarantees.*
+machine-verifiable correctness guarantees._
 
 ### Property 1: Client income count round-trip
 
-*For any* set of clients and income rows, calling `getClientsWithIncomeCount()` SHALL
+_For any_ set of clients and income rows, calling `getClientsWithIncomeCount()` SHALL
 return each client with an `incomeCount` equal to the actual number of income rows
 referencing that client (zero when none exist).
 
@@ -482,7 +487,7 @@ referencing that client (zero when none exist).
 
 ### Property 2: Client lookup round-trip
 
-*For any* client inserted into the database, calling `getClientById(id)` with that
+_For any_ client inserted into the database, calling `getClientById(id)` with that
 client's id SHALL return a row with matching `id`, `name`, `businessName`, `email`,
 and `phone` fields. Calling `getClientById` with a non-existent id SHALL return `null`.
 
@@ -492,7 +497,7 @@ and `phone` fields. Calling `getClientById` with a non-existent id SHALL return 
 
 ### Property 3: Client server actions never throw
 
-*For any* input to `createClient`, `updateClient`, or `deleteClient` - including
+_For any_ input to `createClient`, `updateClient`, or `deleteClient` - including
 malformed data, duplicate emails, and FK violations - the action SHALL return
 `{ error?: string }` and SHALL NOT throw an exception.
 
@@ -502,7 +507,7 @@ malformed data, duplicate emails, and FK violations - the action SHALL return
 
 ### Property 4: Income requires clientId after B1
 
-*For any* call to `createIncome` or `updateIncome` that omits `clientId` or provides
+_For any_ call to `createIncome` or `updateIncome` that omits `clientId` or provides
 a non-UUID value, the action SHALL return a validation error without inserting or
 updating any row.
 
@@ -512,7 +517,7 @@ updating any row.
 
 ### Property 5: Expense category query round-trip
 
-*For any* set of expense categories inserted into `expense_categories`, calling
+_For any_ set of expense categories inserted into `expense_categories`, calling
 `getAllExpenseCategories()` SHALL return all of them ordered by name ascending, with
 no duplicates and no omissions.
 
@@ -522,7 +527,7 @@ no duplicates and no omissions.
 
 ### Property 6: Delete category blocked when in use
 
-*For any* expense category that is referenced by one or more rows in the `expenses`
+_For any_ expense category that is referenced by one or more rows in the `expenses`
 table, calling `deleteExpenseCategory(id)` SHALL return
 `{ error: 'Category is in use by existing expenses' }` and SHALL NOT delete the row.
 
@@ -532,7 +537,7 @@ table, calling `deleteExpenseCategory(id)` SHALL return
 
 ### Property 7: Breadcrumb label mapping is total
 
-*For any* pathname string, the breadcrumb label derivation function SHALL return a
+_For any_ pathname string, the breadcrumb label derivation function SHALL return a
 non-empty string. For all known route segments defined in `ROUTE_LABELS`, it SHALL
 return the exact mapped label. For unknown segments, it SHALL return the segment
 with its first letter capitalised.
@@ -590,9 +595,9 @@ name, and returns early with an error if any exist.
 All forms display inline errors below the submit button:
 
 ```tsx
-{errorMessage && (
-  <p className="w-full text-sm text-destructive">{errorMessage}</p>
-)}
+{
+  errorMessage && <p className="w-full text-sm text-destructive">{errorMessage}</p>;
+}
 ```
 
 Table-level delete errors use `toast.error(result.error)` via sonner.
@@ -620,42 +625,49 @@ Use a property-based testing library (e.g. `fast-check` for TypeScript) with a
 minimum of 100 iterations per property. Each test is tagged with its design property.
 
 **Property 1** - `getClientsWithIncomeCount` round-trip
+
 - Generate: random clients (1–20), random income rows referencing them
 - Insert all, call `getClientsWithIncomeCount()`
 - Assert: every returned row's `incomeCount` equals the actual count of income rows for that client
 - Tag: `Feature: mvp-stage1-blockers, Property 1: client income count round-trip`
 
 **Property 2** - `getClientById` round-trip
+
 - Generate: random client data (name, optional businessName/email/phone)
 - Insert, call `getClientById(insertedId)`
 - Assert: returned row matches inserted data; `getClientById(randomUUID)` returns null
 - Tag: `Feature: mvp-stage1-blockers, Property 2: client lookup round-trip`
 
 **Property 3** - Server actions never throw
+
 - Generate: random FormData inputs (valid and invalid)
 - Call each action, wrap in try/catch
 - Assert: no exception thrown; return value is always `{ error?: string }`
 - Tag: `Feature: mvp-stage1-blockers, Property 3: client server actions never throw`
 
 **Property 4** - Income requires clientId
+
 - Generate: random income FormData missing `clientId` or with invalid UUID
 - Call `createIncome` / `updateIncome`
 - Assert: returns `{ error: string }`, no DB row inserted/updated
 - Tag: `Feature: mvp-stage1-blockers, Property 4: income requires clientId after B1`
 
 **Property 5** - Expense category query round-trip
+
 - Generate: random category names (1–30, unique strings)
 - Insert all, call `getAllExpenseCategories()`
 - Assert: all inserted names present, ordered by name ASC, no duplicates
 - Tag: `Feature: mvp-stage1-blockers, Property 5: expense category query round-trip`
 
 **Property 6** - Delete category blocked when in use
+
 - Generate: random category + random expense rows referencing it
 - Insert all, call `deleteExpenseCategory(id)`
 - Assert: returns `{ error: 'Category is in use by existing expenses' }`, row still exists
 - Tag: `Feature: mvp-stage1-blockers, Property 6: delete category blocked when in use`
 
 **Property 7** - Breadcrumb label mapping is total
+
 - Generate: random pathname strings (known segments, unknown segments, multi-segment paths)
 - Call the label derivation function
 - Assert: always returns non-empty string; known segments return exact mapped label; unknown segments return capitalised segment

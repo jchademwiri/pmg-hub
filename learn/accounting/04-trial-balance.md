@@ -21,26 +21,26 @@ If the answer is no → there's an error somewhere ❌
 
 The Trial Balance shows a table with these columns:
 
-| Column | What It Means |
-|--------|---------------|
-| **Code** | The account code (e.g., 1010) |
-| **Account** | The account name (e.g., Business Cheque Account) |
-| **Type** | Asset, Liability, Equity, Revenue, or Expense |
-| **Debit** | Total debits for this account across all journal entries |
-| **Credit** | Total credits for this account across all journal entries |
+| Column      | What It Means                                                |
+| ----------- | ------------------------------------------------------------ |
+| **Code**    | The account code (e.g., 1010)                                |
+| **Account** | The account name (e.g., Business Cheque Account)             |
+| **Type**    | Asset, Liability, Equity, Revenue, or Expense                |
+| **Debit**   | Total debits for this account across all journal entries     |
+| **Credit**  | Total credits for this account across all journal entries    |
 | **Balance** | Debit minus Credit (or Credit minus Debit depending on type) |
 
 ### Understanding the Balance Column
 
 The "balance" means different things depending on the account type:
 
-| Account Type | Balance Calculation | What It Means |
-|-------------|-------------------|---------------|
-| **Assets** | Debits - Credits | Positive = you have this much |
-| **Liabilities** | Credits - Debits | Positive = you owe this much |
-| **Equity** | Credits - Debits | Positive = owner's stake |
-| **Revenue** | Credits - Debits | Positive = income earned |
-| **Expenses** | Debits - Credits | Positive = money spent |
+| Account Type    | Balance Calculation | What It Means                 |
+| --------------- | ------------------- | ----------------------------- |
+| **Assets**      | Debits - Credits    | Positive = you have this much |
+| **Liabilities** | Credits - Debits    | Positive = you owe this much  |
+| **Equity**      | Credits - Debits    | Positive = owner's stake      |
+| **Revenue**     | Credits - Debits    | Positive = income earned      |
+| **Expenses**    | Debits - Credits    | Positive = money spent        |
 
 ---
 
@@ -64,14 +64,14 @@ This is the most important number on the page. Every accounting system is built 
 
 Here's what your Trial Balance looks like right now:
 
-| Code | Account | Type | Debits | Credits |
-|------|---------|------|--------|---------|
-| 1010 | Business Cheque Account | Asset | R20,500 | R2,360 |
-| 4010 | Sales Revenue | Revenue | — | R20,500 |
-| 5030 | Office & Supplies | Expense | R1,785 | — |
-| 5070 | Travel & Transport | Expense | R215 | — |
-| 5140 | Miscellaneous Expense | Expense | R360 | — |
-| | **TOTALS** | | **R22,860** | **R22,860** |
+| Code | Account                 | Type    | Debits      | Credits     |
+| ---- | ----------------------- | ------- | ----------- | ----------- |
+| 1010 | Business Cheque Account | Asset   | R20,500     | R2,360      |
+| 4010 | Sales Revenue           | Revenue | —           | R20,500     |
+| 5030 | Office & Supplies       | Expense | R1,785      | —           |
+| 5070 | Travel & Transport      | Expense | R215        | —           |
+| 5140 | Miscellaneous Expense   | Expense | R360        | —           |
+|      | **TOTALS**              |         | **R22,860** | **R22,860** |
 
 ### What This Tells You:
 
@@ -94,13 +94,13 @@ You can filter the Trial Balance by accounting period (month). This is useful fo
 
 ## When to Check the Trial Balance
 
-| When | Why |
-|------|-----|
-| **After recording journal entries** | Confirm your entries are balanced |
-| **End of each month** | Monthly health check |
-| **Before generating reports** | Ensure data integrity |
-| **When something looks wrong** | The Trial Balance is the first place to check |
-| **Before closing a period** | Confirm everything is balanced before locking |
+| When                                | Why                                           |
+| ----------------------------------- | --------------------------------------------- |
+| **After recording journal entries** | Confirm your entries are balanced             |
+| **End of each month**               | Monthly health check                          |
+| **Before generating reports**       | Ensure data integrity                         |
+| **When something looks wrong**      | The Trial Balance is the first place to check |
+| **Before closing a period**         | Confirm everything is balanced before locking |
 
 ---
 
@@ -119,10 +119,10 @@ If the Trial Balance shows a non-zero difference:
 
 ## Trial Balance vs Other Reports
 
-| Report | What It Shows | When to Use |
-|--------|-------------|-------------|
-| **Trial Balance** | Account totals (Dr/Cr) — health check | Daily/weekly verification |
-| **Profit & Loss** | Revenue vs Expenses — performance | Monthly/quarterly review |
-| **General Ledger** | Individual transactions — detail | Auditing, reconciling |
+| Report             | What It Shows                         | When to Use               |
+| ------------------ | ------------------------------------- | ------------------------- |
+| **Trial Balance**  | Account totals (Dr/Cr) — health check | Daily/weekly verification |
+| **Profit & Loss**  | Revenue vs Expenses — performance     | Monthly/quarterly review  |
+| **General Ledger** | Individual transactions — detail      | Auditing, reconciling     |
 
 The Trial Balance sits between the General Ledger (details) and the Profit & Loss (summary). It's the bridge that confirms everything adds up.

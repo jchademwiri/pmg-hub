@@ -1,43 +1,52 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { useRouter } from 'next/navigation'
-import { Plus, Trash2, Check, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import * as React from 'react';
+import { useRouter } from 'next/navigation';
+import { Plus, Trash2, Check, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { getSASTToday, formatZAR } from '@/lib/format'
-import { toast } from 'sonner'
-import type { ChartAccount, Division } from '@pmg/db'
+} from '@/components/ui/select';
+import { getSASTToday, formatZAR } from '@/lib/format';
+import { toast } from 'sonner';
+import type { ChartAccount, Division } from '@pmg/db';
 
 interface JournalEntryFormProps {
-  accounts: ChartAccount[]
-  divisions: Division[]
+  accounts: ChartAccount[];
+  divisions: Division[];
   createAction: (data: {
-    divisionId: string
-    entryDate: string
-    description: string
-    lines: { accountId: string; debit?: number; credit?: number; description?: string }[]
-  }) => Promise<{ error?: string; entryId?: string }>
+    divisionId: string;
+    entryDate: string;
+    description: string;
+    lines: { accountId: string; debit?: number; credit?: number; description?: string }[];
+  }) => Promise<{ error?: string; entryId?: string }>;
 }
 
 interface LineRow {
-  id: string
-  accountId: string
-  debit: string
-  credit: string
-  description: string
+  id: string;
+  accountId: string;
+  debit: string;
+  credit: string;
+  description: string;
 }
 
 function newLine(): LineRow {
-  return { id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15), accountId: '', debit: '', credit: '', description: '' }
+  return {
+    id:
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Math.random().toString(36).substring(2, 15),
+    accountId: '',
+    debit: '',
+    credit: '',
+    description: '',
+  };
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -46,79 +55,79 @@ const TYPE_LABELS: Record<string, string> = {
   equity: 'Equity',
   revenue: 'Revenue',
   expense: 'Expense',
-}
+};
 
 export function JournalEntryForm({ accounts, divisions, createAction }: JournalEntryFormProps) {
-  const router = useRouter()
-  const [divisionId, setDivisionId] = React.useState(divisions[0]?.id || '')
-  const [entryDate, setEntryDate] = React.useState(getSASTToday())
-  const [description, setDescription] = React.useState('')
-  const [lines, setLines] = React.useState<LineRow[]>([newLine(), newLine()])
-  const [saving, setSaving] = React.useState(false)
+  const router = useRouter();
+  const [divisionId, setDivisionId] = React.useState(divisions[0]?.id || '');
+  const [entryDate, setEntryDate] = React.useState(getSASTToday());
+  const [description, setDescription] = React.useState('');
+  const [lines, setLines] = React.useState<LineRow[]>([newLine(), newLine()]);
+  const [saving, setSaving] = React.useState(false);
 
   // Filter to posting accounts only
   const postingAccounts = React.useMemo(
     () => accounts.filter((a) => a.isPostingAccount && a.isActive),
-    [accounts]
-  )
+    [accounts],
+  );
 
   // Real-time balance calculation
   const totalDebits = React.useMemo(
     () => lines.reduce((s, l) => s + (parseFloat(l.debit) || 0), 0),
-    [lines]
-  )
+    [lines],
+  );
   const totalCredits = React.useMemo(
     () => lines.reduce((s, l) => s + (parseFloat(l.credit) || 0), 0),
-    [lines]
-  )
-  const difference = Math.abs(totalDebits - totalCredits)
-  const isBalanced = totalDebits > 0 && difference < 0.01
+    [lines],
+  );
+  const difference = Math.abs(totalDebits - totalCredits);
+  const isBalanced = totalDebits > 0 && difference < 0.01;
 
   // Validation
   const isValid = React.useMemo(() => {
-    if (!divisionId || !entryDate || !description.trim()) return false
-    if (lines.length < 2) return false
+    if (!divisionId || !entryDate || !description.trim()) return false;
+    if (lines.length < 2) return false;
     for (const line of lines) {
-      if (!line.accountId) return false
-      const d = parseFloat(line.debit) || 0
-      const c = parseFloat(line.credit) || 0
-      if (d <= 0 && c <= 0) return false
-      if (d > 0 && c > 0) return false
+      if (!line.accountId) return false;
+      const d = parseFloat(line.debit) || 0;
+      const c = parseFloat(line.credit) || 0;
+      if (d <= 0 && c <= 0) return false;
+      if (d > 0 && c > 0) return false;
     }
-    return isBalanced
-  }, [divisionId, entryDate, description, lines, isBalanced])
+    return isBalanced;
+  }, [divisionId, entryDate, description, lines, isBalanced]);
 
   function updateLine(id: string, field: keyof LineRow, value: string) {
     setLines((prev) =>
       prev.map((l) => {
-        if (l.id !== id) return l
-        const updated = { ...l, [field]: value }
+        if (l.id !== id) return l;
+        const updated = { ...l, [field]: value };
         // Enforce mutual exclusivity: clearing debit allows credit and vice versa
         if (field === 'debit' && value && parseFloat(value) > 0) {
-          updated.credit = ''
+          updated.credit = '';
         }
         if (field === 'credit' && value && parseFloat(value) > 0) {
-          updated.debit = ''
+          updated.debit = '';
         }
-        return updated
-      })
-    )
+        return updated;
+      }),
+    );
   }
 
   function addLine() {
-    setLines((prev) => [...prev, newLine()])
+    setLines((prev) => [...prev, newLine()]);
   }
 
   function removeLine(id: string) {
-    if (lines.length <= 2) return
-    setLines((prev) => prev.filter((l) => l.id !== id))
+    if (lines.length <= 2) return;
+    setLines((prev) => prev.filter((l) => l.id !== id));
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!isValid) return
+    e.preventDefault();
+    if (!isValid) return;
 
-    setSaving(true)
+    setSaving(true);
     try {
       const result = await createAction({
         divisionId,
@@ -130,18 +139,18 @@ export function JournalEntryForm({ accounts, divisions, createAction }: JournalE
           credit: parseFloat(l.credit) || undefined,
           description: l.description.trim() || undefined,
         })),
-      })
+      });
 
       if (result.error) {
-        toast.error(result.error)
+        toast.error(result.error);
       } else {
-        toast.success('Journal entry created as draft')
-        router.push('/accounting/journals')
+        toast.success('Journal entry created as draft');
+        router.push('/accounting/journals');
       }
     } catch {
-      toast.error('Failed to create journal entry')
+      toast.error('Failed to create journal entry');
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
   }
 
@@ -199,9 +208,9 @@ export function JournalEntryForm({ accounts, divisions, createAction }: JournalE
 
         <div className="divide-y">
           {lines.map((line, index) => {
-            const lineDebit = parseFloat(line.debit) || 0
-            const lineCredit = parseFloat(line.credit) || 0
-            const hasError = line.accountId && lineDebit === 0 && lineCredit === 0
+            const lineDebit = parseFloat(line.debit) || 0;
+            const lineCredit = parseFloat(line.credit) || 0;
+            const hasError = line.accountId && lineDebit === 0 && lineCredit === 0;
 
             return (
               <div key={line.id} className="px-5 py-3 flex items-end gap-3">
@@ -224,11 +233,11 @@ export function JournalEntryForm({ accounts, divisions, createAction }: JournalE
                         {Object.entries(
                           postingAccounts.reduce(
                             (acc, a) => {
-                              ;(acc[a.type] ??= []).push(a)
-                              return acc
+                              (acc[a.type] ??= []).push(a);
+                              return acc;
                             },
-                            {} as Record<string, ChartAccount[]>
-                          )
+                            {} as Record<string, ChartAccount[]>,
+                          ),
                         ).map(([type, accts]) => (
                           <React.Fragment key={type}>
                             <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
@@ -298,7 +307,7 @@ export function JournalEntryForm({ accounts, divisions, createAction }: JournalE
                   </Button>
                 </div>
               </div>
-            )
+            );
           })}
         </div>
 
@@ -323,8 +332,8 @@ export function JournalEntryForm({ accounts, divisions, createAction }: JournalE
               <X className="h-3.5 w-3.5" /> Unbalanced Entry
             </p>
             <p className="opacity-90">
-              Debits and Credits must be equal to maintain a balanced double-entry ledger. Currently off by{' '}
-              <span className="font-bold">{formatZAR(difference)}</span>.
+              Debits and Credits must be equal to maintain a balanced double-entry ledger. Currently
+              off by <span className="font-bold">{formatZAR(difference)}</span>.
             </p>
           </div>
         )}
@@ -341,19 +350,23 @@ export function JournalEntryForm({ accounts, divisions, createAction }: JournalE
             </div>
             <div>
               <span className="text-muted-foreground">Difference:</span>{' '}
-              <span className={`font-semibold tabular-nums ${isBalanced ? 'text-emerald-600' : 'text-destructive'}`}>
+              <span
+                className={`font-semibold tabular-nums ${isBalanced ? 'text-emerald-600' : 'text-destructive'}`}
+              >
                 {formatZAR(difference)}
               </span>
             </div>
           </div>
 
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${
-            isBalanced
-              ? 'bg-emerald-500/10 text-emerald-600'
-              : totalDebits > 0 || totalCredits > 0
-              ? 'bg-destructive/10 text-destructive'
-              : 'bg-muted text-muted-foreground'
-          }`}>
+          <div
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${
+              isBalanced
+                ? 'bg-emerald-500/10 text-emerald-600'
+                : totalDebits > 0 || totalCredits > 0
+                  ? 'bg-destructive/10 text-destructive'
+                  : 'bg-muted text-muted-foreground'
+            }`}
+          >
             {isBalanced ? (
               <>
                 <Check className="h-3.5 w-3.5" />
@@ -380,5 +393,5 @@ export function JournalEntryForm({ accounts, divisions, createAction }: JournalE
         </div>
       </div>
     </form>
-  )
+  );
 }

@@ -1,6 +1,15 @@
 import { db } from '../client';
-import { projectScheduleEntries, projectProgressSections, projectProgressItems } from '../schema/project-schedule';
-import type { ProjectScheduleEntry, NewProjectScheduleEntry, ProjectProgressSection, ProjectProgressItem } from '../schema/project-schedule';
+import {
+  projectScheduleEntries,
+  projectProgressSections,
+  projectProgressItems,
+} from '../schema/project-schedule';
+import type {
+  ProjectScheduleEntry,
+  NewProjectScheduleEntry,
+  ProjectProgressSection,
+  ProjectProgressItem,
+} from '../schema/project-schedule';
 import { eq, asc, and, or, sql } from 'drizzle-orm';
 import { addDays, today as getToday } from '../lib/date-utils';
 
@@ -206,7 +215,9 @@ export async function getActiveProjectScheduleEntries(): Promise<ProjectSchedule
     );
 }
 
-export async function getProjectScheduleEntryById(id: string): Promise<ProjectScheduleEntry | null> {
+export async function getProjectScheduleEntryById(
+  id: string,
+): Promise<ProjectScheduleEntry | null> {
   const result = await db
     .select()
     .from(projectScheduleEntries)
@@ -454,4 +465,3 @@ export async function getProjectsProgressMap(
 
   return map;
 }
-

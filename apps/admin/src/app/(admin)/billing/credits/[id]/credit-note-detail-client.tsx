@@ -29,7 +29,18 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Wallet, AlertCircle, Clock, CheckCircle2, FileText, Pencil, Trash2, Ban, ExternalLink } from 'lucide-react';
+import {
+  ArrowLeft,
+  Wallet,
+  AlertCircle,
+  Clock,
+  CheckCircle2,
+  FileText,
+  Pencil,
+  Trash2,
+  Ban,
+  ExternalLink,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CreditNoteDetail {
@@ -77,15 +88,42 @@ interface Props {
 function getStatusBadge(status: string) {
   switch (status) {
     case 'active':
-      return <Badge variant="default" className="bg-emerald-500/10 text-emerald-700 border-emerald-200 gap-1"><CheckCircle2 className="size-3" />Active</Badge>;
+      return (
+        <Badge
+          variant="default"
+          className="bg-emerald-500/10 text-emerald-700 border-emerald-200 gap-1"
+        >
+          <CheckCircle2 className="size-3" />
+          Active
+        </Badge>
+      );
     case 'partially_applied':
-      return <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200 gap-1"><Clock className="size-3" />Partial</Badge>;
+      return (
+        <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200 gap-1">
+          <Clock className="size-3" />
+          Partial
+        </Badge>
+      );
     case 'fully_applied':
-      return <Badge variant="outline" className="text-zinc-500 gap-1">Used</Badge>;
+      return (
+        <Badge variant="outline" className="text-zinc-500 gap-1">
+          Used
+        </Badge>
+      );
     case 'expired':
-      return <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200 gap-1"><AlertCircle className="size-3" />Expired</Badge>;
+      return (
+        <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200 gap-1">
+          <AlertCircle className="size-3" />
+          Expired
+        </Badge>
+      );
     case 'void':
-      return <Badge variant="destructive" className="gap-1"><Ban className="size-3" />Void</Badge>;
+      return (
+        <Badge variant="destructive" className="gap-1">
+          <Ban className="size-3" />
+          Void
+        </Badge>
+      );
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
@@ -93,12 +131,18 @@ function getStatusBadge(status: string) {
 
 function getTypeLabel(type: string) {
   switch (type) {
-    case 'overpayment': return 'Overpayment';
-    case 'manual_adjustment': return 'Manual Adjustment';
-    case 'credit_note': return 'Credit Note';
-    case 'promotional': return 'Promotional';
-    case 'refund_reversal': return 'Refund Reversal';
-    default: return type;
+    case 'overpayment':
+      return 'Overpayment';
+    case 'manual_adjustment':
+      return 'Manual Adjustment';
+    case 'credit_note':
+      return 'Credit Note';
+    case 'promotional':
+      return 'Promotional';
+    case 'refund_reversal':
+      return 'Refund Reversal';
+    default:
+      return type;
   }
 }
 
@@ -116,11 +160,12 @@ export function CreditNoteDetailClient({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editReason, setEditReason] = useState(note.reason ?? '');
   const [editExpiresAt, setEditExpiresAt] = useState(
-    note.expiresAt ? note.expiresAt.split('T')[0] : ''
+    note.expiresAt ? note.expiresAt.split('T')[0] : '',
   );
   const [isSaving, setIsSaving] = useState(false);
 
-  const canVoid = note.status !== 'void' && note.status !== 'fully_applied' && applications.length === 0;
+  const canVoid =
+    note.status !== 'void' && note.status !== 'fully_applied' && applications.length === 0;
   const canEdit = note.status !== 'void';
   const usedAmount = note.amount - note.amountRemaining;
   const totalRefunded = refunds.reduce((sum, r) => sum + r.amount, 0);
@@ -195,7 +240,12 @@ export function CreditNoteDetailClient({
         </div>
         <div className="flex items-center gap-2">
           {canEdit && (
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowEditDialog(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setShowEditDialog(true)}
+            >
               <Pencil className="size-4" />
               Edit
             </Button>
@@ -212,8 +262,8 @@ export function CreditNoteDetailClient({
                 <AlertDialogHeader>
                   <AlertDialogTitle>Void Credit Note</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Voiding <strong>{note.documentNumber}</strong> will mark it as void.
-                    This cannot be undone. The credit amount will no longer be available for use.
+                    Voiding <strong>{note.documentNumber}</strong> will mark it as void. This cannot
+                    be undone. The credit amount will no longer be available for use.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -232,7 +282,9 @@ export function CreditNoteDetailClient({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Amount</CardTitle>
+            <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Total Amount
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <span className="text-2xl font-bold tabular-nums">{formatZAR(note.amount)}</span>
@@ -240,26 +292,38 @@ export function CreditNoteDetailClient({
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Remaining</CardTitle>
+            <CardTitle className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">
+              Remaining
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <span className="text-2xl font-bold text-emerald-600 tabular-nums">{formatZAR(note.amountRemaining)}</span>
+            <span className="text-2xl font-bold text-emerald-600 tabular-nums">
+              {formatZAR(note.amountRemaining)}
+            </span>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-blue-600 uppercase tracking-wider">Applied</CardTitle>
+            <CardTitle className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
+              Applied
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <span className="text-2xl font-bold text-blue-600 tabular-nums">{formatZAR(usedAmount)}</span>
+            <span className="text-2xl font-bold text-blue-600 tabular-nums">
+              {formatZAR(usedAmount)}
+            </span>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Refunded</CardTitle>
+            <CardTitle className="text-xs font-semibold text-amber-600 uppercase tracking-wider">
+              Refunded
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <span className="text-2xl font-bold text-amber-600 tabular-nums">{formatZAR(totalRefunded)}</span>
+            <span className="text-2xl font-bold text-amber-600 tabular-nums">
+              {formatZAR(totalRefunded)}
+            </span>
           </CardContent>
         </Card>
       </div>
@@ -276,11 +340,16 @@ export function CreditNoteDetailClient({
               <Label className="text-xs text-muted-foreground">Client</Label>
               <p className="text-sm font-medium mt-0.5">
                 {client ? (
-                  <Link href={`/relationships/clients/${client.id}`} className="text-primary hover:underline inline-flex items-center gap-1">
+                  <Link
+                    href={`/relationships/clients/${client.id}`}
+                    className="text-primary hover:underline inline-flex items-center gap-1"
+                  >
                     {client.name}
                     <ExternalLink className="size-3" />
                   </Link>
-                ) : 'Unknown'}
+                ) : (
+                  'Unknown'
+                )}
               </p>
             </div>
             <div>
@@ -297,7 +366,9 @@ export function CreditNoteDetailClient({
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Expires</Label>
-              <p className="text-sm mt-0.5">{note.expiresAt ? fmtDate(note.expiresAt) : 'No expiry'}</p>
+              <p className="text-sm mt-0.5">
+                {note.expiresAt ? fmtDate(note.expiresAt) : 'No expiry'}
+              </p>
             </div>
             {originalInvoice && (
               <div>
@@ -333,7 +404,10 @@ export function CreditNoteDetailClient({
               <div className="space-y-0">
                 {/* Applications */}
                 {applications.map((app, i) => (
-                  <div key={app.id} className="flex items-start gap-3 pb-4 border-l-2 border-blue-200 ml-3 pl-4 last:border-l-0 last:pb-0">
+                  <div
+                    key={app.id}
+                    className="flex items-start gap-3 pb-4 border-l-2 border-blue-200 ml-3 pl-4 last:border-l-0 last:pb-0"
+                  >
                     <div className="size-2 rounded-full bg-blue-500 mt-1.5 -ml-[21px] ring-2 ring-background shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
@@ -345,7 +419,9 @@ export function CreditNoteDetailClient({
                           {app.invoiceNumber}
                           <ExternalLink className="size-3" />
                         </Link>
-                        <span className="text-sm font-semibold text-blue-600">-{formatZAR(app.amount)}</span>
+                        <span className="text-sm font-semibold text-blue-600">
+                          -{formatZAR(app.amount)}
+                        </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         Applied {fmtDate(app.appliedAt)} · Status: {app.invoiceStatus}
@@ -355,15 +431,21 @@ export function CreditNoteDetailClient({
                 ))}
                 {/* Refunds */}
                 {refunds.map((refund) => (
-                  <div key={refund.id} className="flex items-start gap-3 pt-4 border-l-2 border-amber-200 ml-3 pl-4">
+                  <div
+                    key={refund.id}
+                    className="flex items-start gap-3 pt-4 border-l-2 border-amber-200 ml-3 pl-4"
+                  >
                     <div className="size-2 rounded-full bg-amber-500 mt-1.5 -ml-[21px] ring-2 ring-background shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Refund ({refund.refundMethod})</span>
-                        <span className="text-sm font-semibold text-amber-600">-{formatZAR(refund.amount)}</span>
+                        <span className="text-sm font-semibold text-amber-600">
+                          -{formatZAR(refund.amount)}
+                        </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {fmtDate(refund.createdAt)} · {refund.reference ? `Ref: ${refund.reference}` : ''}
+                        {fmtDate(refund.createdAt)} ·{' '}
+                        {refund.reference ? `Ref: ${refund.reference}` : ''}
                         {refund.description ? ` · ${refund.description}` : ''}
                       </p>
                     </div>
@@ -407,7 +489,9 @@ export function CreditNoteDetailClient({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleSaveEdit} disabled={isSaving}>
               {isSaving ? 'Saving...' : 'Save Changes'}
             </Button>

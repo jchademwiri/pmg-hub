@@ -42,7 +42,7 @@ export async function getAllExpenses(
   if (filters?.year) {
     conditions.push(
       sql`${expenses.date} >= ${`${filters.year}-03-01`}`,
-      sql`${expenses.date} < ${`${filters.year + 1}-03-01`}`
+      sql`${expenses.date} < ${`${filters.year + 1}-03-01`}`,
     );
   }
 
@@ -171,11 +171,11 @@ export type MonthlyExpenseSummary = {
 export async function getExpenseMonthlySummaries(
   year: number,
   divisionId?: string,
-  category?: string
+  category?: string,
 ): Promise<MonthlyExpenseSummary[]> {
   const conditions = [
     sql`${expenses.date} >= ${`${year}-03-01`}`,
-    sql`${expenses.date} < ${`${year + 1}-03-01`}`
+    sql`${expenses.date} < ${`${year + 1}-03-01`}`,
   ];
 
   if (divisionId) conditions.push(eq(expenses.divisionId, divisionId));
@@ -194,7 +194,7 @@ export async function getExpenseMonthlySummaries(
     .groupBy(sql`TO_CHAR(${expenses.date}, 'YYYY-MM')`)
     .orderBy(desc(sql`TO_CHAR(${expenses.date}, 'YYYY-MM')`));
 
-  return result.map(r => ({
+  return result.map((r) => ({
     month: r.month,
     count: r.count,
     totalExpenses: Number(r.totalExpenses),

@@ -6,9 +6,9 @@ This document outlines the proposal and implementation phases to transition the 
 
 ## 1. Goal and Core Requirements
 
-1. **Standardized Fiscal Year Alignment:** 
+1. **Standardized Fiscal Year Alignment:**
    - Ensure all calculations grouped or filtered by "year" or "year-to-date" (YTD) utilize the fiscal boundary starting **March 1st** and ending **February 28th (or February 29th in leap years)**.
-   - Any transaction falling in January or February will automatically be attributed to the *previous* calendar year's financial year (e.g., January 15, 2026 belongs to the 2025 financial year).
+   - Any transaction falling in January or February will automatically be attributed to the _previous_ calendar year's financial year (e.g., January 15, 2026 belongs to the 2025 financial year).
 2. **Label Simplification and Rename:**
    - Update standard all-time overview labels that say `"All time"` (signifying inception-to-date aggregates) to `"Year to Date"` (showing statistics for the current financial year).
    - **Strict Label Exclusions:** To preserve standard report labels, **no UI label renamings** (e.g. changing "All time" to "Year to Date") will be performed within the routes:
@@ -28,6 +28,7 @@ This document outlines the proposal and implementation phases to transition the 
 The transition spans two primary layers of the monorepo: **Database Shared Queries** (`packages/db`) and **Control Center Frontend Pages & Helpers** (`apps/admin`).
 
 ### Database Queries (`packages/db`)
+
 - **`packages/db/src/queries/general.ts`**:
   - `getDistinctYears()`: Extracts distinct years from `income` and `expenses`. Needs to subtract `2 months` to correctly group by fiscal year.
   - `getExpensesByCategoryForYear(year)`: Category breakdown for a year. Needs to filter by fiscal year.
@@ -43,6 +44,7 @@ The transition spans two primary layers of the monorepo: **Database Shared Queri
   - `getAllIncome()`: Extend `filters` to accept `monthPeriod?: 'current' | 'previous' | 'past3'`. Calculate SQL date conditions dynamically in JS.
 
 ### Frontend Routing & Views (`apps/admin`)
+
 - **`apps/admin/src/lib/financial.ts`**:
   - `getYTDLabel()`: Dynamically compute the fiscal start year. Show `"Mar [FY_START_YEAR] - [CURRENT_MONTH]"` instead of `"Jan - [CURRENT_MONTH]"`.
   - Update any default metric dashboard calls to pass the current financial year rather than calendar years.
@@ -66,7 +68,9 @@ The transition spans two primary layers of the monorepo: **Database Shared Queri
 ### A. Core Fiscal Date Math (JS & SQL)
 
 #### JavaScript FY Calculator
+
 We can calculate the current financial year dynamically on the server/client:
+
 ```typescript
 const now = new Date();
 const currentFY = now.getMonth() < 2 ? now.getFullYear() - 1 : now.getFullYear();
@@ -74,11 +78,15 @@ const currentFY = now.getMonth() < 2 ? now.getFullYear() - 1 : now.getFullYear()
 ```
 
 #### SQL PostgreSQL FY Bounds
+
 To isolate transactions matching a given financial year (e.g. `2025`):
+
 ```sql
 date_column >= '2025-03-01' AND date_column < '2026-03-01'
 ```
+
 Subtracting 2 months extracts the financial year for grouping:
+
 ```sql
 EXTRACT(YEAR FROM (date_column - INTERVAL '2 months')) = 2025
 ```
@@ -86,6 +94,7 @@ EXTRACT(YEAR FROM (date_column - INTERVAL '2 months')) = 2025
 ---
 
 ### B. Statement Month Filtering Algorithm
+
 Within `getClientStatement` and `getAllIncome`, we will introduce a date boundary generator:
 
 ```typescript
@@ -121,13 +130,11 @@ export function getMonthPeriodDates(monthPeriod: 'current' | 'previous' | 'past3
 ```
 
 This guarantees timezone-safe date-range lookups, which are injected directly into Drizzle conditions:
+
 ```typescript
 if (filters?.monthPeriod) {
   const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
-  conditions.push(
-    sql`date_column >= ${startDate}`,
-    sql`date_column <= ${endDate}`
-  );
+  conditions.push(sql`date_column >= ${startDate}`, sql`date_column <= ${endDate}`);
 }
 ```
 
@@ -145,46 +152,53 @@ graph TD
 ```
 
 ### Phase 1: Database Refactoring (`packages/db`)
-* **Task 1.1:** Add `year?: number` filter support to `getAllQuotations` and `getAllInvoices` in `billing.ts`.
-* **Task 1.2:** Update `getClientsWithBillingActivity` in `billing.ts` to accept `filters?: { year?: number }` and inject the conditions in subqueries.
-* **Task 1.3:** Update `getDistinctYears` and other calendar-dependent queries in `general.ts` to subtract `INTERVAL '2 months'` where required.
-* **Task 1.4:** Extend `getClientStatement` in `billing.ts` and `getAllIncome` in `income.ts` to accept `monthPeriod` filter and dynamically apply JS-based date boundaries.
+
+- **Task 1.1:** Add `year?: number` filter support to `getAllQuotations` and `getAllInvoices` in `billing.ts`.
+- **Task 1.2:** Update `getClientsWithBillingActivity` in `billing.ts` to accept `filters?: { year?: number }` and inject the conditions in subqueries.
+- **Task 1.3:** Update `getDistinctYears` and other calendar-dependent queries in `general.ts` to subtract `INTERVAL '2 months'` where required.
+- **Task 1.4:** Extend `getClientStatement` in `billing.ts` and `getAllIncome` in `income.ts` to accept `monthPeriod` filter and dynamically apply JS-based date boundaries.
 
 ### Phase 2: Page Labels & YTD Dashboard Alignment (`apps/admin`)
-* **Task 2.1:** Modify `apps/admin/src/app/(admin)/billing/invoices/page.tsx`:
+
+- **Task 2.1:** Modify `apps/admin/src/app/(admin)/billing/invoices/page.tsx`:
   - Change `"All time"` text to `"Year to Date"`.
   - Pass the dynamic `currentFY` parameter to get YTD records.
-* **Task 2.2:** Modify `apps/admin/src/app/(admin)/billing/quotes/page.tsx`:
+- **Task 2.2:** Modify `apps/admin/src/app/(admin)/billing/quotes/page.tsx`:
   - Change `"All time"` text to `"Year to Date"`.
   - Pass the dynamic `currentFY` parameter.
-* **Task 2.3:** Modify `apps/admin/src/app/(admin)/billing/statements/page.tsx`:
+- **Task 2.3:** Modify `apps/admin/src/app/(admin)/billing/statements/page.tsx`:
   - Change `"All time"` text to `"Year to Date"`.
   - Pass the dynamic `currentFY` parameter to `getClientsWithBillingActivity`.
-* **Task 2.4:** Update the text label formatting logic inside `apps/admin/src/lib/financial.ts:getYTDLabel()` to present dynamic fiscal years starting from March 1st.
-* **Task 2.5:** Refactor `getProfitPoolSeriesForYear` in `apps/admin/src/lib/financial.ts` and `resolveYear` in `apps/admin/src/app/(admin)/insights/reports/page.tsx` to fully align with standard fiscal year reporting boundaries.
+- **Task 2.4:** Update the text label formatting logic inside `apps/admin/src/lib/financial.ts:getYTDLabel()` to present dynamic fiscal years starting from March 1st.
+- **Task 2.5:** Refactor `getProfitPoolSeriesForYear` in `apps/admin/src/lib/financial.ts` and `resolveYear` in `apps/admin/src/app/(admin)/insights/reports/page.tsx` to fully align with standard fiscal year reporting boundaries.
 
 ### Phase 3: Statement Filters UI Integration (`apps/admin`)
-* **Task 3.1:** Refactor client statement detail route `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx` to read `monthPeriod` from URL queries in addition to `year`.
-* **Task 3.2:** Modify the data fetch block in the statement page to pass `monthPeriod` when available.
-* **Task 3.3:** Add the **Rolling Month Filters** component in the statement detail page sidebar, matching standard layouts and border styles.
-* **Task 3.4:** Ensure that the generated statement PDF/Print boundaries (`periodFrom`/`periodTo`) match the selected month period accurately.
+
+- **Task 3.1:** Refactor client statement detail route `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx` to read `monthPeriod` from URL queries in addition to `year`.
+- **Task 3.2:** Modify the data fetch block in the statement page to pass `monthPeriod` when available.
+- **Task 3.3:** Add the **Rolling Month Filters** component in the statement detail page sidebar, matching standard layouts and border styles.
+- **Task 3.4:** Ensure that the generated statement PDF/Print boundaries (`periodFrom`/`periodTo`) match the selected month period accurately.
 
 ### Phase 4: Build Verification
-* **Task 4.1:** Run full typescript check: `bun run check-types`.
-* **Task 4.2:** Build the entire project: `bun run build`.
+
+- **Task 4.1:** Run full typescript check: `bun run check-types`.
+- **Task 4.2:** Build the entire project: `bun run build`.
 
 ---
 
 ## 5. Verification & Testing Strategy
 
 ### Automated Verification
+
 To ensure no API regression and that Drizzle compilation is correct, we will run the typecheck and production build scripts:
+
 ```bash
 bun run check-types
 bun run build
 ```
 
 ### Manual Visual Verification
+
 1. **Invoice/Quotes Dashboard Check:** Confirm that the cards display `"Year to Date"` instead of `"All time"`, and show count data for the current FY.
 2. **Statement Month Period Toggles:** Go to a client statement page, click "Current Month", "Previous Month", and "Past 3 Months", and ensure:
    - The transaction list updates to display only matching dates.

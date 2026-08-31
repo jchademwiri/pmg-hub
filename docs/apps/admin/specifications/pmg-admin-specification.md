@@ -42,31 +42,31 @@ Only `ADMIN_EMAIL` (set in `.env.local`) can sign in.
 
 ## 2. Tech Stack
 
-| Layer | Choice | Version |
-|---|---|---|
-| Framework | Next.js App Router | 16.2.1 |
-| Language | TypeScript | 5.9.2 |
-| Database | PostgreSQL via Neon | serverless / pooled |
-| ORM | Drizzle ORM | ^0.45.1 |
-| Auth | Better Auth + magic link | ^1.2.7 (not yet wired) |
-| Email | Resend | latest |
-| Styling | Tailwind CSS | v4 |
-| UI Components | shadcn/ui (radix-vega style) | ^4.1.1 |
-| Charts | recharts | 3.8.0 |
-| Toasts | sonner | ^2.0.7 |
-| Themes | next-themes | ^0.4.6 |
-| Validation | Zod | ^4 (root catalog) |
-| Monorepo | Bun + Turborepo | Bun 1.3.5 |
-| Deployment | Vercel | - |
+| Layer         | Choice                       | Version                |
+| ------------- | ---------------------------- | ---------------------- |
+| Framework     | Next.js App Router           | 16.2.1                 |
+| Language      | TypeScript                   | 5.9.2                  |
+| Database      | PostgreSQL via Neon          | serverless / pooled    |
+| ORM           | Drizzle ORM                  | ^0.45.1                |
+| Auth          | Better Auth + magic link     | ^1.2.7 (not yet wired) |
+| Email         | Resend                       | latest                 |
+| Styling       | Tailwind CSS                 | v4                     |
+| UI Components | shadcn/ui (radix-vega style) | ^4.1.1                 |
+| Charts        | recharts                     | 3.8.0                  |
+| Toasts        | sonner                       | ^2.0.7                 |
+| Themes        | next-themes                  | ^0.4.6                 |
+| Validation    | Zod                          | ^4 (root catalog)      |
+| Monorepo      | Bun + Turborepo              | Bun 1.3.5              |
+| Deployment    | Vercel                       | -                      |
 
 ### Next.js 16 - key changes
 
-| Feature | Next.js 15 | Next.js 16 |
-|---|---|---|
-| Auth guard file | `middleware.ts` | `proxy.ts` |
-| Export name | `export function middleware` | `export function proxy` |
-| React version | 19.x | 19.2.4 |
-| React Compiler | optional | enabled (`reactCompiler: true` in `next.config.ts`) |
+| Feature         | Next.js 15                   | Next.js 16                                          |
+| --------------- | ---------------------------- | --------------------------------------------------- |
+| Auth guard file | `middleware.ts`              | `proxy.ts`                                          |
+| Export name     | `export function middleware` | `export function proxy`                             |
+| React version   | 19.x                         | 19.2.4                                              |
+| React Compiler  | optional                     | enabled (`reactCompiler: true` in `next.config.ts`) |
 
 The proxy file lives at `apps/admin/src/proxy.ts` and exports a named `proxy`
 function. Auth is not yet wired - the proxy currently calls `NextResponse.next()`
@@ -262,6 +262,7 @@ Three tabs - Current Month, Previous Month, Year to Date - control which
 without any new fetch. MoM deltas only display on the Current Month tab.
 
 **KPI grid (4 cards)**
+
 - Total Revenue - with MoM delta badge vs previous month
 - Total Expenses - with MoM delta badge (inverted: up is bad)
 - PMG Share (25%) - with MoM delta badge
@@ -270,6 +271,7 @@ without any new fetch. MoM deltas only display on the Current Month tab.
 **Salary card**
 
 Highlighted card (teal border) showing:
+
 - Recommended owner salary (35% of profit pool) for the active period
 - YTD salary as a sub-label
 - Current month only: withdrawn amount vs salary balance
@@ -364,18 +366,18 @@ are expenses in the active period. Sorted by total descending.
 The following phases are planned. Full specifications are in
 `pmg-admin-development-phases.md`.
 
-| Phase | Name | Summary |
-|---|---|---|
-| 3 | Income Management | Add/edit/delete income entries with division and client |
-| 4 | Expense Management | Add/edit/delete expense entries with category and division |
-| 5 | Leads Management | Status updates, notes, tab filtering |
-| 6 | Division Management | Create/rename divisions, view per-division P&L |
-| 7 | Financial Snapshots | Lock historical month figures to prevent retroactive shifts |
-| 8 | Reporting & Insights | Monthly trend charts, category breakdowns, CSV export |
-| 9 | System Hardening | Auth wiring, error boundaries, loading skeletons, rate limiting |
-| 10 | SaaS Expansion | Multi-tenant organizations, user roles, Stripe billing |
+| Phase | Name                 | Summary                                                         |
+| ----- | -------------------- | --------------------------------------------------------------- |
+| 3     | Income Management    | Add/edit/delete income entries with division and client         |
+| 4     | Expense Management   | Add/edit/delete expense entries with category and division      |
+| 5     | Leads Management     | Status updates, notes, tab filtering                            |
+| 6     | Division Management  | Create/rename divisions, view per-division P&L                  |
+| 7     | Financial Snapshots  | Lock historical month figures to prevent retroactive shifts     |
+| 8     | Reporting & Insights | Monthly trend charts, category breakdowns, CSV export           |
+| 9     | System Hardening     | Auth wiring, error boundaries, loading skeletons, rate limiting |
+| 10    | SaaS Expansion       | Multi-tenant organizations, user roles, Stripe billing          |
 
 ---
 
-*Last updated: March 2026 · Playhouse Media Group (PTY) Ltd*
-*Jacob Chademwiri · 285 Erasmus Ave, Raslouw AH, Centurion, 0157*
+_Last updated: March 2026 · Playhouse Media Group (PTY) Ltd_
+_Jacob Chademwiri · 285 Erasmus Ave, Raslouw AH, Centurion, 0157_

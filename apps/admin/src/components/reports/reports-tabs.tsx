@@ -1,37 +1,37 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { MoMComparisonChart } from './mom-comparison-chart'
-import { RevenueByDivisionChart } from './revenue-by-division-chart'
-import { ExpenseByCategoryChart } from './expense-by-category-chart'
-import { ProfitPoolChart } from './profit-pool-chart'
-import { WaterfallChart } from './waterfall-chart'
-import { SankeyDiagram } from './sankey-diagram'
-import { ReportCommentary } from './report-commentary'
-import { FinancialDrilldownSheet } from '@/components/insights/financial-drilldown-sheet'
-import type { DrilldownType } from '@/app/actions/drilldown'
+import { useState } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MoMComparisonChart } from './mom-comparison-chart';
+import { RevenueByDivisionChart } from './revenue-by-division-chart';
+import { ExpenseByCategoryChart } from './expense-by-category-chart';
+import { ProfitPoolChart } from './profit-pool-chart';
+import { WaterfallChart } from './waterfall-chart';
+import { SankeyDiagram } from './sankey-diagram';
+import { ReportCommentary } from './report-commentary';
+import { FinancialDrilldownSheet } from '@/components/insights/financial-drilldown-sheet';
+import type { DrilldownType } from '@/app/actions/drilldown';
 import type {
   MoMSnapshot,
   MonthlyBudgetChartRow,
   MonthlyFinancials,
   BucketBalances,
-} from '@/lib/financial'
-import { TrendingUp, DollarSign, Receipt, PiggyBank, Printer } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+} from '@/lib/financial';
+import { TrendingUp, DollarSign, Receipt, PiggyBank, Printer } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ReportsTabsProps {
-  momData: MoMSnapshot[]
-  budgetChartSeries: MonthlyBudgetChartRow[]
-  expensesByCategory: { category: string; total: number }[]
-  monthlyFinancials: MonthlyFinancials[]
-  currentPeriod: string
-  previousPeriod: string
-  currentMonthLabel: string
-  previousMonthLabel: string
-  ledgerBalances?: BucketBalances
-  pmgShareRate?: number
+  momData: MoMSnapshot[];
+  budgetChartSeries: MonthlyBudgetChartRow[];
+  expensesByCategory: { category: string; total: number }[];
+  monthlyFinancials: MonthlyFinancials[];
+  currentPeriod: string;
+  previousPeriod: string;
+  currentMonthLabel: string;
+  previousMonthLabel: string;
+  ledgerBalances?: BucketBalances;
+  pmgShareRate?: number;
 }
 
 export function ReportsTabs({
@@ -46,46 +46,48 @@ export function ReportsTabs({
   ledgerBalances,
   pmgShareRate,
 }: ReportsTabsProps) {
-  const [drillOpen, setDrillOpen] = useState(false)
-  const [drillPeriod, setDrillPeriod] = useState<string | null>(null)
-  const [drillType, setDrillType] = useState<DrilldownType | null>(null)
+  const [drillOpen, setDrillOpen] = useState(false);
+  const [drillPeriod, setDrillPeriod] = useState<string | null>(null);
+  const [drillType, setDrillType] = useState<DrilldownType | null>(null);
 
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const activeTab = searchParams.get('tab') || 'overview'
+  const activeTab = searchParams.get('tab') || 'overview';
 
   const handleTabChange = (val: string) => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('tab', val)
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
-  }
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', val);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   const openDrill = (type: DrilldownType, period: string) => {
-    setDrillType(type)
-    setDrillPeriod(period)
-    setDrillOpen(true)
-  }
+    setDrillType(type);
+    setDrillPeriod(period);
+    setDrillOpen(true);
+  };
 
   // The MoM chart displays "Cash Receipts" (matching the rest of the app's
   // terminology fix) but the underlying momData metric name stays "Revenue" —
   // it's shared with CSV export and AI commentary generation, which key off
   // that exact string, so only the chart's own rendering is remapped here.
-  const momDataForChart = momData.map((d) => (d.metric === 'Revenue' ? { ...d, metric: 'Cash Receipts' } : d))
+  const momDataForChart = momData.map((d) =>
+    d.metric === 'Revenue' ? { ...d, metric: 'Cash Receipts' } : d,
+  );
 
   // Map MoM metric names (as shown in the chart) to drill-down types
   const metricToDrillType: Record<string, DrilldownType> = {
     'Cash Receipts': 'revenue',
-    'Expenses': 'expenses',
-  }
+    Expenses: 'expenses',
+  };
 
   // Calculate annual totals for waterfall and sankey flow diagram
-  const totalRevenue = monthlyFinancials.reduce((sum, m) => sum + m.revenue, 0)
-  const totalExpenses = monthlyFinancials.reduce((sum, m) => sum + m.expenses, 0)
-  const PMG_SHARE_RATE = pmgShareRate ?? 0.25
-  const totalPmgShare = totalRevenue * PMG_SHARE_RATE
-  const totalProfitPool = totalRevenue - totalExpenses - totalPmgShare
+  const totalRevenue = monthlyFinancials.reduce((sum, m) => sum + m.revenue, 0);
+  const totalExpenses = monthlyFinancials.reduce((sum, m) => sum + m.expenses, 0);
+  const PMG_SHARE_RATE = pmgShareRate ?? 0.25;
+  const totalPmgShare = totalRevenue * PMG_SHARE_RATE;
+  const totalProfitPool = totalRevenue - totalExpenses - totalPmgShare;
 
   // Map Sankey node IDs to drill-down types
   const nodeToDrillType: Record<string, DrilldownType> = {
@@ -94,111 +96,119 @@ export function ReportsTabs({
     pmg: 'pmg_share',
     expenses: 'expenses',
     pool: 'revenue',
-  }
+  };
 
   return (
     <>
-    <FinancialDrilldownSheet
-      open={drillOpen}
-      onOpenChange={setDrillOpen}
-      period={drillPeriod}
-      drillType={drillType}
-    />
-    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-      <div className="flex items-center justify-between mb-4 print:hidden gap-2">
-        <TabsList className="min-w-0 overflow-x-auto">
-          <TabsTrigger value="overview" className="gap-1.5">
-            <TrendingUp className="size-3.5" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="revenue" className="gap-1.5">
-            <DollarSign className="size-3.5" />
-            Revenue
-          </TabsTrigger>
-          <TabsTrigger value="expenses" className="gap-1.5">
-            <Receipt className="size-3.5" />
-            Expenses
-          </TabsTrigger>
-          <TabsTrigger value="profit" className="gap-1.5">
-            <PiggyBank className="size-3.5" />
-            Net Profit
-          </TabsTrigger>
-        </TabsList>
+      <FinancialDrilldownSheet
+        open={drillOpen}
+        onOpenChange={setDrillOpen}
+        period={drillPeriod}
+        drillType={drillType}
+      />
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <div className="flex items-center justify-between mb-4 print:hidden gap-2">
+          <TabsList className="min-w-0 overflow-x-auto">
+            <TabsTrigger value="overview" className="gap-1.5">
+              <TrendingUp className="size-3.5" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="revenue" className="gap-1.5">
+              <DollarSign className="size-3.5" />
+              Revenue
+            </TabsTrigger>
+            <TabsTrigger value="expenses" className="gap-1.5">
+              <Receipt className="size-3.5" />
+              Expenses
+            </TabsTrigger>
+            <TabsTrigger value="profit" className="gap-1.5">
+              <PiggyBank className="size-3.5" />
+              Net Profit
+            </TabsTrigger>
+          </TabsList>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => window.print()}
-          className="gap-2 text-xs border-primary/20 hover:bg-primary/5"
-        >
-          <Printer className="size-3.5 text-primary" />
-          Print / Save PDF Report
-        </Button>
-      </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.print()}
+            className="gap-2 text-xs border-primary/20 hover:bg-primary/5"
+          >
+            <Printer className="size-3.5 text-primary" />
+            Print / Save PDF Report
+          </Button>
+        </div>
 
-      {/* ── Overview Tab ───────────────────────────────────────────────── */}
-      <TabsContent value="overview">
-        <div className="grid grid-cols-1 gap-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[400px]">
-            <MoMComparisonChart data={momDataForChart} currentMonthLabel={currentMonthLabel} previousMonthLabel={previousMonthLabel} onBarClick={(metric, periodType) => {
-              const type = metricToDrillType[metric]
-              if (type) {
-                const targetPeriod = periodType === 'current' ? currentPeriod : previousPeriod
-                openDrill(type, targetPeriod)
-              }
-            }} />
-            <WaterfallChart
+        {/* ── Overview Tab ───────────────────────────────────────────────── */}
+        <TabsContent value="overview">
+          <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[400px]">
+              <MoMComparisonChart
+                data={momDataForChart}
+                currentMonthLabel={currentMonthLabel}
+                previousMonthLabel={previousMonthLabel}
+                onBarClick={(metric, periodType) => {
+                  const type = metricToDrillType[metric];
+                  if (type) {
+                    const targetPeriod = periodType === 'current' ? currentPeriod : previousPeriod;
+                    openDrill(type, targetPeriod);
+                  }
+                }}
+              />
+              <WaterfallChart
+                revenue={totalRevenue}
+                expenses={totalExpenses}
+                pmgShare={totalPmgShare}
+                profitPool={totalProfitPool}
+              />
+            </div>
+            <ReportCommentary
+              momData={momData}
+              currentMonthLabel={currentMonthLabel}
+              previousMonthLabel={previousMonthLabel}
+            />
+          </div>
+        </TabsContent>
+
+        {/* ── Revenue Tab ────────────────────────────────────────────────── */}
+        <TabsContent value="revenue">
+          <div className="grid grid-cols-1 gap-6 min-h-[400px]">
+            <RevenueByDivisionChart data={budgetChartSeries} currentPeriod={currentPeriod} />
+          </div>
+        </TabsContent>
+
+        {/* ── Expenses Tab ───────────────────────────────────────────────── */}
+        <TabsContent value="expenses">
+          <div className="grid grid-cols-1 gap-6 min-h-[400px]">
+            <ExpenseByCategoryChart
+              data={expensesByCategory}
+              onBarClick={() => openDrill('expenses', currentPeriod)}
+            />
+          </div>
+        </TabsContent>
+
+        {/* ── Profit Pool Tab ────────────────────────────────────────────── */}
+        <TabsContent value="profit">
+          <div className="grid grid-cols-1 gap-6 min-h-[400px]">
+            <SankeyDiagram
               revenue={totalRevenue}
               expenses={totalExpenses}
               pmgShare={totalPmgShare}
               profitPool={totalProfitPool}
+              ledgerBalances={ledgerBalances}
+              onNodeClick={(nodeId) => {
+                const type = nodeToDrillType[nodeId];
+                if (type) openDrill(type, currentPeriod);
+              }}
+            />
+            <ProfitPoolChart
+              data={monthlyFinancials.map((m) => ({
+                period: m.month,
+                profit: m.revenue * (1 - PMG_SHARE_RATE) - m.expenses,
+              }))}
             />
           </div>
-          <ReportCommentary
-            momData={momData}
-            currentMonthLabel={currentMonthLabel}
-            previousMonthLabel={previousMonthLabel}
-          />
-        </div>
-      </TabsContent>
-
-      {/* ── Revenue Tab ────────────────────────────────────────────────── */}
-      <TabsContent value="revenue">
-        <div className="grid grid-cols-1 gap-6 min-h-[400px]">
-          <RevenueByDivisionChart
-            data={budgetChartSeries}
-            currentPeriod={currentPeriod}
-          />
-        </div>
-      </TabsContent>
-
-      {/* ── Expenses Tab ───────────────────────────────────────────────── */}
-      <TabsContent value="expenses">
-        <div className="grid grid-cols-1 gap-6 min-h-[400px]">
-          <ExpenseByCategoryChart data={expensesByCategory} onBarClick={() => openDrill('expenses', currentPeriod)} />
-        </div>
-      </TabsContent>
-
-      {/* ── Profit Pool Tab ────────────────────────────────────────────── */}
-      <TabsContent value="profit">
-        <div className="grid grid-cols-1 gap-6 min-h-[400px]">
-          <SankeyDiagram
-            revenue={totalRevenue}
-            expenses={totalExpenses}
-            pmgShare={totalPmgShare}
-            profitPool={totalProfitPool}
-            ledgerBalances={ledgerBalances}
-            onNodeClick={(nodeId) => {
-              const type = nodeToDrillType[nodeId]
-              if (type) openDrill(type, currentPeriod)
-            }}
-          />
-          <ProfitPoolChart
-            data={monthlyFinancials.map(m => ({ period: m.month, profit: m.revenue * (1 - PMG_SHARE_RATE) - m.expenses }))}
-          />
-        </div>
-      </TabsContent>
-    </Tabs>
+        </TabsContent>
+      </Tabs>
     </>
-  )
+  );
 }

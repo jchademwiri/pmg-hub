@@ -96,13 +96,15 @@ Add `personalMessage?: string` to `OutstandingReminderEmailProps`.
 Render it after the greeting and before the overdue alert block:
 
 ```tsx
-{personalMessage && (
-  <Section className="mb-[24px] rounded-[6px] border-l-4 border-solid border-brand bg-[#F8FAFC] p-[16px]">
-    <Text className="m-0 text-[14px] italic leading-[22px] text-[#475569]">
-      "{personalMessage}"
-    </Text>
-  </Section>
-)}
+{
+  personalMessage && (
+    <Section className="mb-[24px] rounded-[6px] border-l-4 border-solid border-brand bg-[#F8FAFC] p-[16px]">
+      <Text className="m-0 text-[14px] italic leading-[22px] text-[#475569]">
+        "{personalMessage}"
+      </Text>
+    </Section>
+  );
+}
 ```
 
 Notes:
@@ -196,7 +198,7 @@ export function validatePersonalMessage(message?: string): {
   valid: boolean;
   sanitized?: string;
   error?: string;
-}
+};
 ```
 
 Rules:
@@ -210,7 +212,7 @@ Rules:
 export function validateRecipientEmail(email: string): {
   valid: boolean;
   error?: string;
-}
+};
 ```
 
 Rules:

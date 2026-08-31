@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ClientAgingDetailPage({ params }: Props) {
   const { clientId } = await params;
-  
+
   const [client, outstandingInvoices] = await Promise.all([
     getClientById(clientId),
     getClientOutstandingInvoices(clientId),
@@ -43,7 +43,11 @@ export default async function ClientAgingDetailPage({ params }: Props) {
       {/* Back button + title */}
       <div className="flex flex-col gap-2">
         <Link href="/billing/aging">
-          <Button variant="ghost" size="sm" className="-ml-3 gap-1 h-8 text-muted-foreground hover:text-foreground">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 gap-1 h-8 text-muted-foreground hover:text-foreground"
+          >
             <ChevronLeft className="size-4" />
             Back to Aging Report
           </Button>

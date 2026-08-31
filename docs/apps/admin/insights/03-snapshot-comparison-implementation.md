@@ -12,15 +12,15 @@ A comparison mode for the Snapshots page that lets users select 2 closed periods
 
 ### New Files
 
-| File | Purpose |
-|------|---------|
-| `components/insights/snapshot-delta-badge.tsx` | Reusable delta indicator showing % change between two values |
-| `components/insights/snapshot-comparison-panel.tsx` | Main comparison panel with 3 tabs |
+| File                                                | Purpose                                                      |
+| --------------------------------------------------- | ------------------------------------------------------------ |
+| `components/insights/snapshot-delta-badge.tsx`      | Reusable delta indicator showing % change between two values |
+| `components/insights/snapshot-comparison-panel.tsx` | Main comparison panel with 3 tabs                            |
 
 ### Modified Files
 
-| File | Changes |
-|------|---------|
+| File                                        | Changes                                                                                  |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `components/insights/snapshots-cockpit.tsx` | Added compare mode toggle, multi-select sidebar, hides single-period view when comparing |
 
 ---

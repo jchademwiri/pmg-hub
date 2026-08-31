@@ -39,7 +39,11 @@ export interface ReportPreviewFilter {
   category?: string;
 }
 
-export async function resolvePeriodDateRange(periodStr?: string, customStart?: string, customEnd?: string) {
+export async function resolvePeriodDateRange(
+  periodStr?: string,
+  customStart?: string,
+  customEnd?: string,
+) {
   let startDate = customStart;
   let endDate = customEnd;
   let periodMonth: string | undefined = undefined;
@@ -95,11 +99,16 @@ export async function fetchReportPreviewData(filter: ReportPreviewFilter) {
       db.select({ id: divisions.id, name: divisions.name }).from(divisions),
     ]);
 
-    const activeDivision = filter.divisionId && filter.divisionId !== 'all'
-      ? divList.find((d) => d.id === filter.divisionId)
-      : null;
+    const activeDivision =
+      filter.divisionId && filter.divisionId !== 'all'
+        ? divList.find((d) => d.id === filter.divisionId)
+        : null;
 
-    const { periodMonth, startDate, endDate } = await resolvePeriodDateRange(filter.period, filter.startDate, filter.endDate);
+    const { periodMonth, startDate, endDate } = await resolvePeriodDateRange(
+      filter.period,
+      filter.startDate,
+      filter.endDate,
+    );
 
     let data: any = null;
 
@@ -148,8 +157,14 @@ export async function fetchReportPreviewData(filter: ReportPreviewFilter) {
       case 'trial-balance': {
         const d = filter.divisionId !== 'all' ? filter.divisionId : undefined;
         const rows = await getTrialBalance(periodMonth, d, startDate, endDate);
-        const totalDebits = rows.reduce((s, r: any) => s + (Number(r.debit ?? r.totalDebits) || 0), 0);
-        const totalCredits = rows.reduce((s, r: any) => s + (Number(r.credit ?? r.totalCredits) || 0), 0);
+        const totalDebits = rows.reduce(
+          (s, r: any) => s + (Number(r.debit ?? r.totalDebits) || 0),
+          0,
+        );
+        const totalCredits = rows.reduce(
+          (s, r: any) => s + (Number(r.credit ?? r.totalCredits) || 0),
+          0,
+        );
         data = { rows, totalDebits, totalCredits };
         break;
       }

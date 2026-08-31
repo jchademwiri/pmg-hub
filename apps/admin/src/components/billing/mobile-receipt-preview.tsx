@@ -25,7 +25,7 @@ export function MobileReceiptPreview({
   amountPaid,
   balanceDue,
   className,
-}: DocumentPreviewProps & { 
+}: DocumentPreviewProps & {
   className?: string;
   subtotal: number;
   discountTotal: number;
@@ -35,7 +35,9 @@ export function MobileReceiptPreview({
   const isQuote = type === 'quote';
 
   return (
-    <div className={`w-full max-w-sm mx-auto bg-card border border-border shadow-sm rounded-xl overflow-hidden ${className}`}>
+    <div
+      className={`w-full max-w-sm mx-auto bg-card border border-border shadow-sm rounded-xl overflow-hidden ${className}`}
+    >
       {/* Header section */}
       <div className="bg-muted/30 p-6 flex flex-col items-center justify-center text-center border-b border-border border-dashed">
         {org.logoUrl ? (
@@ -78,14 +80,18 @@ export function MobileReceiptPreview({
           </div>
           <div>
             <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Billed To</p>
-            <p className="font-medium truncate" title={client.name}>{client.name}</p>
+            <p className="font-medium truncate" title={client.name}>
+              {client.name}
+            </p>
           </div>
         </div>
 
         {/* Line Items */}
         {lineItems && lineItems.length > 0 && (
           <div className="flex flex-col gap-3">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border pb-2">Line Items</p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border pb-2">
+              Line Items
+            </p>
             <div className="flex flex-col gap-3">
               {lineItems.map((item, idx) => {
                 const total = item.qty * item.unitPrice - (item.discountAmount ?? 0);
@@ -124,41 +130,72 @@ export function MobileReceiptPreview({
             </div>
           )}
           <div className="flex justify-between font-bold text-base pt-2 border-t border-border mt-1">
-            <span>{type === 'invoice' && (status.toLowerCase() === 'paid' || status.toLowerCase() === 'partially_paid') ? 'Total Invoiced' : 'Total'}</span>
+            <span>
+              {type === 'invoice' &&
+              (status.toLowerCase() === 'paid' || status.toLowerCase() === 'partially_paid')
+                ? 'Total Invoiced'
+                : 'Total'}
+            </span>
             <span className="tabular-nums">{formatZAR(grandTotal)}</span>
           </div>
-          {type === 'invoice' && (status.toLowerCase() === 'paid' || status.toLowerCase() === 'partially_paid' || status.toLowerCase() === 'written_off') && (
-            <>
-              {(amountPaid ?? 0) > 0 || status.toLowerCase() === 'paid' ? (
-                <div className="flex justify-between text-sm font-medium text-emerald-600">
-                  <span>Less Payments</span>
-                  <span className="tabular-nums">-{formatZAR(status.toLowerCase() === 'paid' ? grandTotal : (amountPaid ?? (grandTotal - (balanceDue ?? 0))))}</span>
+          {type === 'invoice' &&
+            (status.toLowerCase() === 'paid' ||
+              status.toLowerCase() === 'partially_paid' ||
+              status.toLowerCase() === 'written_off') && (
+              <>
+                {(amountPaid ?? 0) > 0 || status.toLowerCase() === 'paid' ? (
+                  <div className="flex justify-between text-sm font-medium text-emerald-600">
+                    <span>Less Payments</span>
+                    <span className="tabular-nums">
+                      -
+                      {formatZAR(
+                        status.toLowerCase() === 'paid'
+                          ? grandTotal
+                          : (amountPaid ?? grandTotal - (balanceDue ?? 0)),
+                      )}
+                    </span>
+                  </div>
+                ) : null}
+                {status.toLowerCase() === 'written_off' ? (
+                  <div className="flex justify-between text-sm font-medium text-rose-600">
+                    <span>Less Write-Off</span>
+                    <span className="tabular-nums">
+                      -{formatZAR(grandTotal - (amountPaid ?? 0))}
+                    </span>
+                  </div>
+                ) : null}
+                <div className="flex justify-between font-bold text-base pt-2 border-t border-border mt-1">
+                  <span>Balance Due</span>
+                  <span
+                    className={`tabular-nums ${(balanceDue ?? 0) === 0 || status.toLowerCase() === 'paid' || status.toLowerCase() === 'written_off' ? 'text-emerald-600' : 'text-amber-600'}`}
+                  >
+                    {formatZAR(
+                      status.toLowerCase() === 'paid' || status.toLowerCase() === 'written_off'
+                        ? 0
+                        : (balanceDue ?? 0),
+                    )}
+                  </span>
                 </div>
-              ) : null}
-              {status.toLowerCase() === 'written_off' ? (
-                <div className="flex justify-between text-sm font-medium text-rose-600">
-                  <span>Less Write-Off</span>
-                  <span className="tabular-nums">-{formatZAR(grandTotal - (amountPaid ?? 0))}</span>
-                </div>
-              ) : null}
-              <div className="flex justify-between font-bold text-base pt-2 border-t border-border mt-1">
-                <span>Balance Due</span>
-                <span className={`tabular-nums ${(balanceDue ?? 0) === 0 || status.toLowerCase() === 'paid' || status.toLowerCase() === 'written_off' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                  {formatZAR(status.toLowerCase() === 'paid' || status.toLowerCase() === 'written_off' ? 0 : (balanceDue ?? 0))}
-                </span>
-              </div>
-            </>
-          )}
+              </>
+            )}
         </div>
 
         {/* Banking Details */}
         {banking && type === 'invoice' && (
           <div className="bg-muted/30 rounded-lg p-4 flex flex-col gap-1 text-xs">
             <p className="font-semibold mb-1">Payment Details</p>
-            <p><span className="text-muted-foreground">Bank:</span> {banking.bankName}</p>
-            <p><span className="text-muted-foreground">Acc Name:</span> {banking.accountName}</p>
-            <p><span className="text-muted-foreground">Acc Number:</span> {banking.accountNumber}</p>
-            <p><span className="text-muted-foreground">Branch:</span> {banking.branchCode}</p>
+            <p>
+              <span className="text-muted-foreground">Bank:</span> {banking.bankName}
+            </p>
+            <p>
+              <span className="text-muted-foreground">Acc Name:</span> {banking.accountName}
+            </p>
+            <p>
+              <span className="text-muted-foreground">Acc Number:</span> {banking.accountNumber}
+            </p>
+            <p>
+              <span className="text-muted-foreground">Branch:</span> {banking.branchCode}
+            </p>
             <p className="mt-1 font-medium text-primary">Use {number} as reference</p>
           </div>
         )}

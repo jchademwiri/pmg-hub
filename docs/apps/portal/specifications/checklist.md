@@ -46,15 +46,18 @@ This checklist tracks the progress of the PMG Client Portal (`apps/portal`) impl
 ## ── Phase 4: Remaining Tasks & Next Steps (To-Do) ──
 
 ### 1. Email Templates & Customization
+
 - [ ] **Branded Magic Link Email**: Update the `MagicLinkEmail` React Email component in `packages/emails` to match the portal branding and copy (e.g., "Access your PMG Billing Portal" instead of "Sign in to PMG Control Center").
 - [ ] **Admin Quote Notifications**: Verify the HTML layout of the email notifications sent to sales representatives when a quote is accepted/declined.
 
 ### 2. Admin App Integration
+
 - [ ] **Email Change Handler**: In the admin app's client-editing action, reset `clients.userId = null` if the client's email address is modified, forcing a re-link on their next portal sign-in.
 - [ ] **Portal Link in Invoices/Quotes**: Add a direct link to the client portal in the email templates sent out when invoices or quotes are dispatched from the admin app.
 - [ ] **Impersonation Action**: Add a "View as Client in Portal" button in the admin app's client detail page that sets the `dev_impersonate_client_id` cookie and redirects the admin to `http://localhost:3001/dashboard` for troubleshooting.
 
 ### 3. Polish & Deployment
+
 - [ ] **Mobile Sidebar Toggle**: Implement a client-side state for the hamburger menu button in the header of `(portal)/layout.tsx` to toggle the sidebar on mobile screens.
 - [ ] **Production Deployment**: Deploy the portal app on Vercel and bind the custom domain `portal.playhousemedia.co.za`.
 - [ ] **Testing**: Run end-to-end user tests using a test client account on staging.

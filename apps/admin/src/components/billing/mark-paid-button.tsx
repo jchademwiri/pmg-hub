@@ -4,11 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { confirm } from '@/components/ui/confirm-dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface MarkPaidButtonProps {
   invoiceId: string;
@@ -46,12 +42,12 @@ export function MarkPaidButton({ invoiceId, hasClient, markPaidAction }: MarkPai
       <Tooltip>
         <TooltipTrigger asChild>
           <span className="w-full">
-            <Button disabled className="w-full">Mark Paid</Button>
+            <Button disabled className="w-full">
+              Mark Paid
+            </Button>
           </span>
         </TooltipTrigger>
-        <TooltipContent>
-          Add a client to this invoice before marking as paid.
-        </TooltipContent>
+        <TooltipContent>Add a client to this invoice before marking as paid.</TooltipContent>
       </Tooltip>
     );
   }

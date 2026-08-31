@@ -13,7 +13,14 @@ import {
   type ActivityEvent,
 } from '@/lib/client-billing-helpers';
 import type { InvoiceDetail, QuotationDetail } from '@pmg/db';
-import { ChevronDown, ChevronUp, Activity, TrendingUp, Calendar, AlertTriangle } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Activity,
+  TrendingUp,
+  Calendar,
+  AlertTriangle,
+} from 'lucide-react';
 
 interface ClientFinancialDashboardProps {
   invoices: InvoiceDetail[];
@@ -34,38 +41,38 @@ export function ClientFinancialDashboard({
   // 1. Calculate Metrics
   const todayStr = getSASTToday();
   const activeInvoices = invoices.filter(
-    (inv) => inv.status !== 'void' && inv.status !== 'draft' && inv.invoiceDate <= todayStr
+    (inv) => inv.status !== 'void' && inv.status !== 'draft' && inv.invoiceDate <= todayStr,
   );
   const totalInvoiced = activeInvoices.reduce((sum, inv) => sum + Number(inv.total), 0);
-  const totalPaid = payments.reduce((sum, pay) => sum + Number(pay.amount), 0) + totalCreditsApplied;
+  const totalPaid =
+    payments.reduce((sum, pay) => sum + Number(pay.amount), 0) + totalCreditsApplied;
 
   // Overdue Balance Calculation (strictly unpaid invoices where due date is in the past)
   const overdueInvoices = activeInvoices.filter(
-    (inv) =>
-      inv.status !== 'paid' &&
-      inv.dueDate &&
-      inv.dueDate < todayStr
+    (inv) => inv.status !== 'paid' && inv.dueDate && inv.dueDate < todayStr,
   );
   const overdueBalance = overdueInvoices.reduce(
     (sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)),
-    0
+    0,
   );
 
   // Outstanding Balance Calculation (strictly unpaid invoices that are not overdue yet)
   const outstandingInvoices = activeInvoices.filter(
-    (inv) =>
-      inv.status !== 'paid' &&
-      (!inv.dueDate || inv.dueDate >= todayStr)
+    (inv) => inv.status !== 'paid' && (!inv.dueDate || inv.dueDate >= todayStr),
   );
   const outstandingBalance = outstandingInvoices.reduce(
     (sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)),
-    0
+    0,
   );
 
   // Quote Conversion Rate
   const acceptedQuotes = quotes.filter((q) => q.status === 'accepted' || q.status === 'converted');
   const sentOrAcceptedQuotes = quotes.filter(
-    (q) => q.status === 'sent' || q.status === 'accepted' || q.status === 'converted' || q.status === 'declined'
+    (q) =>
+      q.status === 'sent' ||
+      q.status === 'accepted' ||
+      q.status === 'converted' ||
+      q.status === 'declined',
   );
   const quoteConversionRate =
     sentOrAcceptedQuotes.length > 0
@@ -73,7 +80,11 @@ export function ClientFinancialDashboard({
       : 0;
 
   // 2. Client Health Score (pass total outstanding to preserve score ratios)
-  const health = calculateClientHealth(invoices, outstandingBalance + overdueBalance, overdueBalance);
+  const health = calculateClientHealth(
+    invoices,
+    outstandingBalance + overdueBalance,
+    overdueBalance,
+  );
 
   // 3. Ageing Buckets
   const ageing = { current: 0, days1_30: 0, days31_60: 0, days61_plus: 0 };
@@ -109,23 +120,46 @@ export function ClientFinancialDashboard({
   };
 
   const ageingAllocations = [
-    { key: 'current', label: 'Current', amount: ageing.current, pct: getPct(ageing.current), color: 'bg-green-500' },
-    { key: 'days1_30', label: '1-30 Days', amount: ageing.days1_30, pct: getPct(ageing.days1_30), color: 'bg-amber-500' },
-    { key: 'days31_60', label: '31-60 Days', amount: ageing.days31_60, pct: getPct(ageing.days31_60), color: 'bg-orange-500' },
-    { key: 'days61_plus', label: '61+ Days', amount: ageing.days61_plus, pct: getPct(ageing.days61_plus), color: 'bg-red-500' },
-  ].filter(item => item.amount > 0);
+    {
+      key: 'current',
+      label: 'Current',
+      amount: ageing.current,
+      pct: getPct(ageing.current),
+      color: 'bg-green-500',
+    },
+    {
+      key: 'days1_30',
+      label: '1-30 Days',
+      amount: ageing.days1_30,
+      pct: getPct(ageing.days1_30),
+      color: 'bg-amber-500',
+    },
+    {
+      key: 'days31_60',
+      label: '31-60 Days',
+      amount: ageing.days31_60,
+      pct: getPct(ageing.days31_60),
+      color: 'bg-orange-500',
+    },
+    {
+      key: 'days61_plus',
+      label: '61+ Days',
+      amount: ageing.days61_plus,
+      pct: getPct(ageing.days61_plus),
+      color: 'bg-red-500',
+    },
+  ].filter((item) => item.amount > 0);
 
   // 4. Payment Behavior
   const avgDaysToPay = calculateAverageDaysToPay(invoices);
-  const collectionEfficiency = totalInvoiced > 0 ? Math.round((totalPaid / totalInvoiced) * 100) : 100;
-  
-  const lastPayment = payments.length > 0 
-    ? payments.sort((a, b) => b.date.localeCompare(a.date))[0]
-    : null;
+  const collectionEfficiency =
+    totalInvoiced > 0 ? Math.round((totalPaid / totalInvoiced) * 100) : 100;
 
-  const largestPayment = payments.length > 0
-    ? Math.max(...payments.map(p => Number(p.amount)))
-    : 0;
+  const lastPayment =
+    payments.length > 0 ? payments.sort((a, b) => b.date.localeCompare(a.date))[0] : null;
+
+  const largestPayment =
+    payments.length > 0 ? Math.max(...payments.map((p) => Number(p.amount))) : 0;
 
   // 5. Activity Feed
   const activityEvents = buildActivityFeed(quotes, invoices, payments);
@@ -136,7 +170,9 @@ export function ClientFinancialDashboard({
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="shadow-sm border-muted-foreground/10 bg-card">
           <CardHeader className="p-4 pb-2">
-            <CardDescription className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Invoiced</CardDescription>
+            <CardDescription className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Total Invoiced
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-4 pt-0">
             <span className="text-lg font-bold tabular-nums">{formatZAR(totalInvoiced)}</span>
@@ -145,19 +181,27 @@ export function ClientFinancialDashboard({
 
         <Card className="shadow-sm border-muted-foreground/10 bg-card">
           <CardHeader className="p-4 pb-2">
-            <CardDescription className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Paid</CardDescription>
+            <CardDescription className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Total Paid
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <span className="text-lg font-bold tabular-nums text-green-600 dark:text-green-400">{formatZAR(totalPaid)}</span>
+            <span className="text-lg font-bold tabular-nums text-green-600 dark:text-green-400">
+              {formatZAR(totalPaid)}
+            </span>
           </CardContent>
         </Card>
 
         <Card className="shadow-sm border-muted-foreground/10 bg-card">
           <CardHeader className="p-4 pb-2">
-            <CardDescription className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Outstanding</CardDescription>
+            <CardDescription className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Outstanding
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <span className={`text-lg font-bold tabular-nums ${outstandingBalance > 0 ? 'text-amber-600 dark:text-amber-400' : ''}`}>
+            <span
+              className={`text-lg font-bold tabular-nums ${outstandingBalance > 0 ? 'text-amber-600 dark:text-amber-400' : ''}`}
+            >
               {formatZAR(outstandingBalance)}
             </span>
           </CardContent>
@@ -165,10 +209,14 @@ export function ClientFinancialDashboard({
 
         <Card className="shadow-sm border-muted-foreground/10 bg-card">
           <CardHeader className="p-4 pb-2">
-            <CardDescription className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Overdue</CardDescription>
+            <CardDescription className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Overdue
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <span className={`text-lg font-bold tabular-nums ${overdueBalance > 0 ? 'text-red-600 dark:text-red-400' : ''}`}>
+            <span
+              className={`text-lg font-bold tabular-nums ${overdueBalance > 0 ? 'text-red-600 dark:text-red-400' : ''}`}
+            >
               {formatZAR(overdueBalance)}
             </span>
           </CardContent>
@@ -176,7 +224,9 @@ export function ClientFinancialDashboard({
 
         <Card className="shadow-sm border-muted-foreground/10 bg-card col-span-2 md:col-span-1">
           <CardHeader className="p-4 pb-2">
-            <CardDescription className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Quote Conversion</CardDescription>
+            <CardDescription className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Quote Conversion
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-4 pt-0">
             <span className="text-lg font-bold tabular-nums">{quoteConversionRate}%</span>
@@ -191,10 +241,15 @@ export function ClientFinancialDashboard({
           <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-sm font-semibold">Accounts Receivable Ageing</CardTitle>
-              <CardDescription className="text-xs">Outstanding invoice ageing breakdown</CardDescription>
+              <CardDescription className="text-xs">
+                Outstanding invoice ageing breakdown
+              </CardDescription>
             </div>
             {overdueBalance > 0 && (
-              <Badge variant="destructive" className="flex gap-1 items-center animate-pulse text-[10px] px-2 py-0.5">
+              <Badge
+                variant="destructive"
+                className="flex gap-1 items-center animate-pulse text-[10px] px-2 py-0.5"
+              >
                 <AlertTriangle className="size-3" /> Overdue
               </Badge>
             )}
@@ -207,38 +262,56 @@ export function ClientFinancialDashboard({
                   {ageingAllocations.map((item) => (
                     <Tooltip key={item.key}>
                       <TooltipTrigger asChild>
-                        <div className={`${item.color} transition-all`} style={{ width: `${item.pct}%` }} />
+                        <div
+                          className={`${item.color} transition-all`}
+                          style={{ width: `${item.pct}%` }}
+                        />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <span className="font-semibold">{item.label}</span>: {formatZAR(item.amount)} ({item.pct}%)
+                        <span className="font-semibold">{item.label}</span>:{' '}
+                        {formatZAR(item.amount)} ({item.pct}%)
                       </TooltipContent>
                     </Tooltip>
                   ))}
                 </div>
-                
+
                 {/* Ageing legend table */}
                 <div className="grid grid-cols-4 gap-2 text-center text-xs mt-1">
                   <div className="flex flex-col items-center p-2 rounded-lg bg-green-500/5 dark:bg-green-500/10 border border-green-500/10">
                     <span className="font-medium text-green-600 dark:text-green-400">Current</span>
-                    <span className="font-bold mt-0.5 tabular-nums text-foreground/80">{formatZAR(ageing.current)}</span>
+                    <span className="font-bold mt-0.5 tabular-nums text-foreground/80">
+                      {formatZAR(ageing.current)}
+                    </span>
                   </div>
                   <div className="flex flex-col items-center p-2 rounded-lg bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/10">
-                    <span className="font-medium text-amber-600 dark:text-amber-400">1-30 Days</span>
-                    <span className="font-bold mt-0.5 tabular-nums text-foreground/80">{formatZAR(ageing.days1_30)}</span>
+                    <span className="font-medium text-amber-600 dark:text-amber-400">
+                      1-30 Days
+                    </span>
+                    <span className="font-bold mt-0.5 tabular-nums text-foreground/80">
+                      {formatZAR(ageing.days1_30)}
+                    </span>
                   </div>
                   <div className="flex flex-col items-center p-2 rounded-lg bg-orange-500/5 dark:bg-orange-500/10 border border-orange-500/10">
-                    <span className="font-medium text-orange-600 dark:text-orange-400">31-60 Days</span>
-                    <span className="font-bold mt-0.5 tabular-nums text-foreground/80">{formatZAR(ageing.days31_60)}</span>
+                    <span className="font-medium text-orange-600 dark:text-orange-400">
+                      31-60 Days
+                    </span>
+                    <span className="font-bold mt-0.5 tabular-nums text-foreground/80">
+                      {formatZAR(ageing.days31_60)}
+                    </span>
                   </div>
                   <div className="flex flex-col items-center p-2 rounded-lg bg-red-500/5 dark:bg-red-500/10 border border-red-500/10">
                     <span className="font-medium text-red-600 dark:text-red-400">61+ Days</span>
-                    <span className="font-bold mt-0.5 tabular-nums text-foreground/80">{formatZAR(ageing.days61_plus)}</span>
+                    <span className="font-bold mt-0.5 tabular-nums text-foreground/80">
+                      {formatZAR(ageing.days61_plus)}
+                    </span>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="h-16 flex items-center justify-center border border-dashed rounded-lg bg-muted/20">
-                <span className="text-sm text-muted-foreground">All invoices settled. No outstanding aging balance.</span>
+                <span className="text-sm text-muted-foreground">
+                  All invoices settled. No outstanding aging balance.
+                </span>
               </div>
             )}
           </CardContent>
@@ -249,24 +322,26 @@ export function ClientFinancialDashboard({
           <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-sm font-semibold">Payment Health & Behaviour</CardTitle>
-              <CardDescription className="text-xs">Payment history analytics & health rating</CardDescription>
+              <CardDescription className="text-xs">
+                Payment history analytics & health rating
+              </CardDescription>
             </div>
             <Badge
               variant={
                 health.score === 'Excellent'
                   ? 'default'
                   : health.score === 'Good'
-                  ? 'secondary'
-                  : 'destructive'
+                    ? 'secondary'
+                    : 'destructive'
               }
               className={`font-semibold capitalize text-xs ${
                 health.score === 'Excellent'
                   ? 'bg-green-500 text-white hover:bg-green-600'
                   : health.score === 'Good'
-                  ? 'bg-blue-500 text-white hover:bg-blue-600'
-                  : health.score === 'At Risk'
-                  ? 'bg-orange-500 text-white hover:bg-orange-600'
-                  : 'bg-red-500 text-white hover:bg-red-600'
+                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                    : health.score === 'At Risk'
+                      ? 'bg-orange-500 text-white hover:bg-orange-600'
+                      : 'bg-red-500 text-white hover:bg-red-600'
               }`}
             >
               {health.score} Health
@@ -323,42 +398,64 @@ export function ClientFinancialDashboard({
             <Activity className="size-4 text-amber-500" />
             <div>
               <span className="text-sm font-semibold block">Recent Billing Activity</span>
-              <span className="text-xs text-muted-foreground block">Latest 10 financial events for this client</span>
+              <span className="text-xs text-muted-foreground block">
+                Latest 10 financial events for this client
+              </span>
             </div>
           </div>
-          {isActivityExpanded ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
+          {isActivityExpanded ? (
+            <ChevronUp className="size-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="size-4 text-muted-foreground" />
+          )}
         </Button>
         {isActivityExpanded && (
           <CardContent className="p-4 pt-0 border-t border-muted-foreground/5">
             <div className="flex flex-col gap-3 mt-4">
               {activityEvents.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">No recent activity found.</p>
+                <p className="text-xs text-muted-foreground text-center py-4">
+                  No recent activity found.
+                </p>
               ) : (
                 <>
                   {(showAllActivity ? activityEvents : activityEvents.slice(0, 5)).map((evt) => (
-                    <div key={evt.id} className="flex items-center justify-between text-xs py-2 border-b border-muted-foreground/5 last:border-0">
+                    <div
+                      key={evt.id}
+                      className="flex items-center justify-between text-xs py-2 border-b border-muted-foreground/5 last:border-0"
+                    >
                       <div className="flex items-center gap-3">
-                        <span className={`p-1.5 rounded-full ${
-                          evt.type === 'payment' 
-                            ? 'bg-green-500/10 text-green-600 dark:text-green-400' 
-                            : evt.type === 'invoice' 
-                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                            : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                        }`}>
+                        <span
+                          className={`p-1.5 rounded-full ${
+                            evt.type === 'payment'
+                              ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                              : evt.type === 'invoice'
+                                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                          }`}
+                        >
                           {evt.type === 'payment' ? '📥' : evt.type === 'invoice' ? '📄' : '📜'}
                         </span>
                         <div className="flex flex-col">
-                          <span className="font-semibold text-foreground/90">{evt.title} ({evt.docNumber})</span>
-                          <span className="text-muted-foreground text-[10px]">{evt.description}</span>
+                          <span className="font-semibold text-foreground/90">
+                            {evt.title} ({evt.docNumber})
+                          </span>
+                          <span className="text-muted-foreground text-[10px]">
+                            {evt.description}
+                          </span>
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1">
                         {evt.amount !== undefined && (
-                          <span className={`font-semibold tabular-nums ${evt.type === 'payment' ? 'text-green-600 dark:text-green-400' : ''}`}>
-                            {evt.type === 'payment' ? '+' : ''}{formatZAR(evt.amount)}
+                          <span
+                            className={`font-semibold tabular-nums ${evt.type === 'payment' ? 'text-green-600 dark:text-green-400' : ''}`}
+                          >
+                            {evt.type === 'payment' ? '+' : ''}
+                            {formatZAR(evt.amount)}
                           </span>
                         )}
-                        <span className="text-muted-foreground text-[10px]">{fmtDate(evt.date.split('T')[0])}</span>
+                        <span className="text-muted-foreground text-[10px]">
+                          {fmtDate(evt.date.split('T')[0])}
+                        </span>
                       </div>
                     </div>
                   ))}

@@ -24,14 +24,21 @@ interface AgingReportClientProps {
   globalAging: AgingRow[];
 }
 
-type SortField = 'name' | 'totalOutstanding' | 'current' | 'bucket_1_14' | 'bucket_15_30' | 'bucket_31_60' | 'bucket_61_plus';
+type SortField =
+  | 'name'
+  | 'totalOutstanding'
+  | 'current'
+  | 'bucket_1_14'
+  | 'bucket_15_30'
+  | 'bucket_31_60'
+  | 'bucket_61_plus';
 type SortOrder = 'asc' | 'desc';
 
 export function AgingReportClient({ clientAging, globalAging }: AgingReportClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const filterParam = searchParams.get('filter');
-  
+
   const [searchTerm, setSearchTerm] = React.useState('');
   const [sortField, setSortField] = React.useState<SortField>('totalOutstanding');
   const [sortOrder, setSortOrder] = React.useState<SortOrder>('desc');
@@ -41,10 +48,15 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
     setActiveBucket(filterParam);
   }, [filterParam]);
 
-
   // Totals
-  const totalAR = React.useMemo(() => clientAging.reduce((s, c) => s + c.totalOutstanding, 0), [clientAging]);
-  const totalCurrent = React.useMemo(() => globalAging.find(b => b.bucket === 'current')?.total ?? 0, [globalAging]);
+  const totalAR = React.useMemo(
+    () => clientAging.reduce((s, c) => s + c.totalOutstanding, 0),
+    [clientAging],
+  );
+  const totalCurrent = React.useMemo(
+    () => globalAging.find((b) => b.bucket === 'current')?.total ?? 0,
+    [globalAging],
+  );
   const totalOverdue = React.useMemo(() => totalAR - totalCurrent, [totalAR, totalCurrent]);
 
   // Handle Sort
@@ -98,7 +110,10 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
   }, [filteredClients, sortField, sortOrder]);
 
   const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="ml-1 size-3 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />;
+    if (sortField !== field)
+      return (
+        <ArrowUpDown className="ml-1 size-3 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+      );
     return sortOrder === 'asc' ? (
       <ArrowUp className="ml-1 size-3 text-foreground" />
     ) : (
@@ -138,16 +153,28 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
         <Card className="shadow-none p-4 md:p-5 flex flex-col justify-center">
-          <p className="text-[10px] md:text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">Total Outstanding</p>
-          <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 md:mt-2 tabular-nums text-foreground truncate">{formatZAR(totalAR)}</p>
+          <p className="text-[10px] md:text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">
+            Total Outstanding
+          </p>
+          <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 md:mt-2 tabular-nums text-foreground truncate">
+            {formatZAR(totalAR)}
+          </p>
         </Card>
         <Card className="shadow-none p-4 md:p-5 flex flex-col justify-center">
-          <p className="text-[10px] md:text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">Current</p>
-          <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 md:mt-2 tabular-nums text-emerald-600 truncate">{formatZAR(totalCurrent)}</p>
+          <p className="text-[10px] md:text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">
+            Current
+          </p>
+          <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 md:mt-2 tabular-nums text-emerald-600 truncate">
+            {formatZAR(totalCurrent)}
+          </p>
         </Card>
         <Card className="shadow-none col-span-2 md:col-span-1 p-4 md:p-5 flex flex-col justify-center border-amber-500/20 bg-amber-500/5">
-          <p className="text-[10px] md:text-xs font-semibold text-amber-600/80 dark:text-amber-500/80 uppercase tracking-wider truncate">Total Delinquent</p>
-          <p className={`text-xl md:text-2xl font-bold mt-1 md:mt-2 tabular-nums truncate ${totalOverdue > 0 ? 'text-red-600 dark:text-red-500' : 'text-emerald-600 dark:text-emerald-500'}`}>
+          <p className="text-[10px] md:text-xs font-semibold text-amber-600/80 dark:text-amber-500/80 uppercase tracking-wider truncate">
+            Total Delinquent
+          </p>
+          <p
+            className={`text-xl md:text-2xl font-bold mt-1 md:mt-2 tabular-nums truncate ${totalOverdue > 0 ? 'text-red-600 dark:text-red-500' : 'text-emerald-600 dark:text-emerald-500'}`}
+          >
             {formatZAR(totalOverdue)}
           </p>
         </Card>
@@ -156,10 +183,14 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
       {/* Visual Proportions Bar */}
       <div className="border border-border/40 bg-muted/5 rounded-xl p-5 space-y-4">
         <div>
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Aging Distribution</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">Ratio of receivables per aging category</p>
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Aging Distribution
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Ratio of receivables per aging category
+          </p>
         </div>
-        
+
         {totalAR > 0 ? (
           <div className="space-y-3">
             <div className="h-3 w-full rounded-full overflow-hidden flex bg-muted">
@@ -181,11 +212,12 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
               {segments.map((segment) => {
                 const isActive = activeBucket === segment.bucket;
                 const isAnyActive = activeBucket !== null;
-                const opacityClass = isAnyActive && !isActive ? 'opacity-40 hover:opacity-75' : 'opacity-100';
+                const opacityClass =
+                  isAnyActive && !isActive ? 'opacity-40 hover:opacity-75' : 'opacity-100';
                 const borderClass = isActive
                   ? 'ring-2 ring-primary ring-offset-2 scale-[1.02] shadow-sm'
                   : 'hover:scale-[1.01]';
-                
+
                 return (
                   <button
                     key={segment.bucket}
@@ -193,20 +225,28 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                     className={`rounded-xl border px-3 py-2 text-left transition-all duration-200 cursor-pointer ${bucketBorderColors[segment.bucket]} ${borderClass} ${opacityClass}`}
                   >
                     <div className="flex items-center gap-1.5">
-                      <div className={`size-2.5 rounded-full ${bucketColors[segment.bucket]} shrink-0`} />
+                      <div
+                        className={`size-2.5 rounded-full ${bucketColors[segment.bucket]} shrink-0`}
+                      />
                       <span className="text-[10px] font-bold uppercase tracking-wider">
                         {segment.label}
                       </span>
                     </div>
-                    <p className="text-sm font-bold tabular-nums mt-1">{formatZAR(segment.total)}</p>
-                    <p className="text-[10px] opacity-80 mt-0.5">{Math.round(segment.percent)}% of total</p>
+                    <p className="text-sm font-bold tabular-nums mt-1">
+                      {formatZAR(segment.total)}
+                    </p>
+                    <p className="text-[10px] opacity-80 mt-0.5">
+                      {Math.round(segment.percent)}% of total
+                    </p>
                   </button>
                 );
               })}
             </div>
           </div>
         ) : (
-          <div className="text-center py-4 text-sm text-muted-foreground">No outstanding invoices.</div>
+          <div className="text-center py-4 text-sm text-muted-foreground">
+            No outstanding invoices.
+          </div>
         )}
       </div>
 
@@ -217,7 +257,7 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
             <h3 className="text-sm font-semibold">Client Aging Breakdown</h3>
             {activeBucket && (
               <span className="text-[11px] font-medium bg-muted text-muted-foreground px-2 py-0.5 rounded-full flex items-center gap-1 animate-in fade-in duration-200">
-                Filtered: {segments.find(s => s.bucket === activeBucket)?.label}
+                Filtered: {segments.find((s) => s.bucket === activeBucket)?.label}
                 <button
                   onClick={() => setActiveBucket(null)}
                   className="hover:text-foreground font-bold ml-1 text-sm leading-none"
@@ -240,50 +280,73 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
         </div>
         <div>
           {sortedClients.length === 0 ? (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">No clients found.</div>
+            <div className="px-5 py-8 text-center text-sm text-muted-foreground">
+              No clients found.
+            </div>
           ) : (
             <div className="flex flex-col gap-4">
               {/* Mobile View */}
               <div className="flex md:hidden flex-col gap-3">
                 {sortedClients.map((client) => {
-                  const hasOverdue = client.bucket_1_14 > 0 || client.bucket_15_30 > 0 || client.bucket_31_60 > 0 || client.bucket_61_plus > 0;
+                  const hasOverdue =
+                    client.bucket_1_14 > 0 ||
+                    client.bucket_15_30 > 0 ||
+                    client.bucket_31_60 > 0 ||
+                    client.bucket_61_plus > 0;
                   return (
-                    <div 
+                    <div
                       key={client.clientId}
                       className="bg-card border rounded-lg p-4 flex flex-col gap-3 cursor-pointer hover:border-primary/50 transition-colors shadow-sm"
                       onClick={() => router.push(`/billing/aging/${client.clientId}`)}
                     >
                       <div className="flex justify-between items-start gap-3 border-b border-border/40 pb-3">
-                        <div className="font-semibold text-sm truncate">{client.businessName || client.clientName}</div>
+                        <div className="font-semibold text-sm truncate">
+                          {client.businessName || client.clientName}
+                        </div>
                         <div className="text-right shrink-0">
-                          <div className="font-bold text-sm">{formatZAR(client.totalOutstanding)}</div>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-[11px]">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Current:</span>
-                          <span className="font-medium text-emerald-600">{client.current > 0 ? formatZAR(client.current) : '-'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">1-14 Days:</span>
-                          <span className="font-medium text-amber-600">{client.bucket_1_14 > 0 ? formatZAR(client.bucket_1_14) : '-'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">15-30 Days:</span>
-                          <span className="font-medium text-orange-600">{client.bucket_15_30 > 0 ? formatZAR(client.bucket_15_30) : '-'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">31-60 Days:</span>
-                          <span className="font-medium text-rose-600">{client.bucket_31_60 > 0 ? formatZAR(client.bucket_31_60) : '-'}</span>
-                        </div>
-                        <div className="flex justify-between col-span-2">
-                          <span className="text-muted-foreground">61+ Days:</span>
-                          <span className="font-medium text-red-600">{client.bucket_61_plus > 0 ? formatZAR(client.bucket_61_plus) : '-'}</span>
+                          <div className="font-bold text-sm">
+                            {formatZAR(client.totalOutstanding)}
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex justify-end pt-2 border-t border-border/40 mt-1 gap-2" onClick={(e) => e.stopPropagation()}>
+                      <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-[11px]">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Current:</span>
+                          <span className="font-medium text-emerald-600">
+                            {client.current > 0 ? formatZAR(client.current) : '-'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">1-14 Days:</span>
+                          <span className="font-medium text-amber-600">
+                            {client.bucket_1_14 > 0 ? formatZAR(client.bucket_1_14) : '-'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">15-30 Days:</span>
+                          <span className="font-medium text-orange-600">
+                            {client.bucket_15_30 > 0 ? formatZAR(client.bucket_15_30) : '-'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">31-60 Days:</span>
+                          <span className="font-medium text-rose-600">
+                            {client.bucket_31_60 > 0 ? formatZAR(client.bucket_31_60) : '-'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between col-span-2">
+                          <span className="text-muted-foreground">61+ Days:</span>
+                          <span className="font-medium text-red-600">
+                            {client.bucket_61_plus > 0 ? formatZAR(client.bucket_61_plus) : '-'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div
+                        className="flex justify-end pt-2 border-t border-border/40 mt-1 gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <Button asChild size="sm" variant="outline" className="h-7 px-3 text-xs">
                           <Link href={`/billing/statements/${client.clientId}`}>
                             <FileText className="size-3 mr-1.5" /> Statement
@@ -293,13 +356,22 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                           <SendOverdueRemindersButton
                             clientId={client.clientId}
                             trigger={
-                              <Button size="sm" variant="outline" className="h-7 px-3 text-xs text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-900/20">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-3 text-xs text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-900/20"
+                              >
                                 <Mail className="size-3 mr-1.5" /> Reminder
                               </Button>
                             }
                           />
                         ) : (
-                          <Button size="sm" variant="outline" className="h-7 px-3 text-xs opacity-40 cursor-not-allowed" disabled>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-3 text-xs opacity-40 cursor-not-allowed"
+                            disabled
+                          >
                             <Mail className="size-3 mr-1.5" /> Reminder
                           </Button>
                         )}
@@ -311,121 +383,163 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
 
               {/* Desktop View */}
               <div className="hidden md:block overflow-x-auto border rounded-lg bg-card">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[200px]">
-                      <button onClick={() => handleSort('name')} className="group flex items-center hover:text-foreground font-semibold">
-                        Client
-                        <SortIcon field="name" />
-                      </button>
-                    </TableHead>
-                    <TableHead className="text-right">
-                      <button onClick={() => handleSort('totalOutstanding')} className="group ml-auto flex items-center hover:text-foreground font-semibold">
-                        Outstanding
-                        <SortIcon field="totalOutstanding" />
-                      </button>
-                    </TableHead>
-                    <TableHead className="text-right">
-                      <button onClick={() => handleSort('current')} className="group ml-auto flex items-center hover:text-foreground font-semibold">
-                        Current
-                        <SortIcon field="current" />
-                      </button>
-                    </TableHead>
-                    <TableHead className="text-right">
-                      <button onClick={() => handleSort('bucket_1_14')} className="group ml-auto flex items-center hover:text-foreground font-semibold">
-                        1–14 Days
-                        <SortIcon field="bucket_1_14" />
-                      </button>
-                    </TableHead>
-                    <TableHead className="text-right">
-                      <button onClick={() => handleSort('bucket_15_30')} className="group ml-auto flex items-center hover:text-foreground font-semibold">
-                        15–30 Days
-                        <SortIcon field="bucket_15_30" />
-                      </button>
-                    </TableHead>
-                    <TableHead className="text-right">
-                      <button onClick={() => handleSort('bucket_31_60')} className="group ml-auto flex items-center hover:text-foreground font-semibold">
-                        31–60 Days
-                        <SortIcon field="bucket_31_60" />
-                      </button>
-                    </TableHead>
-                    <TableHead className="text-right">
-                      <button onClick={() => handleSort('bucket_61_plus')} className="group ml-auto flex items-center hover:text-foreground font-semibold">
-                        61+ Days
-                        <SortIcon field="bucket_61_plus" />
-                      </button>
-                    </TableHead>
-                    <TableHead className="w-[100px] text-center">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedClients.map((client) => {
-                    const hasOverdue = client.bucket_1_14 > 0 || client.bucket_15_30 > 0 || client.bucket_31_60 > 0 || client.bucket_61_plus > 0;
-                    return (
-                      <TableRow
-                        key={client.clientId}
-                        className="cursor-pointer hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        onClick={() => router.push(`/billing/aging/${client.clientId}`)}
-                        tabIndex={0}
-                        role="button"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            router.push(`/billing/aging/${client.clientId}`);
-                          }
-                        }}
-                      >
-                        <TableCell className="font-medium text-primary hover:underline">
-                          {client.businessName || client.clientName}
-                        </TableCell>
-                        <TableCell className="text-right font-bold tabular-nums">
-                          {formatZAR(client.totalOutstanding)}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums text-emerald-600">
-                          {client.current > 0 ? formatZAR(client.current) : '—'}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums text-amber-600">
-                          {client.bucket_1_14 > 0 ? formatZAR(client.bucket_1_14) : '—'}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums text-orange-600">
-                          {client.bucket_15_30 > 0 ? formatZAR(client.bucket_15_30) : '—'}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums text-rose-600">
-                          {client.bucket_31_60 > 0 ? formatZAR(client.bucket_31_60) : '—'}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums text-red-600 font-semibold">
-                          {client.bucket_61_plus > 0 ? formatZAR(client.bucket_61_plus) : '—'}
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-center gap-2">
-                            <Button asChild size="icon" variant="ghost" className="size-8" title="View Statement">
-                              <Link href={`/billing/statements/${client.clientId}`}>
-                                <FileText className="size-4 text-muted-foreground" />
-                              </Link>
-                            </Button>
-                            {hasOverdue ? (
-                              <SendOverdueRemindersButton
-                                clientId={client.clientId}
-                                trigger={
-                                  <Button size="icon" variant="ghost" className="size-8" title="Send Overdue Reminder">
-                                    <Mail className="size-4 text-red-500" />
-                                  </Button>
-                                }
-                              />
-                            ) : (
-                              <Button size="icon" variant="ghost" className="size-8 opacity-40 cursor-not-allowed" disabled title="No Overdue Balance">
-                                <Mail className="size-4 text-muted-foreground" />
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[200px]">
+                        <button
+                          onClick={() => handleSort('name')}
+                          className="group flex items-center hover:text-foreground font-semibold"
+                        >
+                          Client
+                          <SortIcon field="name" />
+                        </button>
+                      </TableHead>
+                      <TableHead className="text-right">
+                        <button
+                          onClick={() => handleSort('totalOutstanding')}
+                          className="group ml-auto flex items-center hover:text-foreground font-semibold"
+                        >
+                          Outstanding
+                          <SortIcon field="totalOutstanding" />
+                        </button>
+                      </TableHead>
+                      <TableHead className="text-right">
+                        <button
+                          onClick={() => handleSort('current')}
+                          className="group ml-auto flex items-center hover:text-foreground font-semibold"
+                        >
+                          Current
+                          <SortIcon field="current" />
+                        </button>
+                      </TableHead>
+                      <TableHead className="text-right">
+                        <button
+                          onClick={() => handleSort('bucket_1_14')}
+                          className="group ml-auto flex items-center hover:text-foreground font-semibold"
+                        >
+                          1–14 Days
+                          <SortIcon field="bucket_1_14" />
+                        </button>
+                      </TableHead>
+                      <TableHead className="text-right">
+                        <button
+                          onClick={() => handleSort('bucket_15_30')}
+                          className="group ml-auto flex items-center hover:text-foreground font-semibold"
+                        >
+                          15–30 Days
+                          <SortIcon field="bucket_15_30" />
+                        </button>
+                      </TableHead>
+                      <TableHead className="text-right">
+                        <button
+                          onClick={() => handleSort('bucket_31_60')}
+                          className="group ml-auto flex items-center hover:text-foreground font-semibold"
+                        >
+                          31–60 Days
+                          <SortIcon field="bucket_31_60" />
+                        </button>
+                      </TableHead>
+                      <TableHead className="text-right">
+                        <button
+                          onClick={() => handleSort('bucket_61_plus')}
+                          className="group ml-auto flex items-center hover:text-foreground font-semibold"
+                        >
+                          61+ Days
+                          <SortIcon field="bucket_61_plus" />
+                        </button>
+                      </TableHead>
+                      <TableHead className="w-[100px] text-center">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedClients.map((client) => {
+                      const hasOverdue =
+                        client.bucket_1_14 > 0 ||
+                        client.bucket_15_30 > 0 ||
+                        client.bucket_31_60 > 0 ||
+                        client.bucket_61_plus > 0;
+                      return (
+                        <TableRow
+                          key={client.clientId}
+                          className="cursor-pointer hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                          onClick={() => router.push(`/billing/aging/${client.clientId}`)}
+                          tabIndex={0}
+                          role="button"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              router.push(`/billing/aging/${client.clientId}`);
+                            }
+                          }}
+                        >
+                          <TableCell className="font-medium text-primary hover:underline">
+                            {client.businessName || client.clientName}
+                          </TableCell>
+                          <TableCell className="text-right font-bold tabular-nums">
+                            {formatZAR(client.totalOutstanding)}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums text-emerald-600">
+                            {client.current > 0 ? formatZAR(client.current) : '—'}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums text-amber-600">
+                            {client.bucket_1_14 > 0 ? formatZAR(client.bucket_1_14) : '—'}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums text-orange-600">
+                            {client.bucket_15_30 > 0 ? formatZAR(client.bucket_15_30) : '—'}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums text-rose-600">
+                            {client.bucket_31_60 > 0 ? formatZAR(client.bucket_31_60) : '—'}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums text-red-600 font-semibold">
+                            {client.bucket_61_plus > 0 ? formatZAR(client.bucket_61_plus) : '—'}
+                          </TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-center gap-2">
+                              <Button
+                                asChild
+                                size="icon"
+                                variant="ghost"
+                                className="size-8"
+                                title="View Statement"
+                              >
+                                <Link href={`/billing/statements/${client.clientId}`}>
+                                  <FileText className="size-4 text-muted-foreground" />
+                                </Link>
                               </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+                              {hasOverdue ? (
+                                <SendOverdueRemindersButton
+                                  clientId={client.clientId}
+                                  trigger={
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="size-8"
+                                      title="Send Overdue Reminder"
+                                    >
+                                      <Mail className="size-4 text-red-500" />
+                                    </Button>
+                                  }
+                                />
+                              ) : (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="size-8 opacity-40 cursor-not-allowed"
+                                  disabled
+                                  title="No Overdue Balance"
+                                >
+                                  <Mail className="size-4 text-muted-foreground" />
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
         </div>

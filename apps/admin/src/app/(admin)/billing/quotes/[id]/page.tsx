@@ -11,7 +11,11 @@ import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { MobileReceiptPreview } from '@/components/billing/mobile-receipt-preview';
 import { getQuotationById, getDivisionBillingSettings } from '@pmg/db';
-import { updateQuotationStatus, deleteQuotation, duplicateQuotation } from '@/app/actions/billing-quotes';
+import {
+  updateQuotationStatus,
+  deleteQuotation,
+  duplicateQuotation,
+} from '@/app/actions/billing-quotes';
 import { fmtDate, fmtDateTime, formatZAR } from '@/lib/format';
 import { buildOrgProps, buildBankingProps } from '@/lib/client-billing-helpers';
 import { QuoteDetailActions } from './quote-detail-actions';
@@ -27,7 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const quote = await getQuotationById(id);
   if (!quote) return { title: 'Quotation' };
-  
+
   return { title: `Quote ${quote.documentNumber}` };
 }
 
@@ -103,22 +107,14 @@ export default async function QuoteDetailPage({ params, searchParams }: Props) {
               <h2 className="text-lg font-semibold">{quote.documentNumber}</h2>
               <BillingStatusBadge status={quote.status} />
             </div>
-            <p className="text-sm text-muted-foreground">
-              Issued {fmtDate(quote.quoteDate)}
-            </p>
+            <p className="text-sm text-muted-foreground">Issued {fmtDate(quote.quoteDate)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
           <div className="hidden sm:block">
-            <PrintButton 
-              label="Print"
-              documentTitle={`Quote-${quote.documentNumber}`} 
-            />
+            <PrintButton label="Print" documentTitle={`Quote-${quote.documentNumber}`} />
           </div>
-          <ExportPdfButton 
-            fileName={`Quote-${quote.documentNumber}`}
-            pdfUrl={quotePdfUrl}
-          />
+          <ExportPdfButton fileName={`Quote-${quote.documentNumber}`} pdfUrl={quotePdfUrl} />
           <UniversalEmailDialog
             documentId={quote.id}
             documentNumber={quote.documentNumber}

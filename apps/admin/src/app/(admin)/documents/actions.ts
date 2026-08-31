@@ -1,38 +1,14 @@
 'use server';
 
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { db, publicDocuments } from '@pmg/db';
 import { revalidatePath } from 'next/cache';
-
-function getR2Client() {
-  const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID;
-  const accessKeyId = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
-  const secretAccessKey =
-    process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
-  const bucket = process.env.CLOUDFLARE_R2_BUCKET || process.env.AWS_S3_BUCKET_NAME;
-
-  if (!accessKeyId || !secretAccessKey || !bucket) {
-    throw new Error(
-      'Cloudflare R2 storage credentials or bucket name are missing from environment.',
-    );
-  }
-
-  const endpoint = accountId ? `https://${accountId}.r2.cloudflarestorage.com` : undefined;
-
-  const client = new S3Client({
-    region: accountId ? 'auto' : process.env.AWS_REGION || 'us-east-1',
-    endpoint,
-    forcePathStyle: true,
-    credentials: {
-      accessKeyId,
-      secretAccessKey,
-    },
-  });
-
-  return { client, bucket };
-}
+import { getR2Client } from '@/lib/r2';
+import { getSessionOrRedirect } from '@/lib/auth';
 
 export async function uploadDocumentAction(formData: FormData) {
+  await getSessionOrRedirect();
+
   const file = formData.get('file') as File | null;
   const title = (formData.get('title') as string)?.trim();
   const slug = (formData.get('slug') as string)?.trim();

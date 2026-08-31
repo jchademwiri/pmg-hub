@@ -3,6 +3,7 @@
 This folder contains documentation scoped specifically to the **AWS Application** (`apps/aws`).
 
 ## Tech Stack & Architecture
+
 - **Framework**: Astro 6 (SSR via `@astrojs/vercel`)
 - **Language**: TypeScript + React 19 Components
 - **Styling**: Tailwind CSS v4 + Vite + Tailwind Variants

@@ -7,7 +7,9 @@ We need a structured way to handle invoices when a client does not pay (Write-of
 ## Technical Overview
 
 ### 1. The Write-off Flow
+
 When an invoice is deemed uncollectible:
+
 1. The admin clicks **Write Off** on an `issued` or `overdue` invoice.
 2. The user enters a reason.
 3. The invoice status is set to `written_off`.
@@ -16,7 +18,9 @@ When an invoice is deemed uncollectible:
    - **Credit:** `1100 Accounts Receivable` (Asset reduction)
 
 ### 2. The Bad Debt Recovery Flow (When a Client Pays)
+
 When a payment is received and allocated to a `written_off` invoice:
+
 1. We **re-establish the Accounts Receivable balance** by reversing the write-off for the payment amount:
    - **Debit:** `1100 Accounts Receivable`
    - **Credit:** `5150 Bad Debt Expense` (reduces net bad debt expense in current period)
@@ -44,16 +48,18 @@ When a payment is received and allocated to a `written_off` invoice:
 ### Component 1: Database Schema
 
 #### [MODIFY] [billing.ts](file:///d:/websites/pmg-hub/packages/db/src/schema/billing.ts)
+
 Update `invoiceStatusEnum` to support `'written_off'`:
+
 ```typescript
-export const invoiceStatusEnum = pgEnum("invoice_status", [
-  "draft",
-  "issued",
-  "partially_paid",
-  "paid",
-  "overdue",
-  "void",
-  "written_off", // <-- New status
+export const invoiceStatusEnum = pgEnum('invoice_status', [
+  'draft',
+  'issued',
+  'partially_paid',
+  'paid',
+  'overdue',
+  'void',
+  'written_off', // <-- New status
 ]);
 ```
 
@@ -62,8 +68,10 @@ export const invoiceStatusEnum = pgEnum("invoice_status", [
 ### Component 2: Ledger Posting Logic
 
 #### [MODIFY] [posting.ts](file:///d:/websites/pmg-hub/apps/admin/src/lib/accounting/posting.ts)
+
 1. Add constant for `BAD_DEBT_EXPENSE_CODE = '5150'`.
 2. Add helper to ensure the Bad Debt account exists:
+
 ```typescript
 async function ensureBadDebtAccount(tx: any) {
   const [existing] = await tx
@@ -83,7 +91,9 @@ async function ensureBadDebtAccount(tx: any) {
   }
 }
 ```
+
 3. Implement `postInvoiceWriteOffJournalEntry` to write off the remaining unpaid balance:
+
 ```typescript
 export async function postInvoiceWriteOffJournalEntry(data: {
   invoiceId: string;
@@ -94,7 +104,9 @@ export async function postInvoiceWriteOffJournalEntry(data: {
   // Post DR 5150 Bad Debt / CR 1100 Accounts Receivable
 }
 ```
+
 4. Implement `postBadDebtRecoveryJournalEntry` to reverse the write-off for the recovered amount:
+
 ```typescript
 export async function postBadDebtRecoveryJournalEntry(data: {
   incomeId: string;
@@ -112,7 +124,9 @@ export async function postBadDebtRecoveryJournalEntry(data: {
 ### Component 3: Server Actions
 
 #### [MODIFY] [billing-invoices.ts](file:///d:/websites/pmg-hub/apps/admin/src/app/actions/billing-invoices.ts)
+
 Create a `writeOffInvoice(id: string, reason: string)` server action:
+
 - Checks if the invoice is `issued` or `overdue`.
 - Calculates outstanding balance.
 - Updates invoice status to `'written_off'`.
@@ -120,12 +134,15 @@ Create a `writeOffInvoice(id: string, reason: string)` server action:
 - Revalidates cached paths.
 
 #### [MODIFY] [billing-payments.ts](file:///d:/websites/pmg-hub/apps/admin/src/app/actions/billing-payments.ts)
+
 Update `recordClientPayment`:
+
 - When allocating payment to an invoice, check if the invoice's current status is `'written_off'`.
-- If yes, call `postBadDebtRecoveryJournalEntry` inside the transaction *before* inserting the payment allocation and updating the invoice status.
+- If yes, call `postBadDebtRecoveryJournalEntry` inside the transaction _before_ inserting the payment allocation and updating the invoice status.
 - Drizzle transaction ensures both the recovery reversal and standard payment journal entries post atomically.
 
 Update `deleteClientPayment` / `voidPaymentJournalEntries`:
+
 - Ensure that if a payment on a written-off invoice is deleted/refunded:
   1. **Reverse the recovery entry:** The `DR 1100 / CR 5150` bad-debt recovery journal entry that was posted when the payment was recorded must also be voided or a reversing entry (`DR 5150 / CR 1100`) must be explicitly linked to the delete operation.
   2. **Restore write-off status:** After the recovery reversal is posted, transition the invoice back to `'written_off'` (not `'issued'` or `'overdue'`).
@@ -135,7 +152,8 @@ Update `deleteClientPayment` / `voidPaymentJournalEntries`:
 
 ### Component 4: UI Enhancements
 
-#### [MODIFY] [invoice-detail-actions.tsx](file:///d:/websites/pmg-hub/apps/admin/src/app/(admin)/billing/invoices/[id]/invoice-detail-actions.tsx)
+#### [MODIFY] [invoice-detail-actions.tsx](<file:///d:/websites/pmg-hub/apps/admin/src/app/(admin)/billing/invoices/[id]/invoice-detail-actions.tsx>)
+
 - Render a **Write Off** button next to "Void Invoice" when status is `'issued'` or `'overdue'`.
 - Clicking it opens a dialog/prompt asking for a reason, then triggers the `writeOffInvoice` action.
 - If the status is `'written_off'`, render a status badge: `Written Off` (gray/red style).
@@ -145,7 +163,9 @@ Update `deleteClientPayment` / `voidPaymentJournalEntries`:
 ## Verification Plan
 
 ### Automated Tests
+
 We will run vitest tests in `packages/db` and `apps/admin` to verify:
+
 - Invoices can transition to `written_off` and post balanced `DR 5150 / CR 1100` entries.
 - Payments on written-off invoices transition the invoice back to `paid` or `partially_paid`, posting reversing recovery entries and standard cash receipts.
 - Command:
@@ -155,6 +175,7 @@ We will run vitest tests in `packages/db` and `apps/admin` to verify:
   ```
 
 ### Manual Verification
+
 1. Create a draft invoice, issue it, and verify it shows as outstanding.
 2. Click **Write Off**, enter a reason, and verify the invoice status updates to `Written Off` and outstanding balance goes to R0.
 3. Inspect `Journal Entries` in the ledger to confirm a `DR 5150 / CR 1100` entry was created.

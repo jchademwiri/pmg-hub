@@ -36,10 +36,7 @@ export default async function EditProjectPage({ params }: PageProps) {
     notFound();
   }
 
-  const [clients, divisions] = await Promise.all([
-    getAllClients(),
-    getAllDivisions(),
-  ]);
+  const [clients, divisions] = await Promise.all([getAllClients(), getAllDivisions()]);
 
   return (
     <div className="max-w-5xl mx-auto p-6 bg-card border border-border/50 rounded-xl shadow-sm">

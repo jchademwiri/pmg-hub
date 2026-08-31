@@ -36,11 +36,11 @@ graph TD
     A -->|Click Cloud Backup| D[Server Action: Cloud Backup]
     D -->|Dump JSON State| C
     D -->|Upload Stream & Prune > 30| E[Cloudflare R2 Storage]
-    
+
     A -->|Click Restore| F[Server Action: Restore Backup]
     F -->|Download JSON| E
     F -->|Transaction Import - Exclude Auth| C
-    
+
     G[Daily Cron Job] -->|Trigger api/cron/backup| D
     D -->|On Failure| H[Send Resend Alert Email]
 ```
@@ -56,7 +56,9 @@ We will implement this feature across two primary components: `@pmg/db` (shared 
 We will install `@aws-sdk/client-s3` in `apps/admin` and initialize our bucket client.
 
 #### [NEW] [s3.ts](file:///D:/websites/pmg-hub/apps/admin/src/lib/s3.ts)
+
 A helper to initialize the S3 client using environment variables:
+
 ```typescript
 import { S3Client } from '@aws-sdk/client-s3';
 
@@ -87,7 +89,9 @@ export function getS3Client() {
 ```
 
 #### [MODIFY] [.env.example](file:///D:/websites/pmg-hub/.env.example)
+
 Add the required backup configuration environment keys:
+
 ```env
 # ── Cloud Backup Storage (Cloudflare R2) ──
 BACKUP_BUCKET_NAME=pmg-backups
@@ -104,13 +108,15 @@ SUPER_ADMIN_EMAIL=admin@pmg-hub.co.za
 ### 2. Export & Backup Server Actions (`apps/admin`)
 
 #### [NEW] [data-actions.ts](file:///D:/websites/pmg-hub/apps/admin/src/app/actions/data-actions.ts)
+
 This file will contain eight server-side functions:
-1. **`exportIncomeExpensesCsv()`**: 
+
+1. **`exportIncomeExpensesCsv()`**:
    - Combines both `income` and `expenses` tables.
    - Joins `divisions` and `clients` names.
    - Sorts records chronologically by `date` desc.
    - Formats columns: `Date,Type,Division,Client,Category,Description,Amount`.
-2. **`exportInvoicesCsv()`**: 
+2. **`exportInvoicesCsv()`**:
    - Joins `invoices` with `clients` and `divisions`.
    - Formats columns: `Invoice Number,Client,Division,Status,Invoice Date,Due Date,Subtotal,Discount,VAT,Total,Paid At`.
 3. **`exportClientsCsv()`**:
@@ -157,7 +163,8 @@ This file will contain eight server-side functions:
 
 ### 3. Settings UI Enhancement (`apps/admin`)
 
-#### [MODIFY] [page.tsx](file:///D:/websites/pmg-hub/apps/admin/src/app/(admin)/settings/data/page.tsx)
+#### [MODIFY] [page.tsx](<file:///D:/websites/pmg-hub/apps/admin/src/app/(admin)/settings/data/page.tsx>)
+
 - Connect the **Export Data** cards directly to client components calling the new CSV and JSON export actions.
 - Incorporate a **Cloud Backups & Restore** interface card:
   - Add status indicators showing configuration status (active bucket name, endpoint).
@@ -171,7 +178,9 @@ This file will contain eight server-side functions:
 ### 4. Automated Backup Endpoint (Cron support)
 
 #### [NEW] [route.ts](file:///D:/websites/pmg-hub/apps/admin/src/app/api/cron/backup/route.ts)
+
 A Next.js API Route handler that:
+
 - Listens for GET requests on `/api/cron/backup`.
 - Verifies authorization using a secure token: `Authorization: Bearer <BACKUP_CRON_SECRET>`.
 - Triggers the cloud backup operation inside a `try/catch` block.
@@ -185,7 +194,9 @@ A Next.js API Route handler that:
 We will verify both ad-hoc downloads and cloud backups/restores through the following validation routes:
 
 ### Automated Tests
+
 We will add unit test cases to verify JSON data serialization and table clearing routines:
+
 - Run all project tests with:
   ```bash
   bun --filter admin test
@@ -196,6 +207,7 @@ We will add unit test cases to verify JSON data serialization and table clearing
   - Orderly database inserts (testing restoration sequence on a test database instance).
 
 ### Manual Verification
+
 1. **Ad-hoc CSV Downloads**:
    - Click "Export" on **Income & Expenses**, **Invoices**, and **Clients**. Verify that correct files (e.g. `pmg-clients.csv`) download to your local machine and open successfully in Excel or Google Sheets.
 2. **Ad-hoc JSON Download**:
@@ -206,7 +218,7 @@ We will add unit test cases to verify JSON data serialization and table clearing
    - Verify that the backup file appears in the S3 bucket dashboard.
 4. **Data Restoration**:
    - Create a dummy client record in the database.
-   - Click **[ Restore ]** on a backup taken *before* the dummy record was created.
+   - Click **[ Restore ]** on a backup taken _before_ the dummy record was created.
    - Enter `RESTORE` in the input and click confirm.
    - Confirm that the dummy client record is gone and the database has returned strictly to the previous backup state.
    - Intentionally edit a backup file to contain invalid data, attempt to restore, and confirm that the database safely rolls back with no changes written.

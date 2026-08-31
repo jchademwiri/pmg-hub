@@ -1,16 +1,23 @@
-import type { Metadata } from 'next'
-import { getAllInvoices, getAgingReport, getAllItems, getClientsWithBillingActivity, getAllQuotations, getAllIncome } from '@pmg/db'
-import { SetPageTotal } from '@/components/navigation/page-header-context'
-import { getSASTParts } from '@/lib/format'
-import { BillingOverviewClient } from './billing-overview-client'
+import type { Metadata } from 'next';
+import {
+  getAllInvoices,
+  getAgingReport,
+  getAllItems,
+  getClientsWithBillingActivity,
+  getAllQuotations,
+  getAllIncome,
+} from '@pmg/db';
+import { SetPageTotal } from '@/components/navigation/page-header-context';
+import { getSASTParts } from '@/lib/format';
+import { BillingOverviewClient } from './billing-overview-client';
 
-export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Billing' }
+export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Billing' };
 
 export default async function BillingOverviewPage() {
-  const { year, month } = getSASTParts()
-  const currentFinancialYear = month < 2 ? year - 1 : year
-  const lastFinancialYear = currentFinancialYear - 1
+  const { year, month } = getSASTParts();
+  const currentFinancialYear = month < 2 ? year - 1 : year;
+  const lastFinancialYear = currentFinancialYear - 1;
 
   const [
     invoiceData,
@@ -19,16 +26,19 @@ export default async function BillingOverviewPage() {
     currentMonthInvoiceData,
     aging,
     clients,
-    currentMonthPayments
+    currentMonthPayments,
   ] = await Promise.all([
     getAllInvoices({ excludeDraftVoid: true }, { page: 1, pageSize: 5 }),
-    getAllInvoices({ year: currentFinancialYear, excludeDraftVoid: true }, { page: 1, pageSize: 1 }),
+    getAllInvoices(
+      { year: currentFinancialYear, excludeDraftVoid: true },
+      { page: 1, pageSize: 1 },
+    ),
     getAllInvoices({ year: lastFinancialYear, excludeDraftVoid: true }, { page: 1, pageSize: 1 }),
     getAllInvoices({ monthPeriod: 'current', excludeDraftVoid: true }, { page: 1, pageSize: 1 }),
     getAgingReport(),
     getClientsWithBillingActivity(),
     getAllIncome({ monthPeriod: 'current' }),
-  ])
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -62,7 +72,5 @@ export default async function BillingOverviewPage() {
         recentInvoices={invoiceData.data}
       />
     </div>
-  )
+  );
 }
-
-

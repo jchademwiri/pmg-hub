@@ -1,18 +1,18 @@
-'use client'
+'use client';
 
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 
 interface GeneralLedgerFilterBarProps {
-  accounts: { id: string; name: string; code: string }[]
-  currentAccountId?: string
-  baseUrl?: string
+  accounts: { id: string; name: string; code: string }[];
+  currentAccountId?: string;
+  baseUrl?: string;
 }
 
 export function GeneralLedgerFilterBar({
@@ -20,20 +20,17 @@ export function GeneralLedgerFilterBar({
   currentAccountId,
   baseUrl = '/accounting/general-ledger',
 }: GeneralLedgerFilterBarProps) {
-  const router = useRouter()
+  const router = useRouter();
 
   function handleAccountChange(value: string) {
-    const params = new URLSearchParams()
-    if (value !== 'all') params.set('accountId', value)
-    router.push(`${baseUrl}?` + params.toString())
+    const params = new URLSearchParams();
+    if (value !== 'all') params.set('accountId', value);
+    router.push(`${baseUrl}?` + params.toString());
   }
 
   return (
     <div className="flex flex-wrap gap-3">
-      <Select
-        value={currentAccountId ?? 'all'}
-        onValueChange={handleAccountChange}
-      >
+      <Select value={currentAccountId ?? 'all'} onValueChange={handleAccountChange}>
         <SelectTrigger className="w-[300px]">
           <SelectValue placeholder="All Accounts" />
         </SelectTrigger>
@@ -47,5 +44,5 @@ export function GeneralLedgerFilterBar({
         </SelectContent>
       </Select>
     </div>
-  )
+  );
 }

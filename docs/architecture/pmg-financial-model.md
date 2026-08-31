@@ -85,13 +85,13 @@ flex        = profitPool × 0.05
 
 ## 3. Allocation Rules
 
-| Allocation | Base | Rate | Notes |
-|---|---|---|---|
-| PMG Share | Gross revenue | 25% | Deducted before expenses |
-| Salary | Profit pool | 35% | Owner take-home - system-calculated |
-| Reinvest | Profit pool | 30% | Growth spending |
-| Reserve | Profit pool | 30% | Emergency / stability buffer |
-| Flex | Profit pool | 5% | Discretionary - reward system |
+| Allocation | Base          | Rate | Notes                               |
+| ---------- | ------------- | ---- | ----------------------------------- |
+| PMG Share  | Gross revenue | 25%  | Deducted before expenses            |
+| Salary     | Profit pool   | 35%  | Owner take-home - system-calculated |
+| Reinvest   | Profit pool   | 30%  | Growth spending                     |
+| Reserve    | Profit pool   | 30%  | Emergency / stability buffer        |
+| Flex       | Profit pool   | 5%   | Discretionary - reward system       |
 
 **The allocations always sum to 100% of the profit pool.**
 PMG Share is separate - it is taken from gross revenue, not from the profit pool.
@@ -100,13 +100,13 @@ PMG Share is separate - it is taken from gross revenue, not from the profit pool
 
 ## 4. Allocation Meaning
 
-| Allocation | Role | Purpose |
-|---|---|---|
-| **PMG Share (25%)** | Business backbone | Shared infrastructure, admin tools, scalability costs, and the overhead of operating under the PMG umbrella. Every division pays this regardless of profitability. |
-| **Salary (35%)** | Personal stability | The owner's consistent take-home. Because it is calculated from actual profit, it rises when the business performs well and contracts when it does not - giving honest feedback on business health. |
-| **Reinvest (30%)** | Growth engine | Advertising, new tools, hiring support, product development (e.g. TenderTrack 360). This is the business investing in its own future. |
-| **Reserve (30%)** | Risk protection | Emergency fund and low-income buffer. This allocation is never spent on day-to-day operations. It exists to cover months where revenue dips, unexpected costs hit, or new initiatives require runway. |
-| **Flex (5%)** | Reward system | Controlled discretionary spending - business entertainment, team meals, personal rewards for hitting milestones. Small enough to be sustainable, intentional enough to feel meaningful. |
+| Allocation          | Role               | Purpose                                                                                                                                                                                               |
+| ------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **PMG Share (25%)** | Business backbone  | Shared infrastructure, admin tools, scalability costs, and the overhead of operating under the PMG umbrella. Every division pays this regardless of profitability.                                    |
+| **Salary (35%)**    | Personal stability | The owner's consistent take-home. Because it is calculated from actual profit, it rises when the business performs well and contracts when it does not - giving honest feedback on business health.   |
+| **Reinvest (30%)**  | Growth engine      | Advertising, new tools, hiring support, product development (e.g. TenderTrack 360). This is the business investing in its own future.                                                                 |
+| **Reserve (30%)**   | Risk protection    | Emergency fund and low-income buffer. This allocation is never spent on day-to-day operations. It exists to cover months where revenue dips, unexpected costs hit, or new initiatives require runway. |
+| **Flex (5%)**       | Reward system      | Controlled discretionary spending - business entertainment, team meals, personal rewards for hitting milestones. Small enough to be sustainable, intentional enough to feel meaningful.               |
 
 ---
 
@@ -118,56 +118,56 @@ The financial model maps directly to three database tables.
 
 Every income and expense entry must belong to a division.
 
-| Column | Type | Notes |
-|---|---|---|
-| `id` | uuid PK | |
-| `name` | text NOT NULL UNIQUE | e.g. "Tender Edge Solutions" |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
+| Column       | Type                 | Notes                        |
+| ------------ | -------------------- | ---------------------------- |
+| `id`         | uuid PK              |                              |
+| `name`       | text NOT NULL UNIQUE | e.g. "Tender Edge Solutions" |
+| `created_at` | timestamptz          |                              |
+| `updated_at` | timestamptz          |                              |
 
 ### `income`
 
 All incoming revenue.
 
-| Column | Type | Notes |
-|---|---|---|
-| `id` | uuid PK | |
-| `date` | date NOT NULL | Actual payment received date |
-| `division_id` | uuid FK → divisions | Required - no orphan income |
-| `client_id` | uuid FK → clients | Optional |
-| `description` | text | |
-| `amount` | numeric(12,2) NOT NULL | Must be > 0 (CHECK constraint) |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
+| Column        | Type                   | Notes                          |
+| ------------- | ---------------------- | ------------------------------ |
+| `id`          | uuid PK                |                                |
+| `date`        | date NOT NULL          | Actual payment received date   |
+| `division_id` | uuid FK → divisions    | Required - no orphan income    |
+| `client_id`   | uuid FK → clients      | Optional                       |
+| `description` | text                   |                                |
+| `amount`      | numeric(12,2) NOT NULL | Must be > 0 (CHECK constraint) |
+| `created_at`  | timestamptz            |                                |
+| `updated_at`  | timestamptz            |                                |
 
 ### `expenses`
 
 All outgoing costs.
 
-| Column | Type | Notes |
-|---|---|---|
-| `id` | uuid PK | |
-| `date` | date NOT NULL | Actual payment date |
-| `division_id` | uuid FK → divisions | Required - no orphan expenses |
-| `category` | text NOT NULL | Freeform: "Hosting", "Printing", "Transport"… |
-| `description` | text | |
-| `amount` | numeric(12,2) NOT NULL | Must be > 0 (CHECK constraint) |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
+| Column        | Type                   | Notes                                         |
+| ------------- | ---------------------- | --------------------------------------------- |
+| `id`          | uuid PK                |                                               |
+| `date`        | date NOT NULL          | Actual payment date                           |
+| `division_id` | uuid FK → divisions    | Required - no orphan expenses                 |
+| `category`    | text NOT NULL          | Freeform: "Hosting", "Printing", "Transport"… |
+| `description` | text                   |                                               |
+| `amount`      | numeric(12,2) NOT NULL | Must be > 0 (CHECK constraint)                |
+| `created_at`  | timestamptz            |                                               |
+| `updated_at`  | timestamptz            |                                               |
 
 ### `clients`
 
 Optional - links income to a named client for per-client reporting.
 
-| Column | Type | Notes |
-|---|---|---|
-| `id` | uuid PK | |
-| `name` | text NOT NULL | Contact person |
-| `business_name` | text | Trading name |
-| `email` | text UNIQUE (nullable) | |
-| `phone` | text | |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
+| Column          | Type                   | Notes          |
+| --------------- | ---------------------- | -------------- |
+| `id`            | uuid PK                |                |
+| `name`          | text NOT NULL          | Contact person |
+| `business_name` | text                   | Trading name   |
+| `email`         | text UNIQUE (nullable) |                |
+| `phone`         | text                   |                |
+| `created_at`    | timestamptz            |                |
+| `updated_at`    | timestamptz            |                |
 
 ---
 
@@ -179,24 +179,21 @@ It is a server-only module - no `'use client'`.
 ```ts
 // Simplified representation of the calculation logic
 export async function getFinancialSummary() {
-  const [revenue, expenses] = await Promise.all([
-    getTotalRevenue(),
-    getTotalExpenses(),
-  ])
+  const [revenue, expenses] = await Promise.all([getTotalRevenue(), getTotalExpenses()]);
 
-  const pmgShare   = revenue * 0.20
-  const profitPool = revenue - expenses - pmgShare
+  const pmgShare = revenue * 0.2;
+  const profitPool = revenue - expenses - pmgShare;
 
   return {
     revenue,
     expenses,
     pmgShare,
     profitPool,
-    salary:   profitPool * 0.35,
-    reinvest: profitPool * 0.30,
-    reserve:  profitPool * 0.30,
-    flex:     profitPool * 0.05,
-  }
+    salary: profitPool * 0.35,
+    reinvest: profitPool * 0.3,
+    reserve: profitPool * 0.3,
+    flex: profitPool * 0.05,
+  };
 }
 ```
 
@@ -256,15 +253,15 @@ so individual division P&L figures do not deduct PMG Share.
 
 ## 9. Common Mistakes to Avoid
 
-| Mistake | Consequence | Prevention |
-|---|---|---|
-| Entering salary withdrawals as expenses | Profit pool collapses, salary calculation is wrong | Salary is an allocation, not an expense - never enter it in the expenses table |
-| Forgetting to assign a division | Insert rejected by DB (NOT NULL) | Division select is required on all income/expense forms |
-| Using `DATABASE_URL_DIRECT` | Migration fails - env var renamed | Use `DATABASE_URL_UNPOOLED` |
-| Editing past income without snapshots | All historical dashboard numbers shift | Always close the month before editing past entries (Phase 7) |
-| Confusing PMG Share with expenses | PMG Share is 25% of revenue, deducted before profit | PMG Share is calculated, never entered manually |
+| Mistake                                 | Consequence                                         | Prevention                                                                     |
+| --------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Entering salary withdrawals as expenses | Profit pool collapses, salary calculation is wrong  | Salary is an allocation, not an expense - never enter it in the expenses table |
+| Forgetting to assign a division         | Insert rejected by DB (NOT NULL)                    | Division select is required on all income/expense forms                        |
+| Using `DATABASE_URL_DIRECT`             | Migration fails - env var renamed                   | Use `DATABASE_URL_UNPOOLED`                                                    |
+| Editing past income without snapshots   | All historical dashboard numbers shift              | Always close the month before editing past entries (Phase 7)                   |
+| Confusing PMG Share with expenses       | PMG Share is 25% of revenue, deducted before profit | PMG Share is calculated, never entered manually                                |
 
 ---
 
-*Last updated: March 2026 · Playhouse Media Group (PTY) Ltd*
-*Jacob Chademwiri · 285 Erasmus Ave, Raslouw AH, Centurion, 0157*
+_Last updated: March 2026 · Playhouse Media Group (PTY) Ltd_
+_Jacob Chademwiri · 285 Erasmus Ave, Raslouw AH, Centurion, 0157_

@@ -1,46 +1,54 @@
-import { NextResponse, type NextRequest } from 'next/server'
-import { auth } from '@/lib/auth'
+import { NextResponse, type NextRequest } from 'next/server';
+import { auth } from '@/lib/auth';
 
 type AuthSession = {
   user?: {
-    isActive?: boolean
-  }
-} | null
+    isActive?: boolean;
+  };
+} | null;
 
 // In-memory rate limiter: 10 requests / 60 seconds per IP
-const rateLimitMap = new Map<string, { count: number; windowStart: number }>()
+const rateLimitMap = new Map<string, { count: number; windowStart: number }>();
 
-const RATE_LIMIT_MAX = 10
-const RATE_LIMIT_WINDOW_MS = 60_000
+const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_WINDOW_MS = 60_000;
 
 function isRateLimited(ip: string): boolean {
-  const now = Date.now()
-  const entry = rateLimitMap.get(ip)
+  const now = Date.now();
+
+  // Evict expired entries if map grows
+  if (rateLimitMap.size > 1000) {
+    for (const [key, entry] of rateLimitMap.entries()) {
+      if (now - entry.windowStart >= RATE_LIMIT_WINDOW_MS) {
+        rateLimitMap.delete(key);
+      }
+    }
+  }
+
+  const entry = rateLimitMap.get(ip);
 
   if (!entry || now - entry.windowStart >= RATE_LIMIT_WINDOW_MS) {
-    rateLimitMap.set(ip, { count: 1, windowStart: now })
-    return false
+    rateLimitMap.set(ip, { count: 1, windowStart: now });
+    return false;
   }
 
   if (entry.count >= RATE_LIMIT_MAX) {
-    return true
+    return true;
   }
 
-  entry.count++
-  return false
+  entry.count++;
+  return false;
 }
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
-  const { pathname } = request.nextUrl
+  const { pathname } = request.nextUrl;
 
   // Rate limit auth endpoints
   if (pathname.startsWith('/api/auth/')) {
     const ip =
-      request.headers.get('x-forwarded-for') ??
-      request.headers.get('x-real-ip') ??
-      'unknown'
+      request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? 'unknown';
     if (isRateLimited(ip)) {
-      return new NextResponse('Too Many Requests', { status: 429 })
+      return new NextResponse('Too Many Requests', { status: 429 });
     }
   }
 
@@ -51,50 +59,52 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/api/auth/') ||
     pathname.startsWith('/api/cron/')
   ) {
-    return NextResponse.next()
+    return NextResponse.next();
   }
 
   // Allow the public invite acceptance route through
   if (pathname === '/invite') {
-    return NextResponse.next()
+    return NextResponse.next();
   }
 
   // Require session cookie for all other routes
   const sessionToken =
     request.cookies.get('__Secure-better-auth.session_token') ??
-    request.cookies.get('better-auth.session_token')
+    request.cookies.get('better-auth.session_token');
   if (!sessionToken) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // Validate session directly via the DB adapter - no internal HTTP fetch
   try {
-    const fetchSession = auth.api.getSession as (args: { headers: Headers }) => Promise<AuthSession>
+    const fetchSession = auth.api.getSession as (args: {
+      headers: Headers;
+    }) => Promise<AuthSession>;
     const session = await fetchSession({
       headers: request.headers,
-    })
+    });
 
     if (!session?.user) {
-      return NextResponse.redirect(new URL('/login', request.url))
+      return NextResponse.redirect(new URL('/login', request.url));
     }
 
     // Reject inactive users even if session cookie is present
     if ((session.user as { isActive?: boolean }).isActive === false) {
-      const response = NextResponse.redirect(new URL('/login', request.url))
-      response.cookies.delete('better-auth.session_token')
-      response.cookies.delete('__Secure-better-auth.session_token')
-      return response
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      response.cookies.delete('better-auth.session_token');
+      response.cookies.delete('__Secure-better-auth.session_token');
+      return response;
     }
   } catch {
     // Session validation failed - redirect to login
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon\\.ico|sitemap\\.xml|robots\\.txt|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|otf)).*)',
   ],
-}
+};

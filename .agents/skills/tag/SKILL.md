@@ -21,11 +21,13 @@ Ensure format is `vX.Y.Z`. Ask user if not provided.
 ### 2. Check & Merge Open Release PR (if applicable)
 
 Check if an open release PR is pending against `master`:
+
 ```bash
 gh pr list --base master --state OPEN
 ```
 
 If an open Release PR exists:
+
 1. Verify its CI checks pass:
    ```bash
    gh pr checks <pr-number>

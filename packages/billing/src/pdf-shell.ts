@@ -27,8 +27,8 @@ export function getLogoPath(orgName: string): string | null {
   const fileName = /tender edge|tes/.test(normalized)
     ? 'tes-logo.png'
     : /apex|aws/.test(normalized)
-    ? 'aws-logo.png'
-    : 'pmg-logo.png';
+      ? 'aws-logo.png'
+      : 'pmg-logo.png';
 
   const fullPath = join(process.cwd(), 'public', 'logo', fileName);
   return existsSync(fullPath) ? fullPath : null;
@@ -128,7 +128,12 @@ export function drawShellHeader(doc: jsPDF, opts: DrawShellHeaderOptions): void 
     doc.setFontSize(8);
     const [r, g, b] = opts.highlight.color ?? [220, 38, 38];
     doc.setTextColor(r, g, b);
-    doc.text(`${opts.highlight.label}: ${opts.highlight.value}`, PAGE.width - PAGE.margin, currentY + 13, { align: 'right' });
+    doc.text(
+      `${opts.highlight.label}: ${opts.highlight.value}`,
+      PAGE.width - PAGE.margin,
+      currentY + 13,
+      { align: 'right' },
+    );
     doc.setFont('helvetica', 'normal');
   }
 
@@ -157,7 +162,11 @@ export function drawShellFooter(doc: jsPDF, opts: DrawShellFooterOptions): void 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(113, 113, 122);
-    doc.text(opts.divisionOf ? `A division of ${opts.divisionOf}` : 'Thank you for your business.', PAGE.margin, 288);
+    doc.text(
+      opts.divisionOf ? `A division of ${opts.divisionOf}` : 'Thank you for your business.',
+      PAGE.margin,
+      288,
+    );
     doc.text(`Page ${i} of ${pageCount}`, PAGE.width - PAGE.margin, 288, { align: 'right' });
   }
 }

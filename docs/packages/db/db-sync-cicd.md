@@ -4,9 +4,9 @@ Automatically run Drizzle migrations on every push to dev (staging) and master (
 Proposed Approach
 A GitHub Actions workflow that runs bun src/migrate.ts against the correct DB before (or alongside) each Vercel deployment. Since you have two Neon branches:
 
-Git branch	Neon DB	Vercel env
-master	ep-mute-truth-a4a8304i (prod)	Production
-dev	ep-withered-sea-a4kq5mlk (staging)	Preview
+Git branch Neon DB Vercel env
+master ep-mute-truth-a4a8304i (prod) Production
+dev ep-withered-sea-a4kq5mlk (staging) Preview
 The workflow will detect which branch triggered it and use the matching DATABASE_URL_UNPOOLED.
 
 Proposed Changes
@@ -24,9 +24,9 @@ dev → DATABASE_URL_UNPOOLED_STAGING secret
 GitHub Secrets Required
 You'll need to add two secrets in GitHub → repo → Settings → Secrets and variables → Actions:
 
-Secret name	Value
-DATABASE_URL_UNPOOLED_PROD	postgresql://neondb_owner:...@ep-mute-truth-a4a8304i-pooler...
-DATABASE_URL_UNPOOLED_STAGING	postgresql://neondb_owner:...@ep-withered-sea-a4kq5mlk-pooler...
+Secret name Value
+DATABASE_URL_UNPOOLED_PROD postgresql://neondb_owner:...@ep-mute-truth-a4a8304i-pooler...
+DATABASE_URL_UNPOOLED_STAGING postgresql://neondb_owner:...@ep-withered-sea-a4kq5mlk-pooler...
 Fix: migrate.ts dotenv path
 The migrate script currently reads from packages/db/.env (via resolve(import.meta.dir, "../.env")), which doesn't exist. In CI, env vars come from GitHub Secrets so dotenv isn't needed — but it causes a silent no-op locally. We'll add a fallback so it also checks the root .env.
 

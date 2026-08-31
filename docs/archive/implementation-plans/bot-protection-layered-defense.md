@@ -17,15 +17,15 @@ validation. No external service required.
 
 ### Forms to Protect
 
-| Site | Form | File | Server Action | Honeypot | Rate Limit |
-|------|------|------|---------------|----------|------------|
-| TES | Lead Enquiry | `apps/tes/src/components/LeadForm.astro` | `actions.enquireLead` | ✅ client-only | ✅ middleware |
-| AWS | Contact | `apps/aws/src/components/forms/ContactForm.astro` | `actions.submitContact` | ❌ | ✅ middleware |
-| AWS | Waitlist | `apps/aws/src/components/forms/WaitlistForm.astro` | _(client-side only)_ | ❌ | ❌ |
-| AWS | Booking | `apps/aws/src/components/forms/BookingDialog.astro` | `actions.bookService` | ❌ | ✅ middleware |
-| AWS | Discovery | `apps/aws/src/pages/discovery.astro` | _(client-side only)_ | ❌ | ❌ |
-| PMG | Contact | `apps/pmg/src/components/Contact.astro` | `actions.submitContactForm` | ❌ | ❌ |
-| PMG | Contact Modal | `apps/pmg/src/components/ContactModal.astro` | `actions.submitContactForm` | ❌ | ❌ |
+| Site | Form          | File                                                | Server Action               | Honeypot       | Rate Limit    |
+| ---- | ------------- | --------------------------------------------------- | --------------------------- | -------------- | ------------- |
+| TES  | Lead Enquiry  | `apps/tes/src/components/LeadForm.astro`            | `actions.enquireLead`       | ✅ client-only | ✅ middleware |
+| AWS  | Contact       | `apps/aws/src/components/forms/ContactForm.astro`   | `actions.submitContact`     | ❌             | ✅ middleware |
+| AWS  | Waitlist      | `apps/aws/src/components/forms/WaitlistForm.astro`  | _(client-side only)_        | ❌             | ❌            |
+| AWS  | Booking       | `apps/aws/src/components/forms/BookingDialog.astro` | `actions.bookService`       | ❌             | ✅ middleware |
+| AWS  | Discovery     | `apps/aws/src/pages/discovery.astro`                | _(client-side only)_        | ❌             | ❌            |
+| PMG  | Contact       | `apps/pmg/src/components/Contact.astro`             | `actions.submitContactForm` | ❌             | ❌            |
+| PMG  | Contact Modal | `apps/pmg/src/components/ContactModal.astro`        | `actions.submitContactForm` | ❌             | ❌            |
 
 ### Gaps
 
@@ -71,10 +71,10 @@ at the top of each handler rather than creating a shared utility.
 ```ts
 // ── Bot protection ──────────────────────────────────────────────
 // 1. Honeypot — reject if filled
-const honeypot = input._website;  // or _gotcha, _company_url, etc.
+const honeypot = input._website; // or _gotcha, _company_url, etc.
 if (honeypot && honeypot.length > 0) {
   console.log(`[bot-check] Honeypot triggered from ${input._loadedAt || 'unknown'}`);
-  return { success: true, message: 'Enquiry sent successfully.' };  // lie to bot
+  return { success: true, message: 'Enquiry sent successfully.' }; // lie to bot
 }
 
 // 2. Time check — reject if < 3 seconds
@@ -83,7 +83,7 @@ if (input._loadedAt) {
   const elapsed = Date.now() - loadTime;
   if (elapsed < 3000) {
     console.log(`[bot-check] Too fast: ${elapsed}ms`);
-    return { success: true, message: 'Enquiry sent successfully.' };  // lie to bot
+    return { success: true, message: 'Enquiry sent successfully.' }; // lie to bot
   }
 }
 ```
@@ -99,7 +99,7 @@ if (input._loadedAt) {
 
 - [ ] Rename honeypot field from `_gotcha` to `_website` (more convincing name)
 - [ ] Change the hidden div to use CSS class `sr-only` or `position: absolute; left: -9999px`
-  instead of `display: none` (some bots check for `display: none`)
+      instead of `display: none` (some bots check for `display: none`)
 - [ ] Add a `_loadedAt` hidden input, set via JS on `DOMContentLoaded`:
   ```html
   <input type="hidden" name="_loadedAt" id="loaded-at" value="" />
@@ -160,8 +160,8 @@ if (input._loadedAt) {
   ```
 - [ ] Add client-side honeypot check in the existing `handleSubmit` function:
   ```js
-  const honeypot = formData.get("_company_url");
-  if (honeypot) return;  // silently reject
+  const honeypot = formData.get('_company_url');
+  if (honeypot) return; // silently reject
   ```
 - [ ] Note: This form has no server action, so client-side check is the only option.
 
@@ -232,7 +232,7 @@ if (input._loadedAt) {
   ```
 - [ ] Add `_loadedAt` hidden input + JS initialization in the existing `<script>` block
 - [ ] Note: Both PMG forms submit to the same `submitContactForm` action, so the
-  server-side check covers both.
+      server-side check covers both.
 
 ---
 
@@ -272,10 +272,13 @@ if (input._loadedAt) {
 
     if (RATE_LIMITED_ACTIONS.has(pathname) && context.request.method === 'POST') {
       if (isRateLimited(clientId)) {
-        return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
-          status: 429,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return new Response(
+          JSON.stringify({ error: 'Too many requests. Please try again later.' }),
+          {
+            status: 429,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        );
       }
     }
 
@@ -287,19 +290,19 @@ if (input._loadedAt) {
 
 ## Summary of Changes
 
-| File | Change |
-|------|--------|
-| `apps/tes/src/components/LeadForm.astro` | Rename honeypot, add `_loadedAt`, remove client-side check |
-| `apps/tes/src/actions/index.ts` | Add `_website` + `_loadedAt` to schema, add bot-check |
-| `apps/aws/src/components/forms/ContactForm.astro` | Add honeypot + `_loadedAt` |
-| `apps/aws/src/components/forms/WaitlistForm.astro` | Add honeypot + client-side check |
-| `apps/aws/src/components/forms/BookingDialog.astro` | Add honeypot + `_loadedAt` |
-| `apps/aws/src/pages/discovery.astro` | Add honeypot + client-side check |
-| `apps/aws/src/actions/index.ts` | Add `_company_url` + `_loadedAt` to both action schemas, add bot-check |
-| `apps/pmg/src/components/Contact.astro` | Add honeypot + `_loadedAt` |
-| `apps/pmg/src/components/ContactModal.astro` | Add honeypot + `_loadedAt` |
-| `apps/pmg/src/actions/index.ts` | Add `_company_url` + `_loadedAt` to schema, add bot-check |
-| `apps/pmg/src/middleware.ts` | **New file** — rate limiting for PMG |
+| File                                                | Change                                                                 |
+| --------------------------------------------------- | ---------------------------------------------------------------------- |
+| `apps/tes/src/components/LeadForm.astro`            | Rename honeypot, add `_loadedAt`, remove client-side check             |
+| `apps/tes/src/actions/index.ts`                     | Add `_website` + `_loadedAt` to schema, add bot-check                  |
+| `apps/aws/src/components/forms/ContactForm.astro`   | Add honeypot + `_loadedAt`                                             |
+| `apps/aws/src/components/forms/WaitlistForm.astro`  | Add honeypot + client-side check                                       |
+| `apps/aws/src/components/forms/BookingDialog.astro` | Add honeypot + `_loadedAt`                                             |
+| `apps/aws/src/pages/discovery.astro`                | Add honeypot + client-side check                                       |
+| `apps/aws/src/actions/index.ts`                     | Add `_company_url` + `_loadedAt` to both action schemas, add bot-check |
+| `apps/pmg/src/components/Contact.astro`             | Add honeypot + `_loadedAt`                                             |
+| `apps/pmg/src/components/ContactModal.astro`        | Add honeypot + `_loadedAt`                                             |
+| `apps/pmg/src/actions/index.ts`                     | Add `_company_url` + `_loadedAt` to schema, add bot-check              |
+| `apps/pmg/src/middleware.ts`                        | **New file** — rate limiting for PMG                                   |
 
 ---
 
@@ -323,4 +326,4 @@ if (input._loadedAt) {
 
 ---
 
-*Last updated: June 2026 · Playhouse Media Group (PTY) Ltd*
+_Last updated: June 2026 · Playhouse Media Group (PTY) Ltd_

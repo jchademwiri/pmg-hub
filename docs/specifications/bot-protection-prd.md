@@ -50,14 +50,14 @@ Current issues in the system:
 
 Every public form must include a hidden input field that real users never interact with.
 
-| Property | Rule |
-|----------|------|
-| Field name | `_website` (TES) or `_company_url` (AWS, PMG) |
-| Hidden via | `position: absolute; left: -9999px` (NOT `display: none` — bots check for this) |
-| `aria-hidden` | `true` |
-| `tabindex` | `-1` |
-| `autocomplete` | `off` |
-| Server action | If field has any value → silently discard submission, return `{ success: true }` |
+| Property       | Rule                                                                             |
+| -------------- | -------------------------------------------------------------------------------- |
+| Field name     | `_website` (TES) or `_company_url` (AWS, PMG)                                    |
+| Hidden via     | `position: absolute; left: -9999px` (NOT `display: none` — bots check for this)  |
+| `aria-hidden`  | `true`                                                                           |
+| `tabindex`     | `-1`                                                                             |
+| `autocomplete` | `off`                                                                            |
+| Server action  | If field has any value → silently discard submission, return `{ success: true }` |
 
 > **Honeypot names vary by site** to make pattern-matching harder for bots that adapt.
 
@@ -65,25 +65,25 @@ Every public form must include a hidden input field that real users never intera
 
 Every form must include a timestamp set by JavaScript when the page loads.
 
-| Property | Rule |
-|----------|------|
-| Field name | `_loadedAt` |
-| Set via | `DOMContentLoaded` → `new Date().toISOString()` |
-| Minimum time | **3 seconds** from page load to submission |
+| Property      | Rule                                                               |
+| ------------- | ------------------------------------------------------------------ |
+| Field name    | `_loadedAt`                                                        |
+| Set via       | `DOMContentLoaded` → `new Date().toISOString()`                    |
+| Minimum time  | **3 seconds** from page load to submission                         |
 | Server action | If elapsed < 3000ms → silently discard, return `{ success: true }` |
 
 ### Rate Limiting Rule
 
 All form submission endpoints must be rate-limited at the middleware level.
 
-| Property | Rule |
-|----------|------|
-| Limit | 5 requests per IP per 60-second window |
-| Scope | POST requests to `/actions/*` endpoints only |
-| Response | HTTP 429 with `{ error: "Too many requests. Please try again later." }` |
-| Scope per site | TES: `enquireLead` ✅ (already exists) |
-| | AWS: `submitContact`, `bookService` ✅ (already exists) |
-| | PMG: `submitContactForm` ❌ (needs to be added) |
+| Property       | Rule                                                                    |
+| -------------- | ----------------------------------------------------------------------- |
+| Limit          | 5 requests per IP per 60-second window                                  |
+| Scope          | POST requests to `/actions/*` endpoints only                            |
+| Response       | HTTP 429 with `{ error: "Too many requests. Please try again later." }` |
+| Scope per site | TES: `enquireLead` ✅ (already exists)                                  |
+|                | AWS: `submitContact`, `bookService` ✅ (already exists)                 |
+|                | PMG: `submitContactForm` ❌ (needs to be added)                         |
 
 ### Silent Rejection Rule
 
@@ -118,21 +118,21 @@ Bot-triggered rejections must **never** return error responses.
 
 ## 1.6 Acceptance Criteria
 
-| Scenario | Expected Outcome |
-|----------|-----------------|
-| Normal user submits TES lead form | ✅ Succeeds, saved to DB, email sent |
-| Normal user submits AWS contact form | ✅ Succeeds, saved to DB, email sent |
-| Normal user submits AWS booking form | ✅ Succeeds, saved to DB, email sent |
-| Normal user submits AWS waitlist form | ✅ Succeeds, client-side success message |
-| Normal user submits AWS discovery form | ✅ Succeeds, success overlay shown |
-| Normal user submits PMG contact form | ✅ Succeeds, saved to DB, email sent |
-| Normal user submits PMG modal contact form | ✅ Succeeds, saved to DB, email sent |
-| Bot submits form with `_company_url` filled | ✅ Returns `{ success: true }`, nothing persisted |
-| Bot submits form within 2 seconds of page load | ✅ Returns `{ success: true }`, nothing persisted |
-| Bot floods PMG with 6 rapid submissions | ✅ 6th returns HTTP 429 |
-| Bot bypasses JS and submits via curl | ✅ `_loadedAt` missing/empty → rejected (time check fails) |
-| User has JS disabled | ⚠️ `_loadedAt` will be empty → form rejected. Acceptable: JS is required for Astro client-side actions anyway |
-| Bot fills all fields including honeypot | ✅ Honeypot check triggers, submission silently discarded |
+| Scenario                                       | Expected Outcome                                                                                              |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Normal user submits TES lead form              | ✅ Succeeds, saved to DB, email sent                                                                          |
+| Normal user submits AWS contact form           | ✅ Succeeds, saved to DB, email sent                                                                          |
+| Normal user submits AWS booking form           | ✅ Succeeds, saved to DB, email sent                                                                          |
+| Normal user submits AWS waitlist form          | ✅ Succeeds, client-side success message                                                                      |
+| Normal user submits AWS discovery form         | ✅ Succeeds, success overlay shown                                                                            |
+| Normal user submits PMG contact form           | ✅ Succeeds, saved to DB, email sent                                                                          |
+| Normal user submits PMG modal contact form     | ✅ Succeeds, saved to DB, email sent                                                                          |
+| Bot submits form with `_company_url` filled    | ✅ Returns `{ success: true }`, nothing persisted                                                             |
+| Bot submits form within 2 seconds of page load | ✅ Returns `{ success: true }`, nothing persisted                                                             |
+| Bot floods PMG with 6 rapid submissions        | ✅ 6th returns HTTP 429                                                                                       |
+| Bot bypasses JS and submits via curl           | ✅ `_loadedAt` missing/empty → rejected (time check fails)                                                    |
+| User has JS disabled                           | ⚠️ `_loadedAt` will be empty → form rejected. Acceptable: JS is required for Astro client-side actions anyway |
+| Bot fills all fields including honeypot        | ✅ Honeypot check triggers, submission silently discarded                                                     |
 
 ---
 
@@ -149,15 +149,15 @@ Bot-triggered rejections must **never** return error responses.
 
 ### In Scope
 
-| Site | Form | Honeypot | Time Check | Rate Limit |
-|------|------|----------|------------|------------|
-| TES | Lead Enquiry | ✅ Harden existing | ✅ Add | ✅ Already exists |
-| AWS | Contact | ✅ Add | ✅ Add | ✅ Already exists |
-| AWS | Waitlist | ✅ Add (client-only) | ❌ No server action | ❌ No server action |
-| AWS | Booking | ✅ Add | ✅ Add | ✅ Already exists |
-| AWS | Discovery | ✅ Add (client-only) | ❌ No server action | ❌ No server action |
-| PMG | Contact | ✅ Add | ✅ Add | ✅ Add middleware |
-| PMG | Contact Modal | ✅ Add | ✅ Add | ✅ Same action as Contact |
+| Site | Form          | Honeypot             | Time Check          | Rate Limit                |
+| ---- | ------------- | -------------------- | ------------------- | ------------------------- |
+| TES  | Lead Enquiry  | ✅ Harden existing   | ✅ Add              | ✅ Already exists         |
+| AWS  | Contact       | ✅ Add               | ✅ Add              | ✅ Already exists         |
+| AWS  | Waitlist      | ✅ Add (client-only) | ❌ No server action | ❌ No server action       |
+| AWS  | Booking       | ✅ Add               | ✅ Add              | ✅ Already exists         |
+| AWS  | Discovery     | ✅ Add (client-only) | ❌ No server action | ❌ No server action       |
+| PMG  | Contact       | ✅ Add               | ✅ Add              | ✅ Add middleware         |
+| PMG  | Contact Modal | ✅ Add               | ✅ Add              | ✅ Same action as Contact |
 
 ### Out of Scope
 
@@ -220,7 +220,7 @@ DB or email operations:
 // ── Bot protection ──────────────────────────────────────────────
 
 // Layer 2: Honeypot — reject if filled
-const honeypot = input._website;  // or _company_url
+const honeypot = input._website; // or _company_url
 if (honeypot && honeypot.length > 0) {
   console.log(`[bot-check] Honeypot triggered`);
   return { success: true, message: 'Submission received.' };
@@ -260,13 +260,7 @@ These fields are stripped by the bot-check and never persisted.
 ```html
 <!-- Honeypot — hidden from real users, catches bots -->
 <div style="position: absolute; left: -9999px;" aria-hidden="true">
-  <input
-    type="text"
-    name="_company_url"
-    tabindex="-1"
-    autocomplete="off"
-    aria-hidden="true"
-  />
+  <input type="text" name="_company_url" tabindex="-1" autocomplete="off" aria-hidden="true" />
 </div>
 ```
 
@@ -321,9 +315,7 @@ const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 5;
 const RATE_WINDOW_MS = 60 * 1000;
 
-const RATE_LIMITED_ACTIONS = new Set([
-  '/actions/submitContactForm',
-]);
+const RATE_LIMITED_ACTIONS = new Set(['/actions/submitContactForm']);
 
 function getClientId(context: { request: { ip: string; headers: Headers } }): string {
   return context.request.ip || 'unknown';
@@ -347,10 +339,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   if (RATE_LIMITED_ACTIONS.has(pathname) && context.request.method === 'POST') {
     if (isRateLimited(clientId)) {
-      return new Response(
-        JSON.stringify({ error: 'Too many requests. Please try again later.' }),
-        { status: 429, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
   }
 
@@ -364,15 +356,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
 ### TES — LeadForm.astro
 
-| Change | Detail |
-|--------|--------|
-| Rename honeypot | `_gotcha` → `_website` |
-| Hide method | Change `display: none` to `position: absolute; left: -9999px` |
-| Add timestamp | `<input type="hidden" name="_loadedAt" id="loaded-at" value="" />` |
-| Add JS | Set `loadedAt.value` on page load |
-| Remove client check | Delete the honeypot check from `<script>` (server handles it) |
+| Change              | Detail                                                             |
+| ------------------- | ------------------------------------------------------------------ |
+| Rename honeypot     | `_gotcha` → `_website`                                             |
+| Hide method         | Change `display: none` to `position: absolute; left: -9999px`      |
+| Add timestamp       | `<input type="hidden" name="_loadedAt" id="loaded-at" value="" />` |
+| Add JS              | Set `loadedAt.value` on page load                                  |
+| Remove client check | Delete the honeypot check from `<script>` (server handles it)      |
 
 **Server action:** `apps/tes/src/actions/index.ts` — `enquireLead`
+
 - Add `_website` and `_loadedAt` to Zod schema
 - Add bot-check at top of handler
 
@@ -380,13 +373,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
 ### AWS — ContactForm.astro
 
-| Change | Detail |
-|--------|--------|
-| Add honeypot | New hidden field `_company_url` |
-| Add timestamp | New hidden field `_loadedAt` |
-| Add JS | Set `loadedAt.value` in existing `<script>` |
+| Change        | Detail                                      |
+| ------------- | ------------------------------------------- |
+| Add honeypot  | New hidden field `_company_url`             |
+| Add timestamp | New hidden field `_loadedAt`                |
+| Add JS        | Set `loadedAt.value` in existing `<script>` |
 
 **Server action:** `apps/aws/src/actions/index.ts` — `submitContact`
+
 - Add `_company_url` and `_loadedAt` to Zod schema
 - Add bot-check at top of handler
 
@@ -394,10 +388,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
 ### AWS — WaitlistForm.astro
 
-| Change | Detail |
-|--------|--------|
-| Add honeypot | New hidden field `_company_url` |
-| Add timestamp | New hidden field `_loadedAt` |
+| Change           | Detail                                                       |
+| ---------------- | ------------------------------------------------------------ |
+| Add honeypot     | New hidden field `_company_url`                              |
+| Add timestamp    | New hidden field `_loadedAt`                                 |
 | Add client check | Honeypot check in existing `handleSubmit` (no server action) |
 
 **No server action** — client-side only. Honeypot check in `handleSubmit`:
@@ -407,8 +401,8 @@ function handleSubmit(e) {
   const loadedAt = document.getElementById('loaded-at');
   if (loadedAt && !loadedAt.value) loadedAt.value = new Date().toISOString();
 
-  const honeypot = formData.get("_company_url");
-  if (honeypot) return;  // silently reject
+  const honeypot = formData.get('_company_url');
+  if (honeypot) return; // silently reject
 
   // ... existing logic
 }
@@ -418,13 +412,14 @@ function handleSubmit(e) {
 
 ### AWS — BookingDialog.astro
 
-| Change | Detail |
-|--------|--------|
-| Add honeypot | New hidden field `_company_url` inside `<form id="booking-form">` |
-| Add timestamp | New hidden field `_loadedAt` |
-| Add JS | Set `loadedAt.value` in existing `<script>` |
+| Change        | Detail                                                            |
+| ------------- | ----------------------------------------------------------------- |
+| Add honeypot  | New hidden field `_company_url` inside `<form id="booking-form">` |
+| Add timestamp | New hidden field `_loadedAt`                                      |
+| Add JS        | Set `loadedAt.value` in existing `<script>`                       |
 
 **Server action:** `apps/aws/src/actions/index.ts` — `bookService`
+
 - Add `_company_url` and `_loadedAt` to Zod schema
 - Add bot-check at top of handler
 
@@ -432,10 +427,10 @@ function handleSubmit(e) {
 
 ### AWS — Discovery Form
 
-| Change | Detail |
-|--------|--------|
-| Add honeypot | New hidden field `_company_url` inside `<form id="discoveryForm">` |
-| Add client check | Honeypot check in existing `<script>` submit handler |
+| Change           | Detail                                                             |
+| ---------------- | ------------------------------------------------------------------ |
+| Add honeypot     | New hidden field `_company_url` inside `<form id="discoveryForm">` |
+| Add client check | Honeypot check in existing `<script>` submit handler               |
 
 **No server action** — client-side only. Same pattern as WaitlistForm.
 
@@ -443,13 +438,14 @@ function handleSubmit(e) {
 
 ### PMG — Contact.astro
 
-| Change | Detail |
-|--------|--------|
-| Add honeypot | New hidden field `_company_url` inside `<form class="bottom-contact-form">` |
-| Add timestamp | New hidden field `_loadedAt` |
-| Add JS | Set `loadedAt.value` in existing `<script>` |
+| Change        | Detail                                                                      |
+| ------------- | --------------------------------------------------------------------------- |
+| Add honeypot  | New hidden field `_company_url` inside `<form class="bottom-contact-form">` |
+| Add timestamp | New hidden field `_loadedAt`                                                |
+| Add JS        | Set `loadedAt.value` in existing `<script>`                                 |
 
 **Server action:** `apps/pmg/src/actions/index.ts` — `submitContactForm`
+
 - Add `_company_url` and `_loadedAt` to Zod schema
 - Add bot-check at top of handler
 
@@ -457,11 +453,11 @@ function handleSubmit(e) {
 
 ### PMG — ContactModal.astro
 
-| Change | Detail |
-|--------|--------|
-| Add honeypot | New hidden field `_company_url` inside `<form class="modal-form">` |
-| Add timestamp | New hidden field `_loadedAt` |
-| Add JS | Set `loadedAt.value` in existing `<script>` |
+| Change        | Detail                                                             |
+| ------------- | ------------------------------------------------------------------ |
+| Add honeypot  | New hidden field `_company_url` inside `<form class="modal-form">` |
+| Add timestamp | New hidden field `_loadedAt`                                       |
+| Add JS        | Set `loadedAt.value` in existing `<script>`                        |
 
 **Server action:** Same `submitContactForm` as Contact.astro — already covered.
 
@@ -469,33 +465,33 @@ function handleSubmit(e) {
 
 ## 2.6 Files Changed
 
-| File | Type | Changes |
-|------|------|---------|
-| `apps/tes/src/components/LeadForm.astro` | Modify | Harden honeypot, add `_loadedAt`, remove client check |
-| `apps/tes/src/actions/index.ts` | Modify | Add `_website` + `_loadedAt` to schema, add bot-check |
-| `apps/aws/src/components/forms/ContactForm.astro` | Modify | Add honeypot + `_loadedAt` |
-| `apps/aws/src/components/forms/WaitlistForm.astro` | Modify | Add honeypot + `_loadedAt` + client check |
-| `apps/aws/src/components/forms/BookingDialog.astro` | Modify | Add honeypot + `_loadedAt` |
-| `apps/aws/src/pages/discovery.astro` | Modify | Add honeypot + client check |
-| `apps/aws/src/actions/index.ts` | Modify | Add `_company_url` + `_loadedAt` to both action schemas, add bot-check |
-| `apps/pmg/src/components/Contact.astro` | Modify | Add honeypot + `_loadedAt` |
-| `apps/pmg/src/components/ContactModal.astro` | Modify | Add honeypot + `_loadedAt` |
-| `apps/pmg/src/actions/index.ts` | Modify | Add `_company_url` + `_loadedAt` to schema, add bot-check |
-| `apps/pmg/src/middleware.ts` | **New** | Rate limiting for PMG |
+| File                                                | Type    | Changes                                                                |
+| --------------------------------------------------- | ------- | ---------------------------------------------------------------------- |
+| `apps/tes/src/components/LeadForm.astro`            | Modify  | Harden honeypot, add `_loadedAt`, remove client check                  |
+| `apps/tes/src/actions/index.ts`                     | Modify  | Add `_website` + `_loadedAt` to schema, add bot-check                  |
+| `apps/aws/src/components/forms/ContactForm.astro`   | Modify  | Add honeypot + `_loadedAt`                                             |
+| `apps/aws/src/components/forms/WaitlistForm.astro`  | Modify  | Add honeypot + `_loadedAt` + client check                              |
+| `apps/aws/src/components/forms/BookingDialog.astro` | Modify  | Add honeypot + `_loadedAt`                                             |
+| `apps/aws/src/pages/discovery.astro`                | Modify  | Add honeypot + client check                                            |
+| `apps/aws/src/actions/index.ts`                     | Modify  | Add `_company_url` + `_loadedAt` to both action schemas, add bot-check |
+| `apps/pmg/src/components/Contact.astro`             | Modify  | Add honeypot + `_loadedAt`                                             |
+| `apps/pmg/src/components/ContactModal.astro`        | Modify  | Add honeypot + `_loadedAt`                                             |
+| `apps/pmg/src/actions/index.ts`                     | Modify  | Add `_company_url` + `_loadedAt` to schema, add bot-check              |
+| `apps/pmg/src/middleware.ts`                        | **New** | Rate limiting for PMG                                                  |
 
 ---
 
 ## 2.7 Edge Cases
 
-| Case | Behaviour |
-|------|-----------|
-| User has JavaScript disabled | `_loadedAt` is empty → time check fails → form rejected. Acceptable: Astro client-side actions require JS anyway |
-| Bot strips all hidden fields | Honeypot missing → passes. Time check missing → passes. Rate limit still applies |
-| Bot fills honeypot with spaces only | `honeypot.length > 0` catches this — trim not needed since even spaces trigger it |
+| Case                                 | Behaviour                                                                                                                                                                                        |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| User has JavaScript disabled         | `_loadedAt` is empty → time check fails → form rejected. Acceptable: Astro client-side actions require JS anyway                                                                                 |
+| Bot strips all hidden fields         | Honeypot missing → passes. Time check missing → passes. Rate limit still applies                                                                                                                 |
+| Bot fills honeypot with spaces only  | `honeypot.length > 0` catches this — trim not needed since even spaces trigger it                                                                                                                |
 | Clock skew between client and server | `_loadedAt` is client time, comparison is `Date.now() - loadTime`. Clock skew of a few seconds is unlikely to cause false positives since the threshold is 3s and real users take 10-60+ seconds |
-| Multiple tabs open simultaneously | Each tab sets its own `_loadedAt` — no conflict |
-| Page cached by browser | `_loadedAt` is set fresh on each page load via JS — cached HTML doesn't persist the value |
-| Vercel serverless cold start | No impact — bot-check runs in the action handler, not middleware |
+| Multiple tabs open simultaneously    | Each tab sets its own `_loadedAt` — no conflict                                                                                                                                                  |
+| Page cached by browser               | `_loadedAt` is set fresh on each page load via JS — cached HTML doesn't persist the value                                                                                                        |
+| Vercel serverless cold start         | No impact — bot-check runs in the action handler, not middleware                                                                                                                                 |
 
 ---
 

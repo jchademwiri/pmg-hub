@@ -1,36 +1,36 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { toast } from 'sonner'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Field, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
+import * as React from 'react';
+import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
 
 interface DivisionAddFormProps {
-  createAction: (formData: FormData) => Promise<{ error?: string }>
-  onCancel?: () => void
+  createAction: (formData: FormData) => Promise<{ error?: string }>;
+  onCancel?: () => void;
 }
 
 export function DivisionAddForm({ createAction, onCancel }: DivisionAddFormProps) {
-  const formRef = React.useRef<HTMLFormElement>(null)
-  const [isPending, startTransition] = React.useTransition()
-  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
+  const formRef = React.useRef<HTMLFormElement>(null);
+  const [isPending, startTransition] = React.useTransition();
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setErrorMessage(null)
+    e.preventDefault();
+    setErrorMessage(null);
 
     startTransition(async () => {
-      const fd = new FormData(formRef.current!)
-      const result = await createAction(fd)
+      const fd = new FormData(formRef.current!);
+      const result = await createAction(fd);
       if (result.error) {
-        setErrorMessage(result.error)
+        setErrorMessage(result.error);
       } else {
-        formRef.current?.reset()
-        toast.success('Division created')
+        formRef.current?.reset();
+        toast.success('Division created');
       }
-    })
+    });
   }
 
   return (
@@ -53,13 +53,7 @@ export function DivisionAddForm({ createAction, onCancel }: DivisionAddFormProps
 
       <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4 mt-2">
         {onCancel && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isPending}
-            size="sm"
-          >
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isPending} size="sm">
             Cancel
           </Button>
         )}
@@ -74,5 +68,5 @@ export function DivisionAddForm({ createAction, onCancel }: DivisionAddFormProps
         </Alert>
       )}
     </form>
-  )
+  );
 }

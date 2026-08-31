@@ -14,6 +14,7 @@ Client Components - the `server-only` package enforces this at build time.
 ### Scope
 
 Phase 1 covers:
+
 - Calculating the full `FinancialSummary` from live DB data
 - Wrapping `getRevenueByDivision()` and `getLeadsByStatus()` as typed exports
 - Formatting monetary values as South African Rand strings
@@ -66,27 +67,27 @@ Component to re-fetch through the Financial Engine on the next render.
 ### Public API
 
 ```ts
-import 'server-only' // must be first import
+import 'server-only'; // must be first import
 
 // Types
 export type FinancialSummary = {
-  revenue: number
-  expenses: number
-  pmgShare: number
-  profitPool: number
-  salary: number
-  reinvest: number
-  reserve: number
-  flex: number
-}
-export type DivisionRevenue = { divisionName: string; total: number }
-export type LeadStatusCount = { status: string; count: number }
+  revenue: number;
+  expenses: number;
+  pmgShare: number;
+  profitPool: number;
+  salary: number;
+  reinvest: number;
+  reserve: number;
+  flex: number;
+};
+export type DivisionRevenue = { divisionName: string; total: number };
+export type LeadStatusCount = { status: string; count: number };
 
 // Functions
-export async function getFinancialSummary(): Promise<FinancialSummary>
-export async function getDivisionRevenue(): Promise<DivisionRevenue[]>
-export async function getLeadCounts(): Promise<LeadStatusCount[]>
-export function formatZAR(amount: number): string
+export async function getFinancialSummary(): Promise<FinancialSummary>;
+export async function getDivisionRevenue(): Promise<DivisionRevenue[]>;
+export async function getLeadCounts(): Promise<LeadStatusCount[]>;
+export function formatZAR(amount: number): string;
 ```
 
 ### `getFinancialSummary()`
@@ -95,6 +96,7 @@ Fetches revenue and expenses concurrently, applies the PMG financial model,
 and returns a fully-populated `FinancialSummary`.
 
 Design decisions:
+
 - `Promise.all([getTotalRevenue(), getTotalExpenses()])` - concurrent fetches
   reduce latency vs sequential awaits. Both queries are independent.
 - No `'use server'` directive - this is a module, not a Server Action.
@@ -117,7 +119,7 @@ new Intl.NumberFormat('en-ZA', {
   currency: 'ZAR',
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
-}).format(amount)
+}).format(amount);
 ```
 
 Design decision: `Intl.NumberFormat` is used rather than a manual string
@@ -135,16 +137,16 @@ hard-asserted in tests.
 All fields are raw IEEE 754 `number` values. No rounding to the nearest cent
 before returning - that is explicitly out of scope for Phase 1.
 
-| Field | Formula | Notes |
-|---|---|---|
-| `revenue` | `getTotalRevenue()` | SUM of all income entries |
-| `expenses` | `getTotalExpenses()` | SUM of all expense entries |
-| `pmgShare` | `revenue × 0.20` | Calculated from revenue only |
-| `profitPool` | `revenue − expenses − pmgShare` | May be negative |
-| `salary` | `profitPool × 0.35` | May be negative |
-| `reinvest` | `profitPool × 0.30` | May be negative |
-| `reserve` | `profitPool × 0.30` | May be negative |
-| `flex` | `profitPool × 0.05` | May be negative |
+| Field        | Formula                         | Notes                        |
+| ------------ | ------------------------------- | ---------------------------- |
+| `revenue`    | `getTotalRevenue()`             | SUM of all income entries    |
+| `expenses`   | `getTotalExpenses()`            | SUM of all expense entries   |
+| `pmgShare`   | `revenue × 0.20`                | Calculated from revenue only |
+| `profitPool` | `revenue − expenses − pmgShare` | May be negative              |
+| `salary`     | `profitPool × 0.35`             | May be negative              |
+| `reinvest`   | `profitPool × 0.30`             | May be negative              |
+| `reserve`    | `profitPool × 0.30`             | May be negative              |
+| `flex`       | `profitPool × 0.05`             | May be negative              |
 
 ### DivisionRevenue
 
@@ -158,11 +160,12 @@ Passthrough from `getLeadsByStatus()`. Shape: `{ status: string; count: number }
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system - essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+_A property is a characteristic or behavior that should hold true across all valid executions of a system - essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees._
 
 ### Property 1: Financial formulas correctness
 
-*For any* revenue value and expenses value, `getFinancialSummary()` must return:
+_For any_ revenue value and expenses value, `getFinancialSummary()` must return:
+
 - `pmgShare` equal to `revenue × 0.20`
 - `profitPool` equal to `revenue − expenses − pmgShare`
 - `salary` equal to `profitPool × 0.35`
@@ -174,14 +177,14 @@ Passthrough from `getLeadsByStatus()`. Shape: `{ status: string; count: number }
 
 ### Property 2: Allocation sum invariant
 
-*For any* revenue value and expenses value, `salary + reinvest + reserve + flex`
+_For any_ revenue value and expenses value, `salary + reinvest + reserve + flex`
 must equal `profitPool` within a floating-point tolerance of `0.01`.
 
 **Validates: Requirements 2.1**
 
 ### Property 3: Concurrent fetch and single invocation
 
-*For any* call to `getFinancialSummary()`, `getTotalRevenue()` and
+_For any_ call to `getFinancialSummary()`, `getTotalRevenue()` and
 `getTotalExpenses()` must each be called exactly once per invocation.
 
 > **Testability note:** With `vi.mock`, tests can verify that each helper is
@@ -195,14 +198,14 @@ must equal `profitPool` within a floating-point tolerance of `0.01`.
 
 ### Property 4: Zero-input edge case
 
-*For the specific input* `revenue = 0, expenses = 0`, all eight fields of
+_For the specific input_ `revenue = 0, expenses = 0`, all eight fields of
 `FinancialSummary` must equal `0` and no exception must be thrown.
 
 **Validates: Requirements 2.3**
 
 ### Property 5: Negative profitPool propagates correctly
 
-*For any* input where `expenses > revenue − (revenue × 0.20)` (i.e. a loss
+_For any_ input where `expenses > revenue − (revenue × 0.20)` (i.e. a loss
 period), `getFinancialSummary()` must return mathematically correct negative
 values for `salary`, `reinvest`, `reserve`, and `flex` without clamping to
 zero or throwing an exception.
@@ -211,21 +214,21 @@ zero or throwing an exception.
 
 ### Property 6: getDivisionRevenue passthrough
 
-*For any* array returned by `getRevenueByDivision()`, `getDivisionRevenue()`
+_For any_ array returned by `getRevenueByDivision()`, `getDivisionRevenue()`
 must return the exact same value without modification.
 
 **Validates: Requirements 3.1**
 
 ### Property 7: getLeadCounts passthrough
 
-*For any* array returned by `getLeadsByStatus()`, `getLeadCounts()` must
+_For any_ array returned by `getLeadsByStatus()`, `getLeadCounts()` must
 return the exact same value without modification.
 
 **Validates: Requirements 4.1**
 
 ### Property 8: formatZAR output correctness
 
-*For any* finite number, `formatZAR(amount)` must return a non-empty string
+_For any_ finite number, `formatZAR(amount)` must return a non-empty string
 that contains the `R` currency symbol and has exactly two decimal places in
 the output.
 
@@ -233,14 +236,14 @@ the output.
 
 ### Property 9: formatZAR determinism
 
-*For any* finite number called twice with the same input, `formatZAR` must
+_For any_ finite number called twice with the same input, `formatZAR` must
 return identical strings on both calls.
 
 **Validates: Requirements 5.4**
 
 ### Property 10: getFinancialSummary determinism
 
-*For any* identical pair of `revenue` and `expenses` values (same mocked DB
+_For any_ identical pair of `revenue` and `expenses` values (same mocked DB
 responses), two sequential calls to `getFinancialSummary()` must return
 structurally identical `FinancialSummary` objects.
 
@@ -253,11 +256,11 @@ structurally identical `FinancialSummary` objects.
 The Financial Engine has minimal error handling by design - it is a thin
 calculation layer, not a resilience boundary.
 
-| Scenario | Behaviour |
-|---|---|
-| DB query throws | Exception propagates to the calling Server Component, which triggers Next.js error boundaries |
-| `revenue = 0, expenses = 0` | Returns all-zero `FinancialSummary` - no special case needed, arithmetic handles it |
-| `profitPool < 0` | Returns negative allocation values - no clamping, no exception |
+| Scenario                                  | Behaviour                                                                                                      |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| DB query throws                           | Exception propagates to the calling Server Component, which triggers Next.js error boundaries                  |
+| `revenue = 0, expenses = 0`               | Returns all-zero `FinancialSummary` - no special case needed, arithmetic handles it                            |
+| `profitPool < 0`                          | Returns negative allocation values - no clamping, no exception                                                 |
 | `formatZAR(NaN)` or `formatZAR(Infinity)` | `Intl.NumberFormat` handles these gracefully (returns `NaN` or `∞` representations) - out of scope for Phase 1 |
 
 No input validation or sanitisation is performed inside `financial.ts`. That
@@ -275,6 +278,7 @@ mocked using `vi.mock`.
 ### Dual Testing Approach
 
 **Unit tests** cover specific examples, edge cases, and error conditions:
+
 - Standard case: `revenue = 100_000, expenses = 40_000` → exact field values
 - Zero case: `revenue = 0, expenses = 0` → all fields equal `0`
 - Loss case: `revenue = 10_000, expenses = 15_000` → exact negative values
@@ -300,7 +304,7 @@ vi.mock('@pmg/db', () => ({
   getTotalExpenses: vi.fn(),
   getRevenueByDivision: vi.fn(),
   getLeadsByStatus: vi.fn(),
-}))
+}));
 ```
 
 ### Property Test Configuration
@@ -362,28 +366,28 @@ exact separator characters. Instead:
 
 ```ts
 // correct
-expect(result).toMatch(/R/)
-expect(result).toMatch(/\.\d{2}$|,\d{2}$/)
+expect(result).toMatch(/R/);
+expect(result).toMatch(/\.\d{2}$|,\d{2}$/);
 
 // incorrect - brittle
-expect(result).toBe('R 1 234,50')
+expect(result).toBe('R 1 234,50');
 ```
 
 ### Files Affected
 
-| File | Change |
-|---|---|
-| `packages/db/src/index.ts` | Add `export * from './queries'` (prerequisite) |
-| `apps/admin/package.json` | Add to `dependencies`: `"server-only": "^0.0.1"`, `"@pmg/db": "*"`. Add to `devDependencies`: `"vitest": "^1.4.0"`, `"fast-check": "^4.6.0"`. Add scripts: `"test": "vitest run"`, `"test:watch": "vitest"` |
-| `apps/admin/vitest.config.ts` | Create - configures Vitest with `node` environment and the `@/*` path alias pointing to `./src`, so test imports resolve correctly |
-| `apps/admin/src/lib/financial.ts` | Create the financial engine module |
-| `apps/admin/src/__tests__/financial.test.ts` | Create Vitest test suite |
+| File                                         | Change                                                                                                                                                                                                      |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/db/src/index.ts`                   | Add `export * from './queries'` (prerequisite)                                                                                                                                                              |
+| `apps/admin/package.json`                    | Add to `dependencies`: `"server-only": "^0.0.1"`, `"@pmg/db": "*"`. Add to `devDependencies`: `"vitest": "^1.4.0"`, `"fast-check": "^4.6.0"`. Add scripts: `"test": "vitest run"`, `"test:watch": "vitest"` |
+| `apps/admin/vitest.config.ts`                | Create - configures Vitest with `node` environment and the `@/*` path alias pointing to `./src`, so test imports resolve correctly                                                                          |
+| `apps/admin/src/lib/financial.ts`            | Create the financial engine module                                                                                                                                                                          |
+| `apps/admin/src/__tests__/financial.test.ts` | Create Vitest test suite                                                                                                                                                                                    |
 
 ### `apps/admin/vitest.config.ts` - content
 
 ```ts
-import { defineConfig } from 'vitest/config'
-import { resolve } from 'path'
+import { defineConfig } from 'vitest/config';
+import { resolve } from 'path';
 
 export default defineConfig({
   test: {
@@ -395,5 +399,5 @@ export default defineConfig({
       '@': resolve(__dirname, './src'),
     },
   },
-})
+});
 ```

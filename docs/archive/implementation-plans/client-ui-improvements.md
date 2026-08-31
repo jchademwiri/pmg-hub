@@ -1,4 +1,5 @@
 # PMG Control Center — Client Billing Workspace
+
 ## Complete Implementation Plan (v2)
 
 **Scope:** Three interrelated features to improve client-facing billing operations, triggered by a client requesting copies of all their invoices.
@@ -8,20 +9,25 @@
 ## Problem Statement
 
 ### Gap 1 — No bulk invoice operations
+
 The current invoices list (`/billing/invoices`) has no way to:
+
 - Select multiple invoices (checkboxes)
 - Bulk-download multiple quotes/invoices combined into a single multi-page PDF document
 - Bulk-email a batch to a client
 - Bulk-issue or bulk-void multiple documents at once
 
 ### Gap 2 — Client detail page is incomplete
+
 `/relationships/clients/[id]/page.tsx` shows only **income records**. A client record has no visibility into:
+
 - Quotations created for that client
 - Invoices raised for that client (draft or otherwise)
 - A client statement
 - Any way to open the actual document without navigating away
 
 ### Gap 3 — No client financial overview
+
 There is no at-a-glance financial summary for a client account. Users must manually cross-reference invoices, payments, and statements to understand client health, payment behaviour, or outstanding risk.
 
 ---
@@ -34,12 +40,12 @@ Add a checkbox-based multi-select layer to `InvoicesClient` (and optionally `Quo
 
 ### Bulk actions to support
 
-| Action | Description |
-|---|---|
+| Action                           | Description                                                                                                                                                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Bulk Download (Combined PDF)** | Generate a single multi-page PDF combining all selected documents client-side. Render each document sequentially off-screen using `html2canvas`, and append it as a new page onto a single `jsPDF` document. |
-| **Bulk Email** | For each selected invoice that has a client email, call the existing `sendDocumentEmailAction` with the generated PDF. Show a progress dialog with per-invoice status. |
-| **Bulk Issue** | Transition all selected `draft` invoices to `issued` status in a single batch server action. |
-| **Bulk Void** | Confirm once, then void all selected eligible invoices. |
+| **Bulk Email**                   | For each selected invoice that has a client email, call the existing `sendDocumentEmailAction` with the generated PDF. Show a progress dialog with per-invoice status.                                       |
+| **Bulk Issue**                   | Transition all selected `draft` invoices to `issued` status in a single batch server action.                                                                                                                 |
+| **Bulk Void**                    | Confirm once, then void all selected eligible invoices.                                                                                                                                                      |
 
 ### Files to touch
 
@@ -124,12 +130,12 @@ On mobile (< 1024px): layout collapses to list-only. Tapping a row navigates to 
 
 ### Tabs
 
-| Tab | Content |
-|---|---|
+| Tab            | Content                                                                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Quotations** | All quotes for this client (any status), sorted by date desc. Columns: doc number, date, total, status badge. Checkboxes for bulk download. |
-| **Invoices** | All invoices for this client (any status), same columns plus outstanding balance. Checkboxes for bulk download. |
-| **Payments** | Existing income/payment records — keep current display. |
-| **Statement** | Renders `DocumentPreview` with `type="statement"`. Includes Print and Export PDF buttons. Defaults to current FY. |
+| **Invoices**   | All invoices for this client (any status), same columns plus outstanding balance. Checkboxes for bulk download.                             |
+| **Payments**   | Existing income/payment records — keep current display.                                                                                     |
+| **Statement**  | Renders `DocumentPreview` with `type="statement"`. Includes Print and Export PDF buttons. Defaults to current FY.                           |
 
 ### Document preview pane behaviour
 
@@ -142,9 +148,9 @@ On mobile (< 1024px): layout collapses to list-only. Tapping a row navigates to 
 ```ts
 const [client, quotes, invoices, payments] = await Promise.all([
   getClientById(id),
-  getAllQuotations({ clientId: id }),           // already exists
-  getAllInvoices({ clientId: id }),             // already exists
-  getAllIncome({ clientId: id }),               // already exists
+  getAllQuotations({ clientId: id }), // already exists
+  getAllInvoices({ clientId: id }), // already exists
+  getAllIncome({ clientId: id }), // already exists
 ]);
 ```
 
@@ -174,13 +180,13 @@ Positioned at the top of the Client Billing Workspace. Provides an at-a-glance f
 
 Top row of summary cards (matches the existing `KpiGrid` visual language on the main dashboard):
 
-| Metric | Value | Colour |
-|---|---|---|
-| Outstanding Balance | Amount still owed | Amber |
-| Total Paid | Lifetime payments received | Green |
-| Total Invoiced | Sum of all non-void invoices | Default |
-| Overdue Balance | Sum of overdue invoices | Red (if > 0) |
-| Quote Conversion Rate | Accepted ÷ Sent quotes | Default |
+| Metric                | Value                        | Colour       |
+| --------------------- | ---------------------------- | ------------ |
+| Outstanding Balance   | Amount still owed            | Amber        |
+| Total Paid            | Lifetime payments received   | Green        |
+| Total Invoiced        | Sum of all non-void invoices | Default      |
+| Overdue Balance       | Sum of overdue invoices      | Red (if > 0) |
+| Quote Conversion Rate | Accepted ÷ Sent quotes       | Default      |
 
 ```
 ┌───────────────────────────────────────────────────────────────────┐
@@ -193,15 +199,15 @@ Top row of summary cards (matches the existing `KpiGrid` visual language on the 
 
 ### Section B — Revenue Metrics (expandable or always-visible)
 
-| Metric | Description |
-|---|---|
-| Total Quoted | Total value of all quotations issued |
-| Average Invoice Value | Mean invoice amount |
-| Largest Invoice | Highest single invoice value |
-| Total Invoices | Count of all invoices |
-| Draft / Issued / Paid / Overdue | Count per status |
-| Total Quotations | Count of all quotes |
-| Draft / Accepted / Declined / Expired | Count per status |
+| Metric                                | Description                          |
+| ------------------------------------- | ------------------------------------ |
+| Total Quoted                          | Total value of all quotations issued |
+| Average Invoice Value                 | Mean invoice amount                  |
+| Largest Invoice                       | Highest single invoice value         |
+| Total Invoices                        | Count of all invoices                |
+| Draft / Issued / Paid / Overdue       | Count per status                     |
+| Total Quotations                      | Count of all quotes                  |
+| Draft / Accepted / Declined / Expired | Count per status                     |
 
 ---
 
@@ -211,12 +217,12 @@ Dedicated ageing section using client-specific data (not the global ageing repor
 
 **Buckets:**
 
-| Bucket | Amount |
-|---|---|
+| Bucket                | Amount |
+| --------------------- | ------ |
 | Current (not yet due) | R 0.00 |
-| 1–30 Days overdue | R 0.00 |
-| 31–60 Days overdue | R 0.00 |
-| 61+ Days overdue | R 0.00 |
+| 1–30 Days overdue     | R 0.00 |
+| 31–60 Days overdue    | R 0.00 |
+| 61+ Days overdue      | R 0.00 |
 | **Total Outstanding** | R 0.00 |
 
 **Visualisation (Option A — recommended):**
@@ -238,12 +244,12 @@ This reuses the existing `AllocationTooltipBar` pattern from the dashboard.
 
 A single calculated indicator shown as a coloured badge + label.
 
-| Score | Criteria | Colour |
-|---|---|---|
-| **Excellent** | No overdue invoices, average days-to-pay ≤ 30 | Green |
-| **Good** | Minor overdue balance (< 25% of outstanding), avg days ≤ 45 | Blue |
-| **At Risk** | Consistent overdue, increasing outstanding balance | Orange |
-| **Critical** | Multiple invoices > 90 days overdue | Red |
+| Score         | Criteria                                                    | Colour |
+| ------------- | ----------------------------------------------------------- | ------ |
+| **Excellent** | No overdue invoices, average days-to-pay ≤ 30               | Green  |
+| **Good**      | Minor overdue balance (< 25% of outstanding), avg days ≤ 45 | Blue   |
+| **At Risk**   | Consistent overdue, increasing outstanding balance          | Orange |
+| **Critical**  | Multiple invoices > 90 days overdue                         | Red    |
 
 Calculation logic lives in a pure `calculateClientHealth(invoices, payments)` utility function — no DB query needed, computed from already-loaded data.
 
@@ -251,13 +257,13 @@ Calculation logic lives in a pure `calculateClientHealth(invoices, payments)` ut
 
 ### Section E — Payment Behaviour Analytics
 
-| Metric | Description |
-|---|---|
-| Average Days to Pay | Mean gap between invoice date and payment date |
-| Last Payment Date | Most recent payment received |
-| Largest Single Payment | Largest payment amount |
-| Total Payments Received | Count of payment records |
-| Collection Efficiency | Total paid ÷ Total invoiced (as %) |
+| Metric                  | Description                                    |
+| ----------------------- | ---------------------------------------------- |
+| Average Days to Pay     | Mean gap between invoice date and payment date |
+| Last Payment Date       | Most recent payment received                   |
+| Largest Single Payment  | Largest payment amount                         |
+| Total Payments Received | Count of payment records                       |
+| Collection Efficiency   | Total paid ÷ Total invoiced (as %)             |
 
 Displayed as a compact stat grid (2 columns on mobile, 5 on desktop).
 
@@ -268,6 +274,7 @@ Displayed as a compact stat grid (2 columns on mobile, 5 on desktop).
 Latest 10 activity events for this client, derived from the already-loaded quotes, invoices, and payments data (no additional DB call). Each event shows an icon, description, and relative timestamp.
 
 Example events:
+
 - Invoice `AWS-INV-2026-042` created
 - Invoice `AWS-INV-2026-040` paid — R 12,000
 - Payment received — R 12,000
@@ -381,18 +388,18 @@ No new external dependencies are required. The existing `html2canvas` and `jsPDF
 
 ## Components Already Available (No Re-build Needed)
 
-| Component | Reuse |
-|---|---|
-| `DocumentPreview` | Renders invoice, quote, or statement from props |
-| `BillingStatusBadge` | Status chips |
-| `ExportPdfButton` | Single-doc PDF export — reuse internals for bulk |
-| `PrintButton` | Browser print trigger |
-| `EmailDocumentDialog` | Per-document email — reuse in bulk loop |
-| `BillingTotalsBlock` | Totals display |
-| `AllocationTooltipBar` | Stacked bar — reuse for ageing visualisation |
-| `KpiCard` / `KpiGrid` | KPI cards — reuse visual pattern for client KPI strip |
-| `confirm` | Confirmation dialogs |
-| `AgingReportGrid` | Ageing buckets display — adapt for per-client data |
+| Component              | Reuse                                                 |
+| ---------------------- | ----------------------------------------------------- |
+| `DocumentPreview`      | Renders invoice, quote, or statement from props       |
+| `BillingStatusBadge`   | Status chips                                          |
+| `ExportPdfButton`      | Single-doc PDF export — reuse internals for bulk      |
+| `PrintButton`          | Browser print trigger                                 |
+| `EmailDocumentDialog`  | Per-document email — reuse in bulk loop               |
+| `BillingTotalsBlock`   | Totals display                                        |
+| `AllocationTooltipBar` | Stacked bar — reuse for ageing visualisation          |
+| `KpiCard` / `KpiGrid`  | KPI cards — reuse visual pattern for client KPI strip |
+| `confirm`              | Confirmation dialogs                                  |
+| `AgingReportGrid`      | Ageing buckets display — adapt for per-client data    |
 
 All work is **additive** — no existing pages or routes are broken.
 

@@ -1,25 +1,25 @@
-'use client'
+'use client';
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from 'recharts';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatZAR, fmtMonthYear } from '@/lib/format'
+} from '@/components/ui/chart';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatZAR, fmtMonthYear } from '@/lib/format';
 
 const config: ChartConfig = {
   profit: { label: 'Net Profit', color: 'var(--chart-1)' },
-}
+};
 
-const NEG_COLOR = 'var(--color-destructive, #ef4444)'
-const POS_COLOR = 'var(--chart-1)'
+const NEG_COLOR = 'var(--color-destructive, #ef4444)';
+const POS_COLOR = 'var(--chart-1)';
 
 type Props = {
-  data: { period: string; profit: number }[]
-}
+  data: { period: string; profit: number }[];
+};
 
 export function ProfitPoolChart({ data }: Props) {
   return (
@@ -67,5 +67,5 @@ export function ProfitPoolChart({ data }: Props) {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

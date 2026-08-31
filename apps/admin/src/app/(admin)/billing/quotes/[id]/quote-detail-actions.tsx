@@ -38,7 +38,7 @@ export function QuoteDetailActions({
     setIsPending(true);
     startTransition(async () => {
       const result = await updateStatusAction(quote.id, status);
-      
+
       if (result.error) {
         setIsPending(false);
         toast.error(result.error);
@@ -48,7 +48,7 @@ export function QuoteDetailActions({
       if (status === 'accepted') {
         const convertResult = await convertQuoteToInvoice(quote.id);
         setIsPending(false);
-        
+
         if (convertResult.error) {
           toast.error(`Quote accepted, but failed to create invoice: ${convertResult.error}`);
           router.refresh();

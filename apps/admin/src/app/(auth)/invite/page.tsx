@@ -1,17 +1,17 @@
-import { getDb, invitations, eq } from '@pmg/db'
-import { redirect } from 'next/navigation'
-import type { Metadata } from 'next'
-import { InviteAcceptClient } from './invite-accept-client'
+import { getDb, invitations, eq } from '@pmg/db';
+import { redirect } from 'next/navigation';
+import type { Metadata } from 'next';
+import { InviteAcceptClient } from './invite-accept-client';
 
-export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Accept Invitation' }
+export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Accept Invitation' };
 
 interface InvitePageProps {
-  searchParams: Promise<{ token?: string }>
+  searchParams: Promise<{ token?: string }>;
 }
 
 export default async function InvitePage({ searchParams }: InvitePageProps) {
-  const { token } = await searchParams
+  const { token } = await searchParams;
 
   if (!token) {
     return (
@@ -21,33 +21,35 @@ export default async function InvitePage({ searchParams }: InvitePageProps) {
           <p className="text-muted-foreground">No invitation token was provided.</p>
         </div>
       </div>
-    )
+    );
   }
 
-  const db = getDb()
+  const db = getDb();
 
   // Look up the invitation by token
   const [invitation] = await db
     .select()
     .from(invitations)
     .where(eq(invitations.token, token))
-    .limit(1)
+    .limit(1);
 
   if (!invitation) {
     return (
       <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
         <div className="flex w-full max-w-sm flex-col gap-4 text-center">
           <h1 className="text-2xl font-semibold text-destructive">Invalid Invitation</h1>
-          <p className="text-muted-foreground">This invitation link is invalid or has been revoked.</p>
+          <p className="text-muted-foreground">
+            This invitation link is invalid or has been revoked.
+          </p>
         </div>
       </div>
-    )
+    );
   }
 
   // Check if already accepted
   if (invitation.acceptedAt) {
     // Already accepted - just redirect to login
-    redirect('/login')
+    redirect('/login');
   }
 
   // Check if expired
@@ -61,7 +63,7 @@ export default async function InvitePage({ searchParams }: InvitePageProps) {
           </p>
         </div>
       </div>
-    )
+    );
   }
 
   // Valid invitation - show the accept UI which triggers the magic link sign-in
@@ -77,5 +79,5 @@ export default async function InvitePage({ searchParams }: InvitePageProps) {
         <InviteAcceptClient email={invitation.email} />
       </div>
     </div>
-  )
+  );
 }

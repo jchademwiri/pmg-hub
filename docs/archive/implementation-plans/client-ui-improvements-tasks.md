@@ -5,6 +5,7 @@ This document tracks the tasks required to implement the Client Billing Workspac
 ---
 
 ### 💡 Recommendations Incorporated
+
 - **Combined PDF Generation:** Generates a single, combined multi-page PDF document sequentially instead of downloading a ZIP to prevent browser crash/memory issues.
 - **Partial Failure Resiliency:** Bulk actions show granular status (Success/Error) and support retry loops.
 - **Date Range Selector:** Interactive statement filtering instead of a hardcoded current FY default.
@@ -17,7 +18,8 @@ This document tracks the tasks required to implement the Client Billing Workspac
 ---
 
 ## 📂 Phase 1: Client Page Tabs & Basic Navigation
-*Goal: Replace the single income table with basic tabbed tables for Quotes, Invoices, Payments, and Statement.*
+
+_Goal: Replace the single income table with basic tabbed tables for Quotes, Invoices, Payments, and Statement._
 
 - [x] **Data Fetching Overhaul**
   - Update `apps/admin/src/app/(admin)/relationships/clients/[id]/page.tsx` to load quotes, invoices, and payments in parallel:
@@ -42,7 +44,8 @@ This document tracks the tasks required to implement the Client Billing Workspac
 ---
 
 ## ⚡ Phase 2: Bulk Selection Infrastructure & Server Actions
-*Goal: Set up the UI selection state and backend action endpoints for bulk operations.*
+
+_Goal: Set up the UI selection state and backend action endpoints for bulk operations._
 
 - [x] **Server Actions (`apps/admin/src/app/actions/billing-invoices.ts`)**
   - [x] Implement `bulkIssueInvoices(ids: string[])` action:
@@ -63,7 +66,8 @@ This document tracks the tasks required to implement the Client Billing Workspac
 ---
 
 ## 📊 Phase 3: Client Financial Dashboard
-*Goal: Build the financial metrics strip, ageing bar, client health score, and relative activity feed.*
+
+_Goal: Build the financial metrics strip, ageing bar, client health score, and relative activity feed._
 
 - [x] **Dashboard Utilities (`apps/admin/src/lib/`)**
   - [x] Create `client-health.ts`:
@@ -80,7 +84,8 @@ This document tracks the tasks required to implement the Client Billing Workspac
 ---
 
 ## 🖥️ Phase 4: Split-Pane Document Browser
-*Goal: Provide a split-pane layout to preview and manage documents inline without navigating away.*
+
+_Goal: Provide a split-pane layout to preview and manage documents inline without navigating away._
 
 - [x] **Split-Pane Layout Container**
   - Implement the split-pane grid layout inside `client-billing-workspace.tsx`.
@@ -97,7 +102,8 @@ This document tracks the tasks required to implement the Client Billing Workspac
 ---
 
 ## 📬 Phase 5: Bulk PDF & Email Operations
-*Goal: Implement client-side PDF rendering, multi-page PDF compilation, and sequential automated emailing.*
+
+_Goal: Implement client-side PDF rendering, multi-page PDF compilation, and sequential automated emailing._
 
 - [x] **Client-Side Bulk PDF Downloader (`client-billing-workspace.tsx`)**
   - Implement a **queued generator** that mounts `DocumentPreview` off-screen, converts to canvas/PDF **sequentially (one-by-one)** rather than in parallel. Append each canvas capture to a single combined `jsPDF` instance, and trigger a browser save of the single compiled PDF file.

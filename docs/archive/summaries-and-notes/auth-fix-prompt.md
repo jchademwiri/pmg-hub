@@ -2,7 +2,7 @@
 
 ## The Prompt
 
-```
+````
 Fix the build error in apps/admin/src/lib/auth.ts
 
 ERROR: Module not found: Can't resolve '@react-email/components'
@@ -46,7 +46,7 @@ if (error) {
   console.error('[MagicLink Error]', error);
   throw new APIError('INTERNAL_SERVER_ERROR', { message: 'Failed to send email' });
 }
-```
+````
 
 CHANGES NEEDED IN apps/admin/src/lib/auth.ts:
 
@@ -65,6 +65,7 @@ CHANGES NEEDED IN apps/admin/src/lib/auth.ts:
 6. Return the result from emailClient() call
 
 TARGET: Build should complete with no module resolution errors
+
 ```
 
 ---
@@ -72,9 +73,10 @@ TARGET: Build should complete with no module resolution errors
 ## Or Shorter Version
 
 ```
+
 Fix apps/admin/src/lib/auth.ts - remove @react-email/components dependency
 
-The auth.ts file imports render() from @react-email/components which isn't installed. 
+The auth.ts file imports render() from @react-email/components which isn't installed.
 
 Replace that entire email rendering approach with this pattern (used in billing-payments.ts):
 
@@ -84,7 +86,8 @@ Replace that entire email rendering approach with this pattern (used in billing-
 4. Don't use await render() - let createEmailClient handle the rendering
 
 See apps/admin/src/app/actions/billing-payments.ts lines 177-214 for reference.
-```
+
+````
 
 ---
 
@@ -103,6 +106,6 @@ After Kiro fixes it:
 ```bash
 cd /path/to/pmg-hub
 bun run build
-```
+````
 
 Should see: ✅ Build succeeds, no "Module not found" error

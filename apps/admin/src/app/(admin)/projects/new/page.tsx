@@ -6,10 +6,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'New Project' };
 
 export default async function NewProjectPage() {
-  const [clients, divisions] = await Promise.all([
-    getAllClients(),
-    getAllDivisions(),
-  ]);
+  const [clients, divisions] = await Promise.all([getAllClients(), getAllDivisions()]);
 
   return (
     <div className="max-w-5xl mx-auto p-6 bg-card border border-border/50 rounded-xl shadow-sm">

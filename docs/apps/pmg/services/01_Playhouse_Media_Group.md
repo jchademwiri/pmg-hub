@@ -1,4 +1,5 @@
 # Playhouse Media Group (PTY) Ltd
+
 ### Company Profile - Parent Brand
 
 ---
@@ -15,16 +16,16 @@ PMG operates on a **House of Brands model** - each division carries its own iden
 
 ## Registration & Contact Details
 
-| Field | Detail |
-|---|---|
-| Registered Name | Playhouse Media Group (PTY) Ltd |
-| Registration | CIPC - PTY (Ltd) ✓ Registered |
-| Address | 285 Erasmus Ave, Raslouw AH, Centurion, 0157, Gauteng |
-| Website | www.playhousemedia.net |
-| Email | info@playhousemedia.net |
-| Phone | 074 049 1433 / 068 647 8157 |
-| Director | Jacob Chademwiri |
-| Co-Director & Operations | Youlanda Chademwiri |
+| Field                    | Detail                                                |
+| ------------------------ | ----------------------------------------------------- |
+| Registered Name          | Playhouse Media Group (PTY) Ltd                       |
+| Registration             | CIPC - PTY (Ltd) ✓ Registered                         |
+| Address                  | 285 Erasmus Ave, Raslouw AH, Centurion, 0157, Gauteng |
+| Website                  | www.playhousemedia.net                                |
+| Email                    | info@playhousemedia.net                               |
+| Phone                    | 074 049 1433 / 068 647 8157                           |
+| Director                 | Jacob Chademwiri                                      |
+| Co-Director & Operations | Youlanda Chademwiri                                   |
 
 ---
 
@@ -42,7 +43,7 @@ To help South African individuals and businesses grow by providing professional 
 
 ## Tagline
 
-> *"Building Businesses. One Service at a Time."*
+> _"Building Businesses. One Service at a Time."_
 
 ---
 
@@ -58,23 +59,23 @@ To help South African individuals and businesses grow by providing professional 
 
 ## Leadership & Roles
 
-| Role | Person | Responsibilities |
-|---|---|---|
-| Director / Technical Lead | Jacob Chademwiri | Web development, tender preparations, strategy, systems, TenderTrack 360 SaaS |
-| Co-Director / Operations | Youlanda Chademwiri | Company registrations, CSD management, admin, invoicing, social media |
-| Creative (Shared) | Jacob & Youlanda | Branding, graphic design, marketing content |
+| Role                      | Person              | Responsibilities                                                              |
+| ------------------------- | ------------------- | ----------------------------------------------------------------------------- |
+| Director / Technical Lead | Jacob Chademwiri    | Web development, tender preparations, strategy, systems, TenderTrack 360 SaaS |
+| Co-Director / Operations  | Youlanda Chademwiri | Company registrations, CSD management, admin, invoicing, social media         |
+| Creative (Shared)         | Jacob & Youlanda    | Branding, graphic design, marketing content                                   |
 
 ---
 
 ## The Five Divisions
 
-| # | Brand | Service Area | 2025 Status |
-|---|---|---|---|
-| 1 | Tender Edge Solutions | Tender compliance & bid preparation | **Active - primary revenue driver** |
-| 2 | Apex Web Solutions | Web design & development | **Active - 3–5 clients in 2025** |
-| 3 | LaunchPad SA | Company registrations & CIPC | Formalising |
-| 4 | Playhouse Creative Studio | Graphic design & marketing | Launching |
-| 5 | StudyEdge SA | Academic support & tutoring | Active - expanding from 1 client |
+| #   | Brand                     | Service Area                        | 2025 Status                         |
+| --- | ------------------------- | ----------------------------------- | ----------------------------------- |
+| 1   | Tender Edge Solutions     | Tender compliance & bid preparation | **Active - primary revenue driver** |
+| 2   | Apex Web Solutions        | Web design & development            | **Active - 3–5 clients in 2025**    |
+| 3   | LaunchPad SA              | Company registrations & CIPC        | Formalising                         |
+| 4   | Playhouse Creative Studio | Graphic design & marketing          | Launching                           |
+| 5   | StudyEdge SA              | Academic support & tutoring         | Active - expanding from 1 client    |
 
 > **Also under PMG:** TenderTrack 360 (tendertrack360.co.za) - a standalone SaaS tender management platform built by Jacob. Live and in beta. Free during beta period.
 
@@ -97,13 +98,13 @@ One ecosystem. A client for life.
 
 PMG generated approximately **R80,000 in 2025** operating part-time with no formal branding, no structured pricing, and no marketing.
 
-| Division | 2025 Activity | Clients Served |
-|---|---|---|
-| Tender Edge Solutions | Full tender prep (1) + compliance support (4) | ~5 clients |
-| Apex Web Solutions | Website design, development & hosting | 3–5 clients |
-| StudyEdge SA | Academic support & assignment guidance | 1 client |
-| LaunchPad SA | Not yet formalised | - |
-| Playhouse Creative Studio | Not yet formalised | - |
+| Division                  | 2025 Activity                                 | Clients Served |
+| ------------------------- | --------------------------------------------- | -------------- |
+| Tender Edge Solutions     | Full tender prep (1) + compliance support (4) | ~5 clients     |
+| Apex Web Solutions        | Website design, development & hosting         | 3–5 clients    |
+| StudyEdge SA              | Academic support & assignment guidance        | 1 client       |
+| LaunchPad SA              | Not yet formalised                            | -              |
+| Playhouse Creative Studio | Not yet formalised                            | -              |
 
 > **The opportunity:** R80k part-time with zero marketing and no systems. Formalising each division with proper pricing, branding, and a WhatsApp pipeline is the direct path to R270k–R324k in 2026.
 
@@ -111,23 +112,23 @@ PMG generated approximately **R80,000 in 2025** operating part-time with no form
 
 ## Revenue Strategy - 2026 Focus
 
-| Focus | Division | Reason |
-|---|---|---|
-| 60% | Tender Edge Solutions | Highest ticket. Retainer potential. 5 existing clients to build from. |
-| 30% | Apex Web Solutions | Recurring retainer income. Existing client base to grow and retain. |
-| 10% | LaunchPad SA + Creative Studio + StudyEdge SA | Lead generation, upsell, and organic growth. |
+| Focus | Division                                      | Reason                                                                |
+| ----- | --------------------------------------------- | --------------------------------------------------------------------- |
+| 60%   | Tender Edge Solutions                         | Highest ticket. Retainer potential. 5 existing clients to build from. |
+| 30%   | Apex Web Solutions                            | Recurring retainer income. Existing client base to grow and retain.   |
+| 10%   | LaunchPad SA + Creative Studio + StudyEdge SA | Lead generation, upsell, and organic growth.                          |
 
 ---
 
 ## Revenue Targets
 
-| Period | Target |
-|---|---|
+| Period                              | Target   |
+| ----------------------------------- | -------- |
 | 2025 Actual (part-time, no systems) | ~R80,000 |
-| 2026 Year 1 Goal | R324,000 |
-| 2026 Monthly Average | R27,000 |
-| Year 2 Goal | R624,000 |
-| Year 2 Monthly Average | R52,000 |
+| 2026 Year 1 Goal                    | R324,000 |
+| 2026 Monthly Average                | R27,000  |
+| Year 2 Goal                         | R624,000 |
+| Year 2 Monthly Average              | R52,000  |
 
 ---
 
@@ -144,17 +145,17 @@ PMG generated approximately **R80,000 in 2025** operating part-time with no form
 
 ## Brand Identity
 
-| Element | Detail |
-|---|---|
-| Primary Colour | Deep Navy `#0D1B2A` |
-| Accent Colour | Vibrant Orange `#F97316` |
-| Base | White `#FFFFFF` |
-| Display Font | Playfair Display |
-| Body Font | DM Sans |
-| Tone | Professional, proudly South African, family-owned, trustworthy |
+| Element        | Detail                                                         |
+| -------------- | -------------------------------------------------------------- |
+| Primary Colour | Deep Navy `#0D1B2A`                                            |
+| Accent Colour  | Vibrant Orange `#F97316`                                       |
+| Base           | White `#FFFFFF`                                                |
+| Display Font   | Playfair Display                                               |
+| Body Font      | DM Sans                                                        |
+| Tone           | Professional, proudly South African, family-owned, trustworthy |
 
 ---
 
-*Last updated: March 2026 | Version 2.0*
-*Playhouse Media Group (PTY) Ltd - Jacob & Youlanda Chademwiri*
-*"Building Businesses. One Service at a Time."*
+_Last updated: March 2026 | Version 2.0_
+_Playhouse Media Group (PTY) Ltd - Jacob & Youlanda Chademwiri_
+_"Building Businesses. One Service at a Time."_

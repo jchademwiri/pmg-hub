@@ -29,8 +29,20 @@ interface GrowthRow {
 }
 
 const SERIES = [
-  { key: 'invoicedGrowthPct', amountKey: 'invoiced', deltaKey: 'invoicedDelta', label: 'Invoiced', color: 'var(--chart-1)' },
-  { key: 'paymentsGrowthPct', amountKey: 'received', deltaKey: 'paymentsDelta', label: 'Payments', color: 'oklch(0.72 0.16 150)' },
+  {
+    key: 'invoicedGrowthPct',
+    amountKey: 'invoiced',
+    deltaKey: 'invoicedDelta',
+    label: 'Invoiced',
+    color: 'var(--chart-1)',
+  },
+  {
+    key: 'paymentsGrowthPct',
+    amountKey: 'received',
+    deltaKey: 'paymentsDelta',
+    label: 'Payments',
+    color: 'oklch(0.72 0.16 150)',
+  },
 ] as const;
 
 function growthPct(current: number, previous: number | undefined): number | null {
@@ -43,13 +55,23 @@ function signedZAR(value: number) {
   return value >= 0 ? `+${formatted}` : `-${formatted}`;
 }
 
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { payload: GrowthRow }[]; label?: string }) {
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { payload: GrowthRow }[];
+  label?: string;
+}) {
   if (!active || !payload?.length) return null;
   const row = payload[0].payload;
 
   return (
     <div className="rounded-lg border border-border bg-card px-3 py-2.5 text-xs shadow-xl">
-      <p className="mb-2 border-b border-border pb-1.5 font-medium text-muted-foreground">{label}</p>
+      <p className="mb-2 border-b border-border pb-1.5 font-medium text-muted-foreground">
+        {label}
+      </p>
       <div className="flex min-w-52 flex-col gap-2">
         {SERIES.map((s) => {
           const pct = row[s.key];
@@ -62,12 +84,23 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
                 {s.label}
               </span>
               <div className="flex items-center justify-between gap-4 pl-3.5">
-                <span className="tabular-nums text-foreground font-semibold">{formatZAR(amount)}</span>
+                <span className="tabular-nums text-foreground font-semibold">
+                  {formatZAR(amount)}
+                </span>
                 <span
                   className="tabular-nums font-medium"
-                  style={{ color: pct === null ? 'var(--muted-foreground)' : pct >= 0 ? 'var(--chart-ok, #10b981)' : 'var(--chart-bad, #ef4444)' }}
+                  style={{
+                    color:
+                      pct === null
+                        ? 'var(--muted-foreground)'
+                        : pct >= 0
+                          ? 'var(--chart-ok, #10b981)'
+                          : 'var(--chart-bad, #ef4444)',
+                  }}
                 >
-                  {pct === null ? 'no prior month' : `${signedZAR(delta!)} (${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%)`}
+                  {pct === null
+                    ? 'no prior month'
+                    : `${signedZAR(delta!)} (${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%)`}
                 </span>
               </div>
             </div>
@@ -99,15 +132,27 @@ export function MonthlyGrowthChart({ data }: MonthlyGrowthChartProps) {
   );
 
   const totals = useMemo(
-    () => data.reduce((acc, row) => ({ invoiced: acc.invoiced + row.invoiced, received: acc.received + row.received }), { invoiced: 0, received: 0 }),
+    () =>
+      data.reduce(
+        (acc, row) => ({
+          invoiced: acc.invoiced + row.invoiced,
+          received: acc.received + row.received,
+        }),
+        { invoiced: 0, received: 0 },
+      ),
     [data],
   );
 
   // Average MoM growth across the months that had a prior month to compare against.
   const avgGrowth = useMemo(() => {
-    const invoicedPcts = chartData.map((r) => r.invoicedGrowthPct).filter((v): v is number => v !== null);
-    const paymentsPcts = chartData.map((r) => r.paymentsGrowthPct).filter((v): v is number => v !== null);
-    const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
+    const invoicedPcts = chartData
+      .map((r) => r.invoicedGrowthPct)
+      .filter((v): v is number => v !== null);
+    const paymentsPcts = chartData
+      .map((r) => r.paymentsGrowthPct)
+      .filter((v): v is number => v !== null);
+    const avg = (arr: number[]) =>
+      arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
     return { invoiced: avg(invoicedPcts), payments: avg(paymentsPcts) };
   }, [chartData]);
 
@@ -145,7 +190,12 @@ export function MonthlyGrowthChart({ data }: MonthlyGrowthChartProps) {
           <div className="min-w-0 rounded-md border border-border bg-muted/20 p-4">
             <ResponsiveContainer width="100%" height={280}>
               <ComposedChart data={chartData} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="2 4" stroke="var(--border)" opacity={0.6} vertical={false} />
+                <CartesianGrid
+                  strokeDasharray="2 4"
+                  stroke="var(--border)"
+                  opacity={0.6}
+                  vertical={false}
+                />
                 <XAxis
                   dataKey="month"
                   tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
@@ -163,12 +213,23 @@ export function MonthlyGrowthChart({ data }: MonthlyGrowthChartProps) {
                 <ReferenceLine y={0} stroke="var(--border)" />
                 <Tooltip
                   content={<CustomTooltip />}
-                  cursor={chartType === 'bar' ? { fill: 'var(--muted)', opacity: 0.35 } : { stroke: 'var(--border)', strokeWidth: 1, strokeDasharray: '2 2' }}
+                  cursor={
+                    chartType === 'bar'
+                      ? { fill: 'var(--muted)', opacity: 0.35 }
+                      : { stroke: 'var(--border)', strokeWidth: 1, strokeDasharray: '2 2' }
+                  }
                 />
 
                 {chartType === 'bar'
                   ? SERIES.map((s) => (
-                      <Bar key={s.key} dataKey={s.key} name={s.label} fill={s.color} radius={[4, 4, 4, 4]} maxBarSize={22} />
+                      <Bar
+                        key={s.key}
+                        dataKey={s.key}
+                        name={s.label}
+                        fill={s.color}
+                        radius={[4, 4, 4, 4]}
+                        maxBarSize={22}
+                      />
                     ))
                   : SERIES.map((s) => (
                       <Line
@@ -189,17 +250,31 @@ export function MonthlyGrowthChart({ data }: MonthlyGrowthChartProps) {
 
           <div className="flex flex-col justify-center gap-6 text-right">
             <div>
-              <p className="text-xs font-medium" style={{ color: 'var(--chart-1)' }}>Total Invoiced</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">{formatZAR(totals.invoiced)}</p>
+              <p className="text-xs font-medium" style={{ color: 'var(--chart-1)' }}>
+                Total Invoiced
+              </p>
+              <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">
+                {formatZAR(totals.invoiced)}
+              </p>
               <p className="text-[10px] text-muted-foreground/80 mt-0.5">
-                Avg MoM: {avgGrowth.invoiced === null ? '—' : `${avgGrowth.invoiced >= 0 ? '+' : ''}${avgGrowth.invoiced.toFixed(1)}%`}
+                Avg MoM:{' '}
+                {avgGrowth.invoiced === null
+                  ? '—'
+                  : `${avgGrowth.invoiced >= 0 ? '+' : ''}${avgGrowth.invoiced.toFixed(1)}%`}
               </p>
             </div>
             <div>
-              <p className="text-xs font-medium" style={{ color: 'oklch(0.72 0.16 150)' }}>Total Payments</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">{formatZAR(totals.received)}</p>
+              <p className="text-xs font-medium" style={{ color: 'oklch(0.72 0.16 150)' }}>
+                Total Payments
+              </p>
+              <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">
+                {formatZAR(totals.received)}
+              </p>
               <p className="text-[10px] text-muted-foreground/80 mt-0.5">
-                Avg MoM: {avgGrowth.payments === null ? '—' : `${avgGrowth.payments >= 0 ? '+' : ''}${avgGrowth.payments.toFixed(1)}%`}
+                Avg MoM:{' '}
+                {avgGrowth.payments === null
+                  ? '—'
+                  : `${avgGrowth.payments >= 0 ? '+' : ''}${avgGrowth.payments.toFixed(1)}%`}
               </p>
             </div>
           </div>
@@ -222,19 +297,41 @@ export function MonthlyGrowthChart({ data }: MonthlyGrowthChartProps) {
               {chartData.map((row) => (
                 <tr key={row.month} className="border-b border-border/50 last:border-0">
                   <td className="px-3 py-2 text-left text-muted-foreground">{row.month}</td>
-                  <td className="px-3 py-2 text-right tabular-nums text-foreground font-medium">{formatZAR(row.invoiced)}</td>
-                  <td
-                    className="px-3 py-2 text-right tabular-nums font-medium"
-                    style={{ color: row.invoicedGrowthPct === null ? 'var(--muted-foreground)' : row.invoicedGrowthPct >= 0 ? 'var(--chart-ok, #10b981)' : 'var(--chart-bad, #ef4444)' }}
-                  >
-                    {row.invoicedGrowthPct === null ? '—' : `${signedZAR(row.invoicedDelta!)} (${row.invoicedGrowthPct >= 0 ? '+' : ''}${row.invoicedGrowthPct.toFixed(1)}%)`}
+                  <td className="px-3 py-2 text-right tabular-nums text-foreground font-medium">
+                    {formatZAR(row.invoiced)}
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums text-foreground font-medium">{formatZAR(row.received)}</td>
                   <td
                     className="px-3 py-2 text-right tabular-nums font-medium"
-                    style={{ color: row.paymentsGrowthPct === null ? 'var(--muted-foreground)' : row.paymentsGrowthPct >= 0 ? 'var(--chart-ok, #10b981)' : 'var(--chart-bad, #ef4444)' }}
+                    style={{
+                      color:
+                        row.invoicedGrowthPct === null
+                          ? 'var(--muted-foreground)'
+                          : row.invoicedGrowthPct >= 0
+                            ? 'var(--chart-ok, #10b981)'
+                            : 'var(--chart-bad, #ef4444)',
+                    }}
                   >
-                    {row.paymentsGrowthPct === null ? '—' : `${signedZAR(row.paymentsDelta!)} (${row.paymentsGrowthPct >= 0 ? '+' : ''}${row.paymentsGrowthPct.toFixed(1)}%)`}
+                    {row.invoicedGrowthPct === null
+                      ? '—'
+                      : `${signedZAR(row.invoicedDelta!)} (${row.invoicedGrowthPct >= 0 ? '+' : ''}${row.invoicedGrowthPct.toFixed(1)}%)`}
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums text-foreground font-medium">
+                    {formatZAR(row.received)}
+                  </td>
+                  <td
+                    className="px-3 py-2 text-right tabular-nums font-medium"
+                    style={{
+                      color:
+                        row.paymentsGrowthPct === null
+                          ? 'var(--muted-foreground)'
+                          : row.paymentsGrowthPct >= 0
+                            ? 'var(--chart-ok, #10b981)'
+                            : 'var(--chart-bad, #ef4444)',
+                    }}
+                  >
+                    {row.paymentsGrowthPct === null
+                      ? '—'
+                      : `${signedZAR(row.paymentsDelta!)} (${row.paymentsGrowthPct >= 0 ? '+' : ''}${row.paymentsGrowthPct.toFixed(1)}%)`}
                   </td>
                 </tr>
               ))}

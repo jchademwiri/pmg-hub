@@ -24,12 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import type { ProjectScheduleEntry } from '@pmg/db';
 import { ProjectStatusBadge } from '@/components/projects/project-status-badge';
@@ -142,7 +137,7 @@ export function ProjectDetailsClient({
         ...i,
         completedAt: i.completedAt ? new Date(i.completedAt) : null,
       })),
-    }))
+    })),
   );
 
   React.useEffect(() => {
@@ -154,7 +149,7 @@ export function ProjectDetailsClient({
           ...i,
           completedAt: i.completedAt ? new Date(i.completedAt) : null,
         })),
-      }))
+      })),
     );
   }, [initialChecklist]);
 
@@ -162,7 +157,7 @@ export function ProjectDetailsClient({
     (_completed: number, _total: number, sections: ProgressSection[]) => {
       setChecklist(sections);
     },
-    []
+    [],
   );
 
   const client = clients.find((c) => c.id === project.clientId);
@@ -305,8 +300,12 @@ export function ProjectDetailsClient({
                 <Check className="size-4 text-emerald-500" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">All tasks complete!</p>
-                <p className="text-xs text-muted-foreground">Mark as complete to unlock submission.</p>
+                <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                  All tasks complete!
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Mark as complete to unlock submission.
+                </p>
               </div>
             </div>
             <Button
@@ -328,8 +327,12 @@ export function ProjectDetailsClient({
                 <Send className="size-4 text-blue-500" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-blue-700 dark:text-blue-400">Ready to submit</p>
-                <p className="text-xs text-muted-foreground">Submit this project to the client or authority.</p>
+                <p className="text-sm font-semibold text-blue-700 dark:text-blue-400">
+                  Ready to submit
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Submit this project to the client or authority.
+                </p>
               </div>
             </div>
             <Button
@@ -351,10 +354,7 @@ export function ProjectDetailsClient({
             onProgressChange={handleProgressChange}
           />
         ) : (
-          <TaskListView
-            projectId={project.id}
-            initialSections={checklist}
-          />
+          <TaskListView projectId={project.id} initialSections={checklist} />
         )}
       </div>
 
@@ -365,12 +365,7 @@ export function ProjectDetailsClient({
             <Sparkles className="size-4 text-blue-500" />
             <CardTitle className="text-sm font-semibold">Notes & Blockers</CardTitle>
           </div>
-          <Button
-            size="sm"
-            className="gap-1.5"
-            onClick={handleSaveNotes}
-            disabled={savingNotes}
-          >
+          <Button size="sm" className="gap-1.5" onClick={handleSaveNotes} disabled={savingNotes}>
             <Save className="size-3.5" />
             {savingNotes ? 'Saving...' : 'Save Changes'}
           </Button>
@@ -390,7 +385,10 @@ export function ProjectDetailsClient({
               />
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="blockers" className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+              <label
+                htmlFor="blockers"
+                className="text-xs font-semibold text-muted-foreground flex items-center gap-1"
+              >
                 <AlertTriangle className="size-3.5 text-amber-500" /> Blockers & Delays
               </label>
               <Textarea
@@ -425,7 +423,9 @@ export function ProjectDetailsClient({
               </div>
 
               <div className="flex flex-col gap-1 pt-1 border-t border-border/10">
-                <span className="text-muted-foreground font-medium">Target Completion Date (Internal)</span>
+                <span className="text-muted-foreground font-medium">
+                  Target Completion Date (Internal)
+                </span>
                 <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
                   <Calendar className="size-3.5 text-muted-foreground" />
                   <span>{formatDate(project.targetCompletionDate)}</span>
@@ -433,7 +433,9 @@ export function ProjectDetailsClient({
               </div>
 
               <div className="flex flex-col gap-1 pt-1 border-t border-border/10">
-                <span className="text-muted-foreground font-medium">Tender Closing Date (Submission)</span>
+                <span className="text-muted-foreground font-medium">
+                  Tender Closing Date (Submission)
+                </span>
                 <div className="flex items-center gap-1.5 text-red-500 dark:text-red-400 font-semibold">
                   <Calendar className="size-3.5" />
                   <span>{formatDate(project.closingDate)}</span>
@@ -445,11 +447,15 @@ export function ProjectDetailsClient({
             <div className="grid grid-cols-2 gap-4 border-t border-border/10 pt-3">
               <div className="flex flex-col gap-0.5">
                 <span className="text-muted-foreground font-medium">Effort Days</span>
-                <span className="text-base font-bold text-foreground">{project.effortDays} days</span>
+                <span className="text-base font-bold text-foreground">
+                  {project.effortDays} days
+                </span>
               </div>
               <div className="flex flex-col gap-0.5">
                 <span className="text-muted-foreground font-medium">Buffer Days</span>
-                <span className="text-base font-bold text-foreground">{project.bufferDays} days</span>
+                <span className="text-base font-bold text-foreground">
+                  {project.bufferDays} days
+                </span>
               </div>
             </div>
 
@@ -500,7 +506,6 @@ export function ProjectDetailsClient({
           </div>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }

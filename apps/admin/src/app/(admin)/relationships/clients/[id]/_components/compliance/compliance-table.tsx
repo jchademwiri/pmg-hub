@@ -2,7 +2,14 @@
 
 import { format, differenceInCalendarDays } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
@@ -55,15 +62,17 @@ export function ComplianceTable({ clientId, records }: { clientId: string; recor
               {records.map((record) => {
                 const expiryDate = new Date(`${record.expiryDate}T00:00:00`);
                 const daysLeft = differenceInCalendarDays(expiryDate, today);
-                
-                let badgeClassName = "bg-green-500/10 text-green-700 dark:text-green-500 border-green-500/20";
+
+                let badgeClassName =
+                  'bg-green-500/10 text-green-700 dark:text-green-500 border-green-500/20';
                 let statusText = `${daysLeft} days left`;
-                
+
                 if (daysLeft < 0) {
-                  badgeClassName = "bg-red-500/10 text-red-700 dark:text-red-500 border-red-500/20";
-                  statusText = "Expired";
+                  badgeClassName = 'bg-red-500/10 text-red-700 dark:text-red-500 border-red-500/20';
+                  statusText = 'Expired';
                 } else if (daysLeft <= 30) {
-                  badgeClassName = "bg-amber-500/10 text-amber-700 dark:text-amber-500 border-amber-500/20";
+                  badgeClassName =
+                    'bg-amber-500/10 text-amber-700 dark:text-amber-500 border-amber-500/20';
                   statusText = `Expiring (${daysLeft} days)`;
                 }
 
@@ -74,15 +83,24 @@ export function ComplianceTable({ clientId, records }: { clientId: string; recor
                     </TableCell>
                     <TableCell>{format(expiryDate, 'dd MMM yyyy')}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={badgeClassName}>{statusText}</Badge>
+                      <Badge variant="outline" className={badgeClassName}>
+                        {statusText}
+                      </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-xs">{record.uploadedBy}</Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {record.uploadedBy}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <ComplianceFormDialog clientId={clientId} record={record} />
-                        <Button variant="ghost" size="icon" disabled={isPending} onClick={() => handleDelete(record.id)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={isPending}
+                          onClick={() => handleDelete(record.id)}
+                        >
                           <Trash2 className="size-4 text-destructive" />
                         </Button>
                       </div>
