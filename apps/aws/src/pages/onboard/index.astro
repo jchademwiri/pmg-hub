@@ -1,5 +1,5 @@
 ---
-import Layout from '../../layouts/Layout.astro';
+import Layout from '@/layouts/Layout.astro';
 import { actions } from 'astro:actions';
 import { getDb, leads, bridgeDatabaseEnv, eq } from '@pmg/db';
 
@@ -7,17 +7,13 @@ const result = Astro.getActionResult(actions.submitOnboarding);
 const inputErrors = result?.error && 'fields' in result.error ? (result.error.fields as Record<string, string[]>) : {};
 const isSuccess = result?.data?.success === true;
 
-// Query parameters for pre-filling and theming
 const leadId = Astro.url.searchParams.get('lead') || '';
-const divisionParam = (Astro.url.searchParams.get('division') || 'aws').toLowerCase();
 
-// Safe lead data pre-population
 let prefilled = {
 	contactName: '',
 	companyName: '',
 	email: '',
 	phone: '',
-	division: divisionParam,
 };
 
 if (leadId) {
@@ -35,328 +31,257 @@ if (leadId) {
 				companyName: leadData.companyName || '',
 				email: leadData.email || '',
 				phone: leadData.phone || '',
-				division: leadData.divisionId ? 'pmg' : divisionParam,
 			};
 		}
 	} catch (e) {
-		console.error('[onboard page] Failed to pre-fetch lead:', e);
+		console.error('[AWS onboard page] Failed to pre-fetch lead:', e);
 	}
 }
 
-// Brand theming config
-const brands: Record<
-	string,
-	{
-		name: string;
-		brandTag: string;
-		color: string;
-		colorHover: string;
-		glow: string;
-		glowStrong: string;
-		whatsapp: string;
-		portalUrl: string;
-		logoPlay: string;
-		logoHouse: string;
-		logoSub: string;
-	}
-> = {
-	pmg: {
-		name: 'Playhouse Media Group',
-		brandTag: 'Client Account Setup',
-		color: '#f97316',
-		colorHover: '#ea6c10',
-		glow: 'rgba(249, 115, 22, 0.25)',
-		glowStrong: 'rgba(249, 115, 22, 0.45)',
-		whatsapp: '27740491433',
-		portalUrl: 'https://portal.playhousemedia.co.za',
-		logoPlay: 'Play',
-		logoHouse: 'house',
-		logoSub: 'Media Group',
-	},
-	tes: {
-		name: 'Tender Edge Solutions',
-		brandTag: 'Client Compliance Onboarding',
-		color: '#f59e0b',
-		colorHover: '#d97706',
-		glow: 'rgba(245, 158, 11, 0.25)',
-		glowStrong: 'rgba(245, 158, 11, 0.45)',
-		whatsapp: '27745017094',
-		portalUrl: 'https://portal.tenderedgesolutions.co.za',
-		logoPlay: 'Tender',
-		logoHouse: 'Edge',
-		logoSub: 'Solutions',
-	},
-	aws: {
-		name: 'Apex Web Solutions',
-		brandTag: 'Digital Client Setup',
-		color: '#0ea5e9',
-		colorHover: '#0284c7',
-		glow: 'rgba(14, 165, 233, 0.25)',
-		glowStrong: 'rgba(14, 165, 233, 0.45)',
-		whatsapp: '27740491433',
-		portalUrl: 'https://portal.playhousemedia.co.za',
-		logoPlay: 'Apex',
-		logoHouse: 'Web',
-		logoSub: 'Solutions',
-	},
+const BRAND = {
+	name: 'Apex Web Solutions',
+	whatsapp: '27740491433',
+	portalUrl: 'https://portal.playhousemedia.co.za',
 };
-
-const currentBrand = brands[divisionParam] || brands.pmg;
 ---
 
 <Layout
-	title={`Client Account Setup — ${currentBrand.name}`}
-	description="Set up your client profile in seconds to activate your account, access quotes, and begin services."
+	title="Client Account Setup | Apex Web Solutions"
+	description="Complete your client profile to begin your web design and development services with Apex Web Solutions."
 	robots="noindex, nofollow"
 >
-	<!-- Architectural Grain Overlay -->
-	<div class="noise" aria-hidden="true"></div>
+	<main class="relative min-h-[calc(100vh-140px)] pt-28 md:pt-36 pb-20 px-4 sm:px-6 flex items-center justify-center overflow-hidden">
+		<!-- Subtle ambient glow matching AWS sky blue primary -->
+		<div class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[500px] h-[350px] bg-primary/10 rounded-full blur-3xl -z-10" aria-hidden="true"></div>
 
-	<!-- Ambient Atmospheric Glow Orbs -->
-	<div class="orb orb-1" aria-hidden="true"></div>
-	<div class="orb orb-2" aria-hidden="true"></div>
-	<div class="orb orb-3" aria-hidden="true"></div>
-
-	<div class="onboard-wrapper">
-		<!-- Top Branding Bar -->
-		<header class="onboard-header">
-			<a href="/" class="brand-logo" aria-label="Home">
-				<span class="logo-play">{currentBrand.logoPlay}</span><span class="logo-house">{currentBrand.logoHouse}</span>
-				<span class="logo-sub">{currentBrand.logoSub}</span>
-			</a>
-			<div class="header-badge">
-				<span class="pulse-dot"></span>
-				<span>{currentBrand.brandTag}</span>
-			</div>
-		</header>
-
-		<!-- Main Card -->
-		<main class="onboard-main">
-			<div class="onboard-card">
-				<!-- Brand Header -->
-				<div class="card-header">
-					<div class="pill-tag">
-						<span class="pill-dot"></span>
-						<span>Quick Profile Setup</span>
-					</div>
-					<h1 class="card-title">Welcome to {currentBrand.name}</h1>
-					<p class="card-desc">
-						Please confirm your details below to activate your account profile.
-					</p>
+		<div class="w-full max-w-lg bg-card text-card-foreground border border-border rounded-2xl p-6 sm:p-10 shadow-xl relative z-10">
+			<!-- Header inside card -->
+			<div class="text-center mb-8">
+				<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-3">
+					<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+					<span>Client Onboarding</span>
 				</div>
+				<h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+					Client Profile Setup
+				</h1>
+				<p class="text-muted-foreground text-sm mt-2 font-normal">
+					Please confirm your details below to activate your account profile.
+				</p>
+			</div>
 
-				{isSuccess ? (
-					<div class="success-box">
-						<div class="success-icon-wrap">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-								<polyline points="20 6 9 17 4 12"></polyline>
-							</svg>
-						</div>
-						<h2 class="success-title">Account Profile Received!</h2>
-						<p class="success-desc">
-							Thank you for confirming your information. Our team is setting up your profile and will follow up with you shortly.
-						</p>
+			{isSuccess ? (
+				<div class="py-6 text-center">
+					<div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 mb-4">
+						<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+							<polyline points="20 6 9 17 4 12"/>
+						</svg>
+					</div>
+					<h2 class="text-2xl sm:text-3xl font-bold text-foreground mb-2">Account Profile Received!</h2>
+					<p class="text-muted-foreground text-sm leading-relaxed mb-8 max-w-sm mx-auto">
+						Thank you for submitting your details. Our design & engineering team will reach out to you promptly to kick off your project.
+					</p>
 
-						<div class="success-actions">
-							<div class="success-buttons-grid">
-								<a
-									href={`https://wa.me/${currentBrand.whatsapp}?text=${encodeURIComponent(`Hi ${currentBrand.name}, I have just submitted our onboarding profile details.`)}`}
-									target="_blank"
-									rel="noopener noreferrer"
-									class="whatsapp-btn"
-								>
-									<svg viewBox="0 0 24 24" class="whatsapp-icon" fill="currentColor">
-										<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-									</svg>
-									<span>Notify on WhatsApp</span>
-								</a>
-								<a
-									href={currentBrand.portalUrl}
-									target="_blank"
-									rel="noopener noreferrer"
-									class="portal-btn"
-								>
-									<svg viewBox="0 0 24 24" class="portal-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-										<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-										<polyline points="10 17 15 12 10 7"></polyline>
-										<line x1="15" y1="12" x2="3" y2="12"></line>
-									</svg>
-									<span>Go to Client Portal</span>
-								</a>
-							</div>
-							<a href="/" class="home-link">
-								Return to Homepage
+					<div class="flex flex-col gap-3">
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+							<a
+								href={`https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Hi Apex Web Solutions, I have submitted our onboarding profile.')}`}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-white px-5 py-3.5 rounded-xl text-xs sm:text-sm font-bold shadow-md transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]"
+							>
+								<svg viewBox="0 0 24 24" class="w-4 h-4 shrink-0 fill-current">
+									<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+								</svg>
+								<span>Notify on WhatsApp</span>
+							</a>
+							<a
+								href={BRAND.portalUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="inline-flex items-center justify-center gap-2 bg-background hover:bg-muted text-foreground border border-border px-5 py-3.5 rounded-xl text-xs sm:text-sm font-bold shadow-sm transition-all duration-200 hover:-translate-y-0.5"
+							>
+								<svg viewBox="0 0 24 24" class="w-4 h-4 shrink-0 stroke-current text-primary" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+									<polyline points="10 17 15 12 10 7"></polyline>
+									<line x1="15" y1="12" x2="3" y2="12"></line>
+								</svg>
+								<span>Go to Client Portal</span>
 							</a>
 						</div>
+						<a href="/" class="text-xs text-muted-foreground hover:text-foreground transition-colors pt-2">
+							Return to Homepage
+						</a>
 					</div>
-				) : (
-					<form method="POST" action={actions.submitOnboarding} class="onboard-form" novalidate id="onboard-form">
-						<!-- Bot Honeypot -->
-						<div style="position: absolute; left: -9999px;" aria-hidden="true">
-							<input type="text" name="_company_url" tabindex="-1" autocomplete="off" />
-						</div>
-						<input type="hidden" name="_loadedAt" id="onboard-loaded-at" value="" />
-						<input type="hidden" name="leadId" value={leadId} />
-						<input type="hidden" name="division" value={divisionParam} />
+				</div>
+			) : (
+				<form method="POST" action={actions.submitOnboarding} class="space-y-4" novalidate id="aws-onboard-form">
+					<!-- Honeypot -->
+					<div style="position: absolute; left: -9999px;" aria-hidden="true">
+						<input type="text" name="_company_url" tabindex="-1" autocomplete="off" />
+					</div>
+					<input type="hidden" name="_loadedAt" id="aws-onboard-loaded-at" value="" />
+					<input type="hidden" name="leadId" value={leadId} />
 
-						<!-- Cloudflare Turnstile -->
-						{import.meta.env.TURNSTILE_SITE_KEY && (
-							<div class="turnstile-wrap">
-								<div class="cf-turnstile" data-sitekey={import.meta.env.TURNSTILE_SITE_KEY} data-action="_turnstile" data-theme="dark"></div>
-							</div>
+					<!-- Cloudflare Turnstile -->
+					{import.meta.env.TURNSTILE_SITE_KEY && (
+						<div class="flex justify-center my-2">
+							<div class="cf-turnstile" data-sitekey={import.meta.env.TURNSTILE_SITE_KEY} data-action="_turnstile" data-theme="dark"></div>
+						</div>
+					)}
+
+					{result?.error && !('fields' in result.error) && (
+						<div class="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-2.5">
+							<svg class="w-4 h-4 shrink-0 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<circle cx="12" cy="12" r="10"></circle>
+								<line x1="12" y1="8" x2="12" y2="12"></line>
+								<line x1="12" y1="16" x2="12.01" y2="16"></line>
+							</svg>
+							<span>Something went wrong submitting your profile. Please message us on WhatsApp.</span>
+						</div>
+					)}
+
+					<!-- Field: Contact Name -->
+					<div class="space-y-1.5 text-left">
+						<label for="contactName" class="text-xs font-semibold text-foreground/90 uppercase tracking-wider flex items-center gap-1">
+							<span>Your Full Name</span>
+							<span class="text-primary">*</span>
+						</label>
+						<input
+							type="text"
+							id="contactName"
+							name="contactName"
+							required
+							autocomplete="name"
+							placeholder="e.g. Jacob Dlamini"
+							value={prefilled.contactName}
+							class="w-full bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none transition-all"
+						/>
+						{inputErrors.contactName?.[0] && (
+							<p class="text-red-400 text-xs">{inputErrors.contactName[0]}</p>
 						)}
+					</div>
 
-						{result?.error && !('fields' in result.error) && (
-							<div class="form-alert error-alert">
-								<svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<circle cx="12" cy="12" r="10"></circle>
-									<line x1="12" y1="8" x2="12" y2="12"></line>
-									<line x1="12" y1="16" x2="12.01" y2="16"></line>
-								</svg>
-								<span>Something went wrong submitting your profile. Please try again or reach out on WhatsApp.</span>
-							</div>
+					<!-- Field: Company Name -->
+					<div class="space-y-1.5 text-left">
+						<label for="companyName" class="text-xs font-semibold text-foreground/90 uppercase tracking-wider flex items-center gap-1">
+							<span>Business / Brand Name</span>
+							<span class="text-primary">*</span>
+						</label>
+						<input
+							type="text"
+							id="companyName"
+							name="companyName"
+							required
+							autocomplete="organization"
+							placeholder="e.g. Apex Enterprises (Pty) Ltd"
+							value={prefilled.companyName}
+							class="w-full bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none transition-all"
+						/>
+						{inputErrors.companyName?.[0] && (
+							<p class="text-red-400 text-xs">{inputErrors.companyName[0]}</p>
 						)}
+					</div>
 
-						<!-- Field: Contact Name -->
-						<div class="input-group">
-							<label for="contactName">
-								<span>Your Full Name</span>
-								<span class="required-star">*</span>
+					<!-- Field: Email Address -->
+					<div class="space-y-1.5 text-left">
+						<label for="email" class="text-xs font-semibold text-foreground/90 uppercase tracking-wider flex items-center gap-1">
+							<span>Email Address</span>
+							<span class="text-primary">*</span>
+						</label>
+						<input
+							type="email"
+							id="email"
+							name="email"
+							required
+							autocomplete="email"
+							placeholder="e.g. jacob@example.co.za"
+							value={prefilled.email}
+							class="w-full bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none transition-all"
+						/>
+						{inputErrors.email?.[0] && (
+							<p class="text-red-400 text-xs">{inputErrors.email[0]}</p>
+						)}
+					</div>
+
+					<!-- Field: Phone / WhatsApp -->
+					<div class="space-y-1.5 text-left">
+						<label for="phone" class="text-xs font-semibold text-foreground/90 uppercase tracking-wider flex items-center gap-1">
+							<span>Phone / WhatsApp Number</span>
+							<span class="text-primary">*</span>
+						</label>
+						<input
+							type="tel"
+							id="phone"
+							name="phone"
+							required
+							autocomplete="tel"
+							placeholder="e.g. 082 123 4567"
+							value={prefilled.phone}
+							class="w-full bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none transition-all"
+						/>
+						{inputErrors.phone?.[0] && (
+							<p class="text-red-400 text-xs">{inputErrors.phone[0]}</p>
+						)}
+					</div>
+
+					<!-- Field: CIPC Registration Number (Optional) -->
+					<div class="space-y-1.5 text-left">
+						<div class="flex items-center justify-between">
+							<label for="registrationNumber" class="text-xs font-semibold text-foreground/90 uppercase tracking-wider">
+								<span>CIPC Registration No.</span>
 							</label>
-							<input
-								type="text"
-								id="contactName"
-								name="contactName"
-								required
-								autocomplete="name"
-								placeholder="e.g. Jacob Dlamini"
-								value={prefilled.contactName}
-								class:list={[{ 'has-error': !!inputErrors.contactName }]}
-							/>
-							{inputErrors.contactName?.[0] && (
-								<span class="error-msg">{inputErrors.contactName[0]}</span>
-							)}
+							<span class="text-[10px] uppercase tracking-wider text-muted-foreground/60">Optional</span>
 						</div>
+						<input
+							type="text"
+							id="registrationNumber"
+							name="registrationNumber"
+							placeholder="e.g. 2024/123456/07"
+							class="w-full bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-3 text-sm text-foreground font-mono placeholder:text-muted-foreground/40 outline-none transition-all"
+						/>
+					</div>
 
-						<!-- Field: Company Name -->
-						<div class="input-group">
-							<label for="companyName">
-								<span>Business / Company Name</span>
-								<span class="required-star">*</span>
-							</label>
-							<input
-								type="text"
-								id="companyName"
-								name="companyName"
-								required
-								autocomplete="organization"
-								placeholder="e.g. Apex Enterprises (Pty) Ltd"
-								value={prefilled.companyName}
-								class:list={[{ 'has-error': !!inputErrors.companyName }]}
-							/>
-							{inputErrors.companyName?.[0] && (
-								<span class="error-msg">{inputErrors.companyName[0]}</span>
-							)}
-						</div>
+					<!-- Submit Button -->
+					<div class="pt-2">
+						<button
+							type="submit"
+							id="aws-onboard-submit-btn"
+							class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm tracking-wide py-3.5 px-6 rounded-xl shadow-lg shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+						>
+							<span>Establish Digital Profile</span>
+							<svg class="w-4 h-4 shrink-0 transition-transform group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+								<line x1="5" y1="12" x2="19" y2="12"></line>
+								<polyline points="12 5 19 12 12 19"></polyline>
+							</svg>
+						</button>
+					</div>
+				</form>
+			)}
 
-						<!-- Field: Email Address -->
-						<div class="input-group">
-							<label for="email">
-								<span>Email Address</span>
-								<span class="required-star">*</span>
-							</label>
-							<input
-								type="email"
-								id="email"
-								name="email"
-								required
-								autocomplete="email"
-								placeholder="e.g. jacob@example.co.za"
-								value={prefilled.email}
-								class:list={[{ 'has-error': !!inputErrors.email }]}
-							/>
-							{inputErrors.email?.[0] && (
-								<span class="error-msg">{inputErrors.email[0]}</span>
-							)}
-						</div>
-
-						<!-- Field: Phone / WhatsApp -->
-						<div class="input-group">
-							<label for="phone">
-								<span>Phone / WhatsApp Number</span>
-								<span class="required-star">*</span>
-							</label>
-							<input
-								type="tel"
-								id="phone"
-								name="phone"
-								required
-								autocomplete="tel"
-								placeholder="e.g. 082 123 4567"
-								value={prefilled.phone}
-								class:list={[{ 'has-error': !!inputErrors.phone }]}
-							/>
-							{inputErrors.phone?.[0] && (
-								<span class="error-msg">{inputErrors.phone[0]}</span>
-							)}
-						</div>
-
-						<!-- Field: CIPC Registration Number (Optional) -->
-						<div class="input-group">
-							<div class="label-row">
-								<label for="registrationNumber">
-									<span>CIPC Registration No.</span>
-								</label>
-								<span class="optional-badge">Optional</span>
-							</div>
-							<input
-								type="text"
-								id="registrationNumber"
-								name="registrationNumber"
-								placeholder="e.g. 2024/123456/07"
-								class="font-mono-input"
-							/>
-						</div>
-
-						<!-- Submit Button -->
-						<div class="btn-wrap">
-							<button type="submit" id="onboard-submit-btn" class="primary-submit-btn">
-								<span class="btn-text">Establish Client Profile</span>
-								<svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-									<line x1="5" y1="12" x2="19" y2="12"></line>
-									<polyline points="12 5 19 12 12 19"></polyline>
-								</svg>
-							</button>
-						</div>
-					</form>
-				)}
-			</div>
-
-			<!-- Footer Security Note -->
-			<div class="security-footer">
-				<svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+			<div class="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted-foreground/70 text-center">
+				<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 					<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
 					<path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
 				</svg>
-				<span>Protected by Playhouse Media Group secure enterprise protocols.</span>
+				<span>Protected by Apex Web Solutions digital infrastructure</span>
 			</div>
-		</main>
-	</div>
+		</div>
+	</main>
 
 	<script>
-		const loadedAtInput = document.getElementById('onboard-loaded-at') as HTMLInputElement | null;
+		const loadedAtInput = document.getElementById('aws-onboard-loaded-at') as HTMLInputElement | null;
 		if (loadedAtInput) {
 			loadedAtInput.value = Date.now().toString();
 		}
 
-		const form = document.getElementById('onboard-form') as HTMLFormElement | null;
-		const submitBtn = document.getElementById('onboard-submit-btn') as HTMLButtonElement | null;
+		const form = document.getElementById('aws-onboard-form') as HTMLFormElement | null;
+		const submitBtn = document.getElementById('aws-onboard-submit-btn') as HTMLButtonElement | null;
 		if (form && submitBtn) {
 			form.addEventListener('submit', () => {
 				submitBtn.disabled = true;
-				submitBtn.classList.add('loading');
+				submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
 				submitBtn.innerHTML = `
-					<svg class="spinner-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+					<svg class="w-4 h-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
 						<circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"></circle>
 					</svg>
 					<span>Submitting Profile...</span>
@@ -365,580 +290,3 @@ const currentBrand = brands[divisionParam] || brands.pmg;
 		}
 	</script>
 </Layout>
-
-<style define:vars={{
-	brandColor: currentBrand.color,
-	brandColorHover: currentBrand.colorHover,
-	brandGlow: currentBrand.glow,
-	brandGlowStrong: currentBrand.glowStrong,
-}}>
-	/* Core Layout Tokens */
-	:root {
-		--navy-bg: #070a10;
-		--navy-surface: #0e1522;
-		--navy-card: rgba(14, 21, 34, 0.78);
-		--text-main: #f4f4f2;
-		--text-muted: rgba(244, 244, 242, 0.6);
-		--text-faint: rgba(244, 244, 242, 0.35);
-		--card-border: rgba(244, 244, 242, 0.08);
-		--card-border-hover: rgba(244, 244, 242, 0.16);
-		--input-bg: rgba(7, 10, 16, 0.6);
-		--input-border: rgba(244, 244, 242, 0.1);
-	}
-
-	/* Atmospheric Noise Texture */
-	.noise {
-		position: fixed;
-		inset: 0;
-		pointer-events: none;
-		z-index: 1;
-		opacity: 0.03;
-		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-	}
-
-	/* Glowing Ambient Orbs */
-	.orb {
-		position: fixed;
-		border-radius: 50%;
-		filter: blur(140px);
-		pointer-events: none;
-		z-index: 1;
-	}
-
-	.orb-1 {
-		top: -150px;
-		left: -100px;
-		width: 450px;
-		height: 450px;
-		background: radial-gradient(circle, var(--brandGlow) 0%, transparent 70%);
-	}
-
-	.orb-2 {
-		bottom: -150px;
-		right: -100px;
-		width: 500px;
-		height: 500px;
-		background: radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 70%);
-	}
-
-	.orb-3 {
-		top: 40%;
-		left: 60%;
-		width: 350px;
-		height: 350px;
-		background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
-	}
-
-	/* Page Container */
-	.onboard-wrapper {
-		position: relative;
-		z-index: 2;
-		min-height: 100vh;
-		display: flex;
-		flex-direction: column;
-		background: var(--navy-bg);
-		color: var(--text-main);
-		font-family: 'DM Sans', sans-serif;
-	}
-
-	/* Top Header */
-	.onboard-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 24px 32px;
-		max-width: 1200px;
-		width: 100%;
-		margin: 0 auto;
-	}
-
-	.brand-logo {
-		text-decoration: none;
-		display: flex;
-		align-items: baseline;
-		font-family: 'Outfit', sans-serif;
-		font-weight: 800;
-		font-size: 20px;
-		letter-spacing: -0.02em;
-	}
-
-	.logo-play {
-		color: var(--brandColor);
-	}
-
-	.logo-house {
-		color: #ffffff;
-	}
-
-	.logo-sub {
-		color: var(--text-faint);
-		font-weight: 400;
-		font-size: 11.5px;
-		margin-left: 8px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-	}
-
-	.header-badge {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		padding: 6px 14px;
-		border-radius: 20px;
-		background: rgba(244, 244, 242, 0.04);
-		border: 1px solid var(--card-border);
-		font-size: 11.5px;
-		font-weight: 600;
-		color: var(--text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-	}
-
-	.pulse-dot {
-		width: 6px;
-		height: 6px;
-		border-radius: 50%;
-		background: var(--brandColor);
-		box-shadow: 0 0 8px var(--brandColor);
-		animation: pulseGlow 2s infinite ease-in-out;
-	}
-
-	@keyframes pulseGlow {
-		0%, 100% { transform: scale(1); opacity: 1; }
-		50% { transform: scale(1.4); opacity: 0.6; }
-	}
-
-	/* Main Content Area */
-	.onboard-main {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: 20px 20px 60px 20px;
-	}
-
-	/* Glassmorphism Card */
-	.onboard-card {
-		background: var(--navy-card);
-		backdrop-filter: blur(20px);
-		-webkit-backdrop-filter: blur(20px);
-		border: 1px solid var(--card-border);
-		border-radius: 24px;
-		padding: 44px 40px;
-		max-width: 480px;
-		width: 100%;
-		box-shadow:
-			0 24px 60px -12px rgba(0, 0, 0, 0.7),
-			0 0 50px -10px var(--brandGlow),
-			inset 0 1px 1px rgba(255, 255, 255, 0.08);
-		position: relative;
-		overflow: hidden;
-	}
-
-	.onboard-card::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		height: 2px;
-		background: linear-gradient(90deg, transparent, var(--brandColor), transparent);
-	}
-
-	/* Card Header */
-	.card-header {
-		text-align: center;
-		margin-bottom: 32px;
-	}
-
-	.pill-tag {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
-		padding: 4px 12px;
-		border-radius: 12px;
-		background: rgba(244, 244, 242, 0.04);
-		border: 1px solid var(--card-border);
-		font-size: 11px;
-		font-weight: 700;
-		color: var(--brandColor);
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		margin-bottom: 12px;
-	}
-
-	.pill-dot {
-		width: 5px;
-		height: 5px;
-		border-radius: 50%;
-		background: var(--brandColor);
-	}
-
-	.card-title {
-		font-family: 'Outfit', sans-serif;
-		font-size: 26px;
-		font-weight: 800;
-		color: #ffffff;
-		margin: 0 0 10px 0;
-		letter-spacing: -0.02em;
-		line-height: 1.2;
-	}
-
-	.card-desc {
-		font-size: 13.5px;
-		color: var(--text-muted);
-		line-height: 1.55;
-		margin: 0;
-		font-weight: 300;
-	}
-
-	/* Form & Input Styles */
-	.onboard-form {
-		display: flex;
-		flex-direction: column;
-		gap: 20px;
-	}
-
-	.input-group {
-		display: flex;
-		flex-direction: column;
-		gap: 6px;
-		text-align: left;
-	}
-
-	.label-row {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-
-	.input-group label {
-		font-size: 11px;
-		font-weight: 700;
-		color: rgba(244, 244, 242, 0.7);
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		display: flex;
-		align-items: center;
-		gap: 4px;
-	}
-
-	.required-star {
-		color: var(--brandColor);
-	}
-
-	.optional-badge {
-		font-size: 10px;
-		font-weight: 600;
-		color: var(--text-faint);
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-	}
-
-	.input-group input {
-		background: var(--input-bg);
-		border: 1px solid var(--input-border);
-		border-radius: 12px;
-		padding: 13px 16px;
-		color: #ffffff;
-		font-family: 'DM Sans', sans-serif;
-		font-size: 14px;
-		outline: none;
-		transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-		width: 100%;
-		box-sizing: border-box;
-	}
-
-	.input-group input::placeholder {
-		color: rgba(244, 244, 242, 0.25);
-		font-weight: 300;
-	}
-
-	.input-group input:hover {
-		border-color: var(--card-border-hover);
-		background: rgba(7, 10, 16, 0.8);
-	}
-
-	.input-group input:focus {
-		border-color: var(--brandColor);
-		background: rgba(10, 14, 22, 0.95);
-		box-shadow: 0 0 0 3px var(--brandGlow);
-	}
-
-	.input-group input.has-error {
-		border-color: #ef4444;
-		background: rgba(239, 68, 68, 0.05);
-	}
-
-	.font-mono-input {
-		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
-		letter-spacing: 0.02em;
-	}
-
-	.error-msg {
-		font-size: 11px;
-		color: #f87171;
-		margin-top: 2px;
-	}
-
-	.form-alert {
-		padding: 12px 16px;
-		border-radius: 12px;
-		font-size: 12.5px;
-		line-height: 1.45;
-		display: flex;
-		align-items: center;
-		gap: 10px;
-	}
-
-	.error-alert {
-		background: rgba(239, 68, 68, 0.1);
-		border: 1px solid rgba(239, 68, 68, 0.25);
-		color: #fca5a5;
-	}
-
-	.alert-icon {
-		width: 18px;
-		height: 18px;
-		flex-shrink: 0;
-	}
-
-	.turnstile-wrap {
-		display: flex;
-		justify-content: center;
-		margin: 4px 0;
-	}
-
-	/* Submit Button */
-	.btn-wrap {
-		margin-top: 8px;
-	}
-
-	.primary-submit-btn {
-		width: 100%;
-		background: var(--brandColor);
-		color: #ffffff;
-		font-family: 'Outfit', sans-serif;
-		font-weight: 700;
-		font-size: 14.5px;
-		letter-spacing: 0.02em;
-		padding: 15px 24px;
-		border-radius: 12px;
-		border: none;
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 10px;
-		box-shadow: 0 4px 20px var(--brandGlow);
-		transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-	}
-
-	.primary-submit-btn:hover {
-		background: var(--brandColorHover);
-		transform: translateY(-2px);
-		box-shadow: 0 8px 30px var(--brandGlowStrong);
-	}
-
-	.primary-submit-btn:active {
-		transform: scale(0.98);
-	}
-
-	.primary-submit-btn.loading {
-		opacity: 0.75;
-		cursor: not-allowed;
-		transform: none;
-	}
-
-	.btn-arrow {
-		width: 18px;
-		height: 18px;
-		flex-shrink: 0;
-		transition: transform 0.2s ease;
-	}
-
-	.primary-submit-btn:hover .btn-arrow {
-		transform: translateX(3px);
-	}
-
-	.spinner-icon {
-		width: 18px;
-		height: 18px;
-		animation: spin 0.8s linear infinite;
-	}
-
-	@keyframes spin {
-		100% { transform: rotate(360deg); }
-	}
-
-	/* Success State Screen */
-	.success-box {
-		text-align: center;
-		padding: 20px 0;
-	}
-
-	.success-icon-wrap {
-		width: 56px;
-		height: 56px;
-		border-radius: 50%;
-		background: rgba(16, 185, 129, 0.12);
-		border: 1px solid rgba(16, 185, 129, 0.3);
-		color: #34d399;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		margin: 0 auto 20px auto;
-	}
-
-	.success-icon-wrap svg {
-		width: 26px;
-		height: 26px;
-	}
-
-	.success-title {
-		font-family: 'Outfit', sans-serif;
-		font-size: 22px;
-		font-weight: 800;
-		color: #ffffff;
-		margin: 0 0 10px 0;
-	}
-
-	.success-desc {
-		font-size: 13.5px;
-		color: var(--text-muted);
-		line-height: 1.6;
-		margin: 0 0 28px 0;
-		font-weight: 300;
-	}
-
-	.success-actions {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-	}
-
-	.success-buttons-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 10px;
-	}
-
-	.whatsapp-btn {
-		width: 100%;
-		background: #25D366;
-		color: #ffffff;
-		font-family: 'Outfit', sans-serif;
-		font-weight: 700;
-		font-size: 13.5px;
-		padding: 14px 16px;
-		border-radius: 12px;
-		text-decoration: none;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 8px;
-		box-shadow: 0 4px 16px rgba(37, 211, 102, 0.25);
-		transition: all 0.2s ease;
-		box-sizing: border-box;
-		white-space: nowrap;
-	}
-
-	.whatsapp-btn:hover {
-		background: #20bd5a;
-		transform: translateY(-1px);
-		box-shadow: 0 6px 24px rgba(37, 211, 102, 0.35);
-	}
-
-	.whatsapp-icon {
-		width: 18px;
-		height: 18px;
-		flex-shrink: 0;
-	}
-
-	.portal-btn {
-		width: 100%;
-		background: rgba(244, 244, 242, 0.08);
-		border: 1px solid var(--card-border);
-		color: #ffffff;
-		font-family: 'Outfit', sans-serif;
-		font-weight: 700;
-		font-size: 13.5px;
-		padding: 14px 16px;
-		border-radius: 12px;
-		text-decoration: none;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 8px;
-		transition: all 0.2s ease;
-		box-sizing: border-box;
-		white-space: nowrap;
-	}
-
-	.portal-btn:hover {
-		background: rgba(244, 244, 242, 0.15);
-		border-color: var(--card-border-hover);
-		transform: translateY(-1px);
-	}
-
-	.portal-icon {
-		width: 17px;
-		height: 17px;
-		flex-shrink: 0;
-		color: var(--brandColor);
-	}
-
-	.home-link {
-		font-size: 12.5px;
-		color: var(--text-faint);
-		text-decoration: none;
-		padding: 8px 0;
-		transition: color 0.2s ease;
-	}
-
-	.home-link:hover {
-		color: #ffffff;
-	}
-
-	/* Security Footer Note */
-	.security-footer {
-		margin-top: 24px;
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		font-size: 11.5px;
-		color: var(--text-faint);
-	}
-
-	.lock-icon {
-		width: 13px;
-		height: 13px;
-		flex-shrink: 0;
-	}
-
-	/* Mobile Adaptations */
-	@media (max-width: 600px) {
-		.onboard-header {
-			padding: 18px 20px;
-		}
-
-		.onboard-card {
-			padding: 32px 24px;
-			border-radius: 20px;
-		}
-
-		.card-title {
-			font-size: 22px;
-		}
-
-		.header-badge {
-			display: none;
-		}
-
-		.success-buttons-grid {
-			grid-template-columns: 1fr;
-		}
-	}
-</style>
-
