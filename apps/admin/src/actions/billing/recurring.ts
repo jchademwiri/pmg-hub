@@ -22,7 +22,7 @@ import {
 } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { postInvoiceIssueJournalEntry, postExpenseJournalEntry } from '@/lib/accounting/posting';
-import { getSASTParts, getSASTToday, fmtDate, fmtDateLong } from '@/lib/format';
+import { getSASTParts, getSASTToday, fmtDate, fmtDateLong, getEndOfMonth } from '@/lib/format';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { generateBillingPdf } from '@/lib/server-billing-pdf';
 import { getPortalBaseUrl } from '@/lib/portal-url';
@@ -624,7 +624,7 @@ export async function triggerRecurringBillingRun(
       if (lineItems.length === 0) continue;
 
       const invoiceDate = todayStr;
-      const dueDate = addDays(invoiceDate, schedule.dueDaysOffset || 6);
+      const dueDate = getEndOfMonth(invoiceDate);
       const billingPeriod = invoiceDate.slice(0, 7); // YYYY-MM
 
       // Guard against double-generation for the same schedule + month (e.g. a

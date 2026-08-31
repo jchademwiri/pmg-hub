@@ -48,6 +48,7 @@ export type PendingReminderClient = {
   email: string | null;
   divisionId: string;
   divisionName: string;
+  isRetainer: boolean;
   outstandingBalance: number;
   invoiceCount: number;
   headlineDocumentNumber: string;
@@ -112,6 +113,7 @@ async function getPendingReminderClients(
       clientName: clients.name,
       businessName: clients.businessName,
       email: clients.email,
+      isRetainer: clients.isRetainer,
       divisionName: divisions.name,
       allocatedAmount: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)`,
     })
@@ -145,6 +147,7 @@ async function getPendingReminderClients(
       clients.name,
       clients.businessName,
       clients.email,
+      clients.isRetainer,
       divisions.name,
     );
 
@@ -185,6 +188,7 @@ async function getPendingReminderClients(
       email: row.email,
       divisionId: row.divisionId,
       divisionName: row.divisionName,
+      isRetainer: Boolean(row.isRetainer),
       outstandingBalance: outstanding,
       invoiceCount: 1,
       headlineDocumentNumber: row.documentNumber,
