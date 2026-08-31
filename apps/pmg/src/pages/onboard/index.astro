@@ -4,7 +4,7 @@ import { actions } from 'astro:actions';
 import { getDb, leads, bridgeDatabaseEnv, eq } from '@pmg/db';
 
 const result = Astro.getActionResult(actions.submitOnboarding);
-const inputErrors = result?.error && 'fields' in result.error ? result.error.fields : {};
+const inputErrors = result?.error && 'fields' in result.error ? (result.error.fields as Record<string, string[]>) : {};
 const isSuccess = result?.data?.success === true;
 
 // Query parameters for pre-filling and theming
@@ -44,27 +44,56 @@ if (leadId) {
 }
 
 // Brand theming config
-const brands: Record<string, { name: string; tag: string; color: string; accent: string; whatsapp: string }> = {
+const brands: Record<
+	string,
+	{
+		name: string;
+		brandTag: string;
+		color: string;
+		colorHover: string;
+		glow: string;
+		glowStrong: string;
+		whatsapp: string;
+		logoPlay: string;
+		logoHouse: string;
+		logoSub: string;
+	}
+> = {
 	pmg: {
 		name: 'Playhouse Media Group',
-		tag: 'Client Account Setup',
+		brandTag: 'Client Account Setup',
 		color: '#f97316',
-		accent: 'from-orange-500/20 to-transparent',
+		colorHover: '#ea6c10',
+		glow: 'rgba(249, 115, 22, 0.25)',
+		glowStrong: 'rgba(249, 115, 22, 0.45)',
 		whatsapp: '27740491433',
+		logoPlay: 'Play',
+		logoHouse: 'house',
+		logoSub: 'Media Group',
 	},
 	tes: {
 		name: 'Tender Edge Solutions',
-		tag: 'Client Compliance Onboarding',
-		color: '#c9a227',
-		accent: 'from-amber-500/20 to-transparent',
+		brandTag: 'Client Compliance Onboarding',
+		color: '#f59e0b',
+		colorHover: '#d97706',
+		glow: 'rgba(245, 158, 11, 0.25)',
+		glowStrong: 'rgba(245, 158, 11, 0.45)',
 		whatsapp: '27745017094',
+		logoPlay: 'Tender',
+		logoHouse: 'Edge',
+		logoSub: 'Solutions',
 	},
 	aws: {
 		name: 'Apex Web Solutions',
-		tag: 'Digital Client Setup',
+		brandTag: 'Digital Client Setup',
 		color: '#0ea5e9',
-		accent: 'from-sky-500/20 to-transparent',
+		colorHover: '#0284c7',
+		glow: 'rgba(14, 165, 233, 0.25)',
+		glowStrong: 'rgba(14, 165, 233, 0.45)',
 		whatsapp: '27740491433',
+		logoPlay: 'Apex',
+		logoHouse: 'Web',
+		logoSub: 'Solutions',
 	},
 };
 
@@ -73,64 +102,77 @@ const currentBrand = brands[divisionParam] || brands.pmg;
 
 <Layout
 	title={`Client Account Setup — ${currentBrand.name}`}
-	description="Set up your client profile in 10 seconds to begin your services and access your projects and quotes."
+	description="Set up your client profile in seconds to activate your account, access quotes, and begin services."
 	robots="noindex, nofollow"
 >
-	<main class="min-h-screen bg-[#07090e] text-slate-100 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-		<div class="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-orange-500/10 blur-[120px] pointer-events-none"></div>
-		<div class="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-blue-500/10 blur-[120px] pointer-events-none"></div>
+	<!-- Architectural Grain Overlay -->
+	<div class="noise" aria-hidden="true"></div>
 
-		<div class="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-			<div class="text-center mb-8">
-				<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-xs font-semibold text-orange-400 tracking-wider uppercase mb-3">
-					<span class="size-1.5 rounded-full bg-orange-400 animate-pulse"></span>
-					{currentBrand.tag}
-				</div>
-				<h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-					Welcome to {currentBrand.name}
-				</h1>
-				<p class="text-xs sm:text-sm text-slate-400 mt-2 max-w-sm mx-auto leading-relaxed">
-					Please confirm your business details below so we can establish your account profile.
-				</p>
+	<!-- Ambient Atmospheric Glow Orbs -->
+	<div class="orb orb-1" aria-hidden="true"></div>
+	<div class="orb orb-2" aria-hidden="true"></div>
+	<div class="orb orb-3" aria-hidden="true"></div>
+
+	<div class="onboard-wrapper">
+		<!-- Top Branding Bar -->
+		<header class="onboard-header">
+			<a href="/" class="brand-logo" aria-label="Home">
+				<span class="logo-play">{currentBrand.logoPlay}</span><span class="logo-house">{currentBrand.logoHouse}</span>
+				<span class="logo-sub">{currentBrand.logoSub}</span>
+			</a>
+			<div class="header-badge">
+				<span class="pulse-dot"></span>
+				<span>{currentBrand.brandTag}</span>
 			</div>
+		</header>
 
-			<div class="bg-[#0e121d]/90 backdrop-blur-xl border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-				<div class={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${currentBrand.accent}`}></div>
+		<!-- Main Card -->
+		<main class="onboard-main">
+			<div class="onboard-card">
+				<!-- Brand Header -->
+				<div class="card-header">
+					<div class="pill-tag">
+						<span class="pill-dot"></span>
+						<span>Quick Profile Setup</span>
+					</div>
+					<h1 class="card-title">Welcome to {currentBrand.name}</h1>
+					<p class="card-desc">
+						Please confirm your core business details below so we can establish your account profile and prepare your service documentation.
+					</p>
+				</div>
 
 				{isSuccess ? (
-					<div class="text-center py-6 space-y-4">
-						<div class="size-14 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto mb-2">
-							<svg xmlns="http://www.w3.org/2000/svg" class="size-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+					<div class="success-box">
+						<div class="success-icon-wrap">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+								<polyline points="20 6 9 17 4 12"></polyline>
 							</svg>
 						</div>
-						<h2 class="text-xl font-bold text-white">Account Profile Received!</h2>
-						<p class="text-xs text-slate-300 leading-relaxed max-w-xs mx-auto">
-							Thank you for submitting your details. Our team is setting up your profile and will be in touch shortly.
+						<h2 class="success-title">Account Profile Received!</h2>
+						<p class="success-desc">
+							Thank you for confirming your information. Our operations team is creating your client record and will follow up with you promptly.
 						</p>
 
-						<div class="pt-4 flex flex-col gap-2.5">
+						<div class="success-actions">
 							<a
-								href={`https://wa.me/${currentBrand.whatsapp}?text=${encodeURIComponent(`Hi ${currentBrand.name}, I have just submitted our onboarding profile.`)}`}
+								href={`https://wa.me/${currentBrand.whatsapp}?text=${encodeURIComponent(`Hi ${currentBrand.name}, I have just submitted our onboarding profile details.`)}`}
 								target="_blank"
 								rel="noopener noreferrer"
-								class="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-bold text-white bg-[#25D366] hover:bg-[#20bd5a] transition-all shadow-md active:scale-[0.99]"
+								class="whatsapp-btn"
 							>
-								<svg class="size-4 fill-current" viewBox="0 0 24 24">
+								<svg viewBox="0 0 24 24" class="whatsapp-icon" fill="currentColor">
 									<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
 								</svg>
-								<span>Notify on WhatsApp</span>
+								<span>Connect on WhatsApp</span>
 							</a>
-							<a
-								href="/"
-								class="text-xs text-slate-400 hover:text-white transition-colors py-2 text-center"
-							>
+							<a href="/" class="home-link">
 								Return to Homepage
 							</a>
 						</div>
 					</div>
 				) : (
-					<form method="POST" action={actions.submitOnboarding} class="space-y-4" novalidate id="onboard-form">
+					<form method="POST" action={actions.submitOnboarding} class="onboard-form" novalidate id="onboard-form">
+						<!-- Bot Honeypot -->
 						<div style="position: absolute; left: -9999px;" aria-hidden="true">
 							<input type="text" name="_company_url" tabindex="-1" autocomplete="off" />
 						</div>
@@ -138,22 +180,29 @@ const currentBrand = brands[divisionParam] || brands.pmg;
 						<input type="hidden" name="leadId" value={leadId} />
 						<input type="hidden" name="division" value={divisionParam} />
 
+						<!-- Cloudflare Turnstile -->
 						{import.meta.env.TURNSTILE_SITE_KEY && (
-							<div class="cf-turnstile" data-sitekey={import.meta.env.TURNSTILE_SITE_KEY} data-action="_turnstile" data-theme="dark"></div>
-						)}
-
-						{result?.error && !('fields' in result.error) && (
-							<div class="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2">
-								<svg xmlns="http://www.w3.org/2000/svg" class="size-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-								</svg>
-								<span>Something went wrong. Please try again or message us directly on WhatsApp.</span>
+							<div class="turnstile-wrap">
+								<div class="cf-turnstile" data-sitekey={import.meta.env.TURNSTILE_SITE_KEY} data-action="_turnstile" data-theme="dark"></div>
 							</div>
 						)}
 
-						<div>
-							<label for="contactName" class="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-								Your Full Name <span class="text-orange-400">*</span>
+						{result?.error && !('fields' in result.error) && (
+							<div class="form-alert error-alert">
+								<svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<circle cx="12" cy="12" r="10"></circle>
+									<line x1="12" y1="8" x2="12" y2="12"></line>
+									<line x1="12" y1="16" x2="12.01" y2="16"></line>
+								</svg>
+								<span>Something went wrong submitting your profile. Please try again or reach out on WhatsApp.</span>
+							</div>
+						)}
+
+						<!-- Field: Contact Name -->
+						<div class="input-group">
+							<label for="contactName">
+								<span>Your Full Name</span>
+								<span class="required-star">*</span>
 							</label>
 							<input
 								type="text"
@@ -163,16 +212,18 @@ const currentBrand = brands[divisionParam] || brands.pmg;
 								autocomplete="name"
 								placeholder="e.g. Jacob Dlamini"
 								value={prefilled.contactName}
-								class="w-full rounded-xl bg-white/[0.04] border border-white/10 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all focus:border-orange-500 focus:bg-white/[0.07] focus:ring-2 focus:ring-orange-500/20"
+								class:list={[{ 'has-error': !!inputErrors.contactName }]}
 							/>
 							{inputErrors.contactName?.[0] && (
-								<p class="text-red-400 text-[11px] mt-1">{inputErrors.contactName[0]}</p>
+								<span class="error-msg">{inputErrors.contactName[0]}</span>
 							)}
 						</div>
 
-						<div>
-							<label for="companyName" class="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-								Business / Company Name <span class="text-orange-400">*</span>
+						<!-- Field: Company Name -->
+						<div class="input-group">
+							<label for="companyName">
+								<span>Business / Company Name</span>
+								<span class="required-star">*</span>
 							</label>
 							<input
 								type="text"
@@ -180,18 +231,20 @@ const currentBrand = brands[divisionParam] || brands.pmg;
 								name="companyName"
 								required
 								autocomplete="organization"
-								placeholder="e.g. Apex Enterprises Pty Ltd"
+								placeholder="e.g. Apex Enterprises (Pty) Ltd"
 								value={prefilled.companyName}
-								class="w-full rounded-xl bg-white/[0.04] border border-white/10 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all focus:border-orange-500 focus:bg-white/[0.07] focus:ring-2 focus:ring-orange-500/20"
+								class:list={[{ 'has-error': !!inputErrors.companyName }]}
 							/>
 							{inputErrors.companyName?.[0] && (
-								<p class="text-red-400 text-[11px] mt-1">{inputErrors.companyName[0]}</p>
+								<span class="error-msg">{inputErrors.companyName[0]}</span>
 							)}
 						</div>
 
-						<div>
-							<label for="email" class="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-								Email Address <span class="text-orange-400">*</span>
+						<!-- Field: Email Address -->
+						<div class="input-group">
+							<label for="email">
+								<span>Email Address</span>
+								<span class="required-star">*</span>
 							</label>
 							<input
 								type="email"
@@ -201,16 +254,18 @@ const currentBrand = brands[divisionParam] || brands.pmg;
 								autocomplete="email"
 								placeholder="e.g. jacob@example.co.za"
 								value={prefilled.email}
-								class="w-full rounded-xl bg-white/[0.04] border border-white/10 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all focus:border-orange-500 focus:bg-white/[0.07] focus:ring-2 focus:ring-orange-500/20"
+								class:list={[{ 'has-error': !!inputErrors.email }]}
 							/>
 							{inputErrors.email?.[0] && (
-								<p class="text-red-400 text-[11px] mt-1">{inputErrors.email[0]}</p>
+								<span class="error-msg">{inputErrors.email[0]}</span>
 							)}
 						</div>
 
-						<div>
-							<label for="phone" class="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-								Phone / WhatsApp Number <span class="text-orange-400">*</span>
+						<!-- Field: Phone / WhatsApp -->
+						<div class="input-group">
+							<label for="phone">
+								<span>Phone / WhatsApp Number</span>
+								<span class="required-star">*</span>
 							</label>
 							<input
 								type="tel"
@@ -220,38 +275,37 @@ const currentBrand = brands[divisionParam] || brands.pmg;
 								autocomplete="tel"
 								placeholder="e.g. 082 123 4567"
 								value={prefilled.phone}
-								class="w-full rounded-xl bg-white/[0.04] border border-white/10 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all focus:border-orange-500 focus:bg-white/[0.07] focus:ring-2 focus:ring-orange-500/20"
+								class:list={[{ 'has-error': !!inputErrors.phone }]}
 							/>
 							{inputErrors.phone?.[0] && (
-								<p class="text-red-400 text-[11px] mt-1">{inputErrors.phone[0]}</p>
+								<span class="error-msg">{inputErrors.phone[0]}</span>
 							)}
 						</div>
 
-						<div>
-							<div class="flex items-center justify-between mb-1.5">
-								<label for="registrationNumber" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">
-									CIPC Registration No.
+						<!-- Field: CIPC Registration Number (Optional) -->
+						<div class="input-group">
+							<div class="label-row">
+								<label for="registrationNumber">
+									<span>CIPC Registration No.</span>
 								</label>
-								<span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Optional</span>
+								<span class="optional-badge">Optional</span>
 							</div>
 							<input
 								type="text"
 								id="registrationNumber"
 								name="registrationNumber"
 								placeholder="e.g. 2024/123456/07"
-								class="w-full rounded-xl bg-white/[0.04] border border-white/10 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all focus:border-orange-500 focus:bg-white/[0.07] focus:ring-2 focus:ring-orange-500/20 font-mono"
+								class="font-mono-input"
 							/>
 						</div>
 
-						<div class="pt-2">
-							<button
-								type="submit"
-								id="onboard-submit-btn"
-								class="w-full py-3.5 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/20 transition-all active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
-							>
-								<span>Establish Client Profile</span>
-								<svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-									<path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+						<!-- Submit Button -->
+						<div class="btn-wrap">
+							<button type="submit" id="onboard-submit-btn" class="primary-submit-btn">
+								<span class="btn-text">Establish Client Profile</span>
+								<svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+									<line x1="5" y1="12" x2="19" y2="12"></line>
+									<polyline points="12 5 19 12 12 19"></polyline>
 								</svg>
 							</button>
 						</div>
@@ -259,11 +313,16 @@ const currentBrand = brands[divisionParam] || brands.pmg;
 				)}
 			</div>
 
-			<p class="text-center text-[11px] text-slate-500 mt-6">
-				Protected by Playhouse Media Group security protocols.
-			</p>
-		</div>
-	</main>
+			<!-- Footer Security Note -->
+			<div class="security-footer">
+				<svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+					<path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+				</svg>
+				<span>Protected by Playhouse Media Group secure enterprise protocols.</span>
+			</div>
+		</main>
+	</div>
 
 	<script>
 		const loadedAtInput = document.getElementById('onboard-loaded-at') as HTMLInputElement | null;
@@ -276,11 +335,10 @@ const currentBrand = brands[divisionParam] || brands.pmg;
 		if (form && submitBtn) {
 			form.addEventListener('submit', () => {
 				submitBtn.disabled = true;
-				submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+				submitBtn.classList.add('loading');
 				submitBtn.innerHTML = `
-					<svg class="animate-spin size-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-						<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-						<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+					<svg class="spinner-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+						<circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"></circle>
 					</svg>
 					<span>Submitting Profile...</span>
 				`;
@@ -288,3 +346,536 @@ const currentBrand = brands[divisionParam] || brands.pmg;
 		}
 	</script>
 </Layout>
+
+<style define:vars={{
+	brandColor: currentBrand.color,
+	brandColorHover: currentBrand.colorHover,
+	brandGlow: currentBrand.glow,
+	brandGlowStrong: currentBrand.glowStrong,
+}}>
+	/* Core Layout Tokens */
+	:root {
+		--navy-bg: #070a10;
+		--navy-surface: #0e1522;
+		--navy-card: rgba(14, 21, 34, 0.78);
+		--text-main: #f4f4f2;
+		--text-muted: rgba(244, 244, 242, 0.6);
+		--text-faint: rgba(244, 244, 242, 0.35);
+		--card-border: rgba(244, 244, 242, 0.08);
+		--card-border-hover: rgba(244, 244, 242, 0.16);
+		--input-bg: rgba(7, 10, 16, 0.6);
+		--input-border: rgba(244, 244, 242, 0.1);
+	}
+
+	/* Atmospheric Noise Texture */
+	.noise {
+		position: fixed;
+		inset: 0;
+		pointer-events: none;
+		z-index: 1;
+		opacity: 0.03;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+	}
+
+	/* Glowing Ambient Orbs */
+	.orb {
+		position: fixed;
+		border-radius: 50%;
+		filter: blur(140px);
+		pointer-events: none;
+		z-index: 1;
+	}
+
+	.orb-1 {
+		top: -150px;
+		left: -100px;
+		width: 450px;
+		height: 450px;
+		background: radial-gradient(circle, var(--brandGlow) 0%, transparent 70%);
+	}
+
+	.orb-2 {
+		bottom: -150px;
+		right: -100px;
+		width: 500px;
+		height: 500px;
+		background: radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 70%);
+	}
+
+	.orb-3 {
+		top: 40%;
+		left: 60%;
+		width: 350px;
+		height: 350px;
+		background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+	}
+
+	/* Page Container */
+	.onboard-wrapper {
+		position: relative;
+		z-index: 2;
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+		background: var(--navy-bg);
+		color: var(--text-main);
+		font-family: 'DM Sans', sans-serif;
+	}
+
+	/* Top Header */
+	.onboard-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 24px 32px;
+		max-width: 1200px;
+		width: 100%;
+		margin: 0 auto;
+	}
+
+	.brand-logo {
+		text-decoration: none;
+		display: flex;
+		align-items: baseline;
+		font-family: 'Outfit', sans-serif;
+		font-weight: 800;
+		font-size: 20px;
+		letter-spacing: -0.02em;
+	}
+
+	.logo-play {
+		color: var(--brandColor);
+	}
+
+	.logo-house {
+		color: #ffffff;
+	}
+
+	.logo-sub {
+		color: var(--text-faint);
+		font-weight: 400;
+		font-size: 11.5px;
+		margin-left: 8px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.header-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 6px 14px;
+		border-radius: 20px;
+		background: rgba(244, 244, 242, 0.04);
+		border: 1px solid var(--card-border);
+		font-size: 11.5px;
+		font-weight: 600;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+	}
+
+	.pulse-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--brandColor);
+		box-shadow: 0 0 8px var(--brandColor);
+		animation: pulseGlow 2s infinite ease-in-out;
+	}
+
+	@keyframes pulseGlow {
+		0%, 100% { transform: scale(1); opacity: 1; }
+		50% { transform: scale(1.4); opacity: 0.6; }
+	}
+
+	/* Main Content Area */
+	.onboard-main {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 20px 20px 60px 20px;
+	}
+
+	/* Glassmorphism Card */
+	.onboard-card {
+		background: var(--navy-card);
+		backdrop-filter: blur(20px);
+		-webkit-backdrop-filter: blur(20px);
+		border: 1px solid var(--card-border);
+		border-radius: 24px;
+		padding: 44px 40px;
+		max-width: 480px;
+		width: 100%;
+		box-shadow:
+			0 24px 60px -12px rgba(0, 0, 0, 0.7),
+			0 0 50px -10px var(--brandGlow),
+			inset 0 1px 1px rgba(255, 255, 255, 0.08);
+		position: relative;
+		overflow: hidden;
+	}
+
+	.onboard-card::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 2px;
+		background: linear-gradient(90deg, transparent, var(--brandColor), transparent);
+	}
+
+	/* Card Header */
+	.card-header {
+		text-align: center;
+		margin-bottom: 32px;
+	}
+
+	.pill-tag {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 4px 12px;
+		border-radius: 12px;
+		background: rgba(244, 244, 242, 0.04);
+		border: 1px solid var(--card-border);
+		font-size: 11px;
+		font-weight: 700;
+		color: var(--brandColor);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		margin-bottom: 12px;
+	}
+
+	.pill-dot {
+		width: 5px;
+		height: 5px;
+		border-radius: 50%;
+		background: var(--brandColor);
+	}
+
+	.card-title {
+		font-family: 'Outfit', sans-serif;
+		font-size: 26px;
+		font-weight: 800;
+		color: #ffffff;
+		margin: 0 0 10px 0;
+		letter-spacing: -0.02em;
+		line-height: 1.2;
+	}
+
+	.card-desc {
+		font-size: 13.5px;
+		color: var(--text-muted);
+		line-height: 1.55;
+		margin: 0;
+		font-weight: 300;
+	}
+
+	/* Form & Input Styles */
+	.onboard-form {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+	}
+
+	.input-group {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		text-align: left;
+	}
+
+	.label-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.input-group label {
+		font-size: 11px;
+		font-weight: 700;
+		color: rgba(244, 244, 242, 0.7);
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
+
+	.required-star {
+		color: var(--brandColor);
+	}
+
+	.optional-badge {
+		font-size: 10px;
+		font-weight: 600;
+		color: var(--text-faint);
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+	}
+
+	.input-group input {
+		background: var(--input-bg);
+		border: 1px solid var(--input-border);
+		border-radius: 12px;
+		padding: 13px 16px;
+		color: #ffffff;
+		font-family: 'DM Sans', sans-serif;
+		font-size: 14px;
+		outline: none;
+		transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+		width: 100%;
+		box-sizing: border-box;
+	}
+
+	.input-group input::placeholder {
+		color: rgba(244, 244, 242, 0.25);
+		font-weight: 300;
+	}
+
+	.input-group input:hover {
+		border-color: var(--card-border-hover);
+		background: rgba(7, 10, 16, 0.8);
+	}
+
+	.input-group input:focus {
+		border-color: var(--brandColor);
+		background: rgba(10, 14, 22, 0.95);
+		box-shadow: 0 0 0 3px var(--brandGlow);
+	}
+
+	.input-group input.has-error {
+		border-color: #ef4444;
+		background: rgba(239, 68, 68, 0.05);
+	}
+
+	.font-mono-input {
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+		letter-spacing: 0.02em;
+	}
+
+	.error-msg {
+		font-size: 11px;
+		color: #f87171;
+		margin-top: 2px;
+	}
+
+	.form-alert {
+		padding: 12px 16px;
+		border-radius: 12px;
+		font-size: 12.5px;
+		line-height: 1.45;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.error-alert {
+		background: rgba(239, 68, 68, 0.1);
+		border: 1px solid rgba(239, 68, 68, 0.25);
+		color: #fca5a5;
+	}
+
+	.alert-icon {
+		width: 18px;
+		height: 18px;
+		flex-shrink: 0;
+	}
+
+	.turnstile-wrap {
+		display: flex;
+		justify-content: center;
+		margin: 4px 0;
+	}
+
+	/* Submit Button */
+	.btn-wrap {
+		margin-top: 8px;
+	}
+
+	.primary-submit-btn {
+		width: 100%;
+		background: var(--brandColor);
+		color: #ffffff;
+		font-family: 'Outfit', sans-serif;
+		font-weight: 700;
+		font-size: 14.5px;
+		letter-spacing: 0.02em;
+		padding: 15px 24px;
+		border-radius: 12px;
+		border: none;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 10px;
+		box-shadow: 0 4px 20px var(--brandGlow);
+		transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	.primary-submit-btn:hover {
+		background: var(--brandColorHover);
+		transform: translateY(-2px);
+		box-shadow: 0 8px 30px var(--brandGlowStrong);
+	}
+
+	.primary-submit-btn:active {
+		transform: scale(0.98);
+	}
+
+	.primary-submit-btn.loading {
+		opacity: 0.75;
+		cursor: not-allowed;
+		transform: none;
+	}
+
+	.btn-arrow {
+		width: 18px;
+		height: 18px;
+		flex-shrink: 0;
+		transition: transform 0.2s ease;
+	}
+
+	.primary-submit-btn:hover .btn-arrow {
+		transform: translateX(3px);
+	}
+
+	.spinner-icon {
+		width: 18px;
+		height: 18px;
+		animation: spin 0.8s linear infinite;
+	}
+
+	@keyframes spin {
+		100% { transform: rotate(360deg); }
+	}
+
+	/* Success State Screen */
+	.success-box {
+		text-align: center;
+		padding: 20px 0;
+	}
+
+	.success-icon-wrap {
+		width: 56px;
+		height: 56px;
+		border-radius: 50%;
+		background: rgba(16, 185, 129, 0.12);
+		border: 1px solid rgba(16, 185, 129, 0.3);
+		color: #34d399;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin: 0 auto 20px auto;
+	}
+
+	.success-icon-wrap svg {
+		width: 26px;
+		height: 26px;
+	}
+
+	.success-title {
+		font-family: 'Outfit', sans-serif;
+		font-size: 22px;
+		font-weight: 800;
+		color: #ffffff;
+		margin: 0 0 10px 0;
+	}
+
+	.success-desc {
+		font-size: 13.5px;
+		color: var(--text-muted);
+		line-height: 1.6;
+		margin: 0 0 28px 0;
+		font-weight: 300;
+	}
+
+	.success-actions {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.whatsapp-btn {
+		width: 100%;
+		background: #25D366;
+		color: #ffffff;
+		font-family: 'Outfit', sans-serif;
+		font-weight: 700;
+		font-size: 14px;
+		padding: 14px 20px;
+		border-radius: 12px;
+		text-decoration: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		box-shadow: 0 4px 16px rgba(37, 211, 102, 0.25);
+		transition: all 0.2s ease;
+		box-sizing: border-box;
+	}
+
+	.whatsapp-btn:hover {
+		background: #20bd5a;
+		transform: translateY(-1px);
+		box-shadow: 0 6px 24px rgba(37, 211, 102, 0.35);
+	}
+
+	.whatsapp-icon {
+		width: 18px;
+		height: 18px;
+		flex-shrink: 0;
+	}
+
+	.home-link {
+		font-size: 12.5px;
+		color: var(--text-faint);
+		text-decoration: none;
+		padding: 8px 0;
+		transition: color 0.2s ease;
+	}
+
+	.home-link:hover {
+		color: #ffffff;
+	}
+
+	/* Security Footer Note */
+	.security-footer {
+		margin-top: 24px;
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 11.5px;
+		color: var(--text-faint);
+	}
+
+	.lock-icon {
+		width: 13px;
+		height: 13px;
+		flex-shrink: 0;
+	}
+
+	/* Mobile Adaptations */
+	@media (max-width: 600px) {
+		.onboard-header {
+			padding: 18px 20px;
+		}
+
+		.onboard-card {
+			padding: 32px 24px;
+			border-radius: 20px;
+		}
+
+		.card-title {
+			font-size: 22px;
+		}
+
+		.header-badge {
+			display: none;
+		}
+	}
+</style>
+
