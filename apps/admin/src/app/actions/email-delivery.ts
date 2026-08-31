@@ -35,6 +35,15 @@ import { z } from 'zod';
 import { validateEmailPdfAttachment } from '@/lib/pdf-attachments';
 import { getPortalBaseUrl } from '@/lib/portal-url';
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 const CustomAttachmentSchema = z.object({
   filename: z.string(),
   content: z.string(), // base64 string
@@ -760,17 +769,23 @@ export async function sendReceiptEmailAction(rawPayload: unknown) {
     );
 
     const clientName = client?.businessName || client?.name || 'Client';
+    const safeClientName = escapeHtml(clientName);
+    const safeReceiptNumber = escapeHtml(generateReceiptNumber(incomeRow.id, incomeRow.divisionName));
+    const safeDescription = escapeHtml(incomeRow.description ?? 'Client payment');
+    const safeDivisionName = escapeHtml(incomeRow.divisionName);
+    const safePersonalMessage = personalMessage ? escapeHtml(personalMessage) : '';
+
     const htmlBody = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
         <h2 style="color: #1d4ed8; margin-top: 0;">Payment Receipt</h2>
-        <p>Dear ${clientName},</p>
-        <p>Thank you for your payment. Please find attached your official payment receipt for payment reference <strong>${generateReceiptNumber(incomeRow.id, incomeRow.divisionName)}</strong>.</p>
+        <p>Dear ${safeClientName},</p>
+        <p>Thank you for your payment. Please find attached your official payment receipt for payment reference <strong>${safeReceiptNumber}</strong>.</p>
         
         <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
           <table style="width: 100%; font-size: 14px;">
             <tr>
               <td style="padding: 4px 0; color: #4b5563;"><strong>Receipt Number:</strong></td>
-              <td style="padding: 4px 0;">${generateReceiptNumber(incomeRow.id, incomeRow.divisionName)}</td>
+              <td style="padding: 4px 0;">${safeReceiptNumber}</td>
             </tr>
             <tr>
               <td style="padding: 4px 0; color: #4b5563;"><strong>Date Received:</strong></td>
@@ -782,15 +797,15 @@ export async function sendReceiptEmailAction(rawPayload: unknown) {
             </tr>
             <tr>
               <td style="padding: 4px 0; color: #4b5563;"><strong>Payment Description:</strong></td>
-              <td style="padding: 4px 0;">${incomeRow.description ?? 'Client payment'}</td>
+              <td style="padding: 4px 0;">${safeDescription}</td>
             </tr>
           </table>
         </div>
 
-        ${personalMessage ? `<p style="white-space: pre-wrap; font-style: italic; border-left: 3px solid #d1d5db; padding-left: 10px; color: #4b5563;">${personalMessage}</p>` : ''}
+        ${safePersonalMessage ? `<p style="white-space: pre-wrap; font-style: italic; border-left: 3px solid #d1d5db; padding-left: 10px; color: #4b5563;">${safePersonalMessage}</p>` : ''}
 
         <p>If you have any questions regarding this payment, please reply directly to this email.</p>
-        <p style="margin-bottom: 0;">Kind regards,<br><strong>${incomeRow.divisionName}</strong></p>
+        <p style="margin-bottom: 0;">Kind regards,<br><strong>${safeDivisionName}</strong></p>
       </div>
     `;
 
@@ -863,17 +878,23 @@ export async function getReceiptEmailPreviewAction(rawPayload: unknown): Promise
     const [client] = await db.select().from(clients).where(eq(clients.id, incomeRow.clientId!));
 
     const clientName = client?.businessName || client?.name || 'Client';
+    const safeClientName = escapeHtml(clientName);
+    const safeReceiptNumber = escapeHtml(generateReceiptNumber(incomeRow.id, incomeRow.divisionName));
+    const safeDescription = escapeHtml(incomeRow.description ?? 'Client payment');
+    const safeDivisionName = escapeHtml(incomeRow.divisionName);
+    const safePersonalMessage = personalMessage ? escapeHtml(personalMessage) : '';
+
     const htmlBody = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
         <h2 style="color: #10b981; margin-top: 0;">Payment Receipt</h2>
-        <p>Dear ${clientName},</p>
-        <p>Thank you for your payment. Please find attached your official payment receipt for payment reference <strong>${generateReceiptNumber(incomeRow.id, incomeRow.divisionName)}</strong>.</p>
+        <p>Dear ${safeClientName},</p>
+        <p>Thank you for your payment. Please find attached your official payment receipt for payment reference <strong>${safeReceiptNumber}</strong>.</p>
         
         <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
           <table style="width: 100%; font-size: 14px;">
             <tr>
               <td style="padding: 4px 0; color: #4b5563;"><strong>Receipt Number:</strong></td>
-              <td style="padding: 4px 0;">${generateReceiptNumber(incomeRow.id, incomeRow.divisionName)}</td>
+              <td style="padding: 4px 0;">${safeReceiptNumber}</td>
             </tr>
             <tr>
               <td style="padding: 4px 0; color: #4b5563;"><strong>Date Received:</strong></td>
@@ -885,15 +906,15 @@ export async function getReceiptEmailPreviewAction(rawPayload: unknown): Promise
             </tr>
             <tr>
               <td style="padding: 4px 0; color: #4b5563;"><strong>Payment Description:</strong></td>
-              <td style="padding: 4px 0;">${incomeRow.description ?? 'Client payment'}</td>
+              <td style="padding: 4px 0;">${safeDescription}</td>
             </tr>
           </table>
         </div>
 
-        ${personalMessage ? `<p style="white-space: pre-wrap; font-style: italic; border-left: 3px solid #d1d5db; padding-left: 10px; color: #4b5563;">${personalMessage}</p>` : ''}
+        ${safePersonalMessage ? `<p style="white-space: pre-wrap; font-style: italic; border-left: 3px solid #d1d5db; padding-left: 10px; color: #4b5563;">${safePersonalMessage}</p>` : ''}
 
         <p>If you have any questions regarding this payment, please reply directly to this email.</p>
-        <p style="margin-bottom: 0;">Kind regards,<br><strong>${incomeRow.divisionName}</strong></p>
+        <p style="margin-bottom: 0;">Kind regards,<br><strong>${safeDivisionName}</strong></p>
       </div>
     `;
 

@@ -58,10 +58,10 @@ This task list tracks the execution and verification of all bug fixes, security 
 
 ---
 
-- [ ] **Task 4: Email Template XSS Sanitization**
-  - [ ] **4.1** `apps/admin/src/app/actions/email-delivery.ts`
-    - Implement `escapeHtml()` helper.
-    - Sanitize `personalMessage`, `clientName`, and `incomeRow.description` before embedding into `htmlBody` in `sendReceiptEmailAction` and `getReceiptEmailPreviewAction`.
+- [x] **Task 4: Email Template XSS Sanitization**
+  - [x] **4.1** `apps/admin/src/app/actions/email-delivery.ts`
+    - Implemented `escapeHtml()` helper.
+    - Sanitized `personalMessage`, `clientName`, and `incomeRow.description` before embedding into `htmlBody` in `sendReceiptEmailAction` and `getReceiptEmailPreviewAction`.
 
 ---
 
