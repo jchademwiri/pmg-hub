@@ -231,7 +231,9 @@ export default function LoginPage() {
           <div className="mt-6 rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-5 backdrop-blur-xl shadow-xl animate-in fade-in duration-500">
             <div className="flex items-center gap-2 mb-2 text-amber-400">
               <UserCheck className="size-4" />
-              <h3 className="text-xs font-semibold uppercase tracking-wider">Dev Mode User Selector</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wider">
+                Dev Mode User Selector
+              </h3>
             </div>
             <p className="text-xs text-muted-foreground mb-3">
               Select any active client from your local database to switch login in 1 click:
@@ -245,7 +247,8 @@ export default function LoginPage() {
               >
                 {devClients.map((c) => (
                   <option key={c.id} value={c.id} className="bg-[#0f172a] text-white">
-                    {c.name} {c.businessName ? `(${c.businessName})` : ''} {c.email ? `• ${c.email}` : ''}
+                    {c.name} {c.businessName ? `(${c.businessName})` : ''}{' '}
+                    {c.email ? `• ${c.email}` : ''}
                   </option>
                 ))}
               </select>
@@ -254,7 +257,11 @@ export default function LoginPage() {
                 disabled={isDevLoading || !selectedDevClient}
                 className="flex h-8 w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-xs font-medium text-amber-300 hover:bg-amber-500/30 transition-colors disabled:opacity-50"
               >
-                {isDevLoading ? <Loader2 className="size-3.5 animate-spin" /> : 'Log In As Selected Client'}
+                {isDevLoading ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  'Log In As Selected Client'
+                )}
               </button>
             </form>
           </div>

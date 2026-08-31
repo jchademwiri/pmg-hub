@@ -6,11 +6,11 @@ The Items section is a reusable catalogue of service-based line items. Items are
 
 ## Route Map
 
-| Route | Page | Status |
-|---|---|---|
-| `/billing/items` | Items catalogue list | 🔜 Shell - wire up data |
-| `/billing/items/new` | New item form | 🔜 Shell - wire up form |
-| `/billing/items/[id]` | Item detail / edit | 🔜 Shell - wire up data |
+| Route                 | Page                 | Status                  |
+| --------------------- | -------------------- | ----------------------- |
+| `/billing/items`      | Items catalogue list | 🔜 Shell - wire up data |
+| `/billing/items/new`  | New item form        | 🔜 Shell - wire up form |
+| `/billing/items/[id]` | Item detail / edit   | 🔜 Shell - wire up data |
 
 ---
 
@@ -22,33 +22,34 @@ Overview of all saved service items.
 
 **Stats row (3 cards)**
 
-| Stat | Icon | Description |
-|---|---|---|
-| Total Items | Package | All items in the catalogue |
-| Active | CheckCircle | Available for selection in forms |
-| Archived | Archive | Hidden from selection, retained for history |
+| Stat        | Icon        | Description                                 |
+| ----------- | ----------- | ------------------------------------------- |
+| Total Items | Package     | All items in the catalogue                  |
+| Active      | CheckCircle | Available for selection in forms            |
+| Archived    | Archive     | Hidden from selection, retained for history |
 
 Stats are currently hardcoded to `'-'`. Wire to `getAllItems()` aggregates.
 
 **Table columns**
 
-| Column | Notes |
-|---|---|
-| Name | Short label, links to `/billing/items/{id}` |
-| Description | Truncated at ~80 chars |
-| Unit Price | `formatZAR(unitPrice)`, right-aligned |
-| VAT | "15%" or "Exempt" |
-| Status | Badge: Active / Archived |
-| Actions | Dropdown: Edit (→ `[id]` page), Archive/Unarchive (archiving sets status=`archived` + isActive=`false`; restoring sets status=`active` + isActive=`true`), Delete |
+| Column      | Notes                                                                                                                                                             |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Name        | Short label, links to `/billing/items/{id}`                                                                                                                       |
+| Description | Truncated at ~80 chars                                                                                                                                            |
+| Unit Price  | `formatZAR(unitPrice)`, right-aligned                                                                                                                             |
+| VAT         | "15%" or "Exempt"                                                                                                                                                 |
+| Status      | Badge: Active / Archived                                                                                                                                          |
+| Actions     | Dropdown: Edit (→ `[id]` page), Archive/Unarchive (archiving sets status=`archived` + isActive=`false`; restoring sets status=`active` + isActive=`true`), Delete |
 
 Shows `EmptyState` with CTA to `/billing/items/new` when no items exist. Includes `Preview mock item →` dev link (remove before production).
 
 **Data to fetch (server component):**
+
 ```typescript
 const [items, stats] = await Promise.all([
   getAllItems(),
-  getItemStats(),   // { total, active, archived }
-])
+  getItemStats(), // { total, active, archived }
+]);
 ```
 
 ---
@@ -61,12 +62,12 @@ Single-column form (`max-w-2xl mx-auto`) - one card.
 
 **Item Details card - fields:**
 
-| Field | Notes |
-|---|---|
-| Name* | Short label used in the combobox dropdown (e.g. "Website Maintenance") |
+| Field       | Notes                                                                   |
+| ----------- | ----------------------------------------------------------------------- |
+| Name*       | Short label used in the combobox dropdown (e.g. "Website Maintenance")  |
 | Description | Longer text that pre-fills the line item description on invoices/quotes |
-| Unit Price* | Default price in ZAR; can be overridden per line item |
-| Unit Label | Optional label shown next to quantity (e.g. "hour", "month", "project") |
+| Unit Price* | Default price in ZAR; can be overridden per line item                   |
+| Unit Label  | Optional label shown next to quantity (e.g. "hour", "month", "project") |
 
 > **VAT Applicable toggle removed.** VAT is controlled at the document level via the Summary sidebar toggle, not per item. All items are treated as VAT-neutral in the catalogue.
 
@@ -85,22 +86,24 @@ Single-column form (`max-w-2xl mx-auto`) - one card.
 Same two-column layout as invoice/quote detail: `lg:col-span-2` content + `col-span-1` sidebar.
 
 **Header:**
+
 - Back → `/billing/items`
 - Item name + Status badge
 - "Created {createdAt}" subtitle
 
 **Header actions:**
+
 - **Archive / Unarchive** - Archiving an item automatically sets its `status` to `'archived'` **and** `isActive` to `false`. Restoring (unarchiving) automatically sets `status` back to `'active'` **and** `isActive` to `true`. These two fields always move together - no manual toggle needed. Shell shows disabled Archive button
 - Delete (Trash2) - disabled in shell. Requires confirmation. Guard: if item has been used on any document, prefer archiving (show warning)
 
 **Main content (left) - Item Details card:**
 
-| Field | Notes |
-|---|---|
-| Name | Editable text input |
-| Description | Editable textarea |
-| Unit Price | Editable number input |
-| Unit Label | Editable text input (optional) |
+| Field       | Notes                          |
+| ----------- | ------------------------------ |
+| Name        | Editable text input            |
+| Description | Editable textarea              |
+| Unit Price  | Editable number input          |
+| Unit Label  | Editable text input (optional) |
 
 > **VAT Applicable toggle removed.** VAT is no longer a per-item setting. It is controlled at the document level.
 
@@ -112,9 +115,10 @@ Same two-column layout as invoice/quote detail: `lg:col-span-2` content + `col-s
 - **Details card** - Status badge, VAT (Applicable / Exempt), Created date
 
 **Data to fetch:**
+
 ```typescript
-const item = await getItemById(id)
-if (!item) notFound()
+const item = await getItemById(id);
+if (!item) notFound();
 // Usage counts from item.usageInvoices + item.usageQuotes
 ```
 
@@ -137,12 +141,12 @@ When a user adds a line item on the quote or invoice create form, the descriptio
 
 ### Line Item Row Fields
 
-| Field | Source | Editable |
-|---|---|---|
-| Description | From selected item | ✅ Yes (can refine wording per document) |
-| Qty | Defaults to 1 | ✅ Yes |
-| Unit Price | From selected item | ✅ Yes |
-| Line Total | Qty × Unit Price - calculated | ❌ Read-only |
+| Field       | Source                        | Editable                                 |
+| ----------- | ----------------------------- | ---------------------------------------- |
+| Description | From selected item            | ✅ Yes (can refine wording per document) |
+| Qty         | Defaults to 1                 | ✅ Yes                                   |
+| Unit Price  | From selected item            | ✅ Yes                                   |
+| Line Total  | Qty × Unit Price - calculated | ❌ Read-only                             |
 
 > **VAT per line item removed.** VAT is no longer a per-row field. It is applied globally via the document-level VAT toggle in the Summary sidebar.
 
@@ -153,27 +157,33 @@ When a user adds a line item on the quote or invoice create form, the descriptio
 ```typescript
 // packages/db/src/schema/billing.ts (add to existing billing schema)
 
-export const billingItems = pgTable('billing_items', {
-  id:           uuid('id').primaryKey().defaultRandom(),
-  name:         text('name').notNull(),
-  description:  text('description'),
-  unitPrice:    numeric('unit_price', { precision: 12, scale: 2 }).notNull(),
-  unitLabel:    text('unit_label'),              // e.g. 'hour', 'month', 'project'
-  // vatApplicable removed - VAT is controlled at the document level, not per item
-  status:       text('status', { enum: ['active', 'archived'] }).notNull().default('active'),
-  isActive:     boolean('is_active').notNull().default(true),
-  // status and isActive always move together:
-  //   archive  → status='archived', isActive=false
-  //   restore  → status='active',   isActive=true
-  createdAt:    timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt:    timestamp('updated_at', { withTimezone: true }),
-}, (t) => [
-  index('billing_items_status_idx').on(t.status),
-  index('billing_items_name_idx').on(t.name),
-])
+export const billingItems = pgTable(
+  'billing_items',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: text('name').notNull(),
+    description: text('description'),
+    unitPrice: numeric('unit_price', { precision: 12, scale: 2 }).notNull(),
+    unitLabel: text('unit_label'), // e.g. 'hour', 'month', 'project'
+    // vatApplicable removed - VAT is controlled at the document level, not per item
+    status: text('status', { enum: ['active', 'archived'] })
+      .notNull()
+      .default('active'),
+    isActive: boolean('is_active').notNull().default(true),
+    // status and isActive always move together:
+    //   archive  → status='archived', isActive=false
+    //   restore  → status='active',   isActive=true
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }),
+  },
+  (t) => [
+    index('billing_items_status_idx').on(t.status),
+    index('billing_items_name_idx').on(t.name),
+  ],
+);
 
-export type BillingItem    = typeof billingItems.$inferSelect
-export type NewBillingItem = typeof billingItems.$inferInsert
+export type BillingItem = typeof billingItems.$inferSelect;
+export type NewBillingItem = typeof billingItems.$inferInsert;
 ```
 
 Items are global to the workspace (not per-division). VAT is applied at the invoice/quote level via the document-level VAT toggle, not stored on the item.

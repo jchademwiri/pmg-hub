@@ -1,5 +1,6 @@
 # Client Detail Page Research — Index
-*PMG Hub Admin | June 2026*
+
+_PMG Hub Admin | June 2026_
 
 ---
 
@@ -11,17 +12,18 @@ Research and recommendations for redesigning the PMG Hub client detail page (`/r
 
 ## Documents
 
-| File | Description |
-|---|---|
-| `01-industry-research.md` | How Xero, QuickBooks, FreshBooks, Zoho, Wave, Stripe, Harvest, Invoice Ninja, and HubSpot design their client pages — layout patterns, information hierarchy, feature matrix |
-| `02-current-state-analysis.md` | Full audit of the current PMG Hub implementation — component structure, strengths, bugs, friction points, performance notes |
-| `03-recommendations.md` | Redesign recommendations — proposed layout, wireframe, bug fixes, phased plan, competitive positioning |
+| File                           | Description                                                                                                                                                                  |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `01-industry-research.md`      | How Xero, QuickBooks, FreshBooks, Zoho, Wave, Stripe, Harvest, Invoice Ninja, and HubSpot design their client pages — layout patterns, information hierarchy, feature matrix |
+| `02-current-state-analysis.md` | Full audit of the current PMG Hub implementation — component structure, strengths, bugs, friction points, performance notes                                                  |
+| `03-recommendations.md`        | Redesign recommendations — proposed layout, wireframe, bug fixes, phased plan, competitive positioning                                                                       |
 
 ---
 
 ## Key Findings (TL;DR)
 
 ### What the industry does
+
 - **Financial summary always above the fold** — Every leading platform (Xero, QBO, FreshBooks, Zoho, Stripe) shows outstanding balance, overdue, and paid at the very top, before any transaction lists.
 - **KPI tiles that also act as filters** — QuickBooks' "Money Bar" lets users click a summary tile (e.g., "Overdue") to filter the transaction list below. Summary numbers should be interactive, not decorative.
 - **Slide-over drawers for document preview** — Stripe and FreshBooks use right-side drawers so users never lose list context. Full-screen modals feel heavier and break context.
@@ -29,6 +31,7 @@ Research and recommendations for redesigning the PMG Hub client detail page (`/r
 - **Progressive disclosure for analytics** — Advanced data (ageing, health, history) is available but behind a tab or accordion, not blocking the primary workflow.
 
 ### What's wrong with our current page
+
 1. The full financial dashboard always renders, pushing the document browser below the fold.
 2. The edit form redirects to `/relationships/clients` (list page) after saving — clear bug.
 3. Client email and phone are not visible without expanding the edit form.
@@ -39,12 +42,14 @@ Research and recommendations for redesigning the PMG Hub client detail page (`/r
 8. Statement default period is not visually highlighted.
 
 ### What we should do
+
 1. **Phase 1 (immediate):** Fix edit form redirect; show contact info in header; add receipt # column; fix statement period highlight.
 2. **Phase 2:** Compact metric strip above tabs; full analytics moved to "Analytics" tab; action buttons elevated.
 3. **Phase 3:** Split-pane preview on desktop (list + preview side by side); keep Dialog for mobile.
 4. **Phase 4:** Clickable KPI tiles that filter the list; statement auto-preview.
 
 ### What NOT to change
+
 - Bulk PDF generation and bulk email dispatch — unique; no competitor has this. Keep them.
 - Client health score — genuine differentiator. Move to Analytics tab, don't remove.
 - URL-driven state (deep links) — well-implemented, preserve it.

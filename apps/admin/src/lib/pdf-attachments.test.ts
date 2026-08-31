@@ -10,6 +10,8 @@ describe('pdf attachment validation', () => {
   it('rejects PDFs larger than the email attachment limit', () => {
     const oversized = 'A'.repeat(Math.ceil(((MAX_EMAIL_PDF_BYTES + 1) * 4) / 3));
 
-    expect(validateEmailPdfAttachment(oversized, 'Invoice PDF')).toContain('Invoice PDF is too large to email');
+    expect(validateEmailPdfAttachment(oversized, 'Invoice PDF')).toContain(
+      'Invoice PDF is too large to email',
+    );
   });
 });

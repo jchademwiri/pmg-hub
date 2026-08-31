@@ -8,6 +8,7 @@ first week of real use. None of these block shipping, but all should be resolved
 app handles sustained real financial data.
 
 The items span three concerns:
+
 - **Missing CRUD surfaces** - withdrawal history (H1) and lead create/delete (H2)
 - **UX feedback gaps** - delete loading states (H3), success toasts (H4), date defaults (H5)
 - **Data integrity / visual correctness** - withdrawal over-limit guard (H6) and close-month flash (H7)

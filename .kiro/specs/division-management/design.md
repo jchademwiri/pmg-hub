@@ -78,6 +78,7 @@ deleteDivision(id: string): Promise<{ error?: string }>
 ```
 
 All three actions follow the same error-handling contract as `income.ts`:
+
 - Wrap the entire body in `try/catch`
 - Validate with `DivisionSchema.safeParse` before any DB write
 - Return `{ error: issues[0]?.message }` on validation failure
@@ -95,7 +96,7 @@ All three actions follow the same error-handling contract as `income.ts`:
 
 ```ts
 interface DivisionAddFormProps {
-  createAction: (formData: FormData) => Promise<{ error?: string }>
+  createAction: (formData: FormData) => Promise<{ error?: string }>;
 }
 ```
 
@@ -105,9 +106,9 @@ Uses `useTransition` + `useRef` pattern (same as `income-add-form.tsx`). Single 
 
 ```ts
 interface DivisionsTableProps {
-  divisions: DivisionRow[]
-  updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>
-  deleteAction: (id: string) => Promise<{ error?: string }>
+  divisions: DivisionRow[];
+  updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>;
+  deleteAction: (id: string) => Promise<{ error?: string }>;
 }
 ```
 
@@ -116,12 +117,14 @@ Renders a shadcn `Table` with columns: Name, Total Income, Total Expenses, Net P
 Currency columns (Total Income, Total Expenses, Net Profit) use `formatZAR`. Net Profit text is green (`text-green-600`) when `> 0`, red (`text-red-600`) when `<= 0`.
 
 Inline rename state per row:
+
 - Edit button → switches row to edit mode with a text input pre-populated with the current name
 - Save button + Cancel button (or Escape key) in edit mode
 - `useTransition` for pending state; input and buttons disabled while pending
 - Inline error display below the input on failure
 
 Inline delete state per row:
+
 - Delete button → switches row to confirmation mode (inline, not a modal)
 - Confirm and Cancel buttons in confirmation mode
 - `useTransition` for pending state; buttons disabled while pending
@@ -154,18 +157,19 @@ The `divisions` table already has `id`, `name`, and `updatedAt` columns. No migr
 
 ### DivisionRow Shape
 
-| Field | Type | Source |
-|---|---|---|
-| id | string | `divisions.id` |
-| name | string | `divisions.name` |
-| totalIncome | number | `COALESCE(SUM(income.amount), 0)` |
+| Field         | Type   | Source                              |
+| ------------- | ------ | ----------------------------------- |
+| id            | string | `divisions.id`                      |
+| name          | string | `divisions.name`                    |
+| totalIncome   | number | `COALESCE(SUM(income.amount), 0)`   |
 | totalExpenses | number | `COALESCE(SUM(expenses.amount), 0)` |
-| netProfit | number | `totalIncome - totalExpenses` |
-| leadCount | number | `COALESCE(COUNT(leads.id), 0)` |
+| netProfit     | number | `totalIncome - totalExpenses`       |
+| leadCount     | number | `COALESCE(COUNT(leads.id), 0)`      |
 
 ### Export - `packages/db/src/index.ts`
 
 Add to existing exports:
+
 ```ts
 export type { DivisionRow } from './queries';
 ```
@@ -174,65 +178,65 @@ export type { DivisionRow } from './queries';
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system - essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+_A property is a characteristic or behavior that should hold true across all valid executions of a system - essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees._
 
 ### Property 1: getDivisionsWithStats shape and sort order
 
-*For any* array of division rows returned by `getDivisionsWithStats`, every entry must have the correct `DivisionRow` shape (all six fields with correct types) and the results must be ordered by `name` ascending.
+_For any_ array of division rows returned by `getDivisionsWithStats`, every entry must have the correct `DivisionRow` shape (all six fields with correct types) and the results must be ordered by `name` ascending.
 
 **Validates: Requirements 1.1, 1.2, 1.5, 7.1, 7.2**
 
 ### Property 2: getDivisionsWithStats zero defaults
 
-*For any* division that has no income records, no expense records, or no leads, `getDivisionsWithStats` must return `0` for `totalIncome`, `totalExpenses`, and `leadCount` respectively for that division.
+_For any_ division that has no income records, no expense records, or no leads, `getDivisionsWithStats` must return `0` for `totalIncome`, `totalExpenses`, and `leadCount` respectively for that division.
 
 **Validates: Requirements 7.3, 7.4, 7.5**
 
 ### Property 3: netProfit computed correctly
 
-*For any* `DivisionRow` returned by `getDivisionsWithStats`, `netProfit` must equal `totalIncome - totalExpenses`.
+_For any_ `DivisionRow` returned by `getDivisionsWithStats`, `netProfit` must equal `totalIncome - totalExpenses`.
 
 **Validates: Requirements 7.6**
 
 ### Property 4: createDivision round-trip
 
-*For any* valid division name (length 1–100), calling `createDivision` must return `{}` (no error), and the new division must subsequently appear in the results of `getDivisionsWithStats`.
+_For any_ valid division name (length 1–100), calling `createDivision` must return `{}` (no error), and the new division must subsequently appear in the results of `getDivisionsWithStats`.
 
 **Validates: Requirements 2.3, 2.5, 5.4**
 
 ### Property 5: updateDivision round-trip
 
-*For any* existing division and any valid new name (length 1–100), calling `updateDivision` must return `{}` (no error), and a subsequent call to `getDivisionsWithStats` must reflect the updated name and a non-null `updatedAt`.
+_For any_ existing division and any valid new name (length 1–100), calling `updateDivision` must return `{}` (no error), and a subsequent call to `getDivisionsWithStats` must reflect the updated name and a non-null `updatedAt`.
 
 **Validates: Requirements 3.3, 3.5, 5.4**
 
 ### Property 6: deleteDivision round-trip
 
-*For any* division id with no FK references, calling `deleteDivision` must return `{}` (no error), and the division must no longer appear in the results of `getDivisionsWithStats`.
+_For any_ division id with no FK references, calling `deleteDivision` must return `{}` (no error), and the division must no longer appear in the results of `getDivisionsWithStats`.
 
 **Validates: Requirements 4.3, 4.5, 8.4**
 
 ### Property 7: deleteDivision FK block
 
-*For any* division id where the database returns a foreign key constraint violation, `deleteDivision` must return `{ error: 'Cannot delete division with existing income or expense records.' }` without throwing.
+_For any_ division id where the database returns a foreign key constraint violation, `deleteDivision` must return `{ error: 'Cannot delete division with existing income or expense records.' }` without throwing.
 
 **Validates: Requirements 4.4, 4.7, 8.1, 8.2, 8.3**
 
 ### Property 8: Invalid input to createDivision/updateDivision always returns { error }
 
-*For any* name that is empty (length 0) or exceeds 100 characters, calling `createDivision` or `updateDivision` must return `{ error: <non-empty string> }` without writing to the database, and must not throw.
+_For any_ name that is empty (length 0) or exceeds 100 characters, calling `createDivision` or `updateDivision` must return `{ error: <non-empty string> }` without writing to the database, and must not throw.
 
 **Validates: Requirements 2.4, 3.4, 5.2, 6.1, 6.2**
 
 ### Property 9: DivisionSchema round-trip
 
-*For any* valid name string (length 1–100), parsing `{ name }` with `DivisionSchema` must succeed and the output `name` must equal the input `name`.
+_For any_ valid name string (length 1–100), parsing `{ name }` with `DivisionSchema` must succeed and the output `name` must equal the input `name`.
 
 **Validates: Requirements 6.3**
 
 ### Property 10: getDivisionsWithStats after create - newly created division appears sorted
 
-*For any* newly created division name, after `createDivision` succeeds, the division must appear in the results of `getDivisionsWithStats` at the correct position in the name-ascending sort order.
+_For any_ newly created division name, after `createDivision` succeeds, the division must appear in the results of `getDivisionsWithStats` at the correct position in the name-ascending sort order.
 
 **Validates: Requirements 1.5, 2.3, 7.1**
 
@@ -270,6 +274,7 @@ File: `apps/admin/src/__tests__/divisions.test.ts`
 Follows the same pattern as `income.test.ts` and `leads.test.ts`. All DB functions and server actions are mocked with `vi.mock`. Each property test runs a minimum of 100 iterations (`{ numRuns: 100 }`).
 
 **DivisionRow arbitrary:**
+
 ```ts
 const divisionRowArb = fc.record({
   id: fc.uuid(),
@@ -278,7 +283,7 @@ const divisionRowArb = fc.record({
   totalExpenses: fc.float({ min: 0, max: 999999, noNaN: true }),
   netProfit: fc.float({ min: -999999, max: 999999, noNaN: true }),
   leadCount: fc.integer({ min: 0, max: 1000 }),
-})
+});
 ```
 
 **Property tests (P1–P10):** Each maps directly to a Correctness Property above. Tag format: `Feature: division-management, Property N: <property_text>`.

@@ -1,13 +1,8 @@
-import * as React from "react";
-import {
-  Button,
-  Heading,
-  Section,
-  Text,
-} from "@react-email/components";
-import type { BrandingProps } from "../types";
-import { DEFAULT_WEBSITE_URL } from "../domains";
-import { EmailLayout } from "./EmailLayout";
+import * as React from 'react';
+import { Button, Heading, Section, Text } from '@react-email/components';
+import type { BrandingProps } from '../types';
+import { DEFAULT_WEBSITE_URL } from '../domains';
+import { EmailLayout } from './EmailLayout';
 
 export type InvitationEmailProps = {
   /** Recipient's display name */
@@ -23,9 +18,9 @@ export type InvitationEmailProps = {
 } & BrandingProps;
 
 const ROLE_LABELS: Record<string, string> = {
-  super_admin: "Super Admin",
-  admin: "Admin",
-  viewer: "Viewer",
+  super_admin: 'Super Admin',
+  admin: 'Admin',
+  viewer: 'Viewer',
 };
 
 const InvitationEmail = (props: InvitationEmailProps) => {
@@ -33,10 +28,10 @@ const InvitationEmail = (props: InvitationEmailProps) => {
     recipientName,
     role,
     inviteUrl,
-    expiresIn = "7 days",
+    expiresIn = '7 days',
     invitedByName,
-    companyName = "Playhouse Media Group",
-    primaryColor = "#1d4ed8",
+    companyName = 'Playhouse Media Group',
+    primaryColor = '#1d4ed8',
     websiteUrl = DEFAULT_WEBSITE_URL,
     logoUrl,
   } = props;
@@ -63,21 +58,14 @@ const InvitationEmail = (props: InvitationEmailProps) => {
       </Text>
 
       <Text className="m-0 mb-[24px] text-[15px] leading-[24px] text-[#334155]">
-        {invitedByName
-          ? `${invitedByName} has invited you`
-          : "You have been invited"}{" "}
-        to join <strong>{companyName} Control Center</strong> as{" "}
-        <strong>{roleLabel}</strong>.
+        {invitedByName ? `${invitedByName} has invited you` : 'You have been invited'} to join{' '}
+        <strong>{companyName} Control Center</strong> as <strong>{roleLabel}</strong>.
       </Text>
 
       {/* Role badge */}
       <Section className="mb-[24px] rounded-[6px] border-l-4 border-solid border-brand bg-[#F8FAFC] p-[20px]">
-        <Text className="m-0 text-[13px] text-[#64748B]">
-          You will have access as:
-        </Text>
-        <Text className="m-0 mt-[4px] text-[16px] font-bold text-[#020304]">
-          {roleLabel}
-        </Text>
+        <Text className="m-0 text-[13px] text-[#64748B]">You will have access as:</Text>
+        <Text className="m-0 mt-[4px] text-[16px] font-bold text-[#020304]">{roleLabel}</Text>
       </Section>
 
       {/* CTA Button */}
@@ -102,9 +90,8 @@ const InvitationEmail = (props: InvitationEmailProps) => {
       {/* Expiry notice */}
       <Section className="mb-[24px] rounded-[6px] border-l-4 border-solid border-amber-500 bg-[#F8FAFC] p-[16px]">
         <Text className="m-0 text-[12px] leading-[18px] text-[#92400E]">
-          <strong>Note:</strong> This invitation expires in{" "}
-          <strong>{expiresIn}</strong>. If you did not expect this email,
-          you can safely ignore it.
+          <strong>Note:</strong> This invitation expires in <strong>{expiresIn}</strong>. If you did
+          not expect this email, you can safely ignore it.
         </Text>
       </Section>
 
@@ -122,13 +109,13 @@ const InvitationEmail = (props: InvitationEmailProps) => {
 };
 
 InvitationEmail.PreviewProps = {
-  recipientName: "Jane Smith",
-  role: "admin",
-  inviteUrl: "https://app.playhousemedia.co.za/invite?token=abc123",
-  expiresIn: "7 days",
-  invitedByName: "John Doe",
-  companyName: "Playhouse Media Group",
-  primaryColor: "#1d4ed8",
+  recipientName: 'Jane Smith',
+  role: 'admin',
+  inviteUrl: 'https://app.playhousemedia.co.za/invite?token=abc123',
+  expiresIn: '7 days',
+  invitedByName: 'John Doe',
+  companyName: 'Playhouse Media Group',
+  primaryColor: '#1d4ed8',
   websiteUrl: DEFAULT_WEBSITE_URL,
 };
 

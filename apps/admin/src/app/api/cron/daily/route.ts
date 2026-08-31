@@ -18,10 +18,12 @@ export async function GET(request: Request) {
     // 1. Process recurring hosting/retainer invoices
     const recurringRes = await triggerRecurringBillingRun();
     console.log(`[CRON:DAILY] Recurring invoices: ${recurringRes.generatedCount} generated.`);
-    
+
     // 2. Process automated statement sweeps
     const statementRes = await triggerAutomatedStatementsRun();
-    console.log(`[CRON:DAILY] Automated statements: ${statementRes.generatedCount} sent, ${statementRes.skippedZeroBalance} zero-balance skipped.`);
+    console.log(
+      `[CRON:DAILY] Automated statements: ${statementRes.generatedCount} sent, ${statementRes.skippedZeroBalance} zero-balance skipped.`,
+    );
 
     return NextResponse.json({
       success: true,

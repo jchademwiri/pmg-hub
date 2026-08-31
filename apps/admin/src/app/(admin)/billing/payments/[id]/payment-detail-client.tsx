@@ -48,7 +48,7 @@ interface PaymentDetailClientProps {
   creditBalance: number;
   isLocked: boolean;
   pdfUrl: string;
-  
+
   // Data for editing
   divisions: { id: string; name: string }[];
   clients: { id: string; name: string; businessName: string | null }[];
@@ -177,7 +177,7 @@ export function PaymentDetailClient({
 
   const totalAllocatedInForm = Object.values(manualAllocations).reduce(
     (sum, val) => sum + (parseFloat(val) || 0),
-    0
+    0,
   );
 
   const totalPaidNum = parseFloat(editAmount) || 0;
@@ -210,7 +210,9 @@ export function PaymentDetailClient({
       return;
     }
     if (paymentDate < minDate) {
-      toast.error('Date is prior to the open ledger period boundary. Payments cannot be backdated to closed periods.');
+      toast.error(
+        'Date is prior to the open ledger period boundary. Payments cannot be backdated to closed periods.',
+      );
       return;
     }
     if (paymentDate > today) {
@@ -260,7 +262,9 @@ export function PaymentDetailClient({
           <Separator orientation="vertical" className="h-5" />
           <div>
             <h2 className="text-lg font-semibold">Edit Payment</h2>
-            <p className="text-sm text-muted-foreground">Modify payment details for {receiptNumber}</p>
+            <p className="text-sm text-muted-foreground">
+              Modify payment details for {receiptNumber}
+            </p>
           </div>
         </div>
 
@@ -268,10 +272,12 @@ export function PaymentDetailClient({
           {/* Left Form Panel */}
           <div className="flex flex-col gap-5 lg:col-span-1 border-r border-border pr-0 lg:pr-8">
             <h3 className="text-sm font-semibold">Payment Details</h3>
-            
+
             {/* Client Selector */}
             <Field>
-              <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client</FieldLabel>
+              <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Client
+              </FieldLabel>
               <Select value={clientId} onValueChange={setClientId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Client" />
@@ -286,14 +292,19 @@ export function PaymentDetailClient({
               </Select>
               {clientId && !isLoadingClientData && (
                 <div className="mt-1 text-xs text-muted-foreground">
-                  Current Retainer Credit: <span className="font-semibold text-emerald-600">{formatZAR(existingCreditBalance)}</span>
+                  Current Retainer Credit:{' '}
+                  <span className="font-semibold text-emerald-600">
+                    {formatZAR(existingCreditBalance)}
+                  </span>
                 </div>
               )}
             </Field>
 
             {/* Division Selector */}
             <Field>
-              <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Division</FieldLabel>
+              <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Division
+              </FieldLabel>
               <Select value={divisionId} onValueChange={setDivisionId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Division" />
@@ -310,7 +321,9 @@ export function PaymentDetailClient({
 
             {/* Payment Date */}
             <Field>
-              <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payment Date</FieldLabel>
+              <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Payment Date
+              </FieldLabel>
               <Input
                 type="date"
                 value={paymentDate}
@@ -326,20 +339,28 @@ export function PaymentDetailClient({
 
             {/* Payment Note / Bank Reference */}
             <Field>
-              <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payment Note / Bank Reference</FieldLabel>
+              <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Payment Note / Bank Reference
+              </FieldLabel>
               <Input
                 placeholder="Optional — e.g. EFT-89201"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
-              <span className="text-[10px] text-muted-foreground">Optional — a bank or EFT reference for your records</span>
+              <span className="text-[10px] text-muted-foreground">
+                Optional — a bank or EFT reference for your records
+              </span>
             </Field>
 
             {/* Total Amount Paid */}
             <Field>
-              <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Amount Paid (ZAR)</FieldLabel>
+              <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Total Amount Paid (ZAR)
+              </FieldLabel>
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-sm font-semibold text-muted-foreground">R</span>
+                <span className="absolute left-3 top-2.5 text-sm font-semibold text-muted-foreground">
+                  R
+                </span>
                 <Input
                   type="number"
                   step="0.01"
@@ -356,7 +377,9 @@ export function PaymentDetailClient({
               <div className="flex items-center justify-between p-3 rounded-md bg-muted/40 border border-border">
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm font-semibold">Auto-allocate payment (FIFO)</span>
-                  <span className="text-xs text-muted-foreground">Pay oldest outstanding invoices first</span>
+                  <span className="text-xs text-muted-foreground">
+                    Pay oldest outstanding invoices first
+                  </span>
                 </div>
                 <input
                   type="checkbox"
@@ -374,7 +397,9 @@ export function PaymentDetailClient({
 
             {!clientId ? (
               <div className="flex flex-col items-center justify-center py-12 rounded-lg border border-dashed border-border bg-muted/20">
-                <p className="text-sm text-muted-foreground">Please select a client on the left to load outstanding invoices.</p>
+                <p className="text-sm text-muted-foreground">
+                  Please select a client on the left to load outstanding invoices.
+                </p>
               </div>
             ) : isLoadingClientData ? (
               <div className="flex flex-col items-center justify-center py-12">
@@ -383,10 +408,13 @@ export function PaymentDetailClient({
               </div>
             ) : unpaidInvoices.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 rounded-lg border border-dashed border-border bg-emerald-50/20">
-                <p className="text-sm text-emerald-700 font-medium">This client has no outstanding invoices!</p>
+                <p className="text-sm text-emerald-700 font-medium">
+                  This client has no outstanding invoices!
+                </p>
                 {totalPaidNum > 0 && (
                   <p className="mt-1 text-xs text-muted-foreground text-center">
-                    The full {formatZAR(totalPaidNum)} will be saved as an unallocated credit retainer.
+                    The full {formatZAR(totalPaidNum)} will be saved as an unallocated credit
+                    retainer.
                   </p>
                 )}
               </div>
@@ -405,19 +433,28 @@ export function PaymentDetailClient({
                   <TableBody>
                     {unpaidInvoices.map((inv) => {
                       const currentAlloc = manualAllocations[inv.id] || '0';
-                      const outstandingAfterThis = Math.max(0, inv.outstanding - (parseFloat(currentAlloc) || 0));
+                      const outstandingAfterThis = Math.max(
+                        0,
+                        inv.outstanding - (parseFloat(currentAlloc) || 0),
+                      );
 
                       return (
                         <TableRow key={inv.id}>
                           <TableCell className="font-medium">{inv.documentNumber}</TableCell>
-                          <TableCell className="text-muted-foreground">{fmtDate(inv.invoiceDate)}</TableCell>
-                          <TableCell className="text-right tabular-nums">{formatZAR(inv.total)}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {fmtDate(inv.invoiceDate)}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {formatZAR(inv.total)}
+                          </TableCell>
                           <TableCell className="text-right tabular-nums font-medium text-amber-600">
                             {formatZAR(inv.outstanding)}
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="relative inline-block w-full">
-                              <span className="absolute left-2.5 top-2 text-xs font-medium text-muted-foreground">R</span>
+                              <span className="absolute left-2.5 top-2 text-xs font-medium text-muted-foreground">
+                                R
+                              </span>
                               <Input
                                 type="number"
                                 step="0.01"
@@ -448,19 +485,26 @@ export function PaymentDetailClient({
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Amount Allocated to Invoices:</span>
-                    <span className="font-semibold text-amber-600">{formatZAR(totalAllocatedInForm)}</span>
+                    <span className="font-semibold text-amber-600">
+                      {formatZAR(totalAllocatedInForm)}
+                    </span>
                   </div>
-                  
+
                   <Separator className="my-1" />
 
                   {isAllocationExceeded ? (
                     <div className="flex items-center gap-2 p-2.5 rounded bg-destructive/10 border border-destructive/20 text-destructive text-xs">
                       <span className="font-semibold">Error:</span>
-                      <span>You have allocated {formatZAR(totalAllocatedInForm - totalPaidNum)} more than the total payment amount.</span>
+                      <span>
+                        You have allocated {formatZAR(totalAllocatedInForm - totalPaidNum)} more
+                        than the total payment amount.
+                      </span>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between text-emerald-700">
-                      <span className="font-medium">Leftover saved as Client Credit (Retainer):</span>
+                      <span className="font-medium">
+                        Leftover saved as Client Credit (Retainer):
+                      </span>
                       <span className="font-bold">{formatZAR(unallocatedCreditValue)}</span>
                     </div>
                   )}
@@ -468,10 +512,17 @@ export function PaymentDetailClient({
 
                 {/* Submit Buttons */}
                 <div className="flex justify-end gap-3 mt-2">
-                  <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isPending}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsEditing(false)}
+                    disabled={isPending}
+                  >
                     Cancel
                   </Button>
-                  <Button onClick={handleSubmit} disabled={isPending || isAllocationExceeded || isPeriodWarning}>
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isPending || isAllocationExceeded || isPeriodWarning}
+                  >
                     {isPending ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
@@ -502,9 +553,7 @@ export function PaymentDetailClient({
                 Paid
               </span>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Received {fmtDate(payment.date)}
-            </p>
+            <p className="text-sm text-muted-foreground">Received {fmtDate(payment.date)}</p>
           </div>
         </div>
 
@@ -516,11 +565,11 @@ export function PaymentDetailClient({
               Edit Payment
             </Button>
           )}
-          <PrintButton 
+          <PrintButton
             label="Print"
-            documentTitle={`Receipt-${payment.id.slice(0, 8).toUpperCase()}`} 
+            documentTitle={`Receipt-${payment.id.slice(0, 8).toUpperCase()}`}
           />
-          <ExportPdfButton 
+          <ExportPdfButton
             fileName={`Receipt-${payment.id.slice(0, 8).toUpperCase()}`}
             pdfUrl={pdfUrl}
           />
@@ -540,11 +589,7 @@ export function PaymentDetailClient({
         <div className="lg:col-span-2 overflow-x-auto">
           <Card className="shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
             <CardContent className="p-4 overflow-x-auto">
-              <PaymentReceiptPreview 
-                payment={payment}
-                client={client}
-                divSettings={divSettings}
-              />
+              <PaymentReceiptPreview payment={payment} client={client} divSettings={divSettings} />
             </CardContent>
           </Card>
         </div>
@@ -558,7 +603,9 @@ export function PaymentDetailClient({
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <div className="flex flex-col gap-1">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Received</span>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Total Received
+                </span>
                 <span className="text-2xl font-bold text-emerald-600 tabular-nums">
                   {formatZAR(amount)}
                 </span>
@@ -566,13 +613,17 @@ export function PaymentDetailClient({
 
               <div className="grid grid-cols-2 gap-4 border-t pt-3">
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Allocated</span>
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Allocated
+                  </span>
                   <span className="text-sm font-semibold text-zinc-700 tabular-nums">
                     {formatZAR(allocatedSum)}
                   </span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Unallocated</span>
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Unallocated
+                  </span>
                   <span className="text-sm font-semibold text-zinc-700 tabular-nums">
                     {formatZAR(creditBalance)}
                   </span>
@@ -592,14 +643,18 @@ export function PaymentDetailClient({
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-semibold text-foreground text-sm">{client.businessName || client.name}</span>
+                  <span className="font-semibold text-foreground text-sm">
+                    {client.businessName || client.name}
+                  </span>
                   {client.businessName && client.name !== client.businessName && (
                     <span className="text-xs text-muted-foreground">{client.name}</span>
                   )}
                   {client.email && <span className="text-xs text-zinc-500">{client.email}</span>}
                 </div>
                 <Button variant="outline" size="sm" asChild className="w-full">
-                  <Link href={`/relationships/clients/${client.id}?tab=payments&paymentId=${payment.id}`}>
+                  <Link
+                    href={`/relationships/clients/${client.id}?tab=payments&paymentId=${payment.id}`}
+                  >
                     Go to Billing Workspace
                   </Link>
                 </Button>
@@ -618,7 +673,9 @@ export function PaymentDetailClient({
             <CardContent className="text-xs text-muted-foreground flex flex-col gap-1">
               <span className="font-medium text-foreground">{payment.divisionName}</span>
               <span>Division of Playhouse Media Group</span>
-              {divSettings?.salesRepName && <span className="mt-1">Rep: {divSettings.salesRepName}</span>}
+              {divSettings?.salesRepName && (
+                <span className="mt-1">Rep: {divSettings.salesRepName}</span>
+              )}
               {divSettings?.salesRepEmail && <span>Email: {divSettings.salesRepEmail}</span>}
             </CardContent>
           </Card>

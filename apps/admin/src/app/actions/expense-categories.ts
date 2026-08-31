@@ -26,7 +26,10 @@ export async function createExpenseCategory(formData: FormData): Promise<{ error
   }
 }
 
-export async function updateExpenseCategory(id: string, formData: FormData): Promise<{ error?: string }> {
+export async function updateExpenseCategory(
+  id: string,
+  formData: FormData,
+): Promise<{ error?: string }> {
   try {
     await getSessionOrRedirect();
     const raw = Object.fromEntries(formData) as Record<string, string>;
@@ -41,14 +44,10 @@ export async function updateExpenseCategory(id: string, formData: FormData): Pro
     const oldName = rows[0]!.name;
 
     await db.transaction(async (tx) => {
-      await tx.update(expenseCategories)
-        .set({ name: newName })
-        .where(eq(expenseCategories.id, id));
+      await tx.update(expenseCategories).set({ name: newName }).where(eq(expenseCategories.id, id));
 
       if (oldName !== newName) {
-        await tx.update(expenses)
-          .set({ category: newName })
-          .where(eq(expenses.category, oldName));
+        await tx.update(expenses).set({ category: newName }).where(eq(expenses.category, oldName));
       }
     });
 

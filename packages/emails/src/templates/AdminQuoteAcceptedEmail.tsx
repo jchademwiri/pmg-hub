@@ -1,13 +1,8 @@
-import * as React from "react";
-import {
-  Heading,
-  Section,
-  Text,
-  Button,
-} from "@react-email/components";
-import type { BrandingProps } from "../types";
-import { DEFAULT_WEBSITE_URL } from "../domains";
-import { EmailLayout } from "./EmailLayout";
+import * as React from 'react';
+import { Heading, Section, Text, Button } from '@react-email/components';
+import type { BrandingProps } from '../types';
+import { DEFAULT_WEBSITE_URL } from '../domains';
+import { EmailLayout } from './EmailLayout';
 
 export type AdminQuoteAcceptedEmailProps = {
   clientName: string;
@@ -24,8 +19,8 @@ const AdminQuoteAcceptedEmail = (props: AdminQuoteAcceptedEmailProps) => {
     totalAmount,
     acceptedAt,
     viewUrl,
-    companyName = "Playhouse Media Group",
-    primaryColor = "#1d4ed8",
+    companyName = 'Playhouse Media Group',
+    primaryColor = '#1d4ed8',
     websiteUrl = DEFAULT_WEBSITE_URL,
     logoUrl,
   } = props;
@@ -44,9 +39,7 @@ const AdminQuoteAcceptedEmail = (props: AdminQuoteAcceptedEmailProps) => {
         Quote Accepted
       </Heading>
 
-      <Text className="m-0 mb-[24px] text-[15px] leading-[24px] text-[#334155]">
-        Hi there,
-      </Text>
+      <Text className="m-0 mb-[24px] text-[15px] leading-[24px] text-[#334155]">Hi there,</Text>
 
       <Text className="m-0 mb-[24px] text-[15px] leading-[24px] text-[#334155]">
         Client <strong>{clientName}</strong> has accepted Quote <strong>#{documentNumber}</strong>.
@@ -90,7 +83,8 @@ const AdminQuoteAcceptedEmail = (props: AdminQuoteAcceptedEmailProps) => {
       {/* Footer Sign-off */}
       <Section className="border-none border-t border-solid border-[#E2E8F0] pt-[20px]">
         <Text className="m-0 text-[14px] text-[#475569]">
-          Best regards,<br />
+          Best regards,
+          <br />
           <strong>PMG Portal</strong>
         </Text>
       </Section>
@@ -99,13 +93,13 @@ const AdminQuoteAcceptedEmail = (props: AdminQuoteAcceptedEmailProps) => {
 };
 
 AdminQuoteAcceptedEmail.PreviewProps = {
-  clientName: "Basadipele",
-  documentNumber: "TES-Q-2026-016",
-  totalAmount: "ZAR 2,500.00",
-  acceptedAt: "2026/06/29, 21:49:25",
-  viewUrl: "https://control.playhousemedia.co.za/billing/quotes/some-id",
-  companyName: "Playhouse Media Group",
-  primaryColor: "#1d4ed8",
+  clientName: 'Basadipele',
+  documentNumber: 'TES-Q-2026-016',
+  totalAmount: 'ZAR 2,500.00',
+  acceptedAt: '2026/06/29, 21:49:25',
+  viewUrl: 'https://control.playhousemedia.co.za/billing/quotes/some-id',
+  companyName: 'Playhouse Media Group',
+  primaryColor: '#1d4ed8',
   websiteUrl: DEFAULT_WEBSITE_URL,
 };
 

@@ -21,10 +21,9 @@ export async function getProjectChecklistAction(projectId: string) {
   }
 }
 
-
 export async function addProgressSectionAction(
   projectId: string,
-  title: string
+  title: string,
 ): Promise<{ success: boolean; section?: any; error?: string }> {
   try {
     await getSessionOrRedirect();
@@ -37,7 +36,7 @@ export async function addProgressSectionAction(
       .select({ count: sql<number>`count(*)::int` })
       .from(projectProgressSections)
       .where(eq(projectProgressSections.projectId, projectId));
-    
+
     const sortOrder = (countResult?.count ?? 0) + 1;
 
     const [newSection] = await db
@@ -58,7 +57,7 @@ export async function addProgressSectionAction(
 }
 
 export async function deleteProgressSectionAction(
-  sectionId: string
+  sectionId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await getSessionOrRedirect();
@@ -78,7 +77,7 @@ export async function deleteProgressSectionAction(
 
 export async function renameProgressSectionAction(
   sectionId: string,
-  title: string
+  title: string,
 ): Promise<{ success: boolean; section?: any; error?: string }> {
   try {
     await getSessionOrRedirect();
@@ -102,7 +101,7 @@ export async function renameProgressSectionAction(
 
 export async function addProgressItemAction(
   sectionId: string,
-  task: string
+  task: string,
 ): Promise<{ success: boolean; item?: any; error?: string }> {
   try {
     await getSessionOrRedirect();
@@ -151,7 +150,7 @@ export async function addProgressItemAction(
 }
 
 export async function deleteProgressItemAction(
-  itemId: string
+  itemId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await getSessionOrRedirect();
@@ -209,7 +208,7 @@ export async function deleteProgressItemAction(
 
 export async function toggleProgressItemAction(
   itemId: string,
-  isCompleted: boolean
+  isCompleted: boolean,
 ): Promise<{ success: boolean; item?: any; error?: string }> {
   try {
     await getSessionOrRedirect();
@@ -268,7 +267,7 @@ export async function toggleProgressItemAction(
 
 export async function updateProgressItemTextAction(
   itemId: string,
-  task: string
+  task: string,
 ): Promise<{ success: boolean; item?: any; error?: string }> {
   try {
     await getSessionOrRedirect();
@@ -292,7 +291,7 @@ export async function updateProgressItemTextAction(
 
 export async function updateProgressSectionStatusAction(
   sectionId: string,
-  status: 'backlog' | 'in_progress' | 'completed'
+  status: 'backlog' | 'in_progress' | 'completed',
 ): Promise<{ success: boolean; section?: any; error?: string }> {
   try {
     await getSessionOrRedirect();

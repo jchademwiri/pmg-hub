@@ -1,13 +1,8 @@
-import * as React from "react";
-import {
-  Button,
-  Heading,
-  Section,
-  Text,
-} from "@react-email/components";
-import type { BrandingProps } from "../types";
-import { DEFAULT_WEBSITE_URL } from "../domains";
-import { EmailLayout } from "./EmailLayout";
+import * as React from 'react';
+import { Button, Heading, Section, Text } from '@react-email/components';
+import type { BrandingProps } from '../types';
+import { DEFAULT_WEBSITE_URL } from '../domains';
+import { EmailLayout } from './EmailLayout';
 
 export type PortalInvitationEmailProps = {
   /** Recipient's display name */
@@ -20,8 +15,8 @@ const PortalInvitationEmail = (props: PortalInvitationEmailProps) => {
   const {
     recipientName,
     portalUrl,
-    companyName = "Playhouse Media Group",
-    primaryColor = "#1d4ed8",
+    companyName = 'Playhouse Media Group',
+    primaryColor = '#1d4ed8',
     websiteUrl = DEFAULT_WEBSITE_URL,
     logoUrl,
   } = props;
@@ -46,11 +41,14 @@ const PortalInvitationEmail = (props: PortalInvitationEmailProps) => {
       </Text>
 
       <Text className="m-0 mb-[16px] text-[15px] leading-[24px] text-[#334155]">
-        At <strong>{companyName}</strong>, we truly value our partnership and care about your experience. To make working with us as seamless and convenient as possible, we have created a dedicated <strong>Client Portal</strong> just for you.
+        At <strong>{companyName}</strong>, we truly value our partnership and care about your
+        experience. To make working with us as seamless and convenient as possible, we have created
+        a dedicated <strong>Client Portal</strong> just for you.
       </Text>
 
       <Text className="m-0 mb-[24px] text-[15px] leading-[24px] text-[#334155]">
-        Through this portal, you can easily check on your projects, view and download invoices, track quotes, and monitor project progress at any time that suits you.
+        Through this portal, you can easily check on your projects, view and download invoices,
+        track quotes, and monitor project progress at any time that suits you.
       </Text>
 
       {/* CTA Button */}
@@ -67,7 +65,9 @@ const PortalInvitationEmail = (props: PortalInvitationEmailProps) => {
       {/* No password reminder */}
       <Section className="mb-[24px] rounded-[6px] border-l-4 border-solid border-blue-500 bg-[#F8FAFC] p-[16px]">
         <Text className="m-0 text-[13px] leading-[20px] text-[#1e40af]">
-          <strong>No Password Required:</strong> To log in, simply enter your email address on the portal page. A secure, one-time login link will be sent straight to your inbox to log you in instantly and securely.
+          <strong>No Password Required:</strong> To log in, simply enter your email address on the
+          portal page. A secure, one-time login link will be sent straight to your inbox to log you
+          in instantly and securely.
         </Text>
       </Section>
 
@@ -82,10 +82,12 @@ const PortalInvitationEmail = (props: PortalInvitationEmailProps) => {
       {/* Footer */}
       <Section className="border-t border-solid border-[#E2E8F0] pt-[20px]">
         <Text className="m-0 text-[13px] text-[#475569]">
-          If you have any questions or need assistance, feel free to reply directly to this email. We're here to help!
+          If you have any questions or need assistance, feel free to reply directly to this email.
+          We're here to help!
         </Text>
         <Text className="m-0 mt-[12px] text-[13px] text-[#020304]">
-          Warm regards,<br />
+          Warm regards,
+          <br />
           <strong>The {companyName} Team</strong>
         </Text>
       </Section>
@@ -94,10 +96,10 @@ const PortalInvitationEmail = (props: PortalInvitationEmailProps) => {
 };
 
 PortalInvitationEmail.PreviewProps = {
-  recipientName: "Jane Smith",
-  portalUrl: "https://portal.playhousemedia.co.za",
-  companyName: "Playhouse Media Group",
-  primaryColor: "#1d4ed8",
+  recipientName: 'Jane Smith',
+  portalUrl: 'https://portal.playhousemedia.co.za',
+  companyName: 'Playhouse Media Group',
+  primaryColor: '#1d4ed8',
   websiteUrl: DEFAULT_WEBSITE_URL,
 };
 

@@ -39,10 +39,9 @@ Send a statement when:
 
 Ageing shows how old unpaid amounts are.
 
-| Bucket | Meaning | Risk |
-|--------|---------|------|
-| Current | Not overdue or less than 30 days | Low |
-| 30 Days | 31-60 days overdue | Medium |
-| 60 Days | 61-90 days overdue | High |
-| 90 Days | More than 90 days overdue | Urgent |
-
+| Bucket  | Meaning                          | Risk   |
+| ------- | -------------------------------- | ------ |
+| Current | Not overdue or less than 30 days | Low    |
+| 30 Days | 31-60 days overdue               | Medium |
+| 60 Days | 61-90 days overdue               | High   |
+| 90 Days | More than 90 days overdue        | Urgent |

@@ -1,4 +1,5 @@
 # PMG Control Center - UI Polish: Collapsible Add Forms
+
 **Document version:** 1.0  
 **Target codebase:** `pmg-hub` monorepo  
 **Implementing agent:** Kilo-Code (VS Code)
@@ -19,13 +20,13 @@ This document standardises the "add record" UX pattern across all data-entry pag
 
 ### Pages in scope
 
-| Page | Form component | Bug to fix |
-|---|---|---|
-| `/income` | `IncomeAddForm` | **Duplicate render** - form rendered twice, remove the second instance |
-| `/expenses` | `ExpenseAddForm` | - |
-| `/clients` | `ClientAddForm` | - |
-| `/leads` | `LeadAddForm` | - |
-| `/divisions` | `DivisionAddForm` | - |
+| Page         | Form component    | Bug to fix                                                             |
+| ------------ | ----------------- | ---------------------------------------------------------------------- |
+| `/income`    | `IncomeAddForm`   | **Duplicate render** - form rendered twice, remove the second instance |
+| `/expenses`  | `ExpenseAddForm`  | -                                                                      |
+| `/clients`   | `ClientAddForm`   | -                                                                      |
+| `/leads`     | `LeadAddForm`     | -                                                                      |
+| `/divisions` | `DivisionAddForm` | -                                                                      |
 
 ---
 
@@ -47,12 +48,14 @@ This document standardises the "add record" UX pattern across all data-entry pag
 #### 1. `apps/admin/src/app/(admin)/income/page.tsx`
 
 **What to change:**
+
 - Convert this server component so its `<IncomeAddForm>` is no longer rendered here at all.
 - Instead, render a new client shell component `<IncomePageClient>` that owns the toggle state.
 - Remove the **duplicate** `<IncomeAddForm>` render (there are currently two - both must go).
 - Keep all data-fetching (`getAllIncome`, `getAllDivisions`, `getAllClients`, `getDistinctIncomeMonths`) in the server component and pass results as props.
 
 **Resulting structure of `page.tsx` (server component):**
+
 ```tsx
 // apps/admin/src/app/(admin)/income/page.tsx
 import type { Metadata } from 'next';
@@ -266,6 +269,7 @@ git commit -m "feat(ui): collapsible add form on income page, fix duplicate form
 Remove the permanently-visible `<ExpenseAddForm>` and the "Add Expense" `<Button>` from the server component. Replace with a new client shell `<ExpensesPageClient>`.
 
 **Resulting structure of `page.tsx`:**
+
 ```tsx
 // apps/admin/src/app/(admin)/expenses/page.tsx
 import type { Metadata } from 'next';
@@ -498,6 +502,7 @@ git commit -m "feat(ui): collapsible add form on expenses page"
 Remove the permanently-visible `<ClientAddForm>` and the "Add Client" `<Button>`. Replace with `<ClientsPageClient>`.
 
 **Resulting structure of `page.tsx`:**
+
 ```tsx
 // apps/admin/src/app/(admin)/clients/page.tsx
 import type { Metadata } from 'next';
@@ -623,6 +628,7 @@ git commit -m "feat(ui): collapsible add form on clients page"
 Remove the permanently-visible `<LeadAddForm>` and the "Add Lead" `<Button>`. Replace with `<LeadsPageClient>`. Keep `<LeadStatusTabs>` and `<LeadsFilterBar>` in the server component.
 
 **Resulting structure of `page.tsx`:**
+
 ```tsx
 // apps/admin/src/app/(admin)/leads/page.tsx
 import type { Metadata } from 'next';
@@ -750,9 +756,7 @@ export default function LeadsPageClient({
       {entries.length === 0 && !isAdding ? (
         <EmptyState
           message={
-            status || divisionId || source
-              ? 'No leads match the current filters.'
-              : 'No leads yet.'
+            status || divisionId || source ? 'No leads match the current filters.' : 'No leads yet.'
           }
           filtered={!!(status || divisionId || source)}
         />
@@ -790,6 +794,7 @@ git commit -m "feat(ui): collapsible add form on leads page"
 Remove the permanently-visible `<DivisionAddForm>` and the "Add Division" `<Button>`. Replace with `<DivisionsPageClient>`.
 
 **Resulting structure of `page.tsx`:**
+
 ```tsx
 // apps/admin/src/app/(admin)/divisions/page.tsx
 import type { Metadata } from 'next';
@@ -920,6 +925,7 @@ The current `ledger-client.tsx` has one small inconsistency - the button label s
 #### `apps/admin/src/app/(admin)/ledger/ledger-client.tsx`
 
 Find and replace:
+
 ```tsx
 // BEFORE
 <Button onClick={() => setIsAdding(true)} disabled={isAdding}>
@@ -951,14 +957,14 @@ git commit -m "fix(ui): correct ledger page button label from 'Add Withdrawal' t
 
 ## Summary of All Changes
 
-| Phase | Files created | Files modified | Bug fixed |
-|---|---|---|---|
-| 1 - Income | `income/income-client.tsx` | `income/page.tsx` | ✅ Duplicate `<IncomeAddForm>` removed |
-| 2 - Expenses | `expenses/expenses-client.tsx` | `expenses/page.tsx` | - |
-| 3 - Clients | `clients/clients-client.tsx` | `clients/page.tsx` | - |
-| 4 - Leads | `leads/leads-client.tsx` | `leads/page.tsx` | - |
-| 5 - Divisions | `divisions/divisions-client.tsx` | `divisions/page.tsx` | - |
-| 6 - Ledger fix | - | `ledger/ledger-client.tsx` | ✅ Wrong button label corrected |
+| Phase          | Files created                    | Files modified             | Bug fixed                              |
+| -------------- | -------------------------------- | -------------------------- | -------------------------------------- |
+| 1 - Income     | `income/income-client.tsx`       | `income/page.tsx`          | ✅ Duplicate `<IncomeAddForm>` removed |
+| 2 - Expenses   | `expenses/expenses-client.tsx`   | `expenses/page.tsx`        | -                                      |
+| 3 - Clients    | `clients/clients-client.tsx`     | `clients/page.tsx`         | -                                      |
+| 4 - Leads      | `leads/leads-client.tsx`         | `leads/page.tsx`           | -                                      |
+| 5 - Divisions  | `divisions/divisions-client.tsx` | `divisions/page.tsx`       | -                                      |
+| 6 - Ledger fix | -                                | `ledger/ledger-client.tsx` | ✅ Wrong button label corrected        |
 
 **Total new files:** 5  
 **Total modified files:** 6  
@@ -1023,4 +1029,4 @@ export default function XxxPageClient({ ..., createAction, ... }) {
 
 ---
 
-*End of document. Implement phases sequentially. Build must pass before each commit.*
+_End of document. Implement phases sequentially. Build must pass before each commit._

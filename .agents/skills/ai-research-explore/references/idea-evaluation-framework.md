@@ -49,4 +49,3 @@ Each ranked card should record where each field came from:
 - ranking does not prove novelty
 - ranking does not prove benchmark completeness
 - ranking does not prove verified SOTA superiority
-

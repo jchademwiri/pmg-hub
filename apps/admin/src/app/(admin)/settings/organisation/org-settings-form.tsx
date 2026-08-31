@@ -215,7 +215,9 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
                 <Button variant="outline" size="sm" disabled type="button" title="Coming soon">
                   Upload Logo
                 </Button>
-                <p className="text-xs text-muted-foreground">Recommended size: PNG or SVG, transparent background, max 2 MB</p>
+                <p className="text-xs text-muted-foreground">
+                  Recommended size: PNG or SVG, transparent background, max 2 MB
+                </p>
               </div>
             </div>
           </SettingsSection>
@@ -243,4 +245,3 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
     </form>
   );
 }
-

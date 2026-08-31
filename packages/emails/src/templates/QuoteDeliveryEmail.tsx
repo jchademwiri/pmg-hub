@@ -1,13 +1,8 @@
-import * as React from "react";
-import {
-  Button,
-  Heading,
-  Section,
-  Text,
-} from "@react-email/components";
-import type { BrandingProps } from "../types";
-import { DEFAULT_WEBSITE_URL } from "../domains";
-import { EmailLayout } from "./EmailLayout";
+import * as React from 'react';
+import { Button, Heading, Section, Text } from '@react-email/components';
+import type { BrandingProps } from '../types';
+import { DEFAULT_WEBSITE_URL } from '../domains';
+import { EmailLayout } from './EmailLayout';
 
 export type QuoteDeliveryEmailProps = {
   clientName: string;
@@ -37,8 +32,8 @@ const QuoteDeliveryEmail = (props: QuoteDeliveryEmailProps) => {
     personalMessage,
     portalUrl,
     bankDetails,
-    companyName = "Playhouse Media Group",
-    primaryColor = "#1d4ed8",
+    companyName = 'Playhouse Media Group',
+    primaryColor = '#1d4ed8',
     websiteUrl = DEFAULT_WEBSITE_URL,
     logoUrl,
   } = props;
@@ -57,7 +52,8 @@ const QuoteDeliveryEmail = (props: QuoteDeliveryEmailProps) => {
       </Heading>
 
       <Text className="m-0 mb-[16px] text-[15px] leading-[24px] text-[#334155]">
-        Please find attached quotation <strong>{documentNumber}</strong> prepared by <strong>{companyName}</strong>.
+        Please find attached quotation <strong>{documentNumber}</strong> prepared by{' '}
+        <strong>{companyName}</strong>.
       </Text>
 
       {portalUrl && (
@@ -126,7 +122,9 @@ const QuoteDeliveryEmail = (props: QuoteDeliveryEmailProps) => {
             Payment Instructions (50% Deposit Required)
           </Heading>
           <Text className="m-0 mb-[12px] text-[13px] leading-[20px] text-[#475569]">
-            To accept this quotation and secure your booking, please pay a <strong>50% deposit</strong> directly to our bank account. Use quotation number <strong>{documentNumber}</strong> as your deposit reference.
+            To accept this quotation and secure your booking, please pay a{' '}
+            <strong>50% deposit</strong> directly to our bank account. Use quotation number{' '}
+            <strong>{documentNumber}</strong> as your deposit reference.
           </Text>
           <table className="w-full text-[13px] text-[#020304]">
             <tbody>
@@ -155,8 +153,8 @@ const QuoteDeliveryEmail = (props: QuoteDeliveryEmailProps) => {
 
       <Text className="m-0 mb-[24px] text-[14px] leading-[22px] text-[#475569]">
         {portalUrl
-          ? "To accept this quotation, please click the button above to view and approve it in your client portal, or reply directly to this email to discuss any adjustments."
-          : "To accept this quotation, please sign the attached copy and return it to us, or reply directly to this email to discuss any adjustments."}
+          ? 'To accept this quotation, please click the button above to view and approve it in your client portal, or reply directly to this email to discuss any adjustments.'
+          : 'To accept this quotation, please sign the attached copy and return it to us, or reply directly to this email to discuss any adjustments.'}
       </Text>
 
       {/* Footer Sign-off */}
@@ -165,7 +163,8 @@ const QuoteDeliveryEmail = (props: QuoteDeliveryEmailProps) => {
           If you have any questions, feel free to reply directly to this email.
         </Text>
         <Text className="m-0 mt-[12px] text-[14px] text-[#020304]">
-          Kind regards,<br />
+          Kind regards,
+          <br />
           <strong>{companyName}</strong>
         </Text>
       </Section>
@@ -174,22 +173,23 @@ const QuoteDeliveryEmail = (props: QuoteDeliveryEmailProps) => {
 };
 
 QuoteDeliveryEmail.PreviewProps = {
-  clientName: "Acme Corporation",
-  documentNumber: "QT-2026-001",
-  quoteDate: "2026-05-23",
-  expiryDate: "2026-06-07",
-  totalAmount: "R 9,750.00",
-  reference: "RFQ-50122",
-  personalMessage: "Here is the customized quote for your review. Let us know if this aligns with your budget requirements.",
-  portalUrl: "https://portal.playhousemedia.co.za/quotes/q-123",
+  clientName: 'Acme Corporation',
+  documentNumber: 'QT-2026-001',
+  quoteDate: '2026-05-23',
+  expiryDate: '2026-06-07',
+  totalAmount: 'R 9,750.00',
+  reference: 'RFQ-50122',
+  personalMessage:
+    'Here is the customized quote for your review. Let us know if this aligns with your budget requirements.',
+  portalUrl: 'https://portal.playhousemedia.co.za/quotes/q-123',
   bankDetails: {
-    bankName: "First National Bank",
-    accountName: "Playhouse Media Group",
-    accountNumber: "62891234567",
-    branchCode: "250655",
+    bankName: 'First National Bank',
+    accountName: 'Playhouse Media Group',
+    accountNumber: '62891234567',
+    branchCode: '250655',
   },
-  companyName: "Playhouse Media Group",
-  primaryColor: "#1d4ed8",
+  companyName: 'Playhouse Media Group',
+  primaryColor: '#1d4ed8',
   websiteUrl: DEFAULT_WEBSITE_URL,
 };
 

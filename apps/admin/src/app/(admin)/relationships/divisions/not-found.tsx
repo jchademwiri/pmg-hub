@@ -6,8 +6,8 @@ export default function DivisionsNotFound() {
       noun="division"
       links={[
         { label: 'Divisions', href: '/relationships/divisions' },
-        { label: 'Clients',   href: '/relationships/clients'   },
-        { label: 'Leads',     href: '/relationships/leads'     },
+        { label: 'Clients', href: '/relationships/clients' },
+        { label: 'Leads', href: '/relationships/leads' },
       ]}
     />
   );

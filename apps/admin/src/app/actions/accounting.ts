@@ -36,7 +36,9 @@ const CreateAccountSchema = z.object({
   isPostingAccount: z.coerce.boolean().default(true),
 });
 
-export async function createChartAccount(formData: FormData): Promise<{ error?: string; accountId?: string }> {
+export async function createChartAccount(
+  formData: FormData,
+): Promise<{ error?: string; accountId?: string }> {
   try {
     await getSessionOrRedirect();
 
@@ -55,7 +57,7 @@ export async function createChartAccount(formData: FormData): Promise<{ error?: 
     }
 
     const db = getDb();
-    const code = parsed.data.code || await getNextAccountCode(parsed.data.type);
+    const code = parsed.data.code || (await getNextAccountCode(parsed.data.type));
 
     // Check code uniqueness
     const [existing] = await db
@@ -96,7 +98,10 @@ const UpdateAccountSchema = z.object({
   isPostingAccount: z.coerce.boolean().optional(),
 });
 
-export async function updateChartAccount(id: string, formData: FormData): Promise<{ error?: string }> {
+export async function updateChartAccount(
+  id: string,
+  formData: FormData,
+): Promise<{ error?: string }> {
   try {
     await getSessionOrRedirect();
 
@@ -171,7 +176,9 @@ export async function createJournalEntry(data: {
     // Check period is open
     const period = parsed.data.entryDate.slice(0, 7); // YYYY-MM
     if (!(await isPeriodOpen(period))) {
-      return { error: `Period ${period} is closed. Cannot create journal entries in a closed period.` };
+      return {
+        error: `Period ${period} is closed. Cannot create journal entries in a closed period.`,
+      };
     }
 
     // Auto-create period record if it doesn't exist
@@ -205,13 +212,12 @@ export async function createJournalEntry(data: {
             debit: line.debit ? String(line.debit) : null,
             credit: line.credit ? String(line.credit) : null,
             description: line.description ?? null,
-          }))
+          })),
         );
       }
 
       return e;
     });
-
 
     revalidatePath('/accounting/journals');
     revalidatePath('/accounting/chart-of-accounts');
@@ -242,10 +248,7 @@ export async function postJournalEntry(id: string): Promise<{ error?: string }> 
     if (entry.status !== 'draft') return { error: 'Only draft entries can be posted.' };
 
     // Verify lines balance
-    const lines = await db
-      .select()
-      .from(journalLines)
-      .where(eq(journalLines.journalEntryId, id));
+    const lines = await db.select().from(journalLines).where(eq(journalLines.journalEntryId, id));
 
     const validation = validateJournalLines(lines);
     if (!validation.valid) return { error: validation.error };
@@ -372,18 +375,14 @@ export async function fetchJournalsByMonth(year: number, month: number, status?:
   await getSessionOrRedirect();
   const { getJournalEntries } = await import('@pmg/db');
   const period = `${year}-${month.toString().padStart(2, '0')}`;
-  const journalsResult = await getJournalEntries(
-    { period, status, page: 1, pageSize: 5000 }
-  );
+  const journalsResult = await getJournalEntries({ period, status, page: 1, pageSize: 5000 });
   return { data: journalsResult.data };
 }
 
 export async function fetchJournalsByYear(year: number, status?: string) {
   await getSessionOrRedirect();
   const { getJournalEntries } = await import('@pmg/db');
-  const journalsResult = await getJournalEntries(
-    { year, status, page: 1, pageSize: 5000 }
-  );
+  const journalsResult = await getJournalEntries({ year, status, page: 1, pageSize: 5000 });
   return { data: journalsResult.data };
 }
 
@@ -406,9 +405,7 @@ export async function fetchGeneralLedgerByMonth(year: number, month: number, acc
   await getSessionOrRedirect();
   const { getGeneralLedger } = await import('@pmg/db');
   const { startDate, endDate } = getStartAndEndOfMonth(year, month);
-  const result = await getGeneralLedger(
-    { startDate, endDate, accountId, page: 1, pageSize: 5000 }
-  );
+  const result = await getGeneralLedger({ startDate, endDate, accountId, page: 1, pageSize: 5000 });
   return { data: result.data };
 }
 
@@ -416,9 +413,7 @@ export async function fetchGeneralLedgerByYear(year: number, accountId?: string)
   await getSessionOrRedirect();
   const { getGeneralLedger } = await import('@pmg/db');
   const { startDate, endDate } = getStartAndEndOfFinancialYear(year);
-  const result = await getGeneralLedger(
-    { startDate, endDate, accountId, page: 1, pageSize: 5000 }
-  );
+  const result = await getGeneralLedger({ startDate, endDate, accountId, page: 1, pageSize: 5000 });
   return { data: result.data };
 }
 
@@ -441,7 +436,8 @@ export async function recordCashTransfer(data: {
     const { fromAccountId, toAccountId, amount, date, description } = data;
 
     if (amount <= 0) return { error: 'Transfer amount must be positive.' };
-    if (fromAccountId === toAccountId) return { error: 'Source and destination accounts must be different.' };
+    if (fromAccountId === toAccountId)
+      return { error: 'Source and destination accounts must be different.' };
 
     const period = date.slice(0, 7);
     if (!(await isPeriodOpen(period))) {
@@ -452,10 +448,7 @@ export async function recordCashTransfer(data: {
     const db = getDb();
 
     // Default to first active division
-    const [division] = await db
-      .select({ id: chartAccounts.id })
-      .from(chartAccounts)
-      .limit(1);
+    const [division] = await db.select({ id: chartAccounts.id }).from(chartAccounts).limit(1);
 
     // Fetch division from journalEntries if needed, or query divisions table
     const divisionRows = await db.execute(sql`SELECT id FROM divisions LIMIT 1`);

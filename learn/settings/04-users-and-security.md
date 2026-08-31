@@ -30,9 +30,8 @@ Use it to understand:
 
 ## Common Mistakes
 
-| Mistake | Better Approach |
-|---------|-----------------|
-| Sharing one login | Invite each user separately |
+| Mistake                      | Better Approach                    |
+| ---------------------------- | ---------------------------------- |
+| Sharing one login            | Invite each user separately        |
 | Giving everyone admin access | Give admin access only when needed |
-| Leaving old users active | Remove or disable unused access |
-
+| Leaving old users active     | Remove or disable unused access    |

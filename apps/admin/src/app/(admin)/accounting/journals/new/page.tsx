@@ -1,16 +1,16 @@
-import type { Metadata } from 'next'
-import { getActiveChartAccounts, db, divisions, eq } from '@pmg/db'
-import { SetPageTotal } from '@/components/navigation/page-header-context'
-import { createJournalEntry } from '@/app/actions/accounting'
-import { JournalEntryForm } from './journal-entry-form'
-import { BackButton } from '@/components/ui/back-button'
+import type { Metadata } from 'next';
+import { getActiveChartAccounts, db, divisions, eq } from '@pmg/db';
+import { SetPageTotal } from '@/components/navigation/page-header-context';
+import { createJournalEntry } from '@/app/actions/accounting';
+import { JournalEntryForm } from './journal-entry-form';
+import { BackButton } from '@/components/ui/back-button';
 
-export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'New Journal Entry' }
+export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'New Journal Entry' };
 
 export default async function NewJournalEntryPage() {
-  const accounts = await getActiveChartAccounts()
-  const activeDivisions = await db.select().from(divisions).where(eq(divisions.isActive, true))
+  const accounts = await getActiveChartAccounts();
+  const activeDivisions = await db.select().from(divisions).where(eq(divisions.isActive, true));
 
   return (
     <div className="flex flex-col gap-6">
@@ -30,5 +30,5 @@ export default async function NewJournalEntryPage() {
         createAction={createJournalEntry}
       />
     </div>
-  )
+  );
 }

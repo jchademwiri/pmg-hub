@@ -5,6 +5,7 @@
 ## Part 1: High Level Module Specification
 
 # PMG Invoicing Module
+
 ### Feature Specification - Phase 11 of PMG Control Center
 
 > **Internal developer reference · Playhouse Media Group**
@@ -52,6 +53,7 @@ Draft Quote → Send to Client → Accepted → Convert to Invoice → Client Pa
 ```
 
 **What makes this valuable for PMG specifically:**
+
 - Every invoice you issue currently is a manual document (Word/Canva). This replaces that.
 - Your clients, divisions, and income are already in the database. Invoices close the loop.
 - When an invoice is marked Paid, you can optionally auto-create the corresponding income entry - no double entry.
@@ -69,6 +71,7 @@ Here is the honest breakdown:
 ### What makes this tractable
 
 The hardest architectural decisions are already made. You have:
+
 - A working Drizzle schema pattern to copy exactly
 - A working Server Action pattern (`income.ts` is the template for `invoices.ts`)
 - A working form pattern (`IncomeAddForm` is the starting point for `LineItemForm`)
@@ -96,19 +99,19 @@ but requires transaction safety. One DB write must succeed or both fail.
 
 ### Realistic time estimate (mid-level developer + AI co-pilot)
 
-| Phase | Work | Estimated Time |
-|---|---|---|
-| Schema + migrations | New tables, seed data | 1–2 days |
-| Quote CRUD | Create, edit, delete, list | 3–4 days |
-| Invoice CRUD | Create from quote, edit, list | 2–3 days |
-| Line item builder | Dynamic add/remove rows | 2–3 days |
-| Status management | Status transitions, validation | 1–2 days |
-| PDF generation | Branded A4 output, download | 4–6 days |
-| Statement view | Per-client aged summary | 2–3 days |
-| Auto income entry | Mark paid → income record | 1–2 days |
-| Settings page | Brand configs, payment details | 1–2 days |
-| Polish & edge cases | Testing, empty states, error handling | 3–4 days |
-| **Total** | | **~20–29 working days** |
+| Phase               | Work                                  | Estimated Time          |
+| ------------------- | ------------------------------------- | ----------------------- |
+| Schema + migrations | New tables, seed data                 | 1–2 days                |
+| Quote CRUD          | Create, edit, delete, list            | 3–4 days                |
+| Invoice CRUD        | Create from quote, edit, list         | 2–3 days                |
+| Line item builder   | Dynamic add/remove rows               | 2–3 days                |
+| Status management   | Status transitions, validation        | 1–2 days                |
+| PDF generation      | Branded A4 output, download           | 4–6 days                |
+| Statement view      | Per-client aged summary               | 2–3 days                |
+| Auto income entry   | Mark paid → income record             | 1–2 days                |
+| Settings page       | Brand configs, payment details        | 1–2 days                |
+| Polish & edge cases | Testing, empty states, error handling | 3–4 days                |
+| **Total**           |                                       | **~20–29 working days** |
 
 That is roughly **4–6 weeks** of focused part-time work. With AI assistance on the
 boilerplate (schema, Server Actions, form wiring), the mechanical parts compress
@@ -161,41 +164,43 @@ Per-division configuration: banking details, VAT number, footer text.
 Created once per division via a settings page.
 
 ```ts
-import { pgTable, text, uuid, timestamp, boolean } from "drizzle-orm/pg-core";
-import { divisions } from "./divisions";
+import { pgTable, text, uuid, timestamp, boolean } from 'drizzle-orm/pg-core';
+import { divisions } from './divisions';
 
-export const invoiceSettings = pgTable("invoice_settings", {
-  id:              uuid("id").primaryKey().defaultRandom(),
-  divisionId:      uuid("division_id").notNull().unique()
-                     .references(() => divisions.id, { onDelete: "cascade" }),
+export const invoiceSettings = pgTable('invoice_settings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  divisionId: uuid('division_id')
+    .notNull()
+    .unique()
+    .references(() => divisions.id, { onDelete: 'cascade' }),
 
   // Letterhead
-  tradingName:     text("trading_name").notNull(),       // "Apex Web Solutions"
-  tagline:         text("tagline"),                       // "Where Great Websites Begin"
-  email:           text("email").notNull(),
-  phone:           text("phone").notNull(),
-  website:         text("website"),
-  address:         text("address").notNull(),
+  tradingName: text('trading_name').notNull(), // "Apex Web Solutions"
+  tagline: text('tagline'), // "Where Great Websites Begin"
+  email: text('email').notNull(),
+  phone: text('phone').notNull(),
+  website: text('website'),
+  address: text('address').notNull(),
 
   // Legal & tax
-  registrationNo:  text("registration_no"),              // CIPC reg number
-  vatNo:           text("vat_number"),                   // if VAT registered
-  isVatRegistered: boolean("is_vat_registered").notNull().default(false),
+  registrationNo: text('registration_no'), // CIPC reg number
+  vatNo: text('vat_number'), // if VAT registered
+  isVatRegistered: boolean('is_vat_registered').notNull().default(false),
 
   // Banking
-  bankName:        text("bank_name"),
-  accountName:     text("account_name"),
-  accountNo:       text("account_no"),
-  branchCode:      text("branch_code"),
-  accountType:     text("account_type"),                 // "Cheque" | "Savings"
+  bankName: text('bank_name'),
+  accountName: text('account_name'),
+  accountNo: text('account_no'),
+  branchCode: text('branch_code'),
+  accountType: text('account_type'), // "Cheque" | "Savings"
 
   // Defaults
-  defaultPaymentTermsDays: integer("default_payment_terms_days").notNull().default(14),
-  defaultNotes:    text("default_notes"),                // "Thank you for your business."
-  defaultFooter:   text("default_footer"),
+  defaultPaymentTermsDays: integer('default_payment_terms_days').notNull().default(14),
+  defaultNotes: text('default_notes'), // "Thank you for your business."
+  defaultFooter: text('default_footer'),
 
-  createdAt:       timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt:       timestamp("updated_at", { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }),
 });
 ```
 
@@ -205,127 +210,138 @@ Single table for both quotes and invoices (document type field).
 Quotes and invoices share the same structure - the `type` field differentiates them.
 
 ```ts
-import { pgEnum, pgTable, text, uuid, date, numeric,
-         integer, timestamp, boolean, check } from "drizzle-orm/pg-core";
-import { sql, relations } from "drizzle-orm";
-import { divisions } from "./divisions";
-import { clients } from "./clients";
+import {
+  pgEnum,
+  pgTable,
+  text,
+  uuid,
+  date,
+  numeric,
+  integer,
+  timestamp,
+  boolean,
+  check,
+} from 'drizzle-orm/pg-core';
+import { sql, relations } from 'drizzle-orm';
+import { divisions } from './divisions';
+import { clients } from './clients';
 
-export const documentTypeEnum = pgEnum("document_type", ["quote", "invoice", "credit_note"]);
-export const documentStatusEnum = pgEnum("document_status", [
-  "draft",
-  "sent",
-  "accepted",   // quotes only
-  "declined",   // quotes only
-  "converted",  // quote has been converted to invoice
-  "paid",
-  "partial",
-  "overdue",
-  "cancelled",
-  "archived",
+export const documentTypeEnum = pgEnum('document_type', ['quote', 'invoice', 'credit_note']);
+export const documentStatusEnum = pgEnum('document_status', [
+  'draft',
+  'sent',
+  'accepted', // quotes only
+  'declined', // quotes only
+  'converted', // quote has been converted to invoice
+  'paid',
+  'partial',
+  'overdue',
+  'cancelled',
+  'archived',
 ]);
 
 export const invoices = pgTable(
-  "invoices",
+  'invoices',
   {
-    id:             uuid("id").primaryKey().defaultRandom(),
+    id: uuid('id').primaryKey().defaultRandom(),
 
     // Document identity
-    type:           documentTypeEnum("type").notNull().default("invoice"),
-    number:         text("number").notNull().unique(),   // "AWS-INV-2026-001"
-    divisionId:     uuid("division_id").notNull()
-                      .references(() => divisions.id, { onDelete: "restrict" }),
-    clientId:       uuid("client_id")
-                      .references(() => clients.id, { onDelete: "set null" }),
+    type: documentTypeEnum('type').notNull().default('invoice'),
+    number: text('number').notNull().unique(), // "AWS-INV-2026-001"
+    divisionId: uuid('division_id')
+      .notNull()
+      .references(() => divisions.id, { onDelete: 'restrict' }),
+    clientId: uuid('client_id').references(() => clients.id, { onDelete: 'set null' }),
 
     // Status
-    status:         documentStatusEnum("status").notNull().default("draft"),
+    status: documentStatusEnum('status').notNull().default('draft'),
 
     // Dates
-    issueDate:      date("issue_date").notNull(),
-    dueDate:        date("due_date"),
-    expiryDate:     date("expiry_date"),               // quotes: offer expiry
+    issueDate: date('issue_date').notNull(),
+    dueDate: date('due_date'),
+    expiryDate: date('expiry_date'), // quotes: offer expiry
 
     // Quote → Invoice link
     // When a quote is converted, a new invoice row is created.
     // The quote's convertedToInvoiceId is set. The invoice's sourceQuoteId is set.
     // Line items are CLONED - they are not shared.
-    sourceQuoteId:          uuid("source_quote_id"),   // invoice: which quote it came from
-    convertedToInvoiceId:   uuid("converted_to_invoice_id"), // quote: which invoice was created
+    sourceQuoteId: uuid('source_quote_id'), // invoice: which quote it came from
+    convertedToInvoiceId: uuid('converted_to_invoice_id'), // quote: which invoice was created
 
     // Financials (denormalised for fast display - recalculated on every line item save)
-    subtotal:       numeric("subtotal", { precision: 12, scale: 2 }).notNull().default("0"),
-    discountAmount: numeric("discount_amount", { precision: 12, scale: 2 }).notNull().default("0"),
-    vatAmount:      numeric("vat_amount", { precision: 12, scale: 2 }).notNull().default("0"),
-    total:          numeric("total", { precision: 12, scale: 2 }).notNull().default("0"),
-    amountPaid:     numeric("amount_paid", { precision: 12, scale: 2 }).notNull().default("0"),
-    amountDue:      numeric("amount_due", { precision: 12, scale: 2 }).notNull().default("0"),
+    subtotal: numeric('subtotal', { precision: 12, scale: 2 }).notNull().default('0'),
+    discountAmount: numeric('discount_amount', { precision: 12, scale: 2 }).notNull().default('0'),
+    vatAmount: numeric('vat_amount', { precision: 12, scale: 2 }).notNull().default('0'),
+    total: numeric('total', { precision: 12, scale: 2 }).notNull().default('0'),
+    amountPaid: numeric('amount_paid', { precision: 12, scale: 2 }).notNull().default('0'),
+    amountDue: numeric('amount_due', { precision: 12, scale: 2 }).notNull().default('0'),
 
     // Tax
-    vatRate:        numeric("vat_rate", { precision: 5, scale: 2 }).notNull().default("15.00"),
-    vatInclusive:   boolean("vat_inclusive").notNull().default(false), // if true, prices include VAT
+    vatRate: numeric('vat_rate', { precision: 5, scale: 2 }).notNull().default('15.00'),
+    vatInclusive: boolean('vat_inclusive').notNull().default(false), // if true, prices include VAT
 
     // Payment terms
-    paymentTermsDays: integer("payment_terms_days").notNull().default(14),
+    paymentTermsDays: integer('payment_terms_days').notNull().default(14),
 
     // Content
-    clientRef:      text("client_ref"),                // client's PO number or reference
-    notes:          text("notes"),                     // visible to client
-    internalNotes:  text("internal_notes"),            // not on PDF
-    footer:         text("footer"),
+    clientRef: text('client_ref'), // client's PO number or reference
+    notes: text('notes'), // visible to client
+    internalNotes: text('internal_notes'), // not on PDF
+    footer: text('footer'),
 
     // Auto-income flag
-    incomeEntryId:  uuid("income_entry_id"),           // set when paid → income created
+    incomeEntryId: uuid('income_entry_id'), // set when paid → income created
 
-    createdAt:      timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updatedAt:      timestamp("updated_at", { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }),
   },
   (t) => [
-    check("invoices_subtotal_non_negative", sql`${t.subtotal} >= 0`),
-    check("invoices_total_non_negative",    sql`${t.total} >= 0`),
-  ]
+    check('invoices_subtotal_non_negative', sql`${t.subtotal} >= 0`),
+    check('invoices_total_non_negative', sql`${t.total} >= 0`),
+  ],
 );
 
 export const invoicesRelations = relations(invoices, ({ one, many }) => ({
-  division:   one(divisions, { fields: [invoices.divisionId], references: [divisions.id] }),
-  client:     one(clients,   { fields: [invoices.clientId],   references: [clients.id] }),
-  lineItems:  many(invoiceLineItems),
-  payments:   many(invoicePayments),
+  division: one(divisions, { fields: [invoices.divisionId], references: [divisions.id] }),
+  client: one(clients, { fields: [invoices.clientId], references: [clients.id] }),
+  lineItems: many(invoiceLineItems),
+  payments: many(invoicePayments),
 }));
 
-export type Invoice    = typeof invoices.$inferSelect;
+export type Invoice = typeof invoices.$inferSelect;
 export type NewInvoice = typeof invoices.$inferInsert;
 ```
 
 ### `invoice_line_items.ts`
 
 ```ts
-import { pgTable, text, uuid, numeric, integer, timestamp, check } from "drizzle-orm/pg-core";
-import { sql, relations } from "drizzle-orm";
-import { invoices } from "./invoices";
+import { pgTable, text, uuid, numeric, integer, timestamp, check } from 'drizzle-orm/pg-core';
+import { sql, relations } from 'drizzle-orm';
+import { invoices } from './invoices';
 
 export const invoiceLineItems = pgTable(
-  "invoice_line_items",
+  'invoice_line_items',
   {
-    id:          uuid("id").primaryKey().defaultRandom(),
-    invoiceId:   uuid("invoice_id").notNull()
-                   .references(() => invoices.id, { onDelete: "cascade" }),
-    sortOrder:   integer("sort_order").notNull().default(0),
+    id: uuid('id').primaryKey().defaultRandom(),
+    invoiceId: uuid('invoice_id')
+      .notNull()
+      .references(() => invoices.id, { onDelete: 'cascade' }),
+    sortOrder: integer('sort_order').notNull().default(0),
 
-    description: text("description").notNull(),
-    quantity:    numeric("quantity",   { precision: 10, scale: 2 }).notNull().default("1"),
-    unitPrice:   numeric("unit_price", { precision: 12, scale: 2 }).notNull(),
-    vatRate:     numeric("vat_rate",   { precision: 5,  scale: 2 }).notNull().default("15.00"),
-    discount:    numeric("discount",   { precision: 5,  scale: 2 }).notNull().default("0"),
-    amount:      numeric("amount",     { precision: 12, scale: 2 }).notNull(),
+    description: text('description').notNull(),
+    quantity: numeric('quantity', { precision: 10, scale: 2 }).notNull().default('1'),
+    unitPrice: numeric('unit_price', { precision: 12, scale: 2 }).notNull(),
+    vatRate: numeric('vat_rate', { precision: 5, scale: 2 }).notNull().default('15.00'),
+    discount: numeric('discount', { precision: 5, scale: 2 }).notNull().default('0'),
+    amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
     // amount = quantity × unitPrice × (1 - discount/100)
 
-    createdAt:   timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
-    check("line_item_quantity_positive",  sql`${t.quantity} > 0`),
-    check("line_item_unit_price_non_neg", sql`${t.unit_price} >= 0`),
-  ]
+    check('line_item_quantity_positive', sql`${t.quantity} > 0`),
+    check('line_item_unit_price_non_neg', sql`${t.unit_price} >= 0`),
+  ],
 );
 
 export const invoiceLineItemsRelations = relations(invoiceLineItems, ({ one }) => ({
@@ -338,26 +354,25 @@ export const invoiceLineItemsRelations = relations(invoiceLineItems, ({ one }) =
 Records partial or full payments against an invoice.
 
 ```ts
-import { pgTable, uuid, date, numeric, text, timestamp, check } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
-import { invoices } from "./invoices";
+import { pgTable, uuid, date, numeric, text, timestamp, check } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { invoices } from './invoices';
 
 export const invoicePayments = pgTable(
-  "invoice_payments",
+  'invoice_payments',
   {
-    id:          uuid("id").primaryKey().defaultRandom(),
-    invoiceId:   uuid("invoice_id").notNull()
-                   .references(() => invoices.id, { onDelete: "cascade" }),
-    date:        date("date").notNull(),
-    amount:      numeric("amount", { precision: 12, scale: 2 }).notNull(),
-    method:      text("method"),    // "EFT" | "Cash" | "Card" | "SnapScan"
-    reference:   text("reference"), // bank reference / proof of payment note
-    notes:       text("notes"),
-    createdAt:   timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    id: uuid('id').primaryKey().defaultRandom(),
+    invoiceId: uuid('invoice_id')
+      .notNull()
+      .references(() => invoices.id, { onDelete: 'cascade' }),
+    date: date('date').notNull(),
+    amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+    method: text('method'), // "EFT" | "Cash" | "Card" | "SnapScan"
+    reference: text('reference'), // bank reference / proof of payment note
+    notes: text('notes'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [
-    check("payment_amount_positive", sql`${t.amount} > 0`),
-  ]
+  (t) => [check('payment_amount_positive', sql`${t.amount} > 0`)],
 );
 ```
 
@@ -365,10 +380,10 @@ export const invoicePayments = pgTable(
 
 ```ts
 // Add these three lines:
-export * from "./invoice_settings";
-export * from "./invoices";
-export * from "./invoice_line_items";
-export * from "./invoice_payments";
+export * from './invoice_settings';
+export * from './invoices';
+export * from './invoice_line_items';
+export * from './invoice_payments';
 ```
 
 ---
@@ -384,15 +399,15 @@ All calculations happen in a utility function called on every line item save.
 export type LineItemInput = {
   quantity: number;
   unitPrice: number;
-  vatRate: number;    // 15 by default
-  discount: number;  // percentage, 0–100
+  vatRate: number; // 15 by default
+  discount: number; // percentage, 0–100
 };
 
 export function calcLineItem(item: LineItemInput) {
-  const base     = item.quantity * item.unitPrice;
-  const discAmt  = base * (item.discount / 100);
-  const amount   = base - discAmt;
-  const vatAmt   = amount * (item.vatRate / 100);
+  const base = item.quantity * item.unitPrice;
+  const discAmt = base * (item.discount / 100);
+  const amount = base - discAmt;
+  const vatAmt = amount * (item.vatRate / 100);
   return { amount, vatAmount: vatAmt };
 }
 
@@ -401,15 +416,16 @@ export function calcInvoiceTotals(lineItems: LineItemInput[]) {
   let vatAmount = 0;
   for (const item of lineItems) {
     const { amount, vatAmount: itemVat } = calcLineItem(item);
-    subtotal  += amount;
+    subtotal += amount;
     vatAmount += itemVat;
   }
-  const total    = subtotal + vatAmount;
+  const total = subtotal + vatAmount;
   return { subtotal, vatAmount, total };
 }
 ```
 
 When an invoice is saved, the Server Action must:
+
 1. Upsert all line items
 2. Recalculate `subtotal`, `vatAmount`, `total` from the saved line items
 3. Update `amountDue = total - amountPaid`
@@ -435,10 +451,11 @@ Examples:
 ```
 
 Division codes - derive from division name:
-- "Apex Web Solutions"    → AWS
+
+- "Apex Web Solutions" → AWS
 - "Tender Edge Solutions" → TES
 - "Playhouse Media Group" → PMG
-- Any new division        → first 3 chars uppercased
+- Any new division → first 3 chars uppercased
 
 Type codes: `Q` (quote), `INV` (invoice), `CN` (credit note)
 
@@ -447,7 +464,7 @@ Type codes: `Q` (quote), `INV` (invoice), `CN` (credit note)
 
 export async function generateDocumentNumber(
   divisionId: string,
-  type: "quote" | "invoice" | "credit_note"
+  type: 'quote' | 'invoice' | 'credit_note',
 ): Promise<string> {
   const division = await db
     .select({ name: divisions.name })
@@ -455,30 +472,28 @@ export async function generateDocumentNumber(
     .where(eq(divisions.id, divisionId))
     .then((r) => r[0]);
 
-  if (!division) throw new Error("Division not found");
+  if (!division) throw new Error('Division not found');
 
   const codeMap: Record<string, string> = {
-    "Apex Web Solutions":    "AWS",
-    "Tender Edge Solutions": "TES",
-    "Playhouse Media Group": "PMG",
+    'Apex Web Solutions': 'AWS',
+    'Tender Edge Solutions': 'TES',
+    'Playhouse Media Group': 'PMG',
   };
 
-  const divCode  = codeMap[division.name] ?? division.name.slice(0, 3).toUpperCase();
-  const typeCode = type === "quote" ? "Q" : type === "invoice" ? "INV" : "CN";
-  const year     = new Date().getFullYear();
-  const prefix   = `${divCode}-${typeCode}-${year}-`;
+  const divCode = codeMap[division.name] ?? division.name.slice(0, 3).toUpperCase();
+  const typeCode = type === 'quote' ? 'Q' : type === 'invoice' ? 'INV' : 'CN';
+  const year = new Date().getFullYear();
+  const prefix = `${divCode}-${typeCode}-${year}-`;
 
   const existing = await db
     .select({ number: invoices.number })
     .from(invoices)
-    .where(sql`${invoices.number} LIKE ${prefix + "%"}`)
+    .where(sql`${invoices.number} LIKE ${prefix + '%'}`)
     .orderBy(desc(invoices.number));
 
-  const seq = existing.length === 0
-    ? 1
-    : parseInt(existing[0]!.number.split("-").at(-1)!, 10) + 1;
+  const seq = existing.length === 0 ? 1 : parseInt(existing[0]!.number.split('-').at(-1)!, 10) + 1;
 
-  return `${prefix}${String(seq).padStart(3, "0")}`;
+  return `${prefix}${String(seq).padStart(3, '0')}`;
 }
 ```
 
@@ -504,15 +519,15 @@ draft → sent → partial (payment received, not full)
 
 ### Status transition rules (enforced in Server Actions)
 
-| From | Allowed next states |
-|---|---|
-| draft | sent, cancelled |
-| sent (quote) | accepted, declined, draft |
-| sent (invoice) | partial, paid, overdue, cancelled |
-| accepted | converted (system-only), draft |
-| partial | paid, overdue, cancelled |
-| overdue | paid, partial, cancelled |
-| converted / paid / cancelled / archived | none - terminal |
+| From                                    | Allowed next states               |
+| --------------------------------------- | --------------------------------- |
+| draft                                   | sent, cancelled                   |
+| sent (quote)                            | accepted, declined, draft         |
+| sent (invoice)                          | partial, paid, overdue, cancelled |
+| accepted                                | converted (system-only), draft    |
+| partial                                 | paid, overdue, cancelled          |
+| overdue                                 | paid, partial, cancelled          |
+| converted / paid / cancelled / archived | none - terminal                   |
 
 ---
 
@@ -525,40 +540,42 @@ plus a code-level brand config.
 // apps/admin/src/lib/invoice-brands.ts
 
 export type BrandConfig = {
-  primaryColor:   string;  // hex
-  accentColor:    string;
-  logoText:       string;  // fallback if no logo image
-  fontStyle:      "serif" | "sans";
+  primaryColor: string; // hex
+  accentColor: string;
+  logoText: string; // fallback if no logo image
+  fontStyle: 'serif' | 'sans';
 };
 
 export const BRAND_CONFIGS: Record<string, BrandConfig> = {
-  "Apex Web Solutions": {
-    primaryColor: "#0F172A",
-    accentColor:  "#38BDF8",
-    logoText:     "APEX WEB SOLUTIONS",
-    fontStyle:    "sans",
+  'Apex Web Solutions': {
+    primaryColor: '#0F172A',
+    accentColor: '#38BDF8',
+    logoText: 'APEX WEB SOLUTIONS',
+    fontStyle: 'sans',
   },
-  "Tender Edge Solutions": {
-    primaryColor: "#0b2a4a",
-    accentColor:  "#c9a227",
-    logoText:     "TENDER EDGE SOLUTIONS",
-    fontStyle:    "sans",
+  'Tender Edge Solutions': {
+    primaryColor: '#0b2a4a',
+    accentColor: '#c9a227',
+    logoText: 'TENDER EDGE SOLUTIONS',
+    fontStyle: 'sans',
   },
-  "Playhouse Media Group": {
-    primaryColor: "#0D1B2A",
-    accentColor:  "#F97316",
-    logoText:     "PLAYHOUSE MEDIA GROUP",
-    fontStyle:    "sans",
+  'Playhouse Media Group': {
+    primaryColor: '#0D1B2A',
+    accentColor: '#F97316',
+    logoText: 'PLAYHOUSE MEDIA GROUP',
+    fontStyle: 'sans',
   },
 };
 
 export function getBrandConfig(divisionName: string): BrandConfig {
-  return BRAND_CONFIGS[divisionName] ?? {
-    primaryColor: "#0D1B2A",
-    accentColor:  "#F97316",
-    logoText:     divisionName.toUpperCase(),
-    fontStyle:    "sans",
-  };
+  return (
+    BRAND_CONFIGS[divisionName] ?? {
+      primaryColor: '#0D1B2A',
+      accentColor: '#F97316',
+      logoText: divisionName.toUpperCase(),
+      fontStyle: 'sans',
+    }
+  );
 }
 ```
 
@@ -616,7 +633,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 // A React component using @react-pdf/renderer primitives (Document, Page, View, Text, etc.)
 // NOT a standard React component - uses PDF-specific primitives only.
 
-import { Document, Page, View, Text, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 
 // Structure:
 // <Document>
@@ -694,16 +711,22 @@ export async function updateInvoice(id: string, formData: FormData): Promise<{ e
 
 // ── Upsert a line item (add or update) ───────────────────────────────────────
 // Recalculates invoice totals after every line item change.
-export async function upsertLineItem(invoiceId: string, formData: FormData): Promise<{ error?: string }> {}
+export async function upsertLineItem(
+  invoiceId: string,
+  formData: FormData,
+): Promise<{ error?: string }> {}
 
 // ── Delete a line item ────────────────────────────────────────────────────────
-export async function deleteLineItem(lineItemId: string, invoiceId: string): Promise<{ error?: string }> {}
+export async function deleteLineItem(
+  lineItemId: string,
+  invoiceId: string,
+): Promise<{ error?: string }> {}
 
 // ── Update invoice status ─────────────────────────────────────────────────────
 // Validates the transition is allowed before writing.
 export async function updateInvoiceStatus(
   id: string,
-  newStatus: string
+  newStatus: string,
 ): Promise<{ error?: string }> {}
 
 // ── Record a payment ──────────────────────────────────────────────────────────
@@ -711,14 +734,14 @@ export async function updateInvoiceStatus(
 // If fully paid and createIncomeEntry=true, inserts into income table in same transaction.
 export async function recordPayment(
   invoiceId: string,
-  formData: FormData
+  formData: FormData,
 ): Promise<{ error?: string }> {}
 
 // ── Convert quote to invoice ──────────────────────────────────────────────────
 // Creates a new invoice row, clones all line items, links both rows.
 // Quote status → "converted". Returns the new invoice id.
 export async function convertQuoteToInvoice(
-  quoteId: string
+  quoteId: string,
 ): Promise<{ error?: string; invoiceId?: string }> {}
 
 // ── Delete draft document ─────────────────────────────────────────────────────
@@ -730,11 +753,12 @@ export async function duplicateInvoice(id: string): Promise<{ error?: string; id
 ```
 
 All actions revalidate:
+
 ```ts
 revalidatePath('/invoices');
 revalidatePath('/quotes');
 revalidatePath(`/invoices/${id}`);
-revalidatePath('/dashboard');  // if a payment was recorded
+revalidatePath('/dashboard'); // if a payment was recorded
 ```
 
 ---
@@ -746,7 +770,7 @@ Add to `packages/db/src/queries.ts`:
 ```ts
 // ── Invoice list with summary ─────────────────────────────────────────────────
 export async function getAllInvoices(filters?: {
-  type?: "invoice" | "quote";
+  type?: 'invoice' | 'quote';
   status?: string;
   divisionId?: string;
   clientId?: string;
@@ -765,7 +789,11 @@ export async function getInvoiceStats(): Promise<{
 }> {}
 
 // ── Per-client statement data ─────────────────────────────────────────────────
-export async function getClientStatement(clientId: string, from?: string, to?: string): Promise<{
+export async function getClientStatement(
+  clientId: string,
+  from?: string,
+  to?: string,
+): Promise<{
   client: { name: string; businessName: string | null };
   invoices: InvoiceListRow[];
   totalInvoiced: number;
@@ -785,27 +813,27 @@ export async function upsertInvoiceSettings(settings: NewInvoiceSettings): Promi
 
 ### Page components (Server Components)
 
-| Component | File | Description |
-|---|---|---|
-| `InvoiceListPage` | `/invoices/page.tsx` | Server: fetches list + stats, renders shell |
-| `InvoiceDetailPage` | `/invoices/[id]/page.tsx` | Server: fetches full invoice, renders detail |
-| `InvoiceEditPage` | `/invoices/[id]/edit/page.tsx` | Server: fetches invoice + divisions + clients |
-| `QuoteListPage` | `/quotes/page.tsx` | Server: filtered to type=quote |
+| Component           | File                           | Description                                   |
+| ------------------- | ------------------------------ | --------------------------------------------- |
+| `InvoiceListPage`   | `/invoices/page.tsx`           | Server: fetches list + stats, renders shell   |
+| `InvoiceDetailPage` | `/invoices/[id]/page.tsx`      | Server: fetches full invoice, renders detail  |
+| `InvoiceEditPage`   | `/invoices/[id]/edit/page.tsx` | Server: fetches invoice + divisions + clients |
+| `QuoteListPage`     | `/quotes/page.tsx`             | Server: filtered to type=quote                |
 
 ### Client components
 
-| Component | File | Description |
-|---|---|---|
-| `InvoiceShell` | `components/invoices/invoice-shell.tsx` | Layout wrapper, tab navigation |
-| `InvoiceForm` | `components/invoices/invoice-form.tsx` | Header fields (client, dates, terms, notes) |
-| `LineItemEditor` | `components/invoices/line-item-editor.tsx` | Dynamic add/remove rows with live total |
-| `InvoiceTotal` | `components/invoices/invoice-total.tsx` | Subtotal / VAT / Total display |
-| `StatusBadge` | `components/invoices/status-badge.tsx` | Coloured badge per status |
-| `StatusActions` | `components/invoices/status-actions.tsx` | Context-aware action buttons (Send, Mark Paid, etc.) |
-| `PaymentModal` | `components/invoices/payment-modal.tsx` | Dialog to record a payment |
-| `ConvertModal` | `components/invoices/convert-modal.tsx` | Confirm quote → invoice conversion |
-| `InvoicePreview` | `components/invoices/invoice-preview.tsx` | HTML preview (mirrors PDF layout) |
-| `StatementView` | `components/invoices/statement-view.tsx` | Client statement with aging buckets |
+| Component        | File                                       | Description                                          |
+| ---------------- | ------------------------------------------ | ---------------------------------------------------- |
+| `InvoiceShell`   | `components/invoices/invoice-shell.tsx`    | Layout wrapper, tab navigation                       |
+| `InvoiceForm`    | `components/invoices/invoice-form.tsx`     | Header fields (client, dates, terms, notes)          |
+| `LineItemEditor` | `components/invoices/line-item-editor.tsx` | Dynamic add/remove rows with live total              |
+| `InvoiceTotal`   | `components/invoices/invoice-total.tsx`    | Subtotal / VAT / Total display                       |
+| `StatusBadge`    | `components/invoices/status-badge.tsx`     | Coloured badge per status                            |
+| `StatusActions`  | `components/invoices/status-actions.tsx`   | Context-aware action buttons (Send, Mark Paid, etc.) |
+| `PaymentModal`   | `components/invoices/payment-modal.tsx`    | Dialog to record a payment                           |
+| `ConvertModal`   | `components/invoices/convert-modal.tsx`    | Confirm quote → invoice conversion                   |
+| `InvoicePreview` | `components/invoices/invoice-preview.tsx`  | HTML preview (mirrors PDF layout)                    |
+| `StatementView`  | `components/invoices/statement-view.tsx`   | Client statement with aging buckets                  |
 
 ### The `LineItemEditor` - the most complex component
 
@@ -962,10 +990,9 @@ CREATE TYPE "public"."document_status" AS ENUM(
 
 ---
 
-*Last updated: March 2026 · Playhouse Media Group (PTY) Ltd*
-*Jacob Chademwiri · 285 Erasmus Ave, Raslouw AH, Centurion, 0157*
-*"Every rand has a job. Every invoice is a job well done."*
-
+_Last updated: March 2026 · Playhouse Media Group (PTY) Ltd_
+_Jacob Chademwiri · 285 Erasmus Ave, Raslouw AH, Centurion, 0157_
+_"Every rand has a job. Every invoice is a job well done."_
 
 ---
 
@@ -979,19 +1006,19 @@ The Billing section covers four areas: **Quotations**, **Invoices**, **Statement
 
 ## Route Map
 
-| Route | Page | Status |
-|---|---|---|
-| `/billing/quotes` | Quotations list | 🔜 Shell - wire up data |
-| `/billing/quotes/new` | New quote form | 🔜 Shell - wire up form |
-| `/billing/quotes/[id]` | Quote detail + actions | 🔜 Shell - wire up data + actions |
-| `/billing/invoices` | Invoices list | 🔜 Shell - wire up data |
-| `/billing/invoices/new` | New invoice form | 🔜 Shell - wire up form |
-| `/billing/invoices/[id]` | Invoice detail + actions | 🔜 Shell - wire up data + actions |
-| `/billing/statements` | Statements list | 🔜 Shell - wire up data |
-| `/billing/statements/[clientId]` | Client statement | 🔜 Shell - wire up data |
-| `/billing/items` | Items catalogue list | 🔜 Shell - wire up data |
-| `/billing/items/new` | New item form | 🔜 Shell - wire up form |
-| `/billing/items/[id]` | Item detail / edit | 🔜 Shell - wire up data |
+| Route                            | Page                     | Status                            |
+| -------------------------------- | ------------------------ | --------------------------------- |
+| `/billing/quotes`                | Quotations list          | 🔜 Shell - wire up data           |
+| `/billing/quotes/new`            | New quote form           | 🔜 Shell - wire up form           |
+| `/billing/quotes/[id]`           | Quote detail + actions   | 🔜 Shell - wire up data + actions |
+| `/billing/invoices`              | Invoices list            | 🔜 Shell - wire up data           |
+| `/billing/invoices/new`          | New invoice form         | 🔜 Shell - wire up form           |
+| `/billing/invoices/[id]`         | Invoice detail + actions | 🔜 Shell - wire up data + actions |
+| `/billing/statements`            | Statements list          | 🔜 Shell - wire up data           |
+| `/billing/statements/[clientId]` | Client statement         | 🔜 Shell - wire up data           |
+| `/billing/items`                 | Items catalogue list     | 🔜 Shell - wire up data           |
+| `/billing/items/new`             | New item form            | 🔜 Shell - wire up form           |
+| `/billing/items/[id]`            | Item detail / edit       | 🔜 Shell - wire up data           |
 
 ---
 
@@ -1008,6 +1035,7 @@ lg:grid-cols-3
 The `DocumentPreview` component renders a styled document that looks like the actual printed output. It is shared across quotes, invoices, and statements - `type` prop switches the layout.
 
 Page headers follow the pattern:
+
 ```
 [Ghost back button] [Separator] [Title + Badge]    [Action buttons]
 ```
@@ -1024,36 +1052,37 @@ Action buttons in the header (Print, Send, Convert to Invoice, More) are disable
 
 **Stats row (4 cards)**
 
-| Stat | Icon | Description |
-|---|---|---|
-| Total Quotes | FileText | All time count |
-| Pending | Clock | Awaiting client response |
-| Accepted | CheckCircle | Converted to invoice |
-| Declined | XCircle | Not accepted |
+| Stat         | Icon        | Description              |
+| ------------ | ----------- | ------------------------ |
+| Total Quotes | FileText    | All time count           |
+| Pending      | Clock       | Awaiting client response |
+| Accepted     | CheckCircle | Converted to invoice     |
+| Declined     | XCircle     | Not accepted             |
 
 Stats are currently hardcoded to `'-'`. Wire up to `getAllQuotations()` aggregates when implementing.
 
 **Table columns**
 
-| Column | Notes |
-|---|---|
-| Quote # | Monospace, links to `/billing/quotes/{id}` |
-| Client | `clientName ?? '-'` |
-| Issue Date | `quoteDate` |
-| Expiry Date | `expiryDate ?? '-'` |
-| Amount | `formatZAR(total)`, right-aligned, `text-green-500` |
-| Status | `BillingStatusBadge` |
-| Actions | Dropdown: View, Mark Sent, Mark Accepted, Mark Declined, Delete |
+| Column      | Notes                                                           |
+| ----------- | --------------------------------------------------------------- |
+| Quote #     | Monospace, links to `/billing/quotes/{id}`                      |
+| Client      | `clientName ?? '-'`                                             |
+| Issue Date  | `quoteDate`                                                     |
+| Expiry Date | `expiryDate ?? '-'`                                             |
+| Amount      | `formatZAR(total)`, right-aligned, `text-green-500`             |
+| Status      | `BillingStatusBadge`                                            |
+| Actions     | Dropdown: View, Mark Sent, Mark Accepted, Mark Declined, Delete |
 
 Shows `EmptyState` with CTA to `/billing/quotes/new` when no quotes exist. Includes a `Preview mock quote →` dev link (remove before production).
 
 **Data to fetch (server component):**
+
 ```typescript
 const [result, divisions, clients] = await Promise.all([
   getAllQuotations({ divisionId, status }, { page, pageSize: 20 }),
   getAllDivisions(),
   getAllClients(),
-])
+]);
 // SetPageTotal → formatZAR(result.sum), variant: 'green'
 ```
 
@@ -1077,12 +1106,14 @@ Two-column layout: `lg:col-span-2` form + `col-span-1` sidebar.
 - **Status card** - "Quote will be saved as **Draft** until sent to the client."
 
 **Discount field (inside Summary card):**
+
 - Input with a mode toggle: **%** (percentage) or **R** (fixed amount)
 - Applied after subtotal, before VAT
 - Displayed as a negative line in the summary: `Discount (10%) - R −450.00`
 - Stored as `discountType: 'percent' | 'amount'` and `discountValue: number` on the quotation
 
 **VAT toggle (inside Summary card):**
+
 - shadcn `Switch` labelled "Include VAT (15%)"
 - Default: **off** (no VAT shown or calculated)
 - When on: shows VAT row at 15% of (subtotal − discount)
@@ -1093,6 +1124,7 @@ Two-column layout: `lg:col-span-2` form + `col-span-1` sidebar.
 **On submit:** call `createQuotation(data)` → redirect to `/billing/quotes/{id}`
 
 **Form state** (controlled React state, not FormData - line items are nested):
+
 ```typescript
 {
   divisionId, clientId, quoteDate, expiryDate, reference,
@@ -1110,6 +1142,7 @@ Two-column layout: `lg:col-span-2` form + `col-span-1` sidebar.
 **File:** `src/app/(admin)/billing/quotes/[id]/page.tsx`
 
 **Header actions (in order):**
+
 - Print - disabled (v2: PDF)
 - Send - disabled (v2: email)
 - **Export as PDF** - disabled (v2: PDF generation)
@@ -1127,18 +1160,19 @@ Two-column layout: `lg:col-span-2` form + `col-span-1` sidebar.
 
 **Action bar (below document) by status:**
 
-| Status | Actions |
-|---|---|
-| `draft` | Mark Sent, Delete |
-| `sent` | Mark Accepted, Mark Declined, Cancel |
-| `accepted` | **Convert to Invoice** (ConvertToInvoiceButton) |
-| `converted` | "Converted to Invoice {number}" → link to invoice |
-| `declined / cancelled / expired` | "No further actions available." |
+| Status                           | Actions                                           |
+| -------------------------------- | ------------------------------------------------- |
+| `draft`                          | Mark Sent, Delete                                 |
+| `sent`                           | Mark Accepted, Mark Declined, Cancel              |
+| `accepted`                       | **Convert to Invoice** (ConvertToInvoiceButton)   |
+| `converted`                      | "Converted to Invoice {number}" → link to invoice |
+| `declined / cancelled / expired` | "No further actions available."                   |
 
 **Data to fetch:**
+
 ```typescript
-const quote = await getQuotationById(id)
-if (!quote) notFound()
+const quote = await getQuotationById(id);
+if (!quote) notFound();
 ```
 
 ---
@@ -1153,24 +1187,24 @@ Same structure as quotes list with invoice-specific columns and stats.
 
 **Stats row (4 cards)**
 
-| Stat | Icon | Description |
-|---|---|---|
-| Total Invoices | FileText | All time count |
-| Pending | Clock | Awaiting payment |
-| Paid | CheckCircle | This month |
-| Overdue | AlertCircle | Past due date |
+| Stat           | Icon        | Description      |
+| -------------- | ----------- | ---------------- |
+| Total Invoices | FileText    | All time count   |
+| Pending        | Clock       | Awaiting payment |
+| Paid           | CheckCircle | This month       |
+| Overdue        | AlertCircle | Past due date    |
 
 **Table columns**
 
-| Column | Notes |
-|---|---|
-| Invoice # | Monospace, links to `/billing/invoices/{id}` |
-| Client | `clientName ?? '-'` |
-| Issue Date | `invoiceDate` |
-| Due Date | `dueDate ?? '-'` |
-| Amount | `formatZAR(total)`, right-aligned |
-| Status | `BillingStatusBadge` |
-| Actions | Dropdown: View, Issue (if draft), Mark Paid (if issued/overdue), Void |
+| Column     | Notes                                                                 |
+| ---------- | --------------------------------------------------------------------- |
+| Invoice #  | Monospace, links to `/billing/invoices/{id}`                          |
+| Client     | `clientName ?? '-'`                                                   |
+| Issue Date | `invoiceDate`                                                         |
+| Due Date   | `dueDate ?? '-'`                                                      |
+| Amount     | `formatZAR(total)`, right-aligned                                     |
+| Status     | `BillingStatusBadge`                                                  |
+| Actions    | Dropdown: View, Issue (if draft), Mark Paid (if issued/overdue), Void |
 
 `SetPageTotal` uses `result.outstanding` (unpaid total), variant `'amber'`.
 
@@ -1189,6 +1223,7 @@ Same two-column layout as quote form with these differences:
 **Line Items:** All line items must be selected from the pre-saved items catalogue via the item combobox - same constraint as quotes.
 
 **Period lock warning:** If `invoiceDate` falls in a grace-period or locked month, show an amber banner:
+
 ```
 ⚠ This invoice date may fall in a restricted financial period. Marking as paid may be blocked.
 ```
@@ -1204,6 +1239,7 @@ Same two-column layout as quote form with these differences:
 **File:** `src/app/(admin)/billing/invoices/[id]/page.tsx`
 
 **Header actions:**
+
 - Print - disabled (v2: PDF)
 - Send - disabled (v2: email)
 - **Export as PDF** - disabled (v2: PDF generation)
@@ -1214,18 +1250,19 @@ Same two-column layout as quote form with these differences:
 **Main content (left):** `DocumentPreview type="invoice"` - same as quote preview but shows banking details prominently and payment reference instructions.
 
 **Sidebar (right, `sticky top-6`):**
+
 - **Summary card** - Subtotal, Discount (if set, shown as negative), VAT (only if `vatEnabled` is true), Total
 - **Activity card** - timeline (mock in shell, real in v2)
 
 **Action bar by status:**
 
-| Status | Actions |
-|---|---|
-| `draft` | Issue Invoice, Void |
-| `issued` | **Mark Paid** (MarkPaidButton - disabled if no client), Void |
-| `paid` | "Paid on {paidAt}. Revenue posted to income." + "View in Income →" link. **No edit, no delete.** |
-| `overdue` | Mark Paid, Void. Amber banner: "⚠ This invoice is overdue." |
-| `void` | "This invoice has been voided." (no actions) |
+| Status    | Actions                                                                                          |
+| --------- | ------------------------------------------------------------------------------------------------ |
+| `draft`   | Issue Invoice, Void                                                                              |
+| `issued`  | **Mark Paid** (MarkPaidButton - disabled if no client), Void                                     |
+| `paid`    | "Paid on {paidAt}. Revenue posted to income." + "View in Income →" link. **No edit, no delete.** |
+| `overdue` | Mark Paid, Void. Amber banner: "⚠ This invoice is overdue."                                      |
+| `void`    | "This invoice has been voided." (no actions)                                                     |
 
 **Critical: Mark Paid flow**
 
@@ -1247,23 +1284,23 @@ Lists all clients who have at least one quotation or invoice. Stats and table ar
 
 **Stats row (4 cards)**
 
-| Stat | Icon | Description |
-|---|---|---|
-| Active Clients | Users | With billing activity |
-| Total Billed | TrendingUp | All time |
-| Statements | FileText | Generated |
-| Last Generated | Calendar | Most recent |
+| Stat           | Icon       | Description           |
+| -------------- | ---------- | --------------------- |
+| Active Clients | Users      | With billing activity |
+| Total Billed   | TrendingUp | All time              |
+| Statements     | FileText   | Generated             |
+| Last Generated | Calendar   | Most recent           |
 
 **Table columns**
 
-| Column | Notes |
-|---|---|
-| Client | `businessName ?? name` |
-| Total Invoiced | Sum of all invoice totals |
-| Total Paid | Sum of paid invoice totals |
-| Outstanding | Total invoiced − total paid. `text-red-500` if > 0 |
-| Last Activity | Most recent quote or invoice date |
-| View | Link → `/billing/statements/{clientId}` |
+| Column         | Notes                                              |
+| -------------- | -------------------------------------------------- |
+| Client         | `businessName ?? name`                             |
+| Total Invoiced | Sum of all invoice totals                          |
+| Total Paid     | Sum of paid invoice totals                         |
+| Outstanding    | Total invoiced − total paid. `text-red-500` if > 0 |
+| Last Activity  | Most recent quote or invoice date                  |
+| View           | Link → `/billing/statements/{clientId}`            |
 
 Includes `Preview mock statement →` dev link (remove before production). "Generate Statement" button is currently disabled.
 
@@ -1274,16 +1311,17 @@ Includes `Preview mock statement →` dev link (remove before production). "Gene
 **File:** `src/app/(admin)/billing/statements/[clientId]/page.tsx`
 
 **Header actions:**
+
 - Print - disabled (v2)
 - Export PDF - disabled (v2)
 
 **Summary cards (3-up row):**
 
-| Card | Source |
-|---|---|
+| Card           | Source                                    |
+| -------------- | ----------------------------------------- |
 | Total Invoiced | Sum of all invoice totals for this client |
-| Total Paid | Sum of paid invoices |
-| Balance Due | Outstanding = invoiced − paid |
+| Total Paid     | Sum of paid invoices                      |
+| Balance Due    | Outstanding = invoiced − paid             |
 
 **Two-column layout (lg:grid-cols-3):**
 
@@ -1291,31 +1329,34 @@ Includes `Preview mock statement →` dev link (remove before production). "Gene
 
 The statement document renders a transaction history table:
 
-| Column | Description |
-|---|---|
-| Date | Transaction date |
-| Reference | Invoice # or payment reference |
-| Description | What the entry is for |
-| Debit | Amount charged (invoice issued) |
-| Credit | Amount received (payment recorded) |
-| Balance | Running balance |
+| Column      | Description                        |
+| ----------- | ---------------------------------- |
+| Date        | Transaction date                   |
+| Reference   | Invoice # or payment reference     |
+| Description | What the entry is for              |
+| Debit       | Amount charged (invoice issued)    |
+| Credit      | Amount received (payment recorded) |
+| Balance     | Running balance                    |
 
 In v1 this table is built from: all `invoices` for this client (each `issued` invoice = a debit row) + all `income` records for this client (each income row = a credit row). Sort by date ascending to compute running balance correctly.
 
 **Sidebar (right):**
+
 - **Client Info card** - Name, Email, Phone, Address
 - **Statement Period card** - From / To date range. "Change Period" button (disabled in v1, active in v2 with date pickers)
 
 **Data to fetch:**
+
 ```typescript
 const [statement, allIncome] = await Promise.all([
   getClientStatement(clientId, { year }),
-  getAllIncome({ clientId }),   // existing function - reused as-is
-])
-if (!statement.client) notFound()
+  getAllIncome({ clientId }), // existing function - reused as-is
+]);
+if (!statement.client) notFound();
 ```
 
 **Summary strip** (same card style as `/accounts/[account]`):
+
 - Total Quoted - sum of all quote totals
 - Total Invoiced - sum of invoice totals
 - Total Paid - sum of paid invoice totals
@@ -1332,30 +1373,31 @@ Shared across quotes, invoices, and statements. Props:
 
 ```typescript
 interface DocumentPreviewProps {
-  type: 'quote' | 'invoice' | 'statement'
-  number: string
-  status: string
-  issueDate: string
-  dueDate?: string
-  periodFrom?: string      // statement only
-  periodTo?: string        // statement only
-  reference?: string       // quote only - client's own reference
-  org: OrgDetails
-  client: ClientDetails
-  lineItems?: LineItem[]   // quote + invoice
-  transactions?: Transaction[]  // statement
-  notes?: string
-  terms?: string           // quote only
-  banking?: BankingDetails // invoice + statement
-  vatEnabled?: boolean     // quote + invoice - default false
-  vatRate?: number         // only used when vatEnabled is true, default 15
-  discountType?: 'percent' | 'amount'
-  discountValue?: number
-  href?: string
+  type: 'quote' | 'invoice' | 'statement';
+  number: string;
+  status: string;
+  issueDate: string;
+  dueDate?: string;
+  periodFrom?: string; // statement only
+  periodTo?: string; // statement only
+  reference?: string; // quote only - client's own reference
+  org: OrgDetails;
+  client: ClientDetails;
+  lineItems?: LineItem[]; // quote + invoice
+  transactions?: Transaction[]; // statement
+  notes?: string;
+  terms?: string; // quote only
+  banking?: BankingDetails; // invoice + statement
+  vatEnabled?: boolean; // quote + invoice - default false
+  vatRate?: number; // only used when vatEnabled is true, default 15
+  discountType?: 'percent' | 'amount';
+  discountValue?: number;
+  href?: string;
 }
 ```
 
 **Type variants:**
+
 - `quote` - shows line items, totals, terms, no banking
 - `invoice` - shows line items, totals, notes, banking details
 - `statement` - shows transaction history table (debit / credit / balance), no line items
@@ -1389,6 +1431,7 @@ Invoice (draft)
 Format: `{DIVISION_PREFIX}-{TYPE}-{YEAR}-{SEQ}`
 
 Prefix derived from division name - first 3 uppercase alpha chars:
+
 - "Apex Web Solutions" → `APX`
 - "TenderEdge Solutions" → `TES`
 - "PMG Services" → `PMG`
@@ -1421,12 +1464,12 @@ Sequence is per-division, per-type, resets each calendar year. Assigned atomical
 - **Dev preview links** (`Preview mock quote →`, `Preview mock invoice →`, `Preview mock statement →`) are in the current shells - remove before production.
 - **Activity card** in the detail sidebar uses mock data in v1 - wire to a real audit log table in v2.
 
-
 ---
 
 ## Part 3: Billing Implementation Details (V2)
 
 # PMG Control Hub - Billing Update Spec
+
 ## Precise Changes Based on Actual Codebase
 
 **Date:** May 2026  
@@ -1462,12 +1505,14 @@ Reading the actual code, these are already working correctly:
 1. Remove `<SelectItem value="none">No client</SelectItem>` from the client select
 2. Change initial state: `const [clientId, setClientId] = useState('')`
 3. Add client validation in `handleSubmit`:
+
 ```typescript
 if (!clientId) {
   setError('A client is required.');
   return;
 }
 ```
+
 4. Change the `createQuotation` call: `clientId: clientId` (remove the `=== 'none'` check)
 5. Change client select placeholder to `"Select a client… *"` and add `<span className="text-destructive">*</span>` to the label
 
@@ -1484,11 +1529,13 @@ Same four changes as above - same file structure.
 #### `apps/admin/src/app/actions/billing-quotes.ts`
 
 In `createQuotation`, change `clientId` validation in the Zod schema or guard:
+
 ```typescript
 if (!data.clientId) {
   return { error: 'A client is required.' };
 }
 ```
+
 This is the server-side guard - do not rely on frontend only.
 
 #### `apps/admin/src/app/actions/billing-invoices.ts`
@@ -1502,6 +1549,7 @@ Same server-side guard in `createInvoice`.
 **Problem:** `BillingLineItemsForm` currently renders a plain `Input` for description where users can type anything. Need to replace with a strict item combobox.
 
 **What needs to happen:**
+
 - When a user adds a line item, they must select from `billing_items` where `status = 'active'`
 - Selecting an item pre-fills description and unitPrice
 - They can still edit quantity and unit price after selection
@@ -1512,13 +1560,20 @@ Same server-side guard in `createInvoice`.
 #### `packages/db/src/queries/billing.ts`
 
 Add this function at the bottom:
+
 ```typescript
 /**
  * Returns active billing items for use in line item selectors.
  * Only active items are returned - archived items cannot be selected.
  */
 export async function getActiveItems(): Promise<
-  { id: string; name: string; description: string | null; unitPrice: string; unitLabel: string | null }[]
+  {
+    id: string;
+    name: string;
+    description: string | null;
+    unitPrice: string;
+    unitLabel: string | null;
+  }[]
 > {
   return db
     .select({
@@ -1535,6 +1590,7 @@ export async function getActiveItems(): Promise<
 ```
 
 Export from `packages/db/src/index.ts`:
+
 ```typescript
 export { getActiveItems } from './queries/billing';
 ```
@@ -1542,6 +1598,7 @@ export { getActiveItems } from './queries/billing';
 #### `packages/db/src/index.ts`
 
 Ensure this export exists (add if missing):
+
 ```typescript
 export { getActiveItems } from './queries/billing';
 export type { BillingItemRow, BillingItemDetail } from './queries/billing';
@@ -1550,6 +1607,7 @@ export type { BillingItemRow, BillingItemDetail } from './queries/billing';
 #### `apps/admin/src/app/(admin)/billing/quotes/new/page.tsx`
 
 Add `getActiveItems` to the parallel fetch:
+
 ```typescript
 import { getAllDivisions, getAllClients, getActiveItems } from '@pmg/db';
 
@@ -1559,6 +1617,7 @@ const [divisions, clients, activeItems] = await Promise.all([
   getActiveItems(),
 ]);
 ```
+
 Pass `activeItems` to `<QuoteFormClient>`.
 
 #### `apps/admin/src/app/(admin)/billing/invoices/new/page.tsx`
@@ -1576,11 +1635,18 @@ Add `activeItems` prop and replace the description `Input` with an item selector
 interface BillingLineItemsFormProps {
   value: LineItemFormRow[];
   onChange: (rows: LineItemFormRow[]) => void;
-  activeItems: { id: string; name: string; description: string | null; unitPrice: string; unitLabel: string | null }[];
+  activeItems: {
+    id: string;
+    name: string;
+    description: string | null;
+    unitPrice: string;
+    unitLabel: string | null;
+  }[];
 }
 ```
 
 Replace the description input cell with a `Select` component:
+
 ```typescript
 // Replace the description Input with:
 <Select
@@ -1616,10 +1682,11 @@ Replace the description input cell with a `Select` component:
 ```
 
 Add `itemId` to `LineItemFormRow` type:
+
 ```typescript
 export type LineItemFormRow = {
   id: string;
-  itemId?: string;        // ← add this
+  itemId?: string; // ← add this
   description: string;
   quantity: string;
   unitPrice: string;
@@ -1628,6 +1695,7 @@ export type LineItemFormRow = {
 ```
 
 If `activeItems` is empty, show:
+
 ```typescript
 {activeItems.length === 0 && (
   <p className="text-sm text-muted-foreground py-4">
@@ -1643,6 +1711,7 @@ If `activeItems` is empty, show:
 Update `QuoteFormClient` and `InvoiceFormClient` to pass `activeItems` to `BillingLineItemsForm`.
 
 **Validation update in both form clients** - remove the description check and add item check:
+
 ```typescript
 // Replace:
 if (lineItems.some((r) => !r.description.trim())) {
@@ -1707,6 +1776,7 @@ When `vatEnabled` is false (or undefined), VAT row is hidden and `total = subtot
 
 1. Add state: `const [vatEnabled, setVatEnabled] = useState(false)`
 2. Update `calcTotals` function to accept and use `vatEnabled`:
+
 ```typescript
 function calcTotals(lineItems: LineItemFormRow[], vatEnabled: boolean) {
   let subtotal = 0;
@@ -1719,8 +1789,10 @@ function calcTotals(lineItems: LineItemFormRow[], vatEnabled: boolean) {
   return { subtotal, vatAmount, total: subtotal + vatAmount };
 }
 ```
+
 3. Update call: `const totals = calcTotals(lineItems, vatEnabled)`
 4. Add VAT toggle to the sidebar card, **above** the totals:
+
 ```tsx
 <div className="flex items-center justify-between py-1">
   <span className="text-sm">VAT (15%)</span>
@@ -1733,12 +1805,15 @@ function calcTotals(lineItems: LineItemFormRow[], vatEnabled: boolean) {
       vatEnabled ? 'bg-primary' : 'bg-input'
     }`}
   >
-    <div className={`absolute top-0.5 h-4 w-4 rounded-full bg-background shadow-sm transition-transform ${
-      vatEnabled ? 'translate-x-4' : 'translate-x-0.5'
-    }`} />
+    <div
+      className={`absolute top-0.5 h-4 w-4 rounded-full bg-background shadow-sm transition-transform ${
+        vatEnabled ? 'translate-x-4' : 'translate-x-0.5'
+      }`}
+    />
   </button>
 </div>
 ```
+
 5. Pass `vatEnabled` to `BillingTotalsBlock`
 6. Pass `vatEnabled` to `createQuotation` call - the action needs to store `vatAmount` and `total` correctly
 
@@ -1749,6 +1824,7 @@ Same changes as above.
 #### `apps/admin/src/app/actions/billing-quotes.ts` - `createQuotation`
 
 Update totals calculation - remove per-item VAT, use document-level:
+
 ```typescript
 // Accept vatEnabled in input
 let subtotal = 0;
@@ -1769,6 +1845,7 @@ lineItems: parsed.lineItems.map((item, i) => ({
 **Schema migration needed** - add `vat_enabled` to both tables:
 
 In `packages/db/src/schema/billing.ts`, add to `quotations` and `invoices`:
+
 ```typescript
 vatEnabled: boolean('vat_enabled').notNull().default(false),
 ```
@@ -1780,6 +1857,7 @@ Update `QuotationRow`, `InvoiceRow` types in `packages/db/src/queries/billing.ts
 Update `quotationRowSelect` and `invoiceRowSelect` helper objects to include `vatEnabled: quotations.vatEnabled`.
 
 Update `CreateQuotationSchema` / `CreateInvoiceSchema` in `billing-schema.ts`:
+
 ```typescript
 vatEnabled: z.boolean().default(false),
 ```
@@ -1795,12 +1873,14 @@ vatEnabled: z.boolean().default(false),
 #### `apps/admin/src/app/(admin)/billing/quotes/new/quote-form-client.tsx`
 
 Find the sidebar wrapper div:
+
 ```tsx
 {/* Sidebar summary */}
 <div className="flex flex-col gap-4">
 ```
 
 Change to:
+
 ```tsx
 <div className="flex flex-col gap-4 lg:sticky lg:top-16 self-start">
 ```
@@ -1829,12 +1909,14 @@ Run migration after schema update.
 #### `apps/admin/src/app/(admin)/billing/quotes/new/quote-form-client.tsx`
 
 1. Add state:
+
 ```typescript
 const [discountType, setDiscountType] = useState<'percent' | 'amount'>('percent');
 const [discountValue, setDiscountValue] = useState('');
 ```
 
 2. Update `calcTotals`:
+
 ```typescript
 function calcTotals(lineItems, vatEnabled, discountType, discountValue) {
   let subtotal = 0;
@@ -1842,9 +1924,8 @@ function calcTotals(lineItems, vatEnabled, discountType, discountValue) {
     subtotal += (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
   }
   const discountVal = parseFloat(discountValue) || 0;
-  const discountAmount = discountType === 'percent'
-    ? subtotal * (discountVal / 100)
-    : Math.min(discountVal, subtotal);
+  const discountAmount =
+    discountType === 'percent' ? subtotal * (discountVal / 100) : Math.min(discountVal, subtotal);
   const vatBase = subtotal - discountAmount;
   const vatAmount = vatEnabled ? vatBase * 0.15 : 0;
   return { subtotal, discountAmount, vatAmount, total: vatBase + vatAmount };
@@ -1852,8 +1933,11 @@ function calcTotals(lineItems, vatEnabled, discountType, discountValue) {
 ```
 
 3. Add discount section to sidebar, between VAT toggle and BillingTotalsBlock:
+
 ```tsx
-{/* Discount */}
+{
+  /* Discount */
+}
 <div className="flex items-center gap-2">
   <select
     value={discountType}
@@ -1872,10 +1956,11 @@ function calcTotals(lineItems, vatEnabled, discountType, discountValue) {
     placeholder="Discount"
     className="h-8"
   />
-</div>
+</div>;
 ```
 
 4. Pass `discountAmount` to `BillingTotalsBlock`:
+
 ```tsx
 <BillingTotalsBlock
   subtotal={totals.subtotal}
@@ -1895,13 +1980,16 @@ Same changes.
 #### `apps/admin/src/components/billing/billing-totals-block.tsx`
 
 Add discount row:
+
 ```tsx
-{discountAmount > 0 && (
-  <div className="flex justify-between text-sm">
-    <span className="text-muted-foreground">Discount</span>
-    <span className="tabular-nums text-amber-600">−{formatZAR(discountAmount)}</span>
-  </div>
-)}
+{
+  discountAmount > 0 && (
+    <div className="flex justify-between text-sm">
+      <span className="text-muted-foreground">Discount</span>
+      <span className="tabular-nums text-amber-600">−{formatZAR(discountAmount)}</span>
+    </div>
+  );
+}
 ```
 
 Order in the block: Subtotal → Discount → VAT → Total.
@@ -1915,6 +2003,7 @@ Validation: `discountAmount` cannot exceed `subtotal`.
 #### Update `QuotationRow` / `InvoiceRow` types
 
 Add:
+
 ```typescript
 discountType: string | null;
 discountValue: string | null;
@@ -1928,6 +2017,7 @@ Update `quotationRowSelect` and `invoiceRowSelect` to include these fields.
 ### Change 6 - Reference Field on Quotes
 
 **Schema migration needed** - add to `quotations` in `packages/db/src/schema/billing.ts`:
+
 ```typescript
 reference: text('reference'),  // nullable
 ```
@@ -1940,6 +2030,7 @@ Run migration.
 
 1. Add state: `const [reference, setReference] = useState('')`
 2. Add input field in the quote details grid (place after expiry date, before Quote #):
+
 ```tsx
 <div className="flex flex-col gap-1.5 sm:col-span-2">
   <label className="text-sm font-medium">Reference</label>
@@ -1952,14 +2043,17 @@ Run migration.
   <p className="text-xs text-muted-foreground">Optional internal or client reference</p>
 </div>
 ```
+
 3. Pass `reference: reference || null` to `createQuotation` call.
 
 #### `apps/admin/src/app/actions/billing-quotes.ts`
 
 Add `reference` to `CreateQuotationSchema`:
+
 ```typescript
 reference: z.string().max(200).optional().nullable(),
 ```
+
 Store in DB insert.
 
 #### `packages/db/src/queries/billing.ts`
@@ -1970,6 +2064,7 @@ Add `reference: string | null` to `QuotationRow` type.
 #### `apps/admin/src/app/(admin)/billing/quotes/[id]/page.tsx`
 
 Pass `quote.reference` to `DocumentPreview` - the `reference` prop already exists on `DocumentPreviewProps`:
+
 ```typescript
 const docPreviewProps = {
   ...
@@ -1983,21 +2078,23 @@ const docPreviewProps = {
 ### Change 7 - Edit Quotes and Invoices
 
 **New routes needed:**
+
 - `apps/admin/src/app/(admin)/billing/quotes/[id]/edit/page.tsx`
 - `apps/admin/src/app/(admin)/billing/invoices/[id]/edit/page.tsx`
 
 **New server actions needed:**
+
 - `updateQuotation(id, data)` in `billing-quotes.ts`
 - `updateInvoice(id, data)` in `billing-invoices.ts`
 
 **Edit rules (enforced both in UI and server):**
 
-| Document | Editable when status is |
-|---|---|
-| Quote | `draft`, `sent`, `accepted` |
-| Invoice | `draft`, `issued`, `overdue` |
-| Invoice (PAID) | ❌ Cannot edit or delete |
-| Invoice (VOID) | ❌ Cannot edit |
+| Document       | Editable when status is      |
+| -------------- | ---------------------------- |
+| Quote          | `draft`, `sent`, `accepted`  |
+| Invoice        | `draft`, `issued`, `overdue` |
+| Invoice (PAID) | ❌ Cannot edit or delete     |
+| Invoice (VOID) | ❌ Cannot edit               |
 
 #### `apps/admin/src/app/actions/billing-quotes.ts` - add `updateQuotation`
 
@@ -2010,40 +2107,43 @@ export async function updateQuotation(
     const session = await getSessionOrRedirect();
     const existing = await getQuotationById(id);
     if (!existing) return { error: 'Quotation not found.' };
-    
+
     const editableStatuses = ['draft', 'sent', 'accepted'];
     if (!editableStatuses.includes(existing.status)) {
       return { error: 'This quotation can no longer be edited.' };
     }
-    
+
     // ... validate, recalculate totals ...
-    
+
     // Delete existing line items and reinsert
-    await db.delete(billingLineItems).where(
-      and(eq(billingLineItems.documentType, 'quote'), eq(billingLineItems.documentId, id))
-    );
-    
+    await db
+      .delete(billingLineItems)
+      .where(and(eq(billingLineItems.documentType, 'quote'), eq(billingLineItems.documentId, id)));
+
     // Update quotation record
-    await db.update(quotations).set({
-      clientId: data.clientId,
-      quoteDate: data.quoteDate,
-      expiryDate: data.expiryDate ?? null,
-      reference: data.reference ?? null,
-      subtotal: String(subtotal),
-      discountType: data.discountType ?? null,
-      discountValue: data.discountValue ? String(data.discountValue) : null,
-      discountAmount: String(discountAmount),
-      vatEnabled: data.vatEnabled,
-      vatAmount: String(vatAmount),
-      total: String(total),
-      notes: data.notes ?? null,
-      terms: data.terms ?? null,
-      updatedAt: new Date(),
-    }).where(eq(quotations.id, id));
-    
+    await db
+      .update(quotations)
+      .set({
+        clientId: data.clientId,
+        quoteDate: data.quoteDate,
+        expiryDate: data.expiryDate ?? null,
+        reference: data.reference ?? null,
+        subtotal: String(subtotal),
+        discountType: data.discountType ?? null,
+        discountValue: data.discountValue ? String(data.discountValue) : null,
+        discountAmount: String(discountAmount),
+        vatEnabled: data.vatEnabled,
+        vatAmount: String(vatAmount),
+        total: String(total),
+        notes: data.notes ?? null,
+        terms: data.terms ?? null,
+        updatedAt: new Date(),
+      })
+      .where(eq(quotations.id, id));
+
     // Reinsert line items
     await db.insert(billingLineItems).values(/* new line items */);
-    
+
     revalidatePath('/billing/quotes');
     revalidatePath(`/billing/quotes/${id}`);
     return {};
@@ -2063,12 +2163,12 @@ export async function updateInvoice(
   // Guard: block if paid or void
   const existing = await getInvoiceById(id);
   if (!existing) return { error: 'Invoice not found.' };
-  
+
   const lockedStatuses = ['paid', 'void'];
   if (lockedStatuses.includes(existing.status)) {
     return { error: 'Paid or voided invoices cannot be edited.' };
   }
-  
+
   // ... same pattern as updateQuotation ...
 }
 ```
@@ -2083,13 +2183,14 @@ import { getQuotationById, getAllDivisions, getAllClients, getActiveItems } from
 ```
 
 The edit page reuses `QuoteFormClient` with an `initialData` prop. Refactor `QuoteFormClient` to accept:
+
 ```typescript
 interface QuoteFormClientProps {
   divisions: { id: string; name: string }[];
   clients: { id: string; name: string; businessName: string | null }[];
   activeItems: ActiveItem[];
-  initialData?: QuotationDetail;  // ← add
-  editId?: string;                // ← add (if present, calls updateQuotation)
+  initialData?: QuotationDetail; // ← add
+  editId?: string; // ← add (if present, calls updateQuotation)
 }
 ```
 
@@ -2103,36 +2204,45 @@ Same pattern using `InvoiceFormClient` with `initialData` and `editId`.
 #### `apps/admin/src/app/(admin)/billing/quotes/[id]/page.tsx`
 
 Add Edit button to the header action bar. Show only when status is `draft`, `sent`, or `accepted`:
+
 ```tsx
-{['draft', 'sent', 'accepted'].includes(quote.status) && (
-  <Button variant="outline" size="sm" asChild>
-    <Link href={`/billing/quotes/${quote.id}/edit`}>
-      <Pencil className="size-4" />
-      Edit
-    </Link>
-  </Button>
-)}
+{
+  ['draft', 'sent', 'accepted'].includes(quote.status) && (
+    <Button variant="outline" size="sm" asChild>
+      <Link href={`/billing/quotes/${quote.id}/edit`}>
+        <Pencil className="size-4" />
+        Edit
+      </Link>
+    </Button>
+  );
+}
 ```
 
 #### `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx`
 
 Add Edit button. Show only when status is NOT `paid` or `void`:
+
 ```tsx
-{!['paid', 'void'].includes(invoice.status) && (
-  <Button variant="outline" size="sm" asChild>
-    <Link href={`/billing/invoices/${invoice.id}/edit`}>
-      <Pencil className="size-4" />
-      Edit
-    </Link>
-  </Button>
-)}
+{
+  !['paid', 'void'].includes(invoice.status) && (
+    <Button variant="outline" size="sm" asChild>
+      <Link href={`/billing/invoices/${invoice.id}/edit`}>
+        <Pencil className="size-4" />
+        Edit
+      </Link>
+    </Button>
+  );
+}
 ```
 
 Also add message when paid:
+
 ```tsx
-{invoice.status === 'paid' && (
-  <p className="text-xs text-muted-foreground">Paid invoices cannot be modified.</p>
-)}
+{
+  invoice.status === 'paid' && (
+    <p className="text-xs text-muted-foreground">Paid invoices cannot be modified.</p>
+  );
+}
 ```
 
 ---
@@ -2214,6 +2324,7 @@ export async function GET(
 #### Sub-step 8C - Wire the button
 
 In `apps/admin/src/app/(admin)/billing/quotes/[id]/page.tsx`, replace the disabled Print button:
+
 ```tsx
 // Replace:
 <Button variant="outline" size="sm" disabled>
@@ -2231,6 +2342,7 @@ In `apps/admin/src/app/(admin)/billing/quotes/[id]/page.tsx`, replace the disabl
 ```
 
 Same in `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx` - replace disabled Print button with:
+
 ```tsx
 <Button variant="outline" size="sm" asChild>
   <a href={`/api/billing/pdf/invoice/${invoice.id}`} download={`${invoice.documentNumber}.pdf`}>
@@ -2376,6 +2488,7 @@ Create `apps/admin/src/lib/pdf/invoice-pdf.tsx` - same structure but uses `Invoi
 #### `apps/admin/src/app/(admin)/billing/items/new/item-form-client.tsx`
 
 Remove the entire VAT toggle button element:
+
 ```tsx
 // Remove this block entirely:
 <button
@@ -2463,6 +2576,7 @@ npx drizzle-kit migrate
 ```
 
 **Schema changes required:**
+
 1. `quotations` - add `vat_enabled boolean NOT NULL default false`
 2. `invoices` - add `vat_enabled boolean NOT NULL default false`
 3. `quotations` - add `reference text nullable`
@@ -2499,4 +2613,4 @@ Apply in this exact order to avoid TypeScript errors and broken imports:
 
 ---
 
-*PMG Control Hub - Billing Update Spec - May 2026*
+_PMG Control Hub - Billing Update Spec - May 2026_

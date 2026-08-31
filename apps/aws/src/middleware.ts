@@ -1,13 +1,15 @@
-import { defineMiddleware } from 'astro:middleware';
+import { defineMiddleware } from "astro:middleware";
 
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 5;
 const RATE_WINDOW_MS = 60 * 1000;
 
-const RATE_LIMITED_ACTIONS = new Set(['submitContact', 'bookService']);
+const RATE_LIMITED_ACTIONS = new Set(["submitContact", "bookService"]);
 
-function getClientId(context: { request: { ip: string; headers: Headers } }): string {
-  return context.request.ip || 'unknown';
+function getClientId(context: {
+  request: { ip: string; headers: Headers };
+}): string {
+  return context.request.ip || "unknown";
 }
 
 function isRateLimited(clientId: string): boolean {
@@ -40,29 +42,39 @@ function isRateLimited(clientId: string): boolean {
 export const onRequest = defineMiddleware(async (context, next) => {
   const clientId = getClientId(context);
   const pathname = context.url.pathname;
-  const actionName = pathname.replace(/^\/?_?actions\//, '');
+  const actionName = pathname.replace(/^\/?_?actions\//, "");
 
-  if (RATE_LIMITED_ACTIONS.has(actionName) && context.request.method === 'POST') {
+  if (
+    RATE_LIMITED_ACTIONS.has(actionName) &&
+    context.request.method === "POST"
+  ) {
     if (isRateLimited(clientId)) {
-      return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
-        status: 429,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ error: "Too many requests. Please try again later." }),
+        {
+          status: 429,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
   }
 
   const response = await next();
 
   const cacheControlValue =
-    pathname.startsWith('/_astro') || pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?)$/)
-      ? 'public, max-age=31536000, immutable'
-      : 'no-cache, no-store, must-revalidate';
+    pathname.startsWith("/_astro") ||
+    pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?)$/)
+      ? "public, max-age=31536000, immutable"
+      : "no-cache, no-store, must-revalidate";
 
-  response.headers.set('Cache-Control', cacheControlValue);
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  response.headers.set("Cache-Control", cacheControlValue);
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=()",
+  );
 
   return response;
 });

@@ -40,7 +40,12 @@ function daysBetween(a: string, b: string): number {
   return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-export function DraggableUpNext({ tenders, clients, onStatusChange, progressMap = {} }: DraggableUpNextProps) {
+export function DraggableUpNext({
+  tenders,
+  clients,
+  onStatusChange,
+  progressMap = {},
+}: DraggableUpNextProps) {
   const clientMap = new Map(clients.map((c) => [c.id, c]));
   const [items, setItems] = React.useState(tenders);
   const [draggedIndex, setDraggedIndex] = React.useState<number | null>(null);
@@ -148,9 +153,7 @@ export function DraggableUpNext({ tenders, clients, onStatusChange, progressMap 
                 onDrop={(e) => handleDrop(e, index)}
                 className={`flex items-center justify-between py-2.5 first:pt-0 last:pb-0 transition-all ${
                   isDragging ? 'opacity-40 bg-muted/20' : ''
-                } ${
-                  isDragOver ? 'border-t-2 border-t-primary/70 bg-primary/5 pt-4' : ''
-                }`}
+                } ${isDragOver ? 'border-t-2 border-t-primary/70 bg-primary/5 pt-4' : ''}`}
               >
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                   {/* Drag Handle */}
@@ -169,7 +172,10 @@ export function DraggableUpNext({ tenders, clients, onStatusChange, progressMap 
                         <p className="text-xs font-medium truncate">{tender.projectReference}</p>
                       </Link>
                       {tender.priority === 'urgent' && (
-                        <Badge variant="destructive" className="text-[9px] px-1 py-0 h-3.5 leading-none">
+                        <Badge
+                          variant="destructive"
+                          className="text-[9px] px-1 py-0 h-3.5 leading-none"
+                        >
                           Urgent
                         </Badge>
                       )}
@@ -183,7 +189,9 @@ export function DraggableUpNext({ tenders, clients, onStatusChange, progressMap 
                 </div>
 
                 <div className="flex flex-col items-end gap-1 shrink-0 text-right ml-2">
-                  <p className="text-[11px] font-semibold text-foreground">Closes {formatDate(tender.closingDate)}</p>
+                  <p className="text-[11px] font-semibold text-foreground">
+                    Closes {formatDate(tender.closingDate)}
+                  </p>
                   <p className="text-[10px] text-muted-foreground">
                     Target: {formatDate(tender.targetCompletionDate)}
                   </p>

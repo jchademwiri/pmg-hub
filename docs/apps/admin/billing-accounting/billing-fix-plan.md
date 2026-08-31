@@ -72,7 +72,7 @@ const expiryDate = data.expiryDate ?? addDays(quoteDate, 30);
 await db.insert(quotations).values({
   ...rest,
   quoteDate,
-  expiryDate,   // ← always written, never null on a new quote
+  expiryDate, // ← always written, never null on a new quote
 });
 ```
 
@@ -94,7 +94,7 @@ const dueDate = data.dueDate ?? addDays(invoiceDate, 7);
 await db.insert(invoices).values({
   ...rest,
   invoiceDate,
-  dueDate,      // ← always written, never null on a new invoice
+  dueDate, // ← always written, never null on a new invoice
 });
 ```
 
@@ -110,33 +110,38 @@ This is the most likely root cause. When converting, `dueDate` is probably not i
 import { addDays, today } from '@pmg/db';
 
 const invoiceDate = today();
-const dueDate = addDays(invoiceDate, 7);  // ← was missing
+const dueDate = addDays(invoiceDate, 7); // ← was missing
 
 await db.insert(invoices).values({
-  divisionId:     quote.divisionId,
-  clientId:       quote.clientId,
-  documentNumber: await getNextDocumentNumber(quote.divisionId, 'invoice', new Date().getFullYear()),
-  status:         'draft',
+  divisionId: quote.divisionId,
+  clientId: quote.clientId,
+  documentNumber: await getNextDocumentNumber(
+    quote.divisionId,
+    'invoice',
+    new Date().getFullYear(),
+  ),
+  status: 'draft',
   invoiceDate,
-  dueDate,        // ← add this line
-  quotationId:    quote.id,
-  subtotal:       quote.subtotal,
-  discountType:   quote.discountType,
-  discountValue:  quote.discountValue,
+  dueDate, // ← add this line
+  quotationId: quote.id,
+  subtotal: quote.subtotal,
+  discountType: quote.discountType,
+  discountValue: quote.discountValue,
   discountAmount: quote.discountAmount,
-  vatEnabled:     quote.vatEnabled,
-  vatAmount:      quote.vatAmount,
-  total:          quote.total,
-  notes:          quote.notes,
-  terms:          quote.terms,
-  createdBy:      session.user.id,
+  vatEnabled: quote.vatEnabled,
+  vatAmount: quote.vatAmount,
+  total: quote.total,
+  notes: quote.notes,
+  terms: quote.terms,
+  createdBy: session.user.id,
 });
 ```
 
 Also update the quote status to `converted` after the insert:
 
 ```ts
-await db.update(quotations)
+await db
+  .update(quotations)
   .set({ status: 'converted', updatedAt: new Date() })
   .where(eq(quotations.id, quote.id));
 ```
@@ -171,14 +176,14 @@ Run these once. Verify row counts before committing.
 
 ### 2.1 Updated bucket definition
 
-| Bucket key | Label | Rule |
-|---|---|---|
-| `current` | Current | `dueDate >= today` |
-| `1_14` | 1–14 days | `1–14 days past due` |
-| `15_30` | 15–30 days | `15–30 days past due` |
-| `31_60` | 31–60 days | `31–60 days past due` |
-| `61_90` | 61–90 days | `61–90 days past due` |
-| `91_plus` | 91+ days | `91+ days past due` |
+| Bucket key | Label      | Rule                  |
+| ---------- | ---------- | --------------------- |
+| `current`  | Current    | `dueDate >= today`    |
+| `1_14`     | 1–14 days  | `1–14 days past due`  |
+| `15_30`    | 15–30 days | `15–30 days past due` |
+| `31_60`    | 31–60 days | `31–60 days past due` |
+| `61_90`    | 61–90 days | `61–90 days past due` |
+| `91_plus`  | 91+ days   | `91+ days past due`   |
 
 `120+` is removed. `1–14` is added between Current and 15–30.
 
@@ -233,7 +238,7 @@ Map the result to the full 6-bucket output (fill missing buckets with zero):
 const BUCKETS: AgingBucket[] = ['current', '1_14', '15_30', '31_60', '61_90', '91_plus'];
 const LABELS: Record<AgingBucket, string> = {
   current: 'Current',
-  '1_14':  '1–14 days',
+  '1_14': '1–14 days',
   '15_30': '15–30 days',
   '31_60': '31–60 days',
   '61_90': '61–90 days',
@@ -241,10 +246,10 @@ const LABELS: Record<AgingBucket, string> = {
 };
 
 const map = Object.fromEntries(
-  (result.rows as any[]).map(r => [r.bucket, { total: Number(r.total), count: Number(r.count) }])
+  (result.rows as any[]).map((r) => [r.bucket, { total: Number(r.total), count: Number(r.count) }]),
 );
 
-const aging: AgingRow[] = BUCKETS.map(bucket => ({
+const aging: AgingRow[] = BUCKETS.map((bucket) => ({
   bucket,
   label: LABELS[bucket],
   total: map[bucket]?.total ?? 0,
@@ -270,9 +275,7 @@ const aging: AgingRow[] = BUCKETS.map(bucket => ({
 The statement preview (as shown) uses a 6-column grid. Update the column order and keys to match:
 
 ```ts
-const STATEMENT_BUCKETS: AgingBucket[] = [
-  'current', '1_14', '15_30', '31_60', '61_90', '91_plus'
-];
+const STATEMENT_BUCKETS: AgingBucket[] = ['current', '1_14', '15_30', '31_60', '61_90', '91_plus'];
 ```
 
 The `getClientStatement` query in `packages/db/src/queries/billing.ts` does not currently return aging breakdown per client. If you want per-client aging on the statement, add a sub-query there using the same `CASE WHEN` logic filtered to `invoices.client_id = ${clientId}`.

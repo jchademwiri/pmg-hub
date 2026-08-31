@@ -1,20 +1,20 @@
-'use client'
+'use client';
 
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { fmtMonthYear } from '@/lib/format'
+} from '@/components/ui/select';
+import { fmtMonthYear } from '@/lib/format';
 
 interface ExpenseFilterBarProps {
-  divisions: { id: string; name: string }[]
-  categories: string[]
-  currentDivisionId?: string
-  currentCategory?: string
+  divisions: { id: string; name: string }[];
+  categories: string[];
+  currentDivisionId?: string;
+  currentCategory?: string;
 }
 
 export function ExpenseFilterBar({
@@ -23,29 +23,26 @@ export function ExpenseFilterBar({
   currentDivisionId,
   currentCategory,
 }: ExpenseFilterBarProps) {
-  const router = useRouter()
-  const basePath = '/finance/expenses'
+  const router = useRouter();
+  const basePath = '/finance/expenses';
 
   function handleDivisionChange(value: string) {
-    const params = new URLSearchParams()
-    if (value !== 'all') params.set('divisionId', value)
-    if (currentCategory) params.set('category', currentCategory)
-    router.push(`${basePath}?` + params.toString())
+    const params = new URLSearchParams();
+    if (value !== 'all') params.set('divisionId', value);
+    if (currentCategory) params.set('category', currentCategory);
+    router.push(`${basePath}?` + params.toString());
   }
 
   function handleCategoryChange(value: string) {
-    const params = new URLSearchParams()
-    if (currentDivisionId) params.set('divisionId', currentDivisionId)
-    if (value !== 'all') params.set('category', value)
-    router.push(`${basePath}?` + params.toString())
+    const params = new URLSearchParams();
+    if (currentDivisionId) params.set('divisionId', currentDivisionId);
+    if (value !== 'all') params.set('category', value);
+    router.push(`${basePath}?` + params.toString());
   }
 
   return (
     <div className="flex flex-wrap gap-3">
-      <Select
-        value={currentDivisionId ?? 'all'}
-        onValueChange={handleDivisionChange}
-      >
+      <Select value={currentDivisionId ?? 'all'} onValueChange={handleDivisionChange}>
         <SelectTrigger className="w-48">
           <SelectValue placeholder="All divisions" />
         </SelectTrigger>
@@ -59,10 +56,7 @@ export function ExpenseFilterBar({
         </SelectContent>
       </Select>
 
-      <Select
-        value={currentCategory ?? 'all'}
-        onValueChange={handleCategoryChange}
-      >
+      <Select value={currentCategory ?? 'all'} onValueChange={handleCategoryChange}>
         <SelectTrigger className="w-48">
           <SelectValue placeholder="All categories" />
         </SelectTrigger>
@@ -76,5 +70,5 @@ export function ExpenseFilterBar({
         </SelectContent>
       </Select>
     </div>
-  )
+  );
 }

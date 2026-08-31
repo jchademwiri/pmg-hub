@@ -1,20 +1,19 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 
 const quickLinks = [
-  { label: "Leads", href: "/relationships/leads" },
-  { label: "Clients", href: "/relationships/clients" },
-  { label: "Payments", href: "/billing/payments" },
-  { label: "Expenses", href: "/finance/expenses" },
+  { label: 'Leads', href: '/relationships/leads' },
+  { label: 'Clients', href: '/relationships/clients' },
+  { label: 'Payments', href: '/billing/payments' },
+  { label: 'Expenses', href: '/finance/expenses' },
 ];
 
 export default function NotFound() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center min-h-screen bg-background text-foreground px-6">
       <div className="w-full max-w-sm flex flex-col gap-8">
-
         {/* Error */}
         <div className="flex flex-col gap-3">
           <Badge variant="secondary" className="w-fit font-mono text-xs">
@@ -24,8 +23,8 @@ export default function NotFound() {
             <span className="text-6xl font-semibold tracking-tight">404</span>
           </div>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            You've wandered off the map. This page doesn't exist or was moved -
-            happens to the best of us.
+            You've wandered off the map. This page doesn't exist or was moved - happens to the best
+            of us.
           </p>
         </div>
 
@@ -51,7 +50,6 @@ export default function NotFound() {
         <Button asChild size="sm" className="w-fit">
           <Link href="/">Back to dashboard</Link>
         </Button>
-
       </div>
     </div>
   );

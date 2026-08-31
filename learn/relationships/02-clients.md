@@ -16,12 +16,12 @@ A client record can include:
 
 ## Client Financial Health
 
-| Metric | Meaning |
-|--------|---------|
-| Total Invoiced | How much has been billed |
-| Total Paid | How much has been received |
-| Outstanding Balance | What is still owed |
-| Last Activity | Most recent client-related activity |
+| Metric              | Meaning                             |
+| ------------------- | ----------------------------------- |
+| Total Invoiced      | How much has been billed            |
+| Total Paid          | How much has been received          |
+| Outstanding Balance | What is still owed                  |
+| Last Activity       | Most recent client-related activity |
 
 ## Basic Workflow
 
@@ -34,9 +34,8 @@ A client record can include:
 
 ## Common Mistakes
 
-| Mistake | Fix |
-|---------|-----|
-| Duplicate client created | Ask an admin before changing history |
-| Wrong division on a document | Check the quote or invoice division |
-| Balance looks wrong | Review invoices, payments, and credit notes |
-
+| Mistake                      | Fix                                         |
+| ---------------------------- | ------------------------------------------- |
+| Duplicate client created     | Ask an admin before changing history        |
+| Wrong division on a document | Check the quote or invoice division         |
+| Balance looks wrong          | Review invoices, payments, and credit notes |

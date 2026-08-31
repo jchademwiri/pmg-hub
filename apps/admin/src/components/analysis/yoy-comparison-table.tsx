@@ -35,14 +35,49 @@ export function YoYComparisonTable({ data, className }: YoYComparisonTableProps)
   if (!current) return null;
 
   const rows = [
-    { label: 'Total Income', key: 'totalIncome', isCurrency: true, colorClass: 'text-emerald-600 dark:text-emerald-500 font-medium' },
-    { label: 'Total Expenses', key: 'totalExpenses', isCurrency: true, colorClass: 'text-muted-foreground' },
-    { label: 'Net Profit Pool', key: 'netProfit', isCurrency: true, colorClass: 'text-emerald-600 dark:text-emerald-500 font-bold' },
-    { label: 'Total Invoiced', key: 'totalInvoiced', isCurrency: true, colorClass: 'text-emerald-600 dark:text-emerald-500 font-medium' },
-    { label: 'Average Invoice', key: 'averageInvoice', isCurrency: true, colorClass: 'text-emerald-600 dark:text-emerald-500 font-medium' },
-    { label: 'Average Transaction', key: 'averageTransaction', isCurrency: true, colorClass: 'text-emerald-600 dark:text-emerald-500 font-medium' },
+    {
+      label: 'Total Income',
+      key: 'totalIncome',
+      isCurrency: true,
+      colorClass: 'text-emerald-600 dark:text-emerald-500 font-medium',
+    },
+    {
+      label: 'Total Expenses',
+      key: 'totalExpenses',
+      isCurrency: true,
+      colorClass: 'text-muted-foreground',
+    },
+    {
+      label: 'Net Profit Pool',
+      key: 'netProfit',
+      isCurrency: true,
+      colorClass: 'text-emerald-600 dark:text-emerald-500 font-bold',
+    },
+    {
+      label: 'Total Invoiced',
+      key: 'totalInvoiced',
+      isCurrency: true,
+      colorClass: 'text-emerald-600 dark:text-emerald-500 font-medium',
+    },
+    {
+      label: 'Average Invoice',
+      key: 'averageInvoice',
+      isCurrency: true,
+      colorClass: 'text-emerald-600 dark:text-emerald-500 font-medium',
+    },
+    {
+      label: 'Average Transaction',
+      key: 'averageTransaction',
+      isCurrency: true,
+      colorClass: 'text-emerald-600 dark:text-emerald-500 font-medium',
+    },
     { label: 'Quotes Issued', key: 'quotesIssued', isCurrency: false },
-    { label: 'Quote Conversion Rate', key: 'quoteConversionRate', isCurrency: false, isPercent: true },
+    {
+      label: 'Quote Conversion Rate',
+      key: 'quoteConversionRate',
+      isCurrency: false,
+      isPercent: true,
+    },
   ];
 
   const getTrendIcon = (currentVal: number, priorVal: number) => {
@@ -51,7 +86,7 @@ export function YoYComparisonTable({ data, className }: YoYComparisonTableProps)
     return <Minus className="h-4 w-4 text-blue-500" />;
   };
 
-  const renderCell = (row: typeof rows[number], record: (typeof data)[number]) => {
+  const renderCell = (row: (typeof rows)[number], record: (typeof data)[number]) => {
     const value = record[row.key as keyof typeof record];
     if (row.isCurrency) return formatZAR(value as number);
     if (row.isPercent) return `${(value as number).toFixed(1)}%`;
@@ -59,25 +94,35 @@ export function YoYComparisonTable({ data, className }: YoYComparisonTableProps)
   };
 
   return (
-    <div className={cn("rounded-xl border shadow-sm overflow-hidden bg-card", className)}>
+    <div className={cn('rounded-xl border shadow-sm overflow-hidden bg-card', className)}>
       <Table>
         <TableHeader className="bg-muted/50">
           <TableRow className="hover:bg-transparent">
             <TableHead className="font-semibold text-foreground py-4">Metric</TableHead>
-            <TableHead className="text-right font-semibold text-foreground py-4">FY {current.year}</TableHead>
-            {prior && <TableHead className="text-right font-semibold text-foreground py-4">FY {prior.year}</TableHead>}
-            {prior2 && <TableHead className="text-right font-semibold text-foreground py-4">FY {prior2.year}</TableHead>}
+            <TableHead className="text-right font-semibold text-foreground py-4">
+              FY {current.year}
+            </TableHead>
+            {prior && (
+              <TableHead className="text-right font-semibold text-foreground py-4">
+                FY {prior.year}
+              </TableHead>
+            )}
+            {prior2 && (
+              <TableHead className="text-right font-semibold text-foreground py-4">
+                FY {prior2.year}
+              </TableHead>
+            )}
             <TableHead className="text-right font-semibold text-foreground py-4">Trend</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {rows.map((row, index) => (
-            <TableRow 
+            <TableRow
               key={row.key}
               className="transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
             >
               <TableCell className="font-medium py-4">{row.label}</TableCell>
-              
+
               <TableCell className={`text-right ${row.colorClass || ''}`}>
                 {renderCell(row, current)}
               </TableCell>
@@ -95,10 +140,14 @@ export function YoYComparisonTable({ data, className }: YoYComparisonTableProps)
               )}
 
               <TableCell className="text-right flex justify-end items-center h-full py-4">
-                {prior ? getTrendIcon(
-                  current[row.key as keyof typeof current] as number, 
-                  prior[row.key as keyof typeof prior] as number
-                ) : <Minus className="h-4 w-4 text-muted-foreground" />}
+                {prior ? (
+                  getTrendIcon(
+                    current[row.key as keyof typeof current] as number,
+                    prior[row.key as keyof typeof prior] as number,
+                  )
+                ) : (
+                  <Minus className="h-4 w-4 text-muted-foreground" />
+                )}
               </TableCell>
             </TableRow>
           ))}

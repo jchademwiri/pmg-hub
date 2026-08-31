@@ -33,7 +33,9 @@ export async function getTotalExpenses(): Promise<number> {
   return Number(result[0]!.total);
 }
 
-export async function getRevenueByDivision(): Promise<{ divisionId: string; divisionName: string; total: number }[]> {
+export async function getRevenueByDivision(): Promise<
+  { divisionId: string; divisionName: string; total: number }[]
+> {
   const result: { divisionId: string; divisionName: string; total: string }[] = await db
     .select({
       divisionId: divisions.id,
@@ -44,10 +46,16 @@ export async function getRevenueByDivision(): Promise<{ divisionId: string; divi
     .innerJoin(divisions, eq(income.divisionId, divisions.id))
     .groupBy(divisions.id, divisions.name)
     .orderBy(desc(sql`SUM(${income.amount})`));
-  return result.map((row) => ({ divisionId: row.divisionId, divisionName: row.divisionName, total: Number(row.total) }));
+  return result.map((row) => ({
+    divisionId: row.divisionId,
+    divisionName: row.divisionName,
+    total: Number(row.total),
+  }));
 }
 
-export async function getExpensesByDivision(): Promise<{ divisionId: string; divisionName: string; total: number }[]> {
+export async function getExpensesByDivision(): Promise<
+  { divisionId: string; divisionName: string; total: number }[]
+> {
   const result: { divisionId: string; divisionName: string; total: string }[] = await db
     .select({
       divisionId: divisions.id,
@@ -58,7 +66,11 @@ export async function getExpensesByDivision(): Promise<{ divisionId: string; div
     .innerJoin(divisions, eq(expenses.divisionId, divisions.id))
     .groupBy(divisions.id, divisions.name)
     .orderBy(desc(sql`SUM(${expenses.amount})`));
-  return result.map((row) => ({ divisionId: row.divisionId, divisionName: row.divisionName, total: Number(row.total) }));
+  return result.map((row) => ({
+    divisionId: row.divisionId,
+    divisionName: row.divisionName,
+    total: Number(row.total),
+  }));
 }
 
 export async function getMonthlyRevenueByDivision(
@@ -162,7 +174,7 @@ export async function getFinancialSummaryForPeriod(
   rates?: ActiveRates,
 ): Promise<PeriodSummary> {
   // Use provided rates or fetch current active rates
-  const effectiveRates = rates ?? await getActiveRates();
+  const effectiveRates = rates ?? (await getActiveRates());
   const revResult = await db.execute(sql`
     SELECT COALESCE(SUM(amount), 0) AS total
     FROM income
@@ -205,7 +217,7 @@ export async function getPreviousMonthSummary(): Promise<PeriodSummary> {
 export async function getYTDSummary(): Promise<PeriodSummary> {
   return getFinancialSummaryForPeriod(
     "DATE_TRUNC('year', timezone('Africa/Johannesburg', now()) - INTERVAL '2 months') + INTERVAL '2 months'",
-    "timezone('Africa/Johannesburg', now()) + INTERVAL '1 day'"
+    "timezone('Africa/Johannesburg', now()) + INTERVAL '1 day'",
   );
 }
 
@@ -213,7 +225,7 @@ export async function getYTDSummary(): Promise<PeriodSummary> {
 export async function getPreviousYearYTDSummary(): Promise<PeriodSummary> {
   return getFinancialSummaryForPeriod(
     "DATE_TRUNC('year', timezone('Africa/Johannesburg', now()) - INTERVAL '2 months') - INTERVAL '1 year' + INTERVAL '2 months'",
-    "timezone('Africa/Johannesburg', now()) - INTERVAL '1 year' + INTERVAL '1 day'"
+    "timezone('Africa/Johannesburg', now()) - INTERVAL '1 year' + INTERVAL '1 day'",
   );
 }
 
@@ -231,7 +243,9 @@ export async function getExpensesByCategoryForYear(
       total: sql<string>`COALESCE(SUM(${expenses.amount}), '0')`,
     })
     .from(expenses)
-    .where(sql`EXTRACT(YEAR FROM (${expenses.date}::date - INTERVAL '2 months'))::int = ${Number(year)}`)
+    .where(
+      sql`EXTRACT(YEAR FROM (${expenses.date}::date - INTERVAL '2 months'))::int = ${Number(year)}`,
+    )
     .groupBy(expenses.category)
     .orderBy(desc(sql`SUM(${expenses.amount})`));
   return result.map((r) => ({ category: r.category, total: Number(r.total) }));
@@ -390,7 +404,9 @@ export async function getUncategorizedExpensesCount(period: string): Promise<num
   const result = await db
     .select({ count: sql<number>`COUNT(*)::int` })
     .from(expenses)
-    .where(sql`TO_CHAR(${expenses.date}, 'YYYY-MM') = ${period} AND (${expenses.category} IS NULL OR ${expenses.category} = '')`);
+    .where(
+      sql`TO_CHAR(${expenses.date}, 'YYYY-MM') = ${period} AND (${expenses.category} IS NULL OR ${expenses.category} = '')`,
+    );
   return result[0]?.count ?? 0;
 }
 
@@ -410,7 +426,9 @@ export async function getDraftInvoicesCount(year: number): Promise<number> {
  * Pre-close integrity check: return total income and total expenses for a period.
  * Used for variance check between revenue and expense entries.
  */
-export async function getPeriodTotals(period: string): Promise<{ income: number; expenses: number }> {
+export async function getPeriodTotals(
+  period: string,
+): Promise<{ income: number; expenses: number }> {
   const incResult = await db
     .select({ total: sql<string>`COALESCE(SUM(${income.amount}), '0')` })
     .from(income)
@@ -431,7 +449,15 @@ export async function getPeriodTotals(period: string): Promise<{ income: number;
  */
 export async function getIncomeByPeriod(
   period: string,
-): Promise<{ date: string; divisionName: string; clientName: string; description: string | null; amount: number }[]> {
+): Promise<
+  {
+    date: string;
+    divisionName: string;
+    clientName: string;
+    description: string | null;
+    amount: number;
+  }[]
+> {
   const result = await db
     .select({
       date: sql<string>`${income.date}::text`,
@@ -460,7 +486,16 @@ export async function getIncomeByPeriod(
  */
 export async function getExpensesByPeriod(
   period: string,
-): Promise<{ date: string; divisionName: string; category: string; clientName: string; description: string | null; amount: number }[]> {
+): Promise<
+  {
+    date: string;
+    divisionName: string;
+    category: string;
+    clientName: string;
+    description: string | null;
+    amount: number;
+  }[]
+> {
   const result = await db
     .select({
       date: sql<string>`${expenses.date}::text`,
@@ -491,10 +526,11 @@ export async function getExpensesByPeriod(
 export async function getLedgerEntriesByPeriod(
   period: string,
   allocationType?: AllocationType,
-): Promise<{ total: number; entries: { date: string; description: string | null; amount: number; entryType: string }[] }> {
-  const conditions = [
-    sql`TO_CHAR(${ledger.date}, 'YYYY-MM') = ${period}`,
-  ];
+): Promise<{
+  total: number;
+  entries: { date: string; description: string | null; amount: number; entryType: string }[];
+}> {
+  const conditions = [sql`TO_CHAR(${ledger.date}, 'YYYY-MM') = ${period}`];
   if (allocationType) {
     conditions.push(eq(ledger.allocationType, allocationType));
   }

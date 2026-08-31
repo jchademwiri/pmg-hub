@@ -18,14 +18,14 @@ export const server = {
   enquireLead: defineAction({
     accept: 'form',
     input: z.object({
-      name:            z.string().min(1, 'Name is required'),
-      phone:           z.string().min(7, 'Phone number is required'),
-      email:           z.string().email().optional().or(z.literal('')).nullable(),
-      companyName:     z.string().optional().or(z.literal('')).nullable(),
+      name: z.string().min(1, 'Name is required'),
+      phone: z.string().min(7, 'Phone number is required'),
+      email: z.string().email().optional().or(z.literal('')).nullable(),
+      companyName: z.string().optional().or(z.literal('')).nullable(),
       serviceInterest: z.string().min(1, 'Please select a service'),
-      _website:        z.string().optional().or(z.literal('')).nullable(),
-      _loadedAt:       z.string().optional().or(z.literal('')).nullable(),
-      _turnstile:      z.string().optional().or(z.literal('')).nullable(),
+      _website: z.string().optional().or(z.literal('')).nullable(),
+      _loadedAt: z.string().optional().or(z.literal('')).nullable(),
+      _turnstile: z.string().optional().or(z.literal('')).nullable(),
     }),
     handler: async (input) => {
       // ── Bot protection ──────────────────────────────────────────────
@@ -54,24 +54,25 @@ export const server = {
           .limit(1);
 
         const existingLead = await db.query.leads.findFirst({
-          where: (cols, { and, or, eq }) => and(
-            eq(cols.divisionId, tesDivision?.id ?? null),
-            or(
-              eq(cols.phone, input.phone),
-              ...(input.email ? [eq(cols.email, input.email)] : []),
+          where: (cols, { and, or, eq }) =>
+            and(
+              eq(cols.divisionId, tesDivision?.id ?? null),
+              or(
+                eq(cols.phone, input.phone),
+                ...(input.email ? [eq(cols.email, input.email)] : []),
+              ),
             ),
-          ),
         });
 
         const leadValues = {
-          name:            input.name,
-          phone:           input.phone,
-          email:           input.email || null,
-          message:         input.companyName ? `Company: ${input.companyName}` : null,
+          name: input.name,
+          phone: input.phone,
+          email: input.email || null,
+          message: input.companyName ? `Company: ${input.companyName}` : null,
           serviceInterest: input.serviceInterest,
-          source:          'tes' as const,
-          status:          'new' as const,
-          divisionId:      tesDivision?.id ?? null,
+          source: 'tes' as const,
+          status: 'new' as const,
+          divisionId: tesDivision?.id ?? null,
         };
 
         if (existingLead) {
@@ -105,21 +106,21 @@ export const server = {
 
       try {
         const adminResult = await sendEmail(resendConfig, {
-          to:      brand.adminEmail,
+          to: brand.adminEmail,
           subject: `${isUpdate ? '[UPDATE] ' : ''}New TES Enquiry - ${input.name}`,
           replyTo: input.email || undefined,
-          react:   React.createElement(AdminNewLeadEmail, {
-            name:             input.name,
-            email:            input.email || 'Not provided',
-            phone:            input.phone,
+          react: React.createElement(AdminNewLeadEmail, {
+            name: input.name,
+            email: input.email || 'Not provided',
+            phone: input.phone,
             companyName_lead: input.companyName || undefined,
-            package_name:     input.serviceInterest,
-            package_price:    'TBC',
-            package_type:     'TES Enquiry',
-            message:          dbNote || undefined,
-            companyName:      brand.companyName,
-            primaryColor:     brand.primaryColor,
-            websiteUrl:       brand.websiteUrl,
+            package_name: input.serviceInterest,
+            package_price: 'TBC',
+            package_type: 'TES Enquiry',
+            message: dbNote || undefined,
+            companyName: brand.companyName,
+            primaryColor: brand.primaryColor,
+            websiteUrl: brand.websiteUrl,
           }),
         });
 
@@ -129,14 +130,14 @@ export const server = {
 
         if (input.email) {
           const autoReplyResult = await sendEmail(resendConfig, {
-            to:      input.email,
+            to: input.email,
             subject: `We've received your enquiry - ${brand.companyName}`,
-            react:   React.createElement(AutoReplyEmail, {
-              name:           input.name,
+            react: React.createElement(AutoReplyEmail, {
+              name: input.name,
               whatsappNumber: TES_WHATSAPP,
-              companyName:    brand.companyName,
-              primaryColor:   brand.primaryColor,
-              websiteUrl:     brand.websiteUrl,
+              companyName: brand.companyName,
+              primaryColor: brand.primaryColor,
+              websiteUrl: brand.websiteUrl,
             }),
           });
 
@@ -150,7 +151,9 @@ export const server = {
 
       return {
         success: true,
-        message: dbSaved ? 'Enquiry sent successfully.' : 'Enquiry received. We will follow up shortly.',
+        message: dbSaved
+          ? 'Enquiry sent successfully.'
+          : 'Enquiry received. We will follow up shortly.',
       };
     },
   }),

@@ -3,6 +3,7 @@
 **Date:** 2026-05-10  
 **Scope:** Quote, Invoice, and Statement document pages and shared billing components  
 **Files audited:**
+
 - `apps/admin/src/components/billing/document-preview.tsx`
 - `apps/admin/src/components/billing/billing-line-items-table.tsx`
 - `apps/admin/src/components/billing/billing-totals-block.tsx`
@@ -90,9 +91,7 @@ The income records table at the bottom of the statement page is a raw `<table>` 
 ```tsx
 // Current - no overflow protection
 <CardContent className="p-0">
-  <table className="w-full text-sm">
-    ...
-  </table>
+  <table className="w-full text-sm">...</table>
 </CardContent>
 ```
 
@@ -126,14 +125,14 @@ The sticky sidebar in the invoice form is missing `self-start`, which the quote 
 
 ## Summary Table
 
-| # | File | Issue | Severity |
-|---|------|-------|----------|
-| 1 | `document-preview.tsx` | Fixed `w-[794px]` - no mobile-friendly fallback beyond `overflow-x-auto` | Medium |
-| 2 | `document-preview.tsx` | Statement 6-column table has no responsive column strategy | Medium |
-| 3 | `invoices/[id]/page.tsx` | Action button row doesn't wrap on medium screens | Medium |
-| 4 | `quotes/[id]/page.tsx` | Action button row doesn't wrap on medium screens | Medium |
-| 5 | `statements/[clientId]/page.tsx` | Income records table has no `overflow-x-auto` wrapper | **High** |
-| 6 | `invoice-form-client.tsx` | Sidebar missing `self-start` (inconsistent with quote form) | Low |
+| #   | File                             | Issue                                                                    | Severity |
+| --- | -------------------------------- | ------------------------------------------------------------------------ | -------- |
+| 1   | `document-preview.tsx`           | Fixed `w-[794px]` - no mobile-friendly fallback beyond `overflow-x-auto` | Medium   |
+| 2   | `document-preview.tsx`           | Statement 6-column table has no responsive column strategy               | Medium   |
+| 3   | `invoices/[id]/page.tsx`         | Action button row doesn't wrap on medium screens                         | Medium   |
+| 4   | `quotes/[id]/page.tsx`           | Action button row doesn't wrap on medium screens                         | Medium   |
+| 5   | `statements/[clientId]/page.tsx` | Income records table has no `overflow-x-auto` wrapper                    | **High** |
+| 6   | `invoice-form-client.tsx`        | Sidebar missing `self-start` (inconsistent with quote form)              | Low      |
 
 ---
 

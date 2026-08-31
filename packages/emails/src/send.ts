@@ -1,6 +1,6 @@
-import { Resend } from "resend";
-import type React from "react";
-import { render } from "@react-email/components";
+import { Resend } from 'resend';
+import type React from 'react';
+import { render } from '@react-email/components';
 
 export interface ResendConfig {
   apiKey: string;
@@ -33,10 +33,7 @@ export interface SendResult {
  * Instantiates a new Resend client per call using the provided config.
  * Never throws - errors are returned in the `error` field.
  */
-export async function sendEmail(
-  config: ResendConfig,
-  payload: EmailPayload
-): Promise<SendResult> {
+export async function sendEmail(config: ResendConfig, payload: EmailPayload): Promise<SendResult> {
   const resend = new Resend(config.apiKey);
   try {
     const { data, error } = await resend.emails.send(
@@ -66,9 +63,7 @@ export async function sendEmail(
  * Renders a React Email component to HTML string.
  * Used to pre-render email templates before sending.
  */
-export async function renderEmailTemplate(
-  component: React.ReactElement
-): Promise<string> {
+export async function renderEmailTemplate(component: React.ReactElement): Promise<string> {
   return await render(component);
 }
 
@@ -77,7 +72,7 @@ export async function renderEmailTemplate(
  * Use this to avoid repeating config on every call.
  */
 export function createEmailClient(
-  config: ResendConfig
+  config: ResendConfig,
 ): (payload: EmailPayload) => Promise<SendResult> {
   return (payload: EmailPayload) => sendEmail(config, payload);
 }

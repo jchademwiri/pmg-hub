@@ -1,6 +1,7 @@
 # Kiro Fix Instructions
 
 ## Problem Summary
+
 Build fails with: `Module not found: Can't resolve '@react-email/components'` at `apps/admin/src/lib/auth.ts:10:1`
 
 The `admin` app doesn't have `@react-email/components` as a dependency, but auth.ts tries to import and use `render()` from it.
@@ -8,22 +9,25 @@ The `admin` app doesn't have `@react-email/components` as a dependency, but auth
 ## Context for Kiro
 
 ### Current Broken Code (apps/admin/src/lib/auth.ts line 1-11)
+
 ```typescript
-import 'server-only'
-import { betterAuth } from 'better-auth'
-import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { magicLink } from 'better-auth/plugins'
-import { createAuthMiddleware, APIError } from 'better-auth/api'
-import { headers } from 'next/headers'
-import { redirect } from 'next/navigation'
-import { getDb, invitations, user, eq } from '@pmg/db'
-import { Resend } from 'resend'
-import { render } from '@react-email/components'  // ❌ BROKEN: Not in admin dependencies
-import { MagicLinkEmail, DEFAULT_EMAIL_FROM } from '@pmg/emails'
+import 'server-only';
+import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { magicLink } from 'better-auth/plugins';
+import { createAuthMiddleware, APIError } from 'better-auth/api';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { getDb, invitations, user, eq } from '@pmg/db';
+import { Resend } from 'resend';
+import { render } from '@react-email/components'; // ❌ BROKEN: Not in admin dependencies
+import { MagicLinkEmail, DEFAULT_EMAIL_FROM } from '@pmg/emails';
 ```
 
 ### Where render() is Used
+
 In the magicLink plugin's `sendMagicLink` callback:
+
 ```typescript
 const html = await render(
   MagicLinkEmail({
@@ -32,8 +36,8 @@ const html = await render(
     companyName: 'Playhouse Media Group',
     primaryColor: '#1d4ed8',
     websiteUrl: 'https://playhousemedia.co.za',
-  })
-)
+  }),
+);
 ```
 
 ## How Other Emails Do It (Reference Pattern)
@@ -45,7 +49,8 @@ From `apps/admin/src/app/actions/billing-payments.ts` (lines 177-214):
 if (client.email) {
   (async () => {
     try {
-      const { createEmailClient, PaymentThankYouEmail, DEFAULT_REPLY_TO } = await import('@pmg/emails');
+      const { createEmailClient, PaymentThankYouEmail, DEFAULT_REPLY_TO } =
+        await import('@pmg/emails');
       const emailClient = createEmailClient({
         apiKey,
         from: `${fromName} <${fromEmail}>`,
@@ -67,6 +72,7 @@ if (client.email) {
 ```
 
 Key pattern:
+
 - ✅ Use `React.createElement(ComponentName, props)`
 - ✅ Use `createEmailClient()` from @pmg/emails
 - ✅ Pass React element to `emailClient()`
@@ -75,6 +81,7 @@ Key pattern:
 ## What @pmg/emails exports
 
 From `packages/emails/src/index.ts`:
+
 ```typescript
 export { sendEmail, createEmailClient, renderEmailTemplate } from "./send";
 export { default as MagicLinkEmail } from "./templates/MagicLinkEmail";
@@ -85,9 +92,10 @@ export { DEFAULT_EMAIL_FROM, DEFAULT_REPLY_TO, DEFAULT_WEBSITE_URL, ... } from "
 ## The Fix Kiro Should Apply
 
 **Replace this:**
+
 ```typescript
-import { render } from '@react-email/components'
-import { MagicLinkEmail, DEFAULT_EMAIL_FROM } from '@pmg/emails'
+import { render } from '@react-email/components';
+import { MagicLinkEmail, DEFAULT_EMAIL_FROM } from '@pmg/emails';
 
 // In magicLink plugin:
 const html = await render(
@@ -97,28 +105,34 @@ const html = await render(
     companyName: 'Playhouse Media Group',
     primaryColor: '#1d4ed8',
     websiteUrl: 'https://playhousemedia.co.za',
-  })
-)
+  }),
+);
 
 const { error } = await resend.emails.send({
   from: `PMG Admin <${DEFAULT_EMAIL_FROM}>`,
   to: email,
   subject: 'Sign in to PMG Control Center',
   html,
-})
+});
 ```
 
 **With this:**
+
 ```typescript
-import { createEmailClient, MagicLinkEmail, DEFAULT_EMAIL_FROM, DEFAULT_REPLY_TO } from '@pmg/emails'
-import React from 'react'
+import {
+  createEmailClient,
+  MagicLinkEmail,
+  DEFAULT_EMAIL_FROM,
+  DEFAULT_REPLY_TO,
+} from '@pmg/emails';
+import React from 'react';
 
 // In magicLink plugin's sendMagicLink callback:
 const emailClient = createEmailClient({
   apiKey: process.env.PMG_RESEND_API_KEY!,
   from: `PMG Admin <${DEFAULT_EMAIL_FROM}>`,
   adminEmail: DEFAULT_EMAIL_FROM,
-})
+});
 
 const { data, error } = await emailClient({
   to: email,
@@ -131,11 +145,11 @@ const { data, error } = await emailClient({
     websiteUrl: 'https://playhousemedia.co.za',
   }),
   replyTo: DEFAULT_REPLY_TO,
-})
+});
 
 if (error) {
-  console.error('[MagicLink Error]', error)
-  throw new APIError('INTERNAL_SERVER_ERROR', { message: 'Failed to send email' })
+  console.error('[MagicLink Error]', error);
+  throw new APIError('INTERNAL_SERVER_ERROR', { message: 'Failed to send email' });
 }
 ```
 
@@ -158,9 +172,11 @@ if (error) {
    - Check `error` instead of relying on exceptions
 
 ## File Location
+
 `apps/admin/src/lib/auth.ts`
 
 ## Test Command
+
 ```bash
 cd /path/to/pmg-hub
 bun run build
@@ -179,6 +195,7 @@ You can give Kiro this prompt:
 **Problem:** Line 10 imports `render` from '@react-email/components', which doesn't exist in admin's dependencies. This breaks the Turbopack build.
 
 **Solution:** Use the pattern from `apps/admin/src/app/actions/billing-payments.ts` instead:
+
 - Remove the `@react-email/components` import
 - Use `React.createElement()` instead of JSX rendering
 - Use `createEmailClient()` from `@pmg/emails` to send emails
@@ -194,11 +211,11 @@ You can give Kiro this prompt:
 
 ## Summary for Kiro
 
-| Item | Details |
-|------|---------|
-| **File** | `apps/admin/src/lib/auth.ts` |
-| **Error** | Module not found: '@react-email/components' |
-| **Root cause** | Using `render()` function directly |
-| **Fix pattern** | Use `createEmailClient()` + `React.createElement()` |
-| **Reference** | `apps/admin/src/app/actions/billing-payments.ts` (lines 177-214) |
-| **Verification** | `bun run build` succeeds |
+| Item             | Details                                                          |
+| ---------------- | ---------------------------------------------------------------- |
+| **File**         | `apps/admin/src/lib/auth.ts`                                     |
+| **Error**        | Module not found: '@react-email/components'                      |
+| **Root cause**   | Using `render()` function directly                               |
+| **Fix pattern**  | Use `createEmailClient()` + `React.createElement()`              |
+| **Reference**    | `apps/admin/src/app/actions/billing-payments.ts` (lines 177-214) |
+| **Verification** | `bun run build` succeeds                                         |

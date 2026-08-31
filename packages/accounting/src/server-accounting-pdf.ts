@@ -24,7 +24,14 @@ import {
 } from '@pmg/db';
 import { buildOrgProps } from '@pmg/billing/client-billing-helpers';
 import { formatZAR, fmtDate, fmtDateLong, fmtMonthYear } from '@pmg/billing/format';
-import { PAGE, split, ensurePage, drawShellHeader, drawShellFooter, type PdfOrgHeader } from '@pmg/billing/pdf-shell';
+import {
+  PAGE,
+  split,
+  ensurePage,
+  drawShellHeader,
+  drawShellFooter,
+  type PdfOrgHeader,
+} from '@pmg/billing/pdf-shell';
 import { jsPDF } from 'jspdf';
 
 export type AccountingReportType =
@@ -107,7 +114,11 @@ function formatPeriodLabel(period?: string): string {
   return `Period: ${fmtMonthYear(period)}`;
 }
 
-async function buildReportHeader(title: string, period?: string, divisionLabel?: string): Promise<AccountingReportHeader> {
+async function buildReportHeader(
+  title: string,
+  period?: string,
+  divisionLabel?: string,
+): Promise<AccountingReportHeader> {
   const orgSettings = await getOrganisationSettings();
   return {
     title: divisionLabel ? `${title} — ${divisionLabel}` : title,
@@ -130,7 +141,14 @@ function drawReportFooter(doc: jsPDF, header: AccountingReportHeader): void {
   drawShellFooter(doc, { divisionOf: header.org.divisionOf });
 }
 
-function drawAccountRow(doc: jsPDF, y: number, code: string, name: string, amount: number, bold = false): void {
+function drawAccountRow(
+  doc: jsPDF,
+  y: number,
+  code: string,
+  name: string,
+  amount: number,
+  bold = false,
+): void {
   doc.setFont('helvetica', bold ? 'bold' : 'normal');
   doc.setFontSize(9);
   doc.setTextColor(24, 24, 27);
@@ -190,7 +208,11 @@ function drawProfitAndLossTable(doc: jsPDF, startY: number, result: ProfitAndLos
   doc.line(PAGE.margin, y - 4, PAGE.width - PAGE.margin, y - 4);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.setTextColor(result.netProfit >= 0 ? 5 : 220, result.netProfit >= 0 ? 150 : 38, result.netProfit >= 0 ? 105 : 38);
+  doc.setTextColor(
+    result.netProfit >= 0 ? 5 : 220,
+    result.netProfit >= 0 ? 150 : 38,
+    result.netProfit >= 0 ? 105 : 38,
+  );
   doc.text('Net Profit', PAGE.margin + 2, y + 6);
   doc.text(formatZAR(result.netProfit), PAGE.width - PAGE.margin - 2, y + 6, { align: 'right' });
 
@@ -209,7 +231,11 @@ const DIVISION_COLS = {
 
 /** Revenue/expenses/net profit per division, sorted highest-revenue first —
  * answers "which division is bringing in more money" at a glance. */
-function drawProfitAndLossByDivisionTable(doc: jsPDF, startY: number, rows: ProfitAndLossByDivisionRow[]): number {
+function drawProfitAndLossByDivisionTable(
+  doc: jsPDF,
+  startY: number,
+  rows: ProfitAndLossByDivisionRow[],
+): number {
   let y = startY;
 
   y = ensurePage(doc, y, 22);
@@ -249,9 +275,18 @@ function drawProfitAndLossByDivisionTable(doc: jsPDF, startY: number, rows: Prof
     doc.text(row.divisionName, DIVISION_COLS.name, y + 4);
     doc.text(formatZAR(row.totalRevenue), DIVISION_COLS.revenue, y + 4, { align: 'right' });
     doc.text(formatZAR(row.totalIncome), DIVISION_COLS.income, y + 4, { align: 'right' });
-    doc.text(row.totalOutstandingAr > 0 ? formatZAR(row.totalOutstandingAr) : '—', DIVISION_COLS.ar, y + 4, { align: 'right' });
+    doc.text(
+      row.totalOutstandingAr > 0 ? formatZAR(row.totalOutstandingAr) : '—',
+      DIVISION_COLS.ar,
+      y + 4,
+      { align: 'right' },
+    );
     doc.text(formatZAR(row.totalExpenses), DIVISION_COLS.expenses, y + 4, { align: 'right' });
-    doc.setTextColor(row.netProfit >= 0 ? 5 : 220, row.netProfit >= 0 ? 150 : 38, row.netProfit >= 0 ? 105 : 38);
+    doc.setTextColor(
+      row.netProfit >= 0 ? 5 : 220,
+      row.netProfit >= 0 ? 150 : 38,
+      row.netProfit >= 0 ? 105 : 38,
+    );
     doc.text(formatZAR(row.netProfit), DIVISION_COLS.net, y + 4, { align: 'right' });
     doc.setTextColor(113, 113, 122);
     doc.text(`${row.marginPercent.toFixed(1)}%`, DIVISION_COLS.margin, y + 4, { align: 'right' });
@@ -303,7 +338,13 @@ async function buildProfitAndLossPdf(filters: AccountingPdfFilters): Promise<Acc
   };
 }
 
-const TRIAL_BALANCE_COLS = { code: PAGE.margin + 2, name: PAGE.margin + 24, type: 132, debit: 168, credit: PAGE.width - PAGE.margin - 2 };
+const TRIAL_BALANCE_COLS = {
+  code: PAGE.margin + 2,
+  name: PAGE.margin + 24,
+  type: 132,
+  debit: 168,
+  credit: PAGE.width - PAGE.margin - 2,
+};
 
 function drawTrialBalanceTable(doc: jsPDF, startY: number, rows: TrialBalanceRow[]): number {
   let y = startY;
@@ -334,10 +375,24 @@ function drawTrialBalanceTable(doc: jsPDF, startY: number, rows: TrialBalanceRow
     doc.text(row.accountCode, TRIAL_BALANCE_COLS.code, y + 4);
     doc.text(row.accountName, TRIAL_BALANCE_COLS.name, y + 4);
     doc.setTextColor(113, 113, 122);
-    doc.text(row.accountType.charAt(0).toUpperCase() + row.accountType.slice(1), TRIAL_BALANCE_COLS.type, y + 4);
+    doc.text(
+      row.accountType.charAt(0).toUpperCase() + row.accountType.slice(1),
+      TRIAL_BALANCE_COLS.type,
+      y + 4,
+    );
     doc.setTextColor(24, 24, 27);
-    doc.text(row.totalDebits > 0 ? formatZAR(row.totalDebits) : '-', TRIAL_BALANCE_COLS.debit, y + 4, { align: 'right' });
-    doc.text(row.totalCredits > 0 ? formatZAR(row.totalCredits) : '-', TRIAL_BALANCE_COLS.credit, y + 4, { align: 'right' });
+    doc.text(
+      row.totalDebits > 0 ? formatZAR(row.totalDebits) : '-',
+      TRIAL_BALANCE_COLS.debit,
+      y + 4,
+      { align: 'right' },
+    );
+    doc.text(
+      row.totalCredits > 0 ? formatZAR(row.totalCredits) : '-',
+      TRIAL_BALANCE_COLS.credit,
+      y + 4,
+      { align: 'right' },
+    );
     doc.setDrawColor(244, 244, 245);
     doc.line(PAGE.margin, y + 6, PAGE.width - PAGE.margin, y + 6);
     y += 8;
@@ -390,7 +445,14 @@ function periodToDateRange(period: string): { startDate: string; endDate: string
 // its own filter refinement rather than an ever-larger single PDF.
 const GENERAL_LEDGER_MAX_ROWS = 5000;
 
-const GL_COLS = { date: PAGE.margin + 2, entryNo: 42, account: 66, description: 98, debit: 168, credit: PAGE.width - PAGE.margin - 2 };
+const GL_COLS = {
+  date: PAGE.margin + 2,
+  entryNo: 42,
+  account: 66,
+  description: 98,
+  debit: 168,
+  credit: PAGE.width - PAGE.margin - 2,
+};
 
 function drawGeneralLedgerTable(doc: jsPDF, startY: number, rows: GeneralLedgerRow[]): number {
   let y = startY;
@@ -425,7 +487,9 @@ function drawGeneralLedgerTable(doc: jsPDF, startY: number, rows: GeneralLedgerR
     doc.text(row.accountCode, GL_COLS.account, y + 4);
     doc.text(descLines, GL_COLS.description, y + 4);
     doc.text(row.debit > 0 ? formatZAR(row.debit) : '-', GL_COLS.debit, y + 4, { align: 'right' });
-    doc.text(row.credit > 0 ? formatZAR(row.credit) : '-', GL_COLS.credit, y + 4, { align: 'right' });
+    doc.text(row.credit > 0 ? formatZAR(row.credit) : '-', GL_COLS.credit, y + 4, {
+      align: 'right',
+    });
     doc.setDrawColor(244, 244, 245);
     doc.line(PAGE.margin, y + rowHeight, PAGE.width - PAGE.margin, y + rowHeight);
     y += rowHeight;
@@ -444,14 +508,25 @@ function drawGeneralLedgerTable(doc: jsPDF, startY: number, rows: GeneralLedgerR
   return y + 16;
 }
 
-async function buildGeneralLedgerPdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult | AccountingPdfError> {
+async function buildGeneralLedgerPdf(
+  filters: AccountingPdfFilters,
+): Promise<AccountingPdfResult | AccountingPdfError> {
   if (!filters.period && !filters.accountId) {
-    return { error: 'Select a period or an account before exporting the General Ledger — exporting all activity at once isn\'t supported.' };
+    return {
+      error:
+        "Select a period or an account before exporting the General Ledger — exporting all activity at once isn't supported.",
+    };
   }
 
   const dateRange = filters.period ? periodToDateRange(filters.period) : {};
   const [ledgerResult, divisionName] = await Promise.all([
-    getGeneralLedger({ ...dateRange, accountId: filters.accountId, divisionId: filters.divisionId, page: 1, pageSize: GENERAL_LEDGER_MAX_ROWS }),
+    getGeneralLedger({
+      ...dateRange,
+      accountId: filters.accountId,
+      divisionId: filters.divisionId,
+      page: 1,
+      pageSize: GENERAL_LEDGER_MAX_ROWS,
+    }),
     resolveDivisionName(filters.divisionId),
   ]);
   const header = await buildReportHeader('General Ledger', filters.period, divisionName);
@@ -472,7 +547,8 @@ async function buildGeneralLedgerPdf(filters: AccountingPdfFilters): Promise<Acc
   }
   drawReportFooter(doc, header);
 
-  const suffix = [filters.period, filters.accountId, filters.divisionId].filter(Boolean).join('-') || 'filtered';
+  const suffix =
+    [filters.period, filters.accountId, filters.divisionId].filter(Boolean).join('-') || 'filtered';
   return {
     fileName: `general-ledger-${suffix}.pdf`,
     buffer: Buffer.from(doc.output('arraybuffer')),
@@ -524,7 +600,9 @@ function drawJournalEntries(
       doc.text(`${line.accountCode} — ${line.accountName}`, PAGE.margin + 8, y + 4);
       doc.setTextColor(24, 24, 27);
       doc.text(line.debit > 0 ? formatZAR(line.debit) : '', 150, y + 4, { align: 'right' });
-      doc.text(line.credit > 0 ? formatZAR(line.credit) : '', PAGE.width - PAGE.margin - 2, y + 4, { align: 'right' });
+      doc.text(line.credit > 0 ? formatZAR(line.credit) : '', PAGE.width - PAGE.margin - 2, y + 4, {
+        align: 'right',
+      });
       y += 5.5;
     }
     y += 4;
@@ -535,7 +613,12 @@ function drawJournalEntries(
 
 async function buildJournalEntriesPdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
   const [entriesResult, divisionName] = await Promise.all([
-    getJournalEntries({ period: filters.period, divisionId: filters.divisionId, page: 1, pageSize: JOURNAL_ENTRIES_MAX_ROWS }),
+    getJournalEntries({
+      period: filters.period,
+      divisionId: filters.divisionId,
+      page: 1,
+      pageSize: JOURNAL_ENTRIES_MAX_ROWS,
+    }),
     resolveDivisionName(filters.divisionId),
   ]);
   const header = await buildReportHeader('Journal Entries', filters.period, divisionName);
@@ -579,9 +662,17 @@ const CHART_OF_ACCOUNTS_GROUPS: ReadonlyArray<{ key: string; label: string }> = 
   { key: 'expense', label: 'Expenses' },
 ];
 
-const COA_COLS = { code: PAGE.margin + 2, name: PAGE.margin + 26, status: PAGE.width - PAGE.margin - 2 };
+const COA_COLS = {
+  code: PAGE.margin + 2,
+  name: PAGE.margin + 26,
+  status: PAGE.width - PAGE.margin - 2,
+};
 
-function drawChartOfAccountsTable(doc: jsPDF, startY: number, grouped: Record<string, ChartAccount[]>): number {
+function drawChartOfAccountsTable(
+  doc: jsPDF,
+  startY: number,
+  grouped: Record<string, ChartAccount[]>,
+): number {
   let y = startY;
 
   for (const group of CHART_OF_ACCOUNTS_GROUPS) {
@@ -612,8 +703,14 @@ function drawChartOfAccountsTable(doc: jsPDF, startY: number, grouped: Record<st
       doc.setTextColor(24, 24, 27);
       doc.text(account.code, COA_COLS.code, y + 4);
       doc.text(account.name, COA_COLS.name, y + 4);
-      doc.setTextColor(account.isActive ? 5 : 161, account.isActive ? 150 : 161, account.isActive ? 105 : 170);
-      doc.text(account.isActive ? 'Active' : 'Inactive', COA_COLS.status, y + 4, { align: 'right' });
+      doc.setTextColor(
+        account.isActive ? 5 : 161,
+        account.isActive ? 150 : 161,
+        account.isActive ? 105 : 170,
+      );
+      doc.text(account.isActive ? 'Active' : 'Inactive', COA_COLS.status, y + 4, {
+        align: 'right',
+      });
       doc.setDrawColor(244, 244, 245);
       doc.line(PAGE.margin, y + 6, PAGE.width - PAGE.margin, y + 6);
       y += 7;
@@ -641,12 +738,18 @@ async function buildChartOfAccountsPdf(): Promise<AccountingPdfResult> {
   };
 }
 
-async function buildDivisionPerformancePdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
+async function buildDivisionPerformancePdf(
+  filters: AccountingPdfFilters,
+): Promise<AccountingPdfResult> {
   const [byDivision, divisionName] = await Promise.all([
     getProfitAndLossByDivision(filters.period),
     resolveDivisionName(filters.divisionId),
   ]);
-  const header = await buildReportHeader('Division Performance Report', filters.period, divisionName);
+  const header = await buildReportHeader(
+    'Division Performance Report',
+    filters.period,
+    divisionName,
+  );
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   drawReportHeader(doc, header);
@@ -665,7 +768,7 @@ function drawAccountSubtable(
   startY: number,
   rows: Array<{ accountCode: string; accountName: string; amount: number }>,
   totalLabel: string,
-  totalAmount: number
+  totalAmount: number,
 ): number {
   let y = startY;
   for (const row of rows) {
@@ -682,7 +785,11 @@ async function buildBalanceSheetPdf(filters: AccountingPdfFilters): Promise<Acco
     getBalanceSheet(filters.period, filters.divisionId),
     resolveDivisionName(filters.divisionId),
   ]);
-  const header = await buildReportHeader('Balance Sheet (Statement of Financial Position)', filters.period, divisionName);
+  const header = await buildReportHeader(
+    'Balance Sheet (Statement of Financial Position)',
+    filters.period,
+    divisionName,
+  );
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   drawReportHeader(doc, header);
@@ -719,7 +826,13 @@ async function buildBalanceSheetPdf(filters: AccountingPdfFilters): Promise<Acco
 
   const equityRows = [
     ...result.equity,
-    { accountId: 'retained', accountCode: '—', accountName: 'Retained Earnings / Net Income', accountType: 'equity', amount: result.netIncome }
+    {
+      accountId: 'retained',
+      accountCode: '—',
+      accountName: 'Retained Earnings / Net Income',
+      accountType: 'equity',
+      amount: result.netIncome,
+    },
   ];
   y = drawAccountSubtable(doc, y, equityRows, 'Total Equity', result.totalEquity);
   y += 6;
@@ -792,7 +905,9 @@ async function buildCashFlowPdf(filters: AccountingPdfFilters): Promise<Accounti
   };
 }
 
-async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
+async function buildAnnualFinancialStatementsPdf(
+  filters: AccountingPdfFilters,
+): Promise<AccountingPdfResult> {
   const result = await getAnnualFinancialStatements(filters.period, filters.divisionId);
   const header = await buildReportHeader('Annual Financial Statements (AFS)', filters.period);
 
@@ -813,11 +928,13 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(24, 24, 27);
-  doc.text('DIRECTORS\' REPORT', PAGE.margin, y);
+  doc.text("DIRECTORS' REPORT", PAGE.margin, y);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(113, 113, 122);
-  doc.text(`for the year ended ${info.financialYearEnd}`, PAGE.width - PAGE.margin, y, { align: 'right' });
+  doc.text(`for the year ended ${info.financialYearEnd}`, PAGE.width - PAGE.margin, y, {
+    align: 'right',
+  });
   y += 8;
 
   doc.setFont('helvetica', 'bold');
@@ -854,7 +971,9 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setTextColor(24, 24, 27);
   doc.text('Sales Revenue (Group Total)', PAGE.margin + 3, y);
   doc.text(formatZAR(dr.businessActivities.revenue.current), 150, y, { align: 'right' });
-  doc.text(formatZAR(dr.businessActivities.revenue.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  doc.text(formatZAR(dr.businessActivities.revenue.prior), PAGE.width - PAGE.margin - 3, y, {
+    align: 'right',
+  });
   y += 5.5;
 
   // Divisions
@@ -873,22 +992,36 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setTextColor(24, 24, 27);
   doc.text('Operating profit / (loss)', PAGE.margin + 3, y);
   doc.text(formatZAR(dr.businessActivities.operatingProfit.current), 150, y, { align: 'right' });
-  doc.text(formatZAR(dr.businessActivities.operatingProfit.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  doc.text(
+    formatZAR(dr.businessActivities.operatingProfit.prior),
+    PAGE.width - PAGE.margin - 3,
+    y,
+    { align: 'right' },
+  );
   y += 5.5;
 
   doc.text('Profit / (loss) for the year', PAGE.margin + 3, y);
   doc.text(formatZAR(dr.businessActivities.netProfit.current), 150, y, { align: 'right' });
-  doc.text(formatZAR(dr.businessActivities.netProfit.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  doc.text(formatZAR(dr.businessActivities.netProfit.prior), PAGE.width - PAGE.margin - 3, y, {
+    align: 'right',
+  });
   y += 5.5;
 
   doc.text('Total assets', PAGE.margin + 3, y);
   doc.text(formatZAR(dr.businessActivities.totalAssets.current), 150, y, { align: 'right' });
-  doc.text(formatZAR(dr.businessActivities.totalAssets.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  doc.text(formatZAR(dr.businessActivities.totalAssets.prior), PAGE.width - PAGE.margin - 3, y, {
+    align: 'right',
+  });
   y += 5.5;
 
   doc.text('Total liabilities', PAGE.margin + 3, y);
   doc.text(formatZAR(dr.businessActivities.totalLiabilities.current), 150, y, { align: 'right' });
-  doc.text(formatZAR(dr.businessActivities.totalLiabilities.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  doc.text(
+    formatZAR(dr.businessActivities.totalLiabilities.prior),
+    PAGE.width - PAGE.margin - 3,
+    y,
+    { align: 'right' },
+  );
   y += 8;
 
   doc.setFont('helvetica', 'bold');
@@ -926,7 +1059,9 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(113, 113, 122);
-  doc.text(`for the year ended ${info.financialYearEnd}`, PAGE.width - PAGE.margin, y, { align: 'right' });
+  doc.text(`for the year ended ${info.financialYearEnd}`, PAGE.width - PAGE.margin, y, {
+    align: 'right',
+  });
   y += 8;
 
   doc.setFillColor(243, 244, 246);
@@ -972,7 +1107,9 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.text('Employee benefits expense', PAGE.margin + 3, y);
   doc.text('Note 1', 120, y, { align: 'center' });
   doc.text(formatZAR(pnl.employeeBenefits.current), 155, y, { align: 'right' });
-  doc.text(formatZAR(pnl.employeeBenefits.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  doc.text(formatZAR(pnl.employeeBenefits.prior), PAGE.width - PAGE.margin - 3, y, {
+    align: 'right',
+  });
   y += 5.5;
 
   doc.text('Other operating expenses', PAGE.margin + 3, y);
@@ -984,7 +1121,9 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFont('helvetica', 'bold');
   doc.text('Operating profit / (loss)', PAGE.margin + 3, y);
   doc.text(formatZAR(pnl.operatingProfit.current), 155, y, { align: 'right' });
-  doc.text(formatZAR(pnl.operatingProfit.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  doc.text(formatZAR(pnl.operatingProfit.prior), PAGE.width - PAGE.margin - 3, y, {
+    align: 'right',
+  });
   y += 7;
 
   doc.setFont('helvetica', 'bold');
@@ -1023,12 +1162,23 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(24, 24, 27);
-  doc.text('ASSETS', PAGE.margin + 3, y); y += 5.5;
+  doc.text('ASSETS', PAGE.margin + 3, y);
+  y += 5.5;
 
   doc.setFont('helvetica', 'normal');
   for (const a of bs.assets) {
     doc.text(a.accountName, PAGE.margin + 6, y);
-    doc.text(a.accountName.toLowerCase().includes('receivable') ? 'Note 7' : (a.accountName.toLowerCase().includes('bank') || a.accountName.toLowerCase().includes('cash') ? 'Note 8' : 'Note 5'), 120, y, { align: 'center' });
+    doc.text(
+      a.accountName.toLowerCase().includes('receivable')
+        ? 'Note 7'
+        : a.accountName.toLowerCase().includes('bank') ||
+            a.accountName.toLowerCase().includes('cash')
+          ? 'Note 8'
+          : 'Note 5',
+      120,
+      y,
+      { align: 'center' },
+    );
     doc.text(formatZAR(a.amount), 155, y, { align: 'right' });
     doc.text(formatZAR(0), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
     y += 5;
@@ -1039,7 +1189,8 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.text(formatZAR(bs.totalAssets.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
   y += 8;
 
-  doc.text('EQUITY AND LIABILITIES', PAGE.margin + 3, y); y += 5.5;
+  doc.text('EQUITY AND LIABILITIES', PAGE.margin + 3, y);
+  y += 5.5;
   doc.setFont('helvetica', 'normal');
   doc.text('Shareholders Contribution', PAGE.margin + 6, y);
   doc.text('Note 10', 120, y, { align: 'center' });
@@ -1065,7 +1216,9 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFontSize(8.5);
   doc.text('Total equity and liabilities', PAGE.margin + 3, y);
   doc.text(formatZAR(bs.totalLiabilitiesAndEquity.current), 155, y, { align: 'right' });
-  doc.text(formatZAR(bs.totalLiabilitiesAndEquity.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  doc.text(formatZAR(bs.totalLiabilitiesAndEquity.prior), PAGE.width - PAGE.margin - 3, y, {
+    align: 'right',
+  });
   drawReportFooter(doc, header);
 
   // PAGE 4: STATEMENT OF CHANGES IN EQUITY
@@ -1079,7 +1232,9 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(113, 113, 122);
-  doc.text(`for the year ended ${info.financialYearEnd}`, PAGE.width - PAGE.margin, y, { align: 'right' });
+  doc.text(`for the year ended ${info.financialYearEnd}`, PAGE.width - PAGE.margin, y, {
+    align: 'right',
+  });
   y += 8;
 
   doc.setFillColor(243, 244, 246);
@@ -1112,14 +1267,18 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.text(`Balance at ${eq.priorYearEndLabel}`, PAGE.margin + 3, y);
   doc.text('100,00', 115, y, { align: 'right' });
   doc.text(formatZAR(eq.priorClosingRetained), 155, y, { align: 'right' });
-  doc.text(formatZAR(100 + eq.priorClosingRetained), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  doc.text(formatZAR(100 + eq.priorClosingRetained), PAGE.width - PAGE.margin - 3, y, {
+    align: 'right',
+  });
   y += 5.5;
 
   doc.setFont('helvetica', 'normal');
   doc.text(`Balance at 1 March ${priYear}`, PAGE.margin + 3, y);
   doc.text('100,00', 115, y, { align: 'right' });
   doc.text(formatZAR(eq.currentOpeningRetained), 155, y, { align: 'right' });
-  doc.text(formatZAR(100 + eq.currentOpeningRetained), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  doc.text(formatZAR(100 + eq.currentOpeningRetained), PAGE.width - PAGE.margin - 3, y, {
+    align: 'right',
+  });
   y += 5.5;
 
   doc.text(`Net profit / (loss) for FY${curYear} (to date)`, PAGE.margin + 3, y);
@@ -1133,7 +1292,9 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.text(`Balance at ${eq.currentYearEndLabel}`, PAGE.margin + 3, y);
   doc.text('100,00', 115, y, { align: 'right' });
   doc.text(formatZAR(eq.currentClosingRetained), 155, y, { align: 'right' });
-  doc.text(formatZAR(100 + eq.currentClosingRetained), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  doc.text(formatZAR(100 + eq.currentClosingRetained), PAGE.width - PAGE.margin - 3, y, {
+    align: 'right',
+  });
   drawReportFooter(doc, header);
 
   // PAGE 5: CASH FLOW STATEMENT
@@ -1147,7 +1308,9 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(113, 113, 122);
-  doc.text(`for the year ended ${info.financialYearEnd}`, PAGE.width - PAGE.margin, y, { align: 'right' });
+  doc.text(`for the year ended ${info.financialYearEnd}`, PAGE.width - PAGE.margin, y, {
+    align: 'right',
+  });
   y += 8;
 
   doc.setFillColor(243, 244, 246);
@@ -1164,7 +1327,8 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(24, 24, 27);
-  doc.text('Operating activities', PAGE.margin + 3, y); y += 5.5;
+  doc.text('Operating activities', PAGE.margin + 3, y);
+  y += 5.5;
 
   doc.setFont('helvetica', 'normal');
   doc.text('Profit for the year', PAGE.margin + 6, y);
@@ -1181,14 +1345,18 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFont('helvetica', 'bold');
   doc.text('Net cash from operating activities', PAGE.margin + 3, y);
   doc.text(formatZAR(cf.current.netOperatingCashFlow), 155, y, { align: 'right' });
-  doc.text(formatZAR(cf.prior.netOperatingCashFlow), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  doc.text(formatZAR(cf.prior.netOperatingCashFlow), PAGE.width - PAGE.margin - 3, y, {
+    align: 'right',
+  });
   y += 7;
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
   doc.text('Net increase in cash and cash equivalents', PAGE.margin + 3, y);
   doc.text(formatZAR(cf.current.endingCashBalance), 155, y, { align: 'right' });
-  doc.text(formatZAR(cf.prior.endingCashBalance), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  doc.text(formatZAR(cf.prior.endingCashBalance), PAGE.width - PAGE.margin - 3, y, {
+    align: 'right',
+  });
   drawReportFooter(doc, header);
 
   // PAGE 6: DETAILED INCOME STATEMENT & DIVISIONAL REVENUE BREAKDOWN
@@ -1202,7 +1370,9 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(113, 113, 122);
-  doc.text(`for the year ended ${info.financialYearEnd}`, PAGE.width - PAGE.margin, y, { align: 'right' });
+  doc.text(`for the year ended ${info.financialYearEnd}`, PAGE.width - PAGE.margin, y, {
+    align: 'right',
+  });
   y += 8;
 
   doc.setFillColor(243, 244, 246);
@@ -1218,7 +1388,8 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(24, 24, 27);
-  doc.text('INCOME', PAGE.margin + 3, y); y += 5.5;
+  doc.text('INCOME', PAGE.margin + 3, y);
+  y += 5.5;
 
   doc.text('Sales Revenue (excluding VAT)', PAGE.margin + 6, y);
   doc.text(formatZAR(det.revenue.current), 155, y, { align: 'right' });
@@ -1238,7 +1409,8 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(24, 24, 27);
-  doc.text('EXPENSES', PAGE.margin + 3, y); y += 5.5;
+  doc.text('EXPENSES', PAGE.margin + 3, y);
+  y += 5.5;
 
   doc.setFont('helvetica', 'normal');
   for (const exp of det.expenses) {
@@ -1264,7 +1436,9 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   };
 }
 
-async function buildClientPerformancePdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
+async function buildClientPerformancePdf(
+  filters: AccountingPdfFilters,
+): Promise<AccountingPdfResult> {
   const clients = await getClientPerformance(filters.period);
   const header = await buildReportHeader('Client Performance Report', filters.period);
 
@@ -1302,7 +1476,9 @@ async function buildClientPerformancePdf(filters: AccountingPdfFilters): Promise
     doc.text(cli.clientName, 15, y);
     doc.text(formatZAR(cli.totalRevenue), 85, y, { align: 'right' });
     doc.text(formatZAR(cli.totalCashCollected), 120, y, { align: 'right' });
-    doc.text(cli.totalOutstandingAr > 0 ? formatZAR(cli.totalOutstandingAr) : '—', 160, y, { align: 'right' });
+    doc.text(cli.totalOutstandingAr > 0 ? formatZAR(cli.totalOutstandingAr) : '—', 160, y, {
+      align: 'right',
+    });
     doc.text(`${(cli.marginPercent || 0).toFixed(1)}%`, 190, y, { align: 'right' });
     y += 7;
   }

@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 
-import { generateAccountingPdf, isAccountingReportType } from '@pmg/accounting/server-accounting-pdf';
+import {
+  generateAccountingPdf,
+  isAccountingReportType,
+} from '@pmg/accounting/server-accounting-pdf';
 import { getSessionOrRedirect, requireRole } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ type: string }> },
-) {
+export async function GET(req: Request, { params }: { params: Promise<{ type: string }> }) {
   const session = await getSessionOrRedirect();
   if (!requireRole(session, 'admin')) {
     return new NextResponse('Forbidden', { status: 403 });

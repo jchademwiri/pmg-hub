@@ -65,7 +65,8 @@ export default function DivisionsPageClient({
         <div>
           <h2 className="text-lg font-semibold">Divisions</h2>
           <p className="text-sm text-muted-foreground">
-            Manage organization divisions, branding, and performance metrics — financials for {period}
+            Manage organization divisions, branding, and performance metrics — financials for{' '}
+            {period}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -79,13 +80,25 @@ export default function DivisionsPageClient({
       {divisions.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
           {[
-            { label: 'Revenue',          value: formatZAR(totals.revenue),        cls: 'text-emerald-500' },
-            { label: 'Cash Receipts',    value: formatZAR(totals.cashReceived),   cls: 'text-blue-500' },
-            { label: 'Outstanding AR',   value: formatZAR(totals.outstandingAr),  cls: 'text-amber-500' },
-            { label: 'Expenses',         value: formatZAR(totals.expenses),       cls: 'text-muted-foreground' },
-            { label: 'Net Profit',       value: formatZAR(totals.netProfit),      cls: totals.netProfit >= 0 ? 'text-emerald-500' : 'text-red-500' },
-            { label: 'Leads',            value: String(totals.leads),             cls: '' },
-            { label: 'Bad Debt',         value: formatZAR(totals.badDebt),        cls: totals.badDebt > 0 ? 'text-red-500' : '' },
+            { label: 'Revenue', value: formatZAR(totals.revenue), cls: 'text-emerald-500' },
+            { label: 'Cash Receipts', value: formatZAR(totals.cashReceived), cls: 'text-blue-500' },
+            {
+              label: 'Outstanding AR',
+              value: formatZAR(totals.outstandingAr),
+              cls: 'text-amber-500',
+            },
+            { label: 'Expenses', value: formatZAR(totals.expenses), cls: 'text-muted-foreground' },
+            {
+              label: 'Net Profit',
+              value: formatZAR(totals.netProfit),
+              cls: totals.netProfit >= 0 ? 'text-emerald-500' : 'text-red-500',
+            },
+            { label: 'Leads', value: String(totals.leads), cls: '' },
+            {
+              label: 'Bad Debt',
+              value: formatZAR(totals.badDebt),
+              cls: totals.badDebt > 0 ? 'text-red-500' : '',
+            },
           ].map(({ label, value, cls }) => (
             <div key={label} className="rounded-lg border p-4 flex flex-col gap-1">
               <span className="text-xs text-muted-foreground">{label}</span>
@@ -100,7 +113,9 @@ export default function DivisionsPageClient({
         <div className="bg-card rounded-xl border border-border shadow-sm p-5">
           <div className="mb-4">
             <h3 className="text-sm font-semibold text-foreground">Add New Division</h3>
-            <p className="text-xs text-muted-foreground">Create a new organizational business division for tracking financials and leads</p>
+            <p className="text-xs text-muted-foreground">
+              Create a new organizational business division for tracking financials and leads
+            </p>
           </div>
           <DivisionAddForm
             createAction={async (fd) => {

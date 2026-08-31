@@ -1,34 +1,35 @@
-import type { Metadata } from 'next'
-import { getAnalysisOverview, getAllSnapshots } from '@pmg/db'
-import { getSASTParts, formatZAR } from '@/lib/format'
-import { SetPageTotal } from '@/components/navigation/page-header-context'
-import { InsightsOverviewClient } from './insights-overview-client'
+import type { Metadata } from 'next';
+import { getAnalysisOverview, getAllSnapshots } from '@pmg/db';
+import { getSASTParts, formatZAR } from '@/lib/format';
+import { SetPageTotal } from '@/components/navigation/page-header-context';
+import { InsightsOverviewClient } from './insights-overview-client';
 
-export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Reports & Insights | PMG Hub' }
+export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Reports & Insights | PMG Hub' };
 
 export default async function InsightsOverviewPage() {
-  const { year, month, day } = getSASTParts()
-  
-  let defaultYear = year
-  if (month < 2) defaultYear = year - 1
+  const { year, month, day } = getSASTParts();
 
-  const currentDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  let defaultYear = year;
+  if (month < 2) defaultYear = year - 1;
+
+  const currentDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
   const [overviewResult, snapshotsResult] = await Promise.allSettled([
     getAnalysisOverview(defaultYear, currentDateStr),
     getAllSnapshots(),
-  ])
+  ]);
 
-  const overviewStatus = overviewResult.status
-  const snapshotsStatus = snapshotsResult.status
+  const overviewStatus = overviewResult.status;
+  const snapshotsStatus = snapshotsResult.status;
 
-  const overviewData = overviewResult.status === 'fulfilled' ? overviewResult.value : null
-  const snapshots = snapshotsResult.status === 'fulfilled' ? snapshotsResult.value : []
+  const overviewData = overviewResult.status === 'fulfilled' ? overviewResult.value : null;
+  const snapshots = snapshotsResult.status === 'fulfilled' ? snapshotsResult.value : [];
 
-  const totalValue = overviewStatus === 'fulfilled' && overviewData
-    ? `YTD Revenue: ${formatZAR(overviewData.ytd?.currentRevenue ?? 0)}`
-    : 'YTD Revenue: Unavailable'
+  const totalValue =
+    overviewStatus === 'fulfilled' && overviewData
+      ? `YTD Revenue: ${formatZAR(overviewData.ytd?.currentRevenue ?? 0)}`
+      : 'YTD Revenue: Unavailable';
 
   return (
     <div className="flex flex-col gap-6">
@@ -37,7 +38,8 @@ export default async function InsightsOverviewPage() {
       <div>
         <h2 className="text-lg font-semibold">Reports & Insights Overview</h2>
         <p className="text-sm text-muted-foreground">
-          Centralized business intelligence, performance analysis, custom reports, and compliance monitoring.
+          Centralized business intelligence, performance analysis, custom reports, and compliance
+          monitoring.
         </p>
       </div>
 
@@ -48,5 +50,5 @@ export default async function InsightsOverviewPage() {
         snapshotsStatus={snapshotsStatus}
       />
     </div>
-  )
+  );
 }

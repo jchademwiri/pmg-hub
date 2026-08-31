@@ -24,11 +24,11 @@ An accounting period is a defined block of time (usually a month) during which t
 
 ## Period Statuses
 
-| Status | What It Means | Can You Add Entries? |
-|--------|---------------|---------------------|
-| **Open** | Active period — transactions can be recorded | ✅ Yes |
-| **Closed** | Period is finalised — no new entries allowed | ❌ No |
-| **Locked** | Permanently sealed — cannot be reopened | ❌ Never |
+| Status     | What It Means                                | Can You Add Entries? |
+| ---------- | -------------------------------------------- | -------------------- |
+| **Open**   | Active period — transactions can be recorded | ✅ Yes               |
+| **Closed** | Period is finalised — no new entries allowed | ❌ No                |
+| **Locked** | Permanently sealed — cannot be reopened      | ❌ Never             |
 
 ### The Lifecycle of a Period
 
@@ -76,12 +76,12 @@ If you try to post a journal entry to a **closed** period, the system will rejec
 
 ## Period Management Actions
 
-| Action | What It Does | When to Use |
-|--------|-------------|-------------|
-| **Ensure/Open** | Creates a new period or returns the existing one | When creating entries for a new month |
-| **Close** | Prevents new entries in this period | End of month, after review |
-| **Reopen** | Allows entries again in a closed period | If you need to add a missed transaction |
-| **Lock** | Permanently seals the period | Year-end, after accountant sign-off |
+| Action          | What It Does                                     | When to Use                             |
+| --------------- | ------------------------------------------------ | --------------------------------------- |
+| **Ensure/Open** | Creates a new period or returns the existing one | When creating entries for a new month   |
+| **Close**       | Prevents new entries in this period              | End of month, after review              |
+| **Reopen**      | Allows entries again in a closed period          | If you need to add a missed transaction |
+| **Lock**        | Permanently seals the period                     | Year-end, after accountant sign-off     |
 
 ---
 
@@ -89,10 +89,10 @@ If you try to post a journal entry to a **closed** period, the system will rejec
 
 Periods and snapshots are related, but they are not the same thing.
 
-| Item | Meaning |
-|------|---------|
+| Item              | Meaning                                                        |
+| ----------------- | -------------------------------------------------------------- |
 | Accounting period | Controls whether accounting entries can be posted into a month |
-| Snapshot | A locked monthly financial record used for business review |
+| Snapshot          | A locked monthly financial record used for business review     |
 
 For normal month-end, use the dashboard close-month flow to lock the completed month as a snapshot. Use `/accounting/periods` when you specifically need to review or control accounting period status.
 

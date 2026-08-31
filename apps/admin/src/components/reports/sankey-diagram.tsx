@@ -1,27 +1,27 @@
-'use client'
+'use client';
 
-import { useState, useRef } from 'react'
-import { formatZAR } from '@/lib/format'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { useState, useRef } from 'react';
+import { formatZAR } from '@/lib/format';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from '@/components/ui/dropdown-menu'
-import { cn } from '@/lib/utils'
-import { Download } from 'lucide-react'
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
+import { Download } from 'lucide-react';
 
 interface SankeyDiagramProps {
-  revenue: number
-  expenses: number
-  pmgShare: number
-  profitPool: number
+  revenue: number;
+  expenses: number;
+  pmgShare: number;
+  profitPool: number;
   ledgerBalances?: {
-    pmg_share: { expected: number; spent: number; available: number }
-  }
-  onNodeClick?: (nodeId: string) => void
+    pmg_share: { expected: number; spent: number; available: number };
+  };
+  onNodeClick?: (nodeId: string) => void;
 }
 
 export function SankeyDiagram({
@@ -32,66 +32,66 @@ export function SankeyDiagram({
   ledgerBalances,
   onNodeClick,
 }: SankeyDiagramProps) {
-  const [hoveredId, setHoveredId] = useState<string | null>(null)
-  const svgRef = useRef<SVGSVGElement>(null)
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
 
   const handleExportSVG = () => {
-    if (!svgRef.current) return
-    const svgString = new XMLSerializer().serializeToString(svgRef.current)
-    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `pmg-allocation-flow.svg`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }
+    if (!svgRef.current) return;
+    const svgString = new XMLSerializer().serializeToString(svgRef.current);
+    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `pmg-allocation-flow.svg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   const handleExportPNG = () => {
-    if (!svgRef.current) return
-    const svgElement = svgRef.current
-    const svgString = new XMLSerializer().serializeToString(svgElement)
-    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const img = new Image()
+    if (!svgRef.current) return;
+    const svgElement = svgRef.current;
+    const svgString = new XMLSerializer().serializeToString(svgElement);
+    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
 
     img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = 840 * 2
-      canvas.height = 410 * 2
-      const ctx = canvas.getContext('2d')
+      const canvas = document.createElement('canvas');
+      canvas.width = 840 * 2;
+      canvas.height = 410 * 2;
+      const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.fillStyle = '#09090b'
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-        const pngUrl = canvas.toDataURL('image/png')
-        const link = document.createElement('a')
-        link.href = pngUrl
-        link.download = `pmg-allocation-flow.png`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+        ctx.fillStyle = '#09090b';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const pngUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = pngUrl;
+        link.download = `pmg-allocation-flow.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       }
-      URL.revokeObjectURL(url)
-    }
+      URL.revokeObjectURL(url);
+    };
 
-    img.src = url
-  }
+    img.src = url;
+  };
 
-  const isProfitable = profitPool > 0
-  const netRevenue = revenue - pmgShare
+  const isProfitable = profitPool > 0;
+  const netRevenue = revenue - pmgShare;
 
   // Percentage distribution calculations relative to Gross Cash Receipts
-  const pmgPct = revenue > 0 ? (pmgShare / revenue) * 100 : 0
-  const netPct = revenue > 0 ? (netRevenue / revenue) * 100 : 0
-  const expPct = revenue > 0 ? (expenses / revenue) * 100 : 0
-  const poolPct = revenue > 0 ? (profitPool / revenue) * 100 : 0
+  const pmgPct = revenue > 0 ? (pmgShare / revenue) * 100 : 0;
+  const netPct = revenue > 0 ? (netRevenue / revenue) * 100 : 0;
+  const expPct = revenue > 0 ? (expenses / revenue) * 100 : 0;
+  const poolPct = revenue > 0 ? (profitPool / revenue) * 100 : 0;
 
   // SVG coordinate configuration
-  const width = 840
-  const height = 410
+  const width = 840;
+  const height = 410;
 
   // Nodes definition with explicit full-color attributes for SVG/PNG export support
   const nodes = [
@@ -111,15 +111,15 @@ export function SankeyDiagram({
       pctBg: '#064e3b',
       pctColor: '#34d399',
     },
-    { 
-      id: 'pmg', 
-      label: 'PMG Share', 
-      val: pmgShare, 
+    {
+      id: 'pmg',
+      label: 'PMG Share',
+      val: pmgShare,
       pct: `${pmgPct.toFixed(1)}%`,
-      x: 340, 
-      y: ledgerBalances ? 90 : 110, 
-      w: 160, 
-      h: ledgerBalances ? 68 : 48, 
+      x: 340,
+      y: ledgerBalances ? 90 : 110,
+      w: 160,
+      h: ledgerBalances ? 68 : 48,
       stroke: '#3b82f6',
       fill: '#0f172a',
       labelColor: '#a1a1aa',
@@ -130,15 +130,15 @@ export function SankeyDiagram({
       spent: ledgerBalances?.pmg_share.spent,
       available: ledgerBalances?.pmg_share.available,
     },
-    { 
+    {
       id: 'net',
       label: 'Net Cash Receipts',
       val: netRevenue,
       pct: `${netPct.toFixed(1)}%`,
-      x: 340, 
-      y: 260, 
-      w: 160, 
-      h: 48, 
+      x: 340,
+      y: 260,
+      w: 160,
+      h: 48,
       stroke: '#10b981',
       fill: '#091a14',
       labelColor: '#a1a1aa',
@@ -146,15 +146,15 @@ export function SankeyDiagram({
       pctBg: '#064e3b',
       pctColor: '#34d399',
     },
-    { 
-      id: 'expenses', 
-      label: 'Expenses', 
-      val: expenses, 
+    {
+      id: 'expenses',
+      label: 'Expenses',
+      val: expenses,
       pct: `${expPct.toFixed(1)}%`,
-      x: 620, 
-      y: 110, 
-      w: 160, 
-      h: 48, 
+      x: 620,
+      y: 110,
+      w: 160,
+      h: 48,
       stroke: '#f59e0b',
       fill: '#1c1917',
       labelColor: '#a1a1aa',
@@ -162,15 +162,15 @@ export function SankeyDiagram({
       pctBg: '#451a03',
       pctColor: '#fbbf24',
     },
-    { 
-      id: 'pool', 
-      label: isProfitable ? 'Profit Pool' : 'Net Deficit', 
-      val: Math.abs(profitPool), 
+    {
+      id: 'pool',
+      label: isProfitable ? 'Profit Pool' : 'Net Deficit',
+      val: Math.abs(profitPool),
       pct: `${poolPct.toFixed(1)}%`,
-      x: 620, 
-      y: 260, 
-      w: 160, 
-      h: 48, 
+      x: 620,
+      y: 260,
+      w: 160,
+      h: 48,
       stroke: isProfitable ? '#10b981' : '#ef4444',
       fill: isProfitable ? '#091a14' : '#1f1213',
       labelColor: '#a1a1aa',
@@ -178,71 +178,75 @@ export function SankeyDiagram({
       pctBg: isProfitable ? '#064e3b' : '#7f1d1d',
       pctColor: isProfitable ? '#34d399' : '#f87171',
     },
-  ]
+  ];
 
   // Links definitions with explicit full-color stroke attributes
   const links = [
-    { 
+    {
       id: 'link-gross-pmg',
-      source: 'gross', 
-      target: 'pmg', 
-      val: pmgShare, 
-      pct: `${pmgPct.toFixed(1)}%`, 
+      source: 'gross',
+      target: 'pmg',
+      val: pmgShare,
+      pct: `${pmgPct.toFixed(1)}%`,
       stroke: '#3b82f6',
     },
-    { 
+    {
       id: 'link-gross-net',
-      source: 'gross', 
-      target: 'net', 
-      val: netRevenue, 
-      pct: `${netPct.toFixed(1)}%`, 
+      source: 'gross',
+      target: 'net',
+      val: netRevenue,
+      pct: `${netPct.toFixed(1)}%`,
       stroke: '#10b981',
     },
-    { 
+    {
       id: 'link-net-expenses',
-      source: 'net', 
-      target: 'expenses', 
-      val: expenses, 
-      pct: `${expPct.toFixed(1)}%`, 
+      source: 'net',
+      target: 'expenses',
+      val: expenses,
+      pct: `${expPct.toFixed(1)}%`,
       stroke: '#f59e0b',
     },
-    { 
+    {
       id: 'link-net-pool',
-      source: 'net', 
-      target: 'pool', 
-      val: Math.abs(profitPool), 
-      pct: `${poolPct.toFixed(1)}%`, 
+      source: 'net',
+      target: 'pool',
+      val: Math.abs(profitPool),
+      pct: `${poolPct.toFixed(1)}%`,
       stroke: isProfitable ? '#10b981' : '#ef4444',
     },
-  ]
+  ];
 
   // Link helper (cubic bezier link paths)
   const getLinkPath = (x0: number, y0: number, x1: number, y1: number) => {
-    const dx = Math.abs(x1 - x0) / 2
-    return `M ${x0} ${y0} C ${x0 + dx} ${y0}, ${x1 - dx} ${y1}, ${x1} ${y1}`
-  }
+    const dx = Math.abs(x1 - x0) / 2;
+    return `M ${x0} ${y0} C ${x0 + dx} ${y0}, ${x1 - dx} ${y1}, ${x1} ${y1}`;
+  };
 
   // Max stroke width for styling links
-  const maxStroke = 32
+  const maxStroke = 32;
   const getStrokeWidth = (val: number) => {
-    const ratio = revenue !== 0 ? val / revenue : 0
-    return Math.max(4, ratio * maxStroke)
-  }
+    const ratio = revenue !== 0 ? val / revenue : 0;
+    return Math.max(4, ratio * maxStroke);
+  };
 
   // Hover helper logic
-  const isLinkActive = (link: typeof links[0]) => {
-    if (!hoveredId) return false
-    if (hoveredId === link.id) return true
-    return hoveredId === link.source || hoveredId === link.target
-  }
+  const isLinkActive = (link: (typeof links)[0]) => {
+    if (!hoveredId) return false;
+    if (hoveredId === link.id) return true;
+    return hoveredId === link.source || hoveredId === link.target;
+  };
 
   const isNodeActive = (nodeId: string) => {
-    if (!hoveredId) return false
-    if (hoveredId === nodeId) return true
-    const activeLink = links.find((l) => l.id === hoveredId)
-    if (activeLink) return activeLink.source === nodeId || activeLink.target === nodeId
-    return links.some((l) => (l.source === hoveredId && l.target === nodeId) || (l.target === hoveredId && l.source === nodeId))
-  }
+    if (!hoveredId) return false;
+    if (hoveredId === nodeId) return true;
+    const activeLink = links.find((l) => l.id === hoveredId);
+    if (activeLink) return activeLink.source === nodeId || activeLink.target === nodeId;
+    return links.some(
+      (l) =>
+        (l.source === hoveredId && l.target === nodeId) ||
+        (l.target === hoveredId && l.source === nodeId),
+    );
+  };
 
   return (
     <Card className="rounded-xl border border-border bg-gradient-to-tr from-card to-card/75 backdrop-blur-md shadow-none hover:shadow-md hover:shadow-primary/5 transition-all duration-300">
@@ -253,10 +257,11 @@ export function SankeyDiagram({
               <span>Allocation Route — Flow & % Distribution</span>
             </CardTitle>
             <CardDescription>
-              Interactive income flow routing. Hover over nodes or flow lines to highlight distribution paths.
+              Interactive income flow routing. Hover over nodes or flow lines to highlight
+              distribution paths.
             </CardDescription>
           </div>
-          
+
           {/* Summary Percentage Distribution Badges & Export Button */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
@@ -265,12 +270,14 @@ export function SankeyDiagram({
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
               Expenses: {expPct.toFixed(1)}%
             </span>
-            <span className={cn(
-              "text-[10px] font-semibold px-2 py-0.5 rounded-full border",
-              isProfitable 
-                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" 
-                : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20"
-            )}>
+            <span
+              className={cn(
+                'text-[10px] font-semibold px-2 py-0.5 rounded-full border',
+                isProfitable
+                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                  : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
+              )}
+            >
               Net Profit: {poolPct.toFixed(1)}%
             </span>
 
@@ -295,9 +302,9 @@ export function SankeyDiagram({
       </CardHeader>
       <CardContent className="pt-2">
         <div className="w-full overflow-x-auto">
-          <svg 
+          <svg
             ref={svgRef}
-            viewBox={`0 0 ${width} ${height}`} 
+            viewBox={`0 0 ${width} ${height}`}
             className="w-full min-w-[760px] h-auto overflow-visible select-none"
             style={{ backgroundColor: '#09090b' }}
           >
@@ -306,24 +313,24 @@ export function SankeyDiagram({
 
             {/* Draw Links */}
             {links.map((link) => {
-              const srcNode = nodes.find((n) => n.id === link.source)!
-              const tgtNode = nodes.find((n) => n.id === link.target)!
-              
-              const x0 = srcNode.x + srcNode.w
-              const y0 = srcNode.y + srcNode.h / 2
-              const x1 = tgtNode.x
-              const y1 = tgtNode.y + tgtNode.h / 2
-              
-              const baseWidth = getStrokeWidth(link.val)
-              const active = isLinkActive(link)
-              const strokeWidth = active ? baseWidth + 3 : baseWidth
-              const opacity = active ? 0.95 : 0.55
-              const midX = (x0 + x1) / 2
-              const midY = (y0 + y1) / 2
+              const srcNode = nodes.find((n) => n.id === link.source)!;
+              const tgtNode = nodes.find((n) => n.id === link.target)!;
+
+              const x0 = srcNode.x + srcNode.w;
+              const y0 = srcNode.y + srcNode.h / 2;
+              const x1 = tgtNode.x;
+              const y1 = tgtNode.y + tgtNode.h / 2;
+
+              const baseWidth = getStrokeWidth(link.val);
+              const active = isLinkActive(link);
+              const strokeWidth = active ? baseWidth + 3 : baseWidth;
+              const opacity = active ? 0.95 : 0.55;
+              const midX = (x0 + x1) / 2;
+              const midY = (y0 + y1) / 2;
 
               return (
-                <g 
-                  key={link.id} 
+                <g
+                  key={link.id}
                   className="cursor-pointer group/link"
                   onMouseEnter={() => setHoveredId(link.id)}
                   onMouseLeave={() => setHoveredId(null)}
@@ -359,16 +366,16 @@ export function SankeyDiagram({
                     {link.pct}
                   </text>
                 </g>
-              )
+              );
             })}
 
             {/* Draw Nodes */}
             {nodes.map((node) => {
-              const active = isNodeActive(node.id)
+              const active = isNodeActive(node.id);
 
               return (
-                <g 
-                  key={node.id} 
+                <g
+                  key={node.id}
                   className="cursor-pointer group/node"
                   onMouseEnter={() => setHoveredId(node.id)}
                   onMouseLeave={() => setHoveredId(null)}
@@ -449,7 +456,7 @@ export function SankeyDiagram({
                       <text
                         x={node.x + 10}
                         y={node.y + 57}
-                        fill={(node.available ?? 0) >= 0 ? "#34d399" : "#f87171"}
+                        fill={(node.available ?? 0) >= 0 ? '#34d399' : '#f87171'}
                         fontSize="8"
                         fontWeight="600"
                       >
@@ -458,12 +465,11 @@ export function SankeyDiagram({
                     </>
                   )}
                 </g>
-              )
+              );
             })}
           </svg>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
-

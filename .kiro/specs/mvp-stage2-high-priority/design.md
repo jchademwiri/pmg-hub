@@ -61,17 +61,17 @@ graph TD
 ```ts
 export type WithdrawalRow = {
   id: string;
-  date: string;          // ISO date string e.g. "2026-03-15"
-  amount: string;        // numeric from DB - caller converts with Number()
+  date: string; // ISO date string e.g. "2026-03-15"
+  amount: string; // numeric from DB - caller converts with Number()
   description: string | null;
   createdAt: Date | null;
 };
 
-export async function getAllWithdrawals(): Promise<WithdrawalRow[]>
+export async function getAllWithdrawals(): Promise<WithdrawalRow[]>;
 // SELECT id, date::text, amount, description, created_at
 // FROM withdrawals ORDER BY date DESC, created_at DESC
 
-export async function getWithdrawalById(id: string): Promise<WithdrawalRow | null>
+export async function getWithdrawalById(id: string): Promise<WithdrawalRow | null>;
 // SELECT ... FROM withdrawals WHERE id = $id
 // returns first row or null
 ```
@@ -79,7 +79,7 @@ export async function getWithdrawalById(id: string): Promise<WithdrawalRow | nul
 **`apps/admin/src/app/actions/withdrawals.ts`** - new file, two server actions:
 
 ```ts
-'use server'
+'use server';
 // updateWithdrawal(id: string, formData: FormData): Promise<{ error?: string }>
 //   Zod schema: { date: z.string().min(1), amount: z.coerce.number().positive(),
 //                 description: z.string().optional() }
@@ -123,8 +123,8 @@ The new `withdrawals.ts` file handles edit/delete only.
 
 ```ts
 interface WithdrawalsTableProps {
-  entries: WithdrawalRow[]
-  deleteAction: (id: string) => Promise<{ error?: string }>
+  entries: WithdrawalRow[];
+  deleteAction: (id: string) => Promise<{ error?: string }>;
 }
 // Columns: Date | Amount (formatZAR) | Description | Actions
 // Actions: edit link (Pencil icon → /withdrawals/[id]) + delete inline confirm/cancel
@@ -136,8 +136,8 @@ interface WithdrawalsTableProps {
 
 ```ts
 interface WithdrawalEditFormProps {
-  entry: WithdrawalRow
-  updateAction: (formData: FormData) => Promise<{ error?: string }>
+  entry: WithdrawalRow;
+  updateAction: (formData: FormData) => Promise<{ error?: string }>;
 }
 // Fields: date (pre-populated from entry.date), amount (pre-populated), description (optional)
 // useTransition, on success: router.push('/withdrawals')
@@ -184,8 +184,8 @@ import { ..., Wallet } from 'lucide-react'
 
 ```ts
 interface LeadAddFormProps {
-  divisions: { id: string; name: string }[]
-  createAction: (formData: FormData) => Promise<{ error?: string }>
+  divisions: { id: string; name: string }[];
+  createAction: (formData: FormData) => Promise<{ error?: string }>;
 }
 // useTransition + useRef for reset
 // Fields: name (required), email, phone, source, serviceInterest,
@@ -246,6 +246,7 @@ try {
 ```
 
 Files to update:
+
 - `apps/admin/src/components/income/income-table.tsx`
 - `apps/admin/src/components/expenses/expense-table.tsx` - already has `inFlightId` / `useTransition`; replace with the simpler `isPendingDelete` boolean pattern for consistency
 - `apps/admin/src/components/divisions/divisions-table.tsx` - already has `isDeletePending` via `useTransition`; already shows "Deleting…" - verify it matches the spec exactly
@@ -261,25 +262,25 @@ Note: `expense-table.tsx` already has a partial implementation using `useTransit
 
 Seven existing client components need a single line added after the `!result.error` check:
 
-| File | Toast message |
-|------|--------------|
-| `income-add-form.tsx` | `toast.success('Income added')` |
-| `income-edit-form.tsx` | `toast.success('Income updated')` |
-| `expense-add-form.tsx` | `toast.success('Expense added')` |
-| `expense-edit-form.tsx` | `toast.success('Expense updated')` |
+| File                    | Toast message                       |
+| ----------------------- | ----------------------------------- |
+| `income-add-form.tsx`   | `toast.success('Income added')`     |
+| `income-edit-form.tsx`  | `toast.success('Income updated')`   |
+| `expense-add-form.tsx`  | `toast.success('Expense added')`    |
+| `expense-edit-form.tsx` | `toast.success('Expense updated')`  |
 | `division-add-form.tsx` | `toast.success('Division created')` |
-| `lead-status-form.tsx` | `toast.success('Status updated')` |
-| `lead-notes-form.tsx` | `toast.success('Notes saved')` |
+| `lead-status-form.tsx`  | `toast.success('Status updated')`   |
+| `lead-notes-form.tsx`   | `toast.success('Notes saved')`      |
 
 Pattern (same in all files):
 
 ```ts
-const result = await createAction(fd)
+const result = await createAction(fd);
 if (result.error) {
-  setErrorMessage(result.error)
+  setErrorMessage(result.error);
 } else {
-  toast.success('Income added')   // ← add this line
-  formRef.current?.reset()
+  toast.success('Income added'); // ← add this line
+  formRef.current?.reset();
 }
 ```
 
@@ -301,6 +302,7 @@ const today = new Date().toISOString().split('T')[0]
 ```
 
 Files to update:
+
 - `apps/admin/src/components/income/income-add-form.tsx`
 - `apps/admin/src/components/expenses/expense-add-form.tsx`
 
@@ -318,11 +320,11 @@ Edit forms (`income-edit-form.tsx`, `expense-edit-form.tsx`) are explicitly NOT 
 
 ```ts
 interface WithdrawModalProps {
-  open: boolean
-  onClose: () => void
-  onSuccess: () => void
-  withdrawAction: (amount: number) => Promise<{ error?: string }>
-  maxAmount: number   // ← new prop
+  open: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  withdrawAction: (amount: number) => Promise<{ error?: string }>;
+  maxAmount: number; // ← new prop
 }
 ```
 
@@ -431,21 +433,21 @@ existing `withdrawals` and `leads` tables.
 
 ### Existing `withdrawals` table (relevant columns)
 
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | `uuid` | PK, auto-generated |
-| `date` | `date` | NOT NULL |
-| `amount` | `numeric(12,2)` | NOT NULL, positive check constraint |
-| `description` | `text` | nullable |
-| `created_at` | `timestamptz` | defaultNow() |
+| Column        | Type            | Notes                               |
+| ------------- | --------------- | ----------------------------------- |
+| `id`          | `uuid`          | PK, auto-generated                  |
+| `date`        | `date`          | NOT NULL                            |
+| `amount`      | `numeric(12,2)` | NOT NULL, positive check constraint |
+| `description` | `text`          | nullable                            |
+| `created_at`  | `timestamptz`   | defaultNow()                        |
 
 ### New `WithdrawalRow` type (queries.ts)
 
 ```ts
 export type WithdrawalRow = {
   id: string;
-  date: string;           // date::text cast
-  amount: string;         // numeric - caller uses Number()
+  date: string; // date::text cast
+  amount: string; // numeric - caller uses Number()
   description: string | null;
   createdAt: Date | null;
 };
@@ -453,26 +455,26 @@ export type WithdrawalRow = {
 
 ### Existing `leads` table (relevant columns for createLead)
 
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | `uuid` | PK |
-| `name` | `text` | nullable |
-| `email` | `text` | nullable |
-| `phone` | `text` | nullable |
-| `source` | `text` | nullable |
-| `service_interest` | `text` | nullable |
-| `division_id` | `uuid` | FK, nullable |
-| `message` | `text` | nullable |
-| `status` | `enum` | 'new' \| 'contacted' \| 'converted' \| 'lost' |
+| Column             | Type   | Notes                                         |
+| ------------------ | ------ | --------------------------------------------- |
+| `id`               | `uuid` | PK                                            |
+| `name`             | `text` | nullable                                      |
+| `email`            | `text` | nullable                                      |
+| `phone`            | `text` | nullable                                      |
+| `source`           | `text` | nullable                                      |
+| `service_interest` | `text` | nullable                                      |
+| `division_id`      | `uuid` | FK, nullable                                  |
+| `message`          | `text` | nullable                                      |
+| `status`           | `enum` | 'new' \| 'contacted' \| 'converted' \| 'lost' |
 
 ---
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions
+_A property is a characteristic or behavior that should hold true across all valid executions
 of a system - essentially, a formal statement about what the system should do. Properties
 serve as the bridge between human-readable specifications and machine-verifiable correctness
-guarantees.*
+guarantees._
 
 ### Property Reflection
 
@@ -485,7 +487,7 @@ Before listing properties, redundancies are eliminated:
 
 ### Property 1: getAllWithdrawals ordering invariant
 
-*For any* set of withdrawal records with varying dates and `created_at` timestamps, calling
+_For any_ set of withdrawal records with varying dates and `created_at` timestamps, calling
 `getAllWithdrawals()` SHALL return them ordered by `date DESC`, then `created_at DESC`.
 
 **Validates: Requirements 1.1**
@@ -494,7 +496,7 @@ Before listing properties, redundancies are eliminated:
 
 ### Property 2: getWithdrawalById round-trip
 
-*For any* valid withdrawal record inserted into the database, calling `getWithdrawalById(id)`
+_For any_ valid withdrawal record inserted into the database, calling `getWithdrawalById(id)`
 with that record's id SHALL return a row with the same `date`, `amount`, and `description`.
 Calling it with an id that does not exist SHALL return `null`.
 
@@ -504,7 +506,7 @@ Calling it with an id that does not exist SHALL return `null`.
 
 ### Property 3: updateWithdrawal validation gate
 
-*For any* payload where `date` is empty or `amount` is zero or negative, calling
+_For any_ payload where `date` is empty or `amount` is zero or negative, calling
 `updateWithdrawal` SHALL return `{ error: string }` without mutating the database row.
 
 **Validates: Requirements 1.4**
@@ -513,7 +515,7 @@ Calling it with an id that does not exist SHALL return `null`.
 
 ### Property 4: createLead contact requirement
 
-*For any* lead payload where both `email` and `phone` are absent (undefined, null, or empty
+_For any_ lead payload where both `email` and `phone` are absent (undefined, null, or empty
 string), calling `createLead` SHALL return `{ error: 'At least one of email or phone is required' }`
 without inserting a row into the `leads` table.
 
@@ -523,7 +525,7 @@ without inserting a row into the `leads` table.
 
 ### Property 5: WithdrawModal over-limit warning visibility
 
-*For any* numeric `maxAmount` and any amount entered into the `WithdrawModal` input, the
+_For any_ numeric `maxAmount` and any amount entered into the `WithdrawModal` input, the
 over-limit warning SHALL be visible if and only if `enteredAmount > maxAmount`.
 
 **Validates: Requirements 7.2, 7.3**
@@ -532,7 +534,7 @@ over-limit warning SHALL be visible if and only if `enteredAmount > maxAmount`.
 
 ### Property 6: SalaryCard remaining balance computation
 
-*For any* `salary` and `withdrawn` values, the `remaining` value passed as `maxAmount` to
+_For any_ `salary` and `withdrawn` values, the `remaining` value passed as `maxAmount` to
 `WithdrawModal` SHALL equal `Math.max(0, salary - withdrawn)`, ensuring it is always
 non-negative.
 
@@ -542,7 +544,7 @@ non-negative.
 
 ### Property 7: DashboardShell snapshot-conditional rendering
 
-*For any* value of `hasSnapshot`, `DashboardShell` SHALL render the `"Month closed"` badge
+_For any_ value of `hasSnapshot`, `DashboardShell` SHALL render the `"Month closed"` badge
 when `hasSnapshot` is `true` and SHALL render `CloseMonthButton` when `hasSnapshot` is
 `false` - never both simultaneously.
 
@@ -559,6 +561,7 @@ All server actions follow the same contract:
 3. **Never throw** - the `try/catch` wraps the entire action body; the catch block always returns `{ error }`.
 
 Client components handle errors in two ways:
+
 - **Inline error state** - `setErrorMessage(result.error)` displayed below the form.
 - **Toast error** - `toast.error(result.error)` for delete failures in table components.
 

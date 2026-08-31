@@ -4,12 +4,12 @@
 
 ## Common Reports
 
-| Report | What It Shows |
-|--------|---------------|
-| Revenue | Income by client, division, and month |
-| Expenses | Costs by category and division |
+| Report        | What It Shows                          |
+| ------------- | -------------------------------------- |
+| Revenue       | Income by client, division, and month  |
+| Expenses      | Costs by category and division         |
 | Profit & Loss | Revenue minus expenses and allocations |
-| Division | Performance by `AWS`, `TES`, and `PMG` |
+| Division      | Performance by `AWS`, `TES`, and `PMG` |
 
 ## How To Read Reports
 
@@ -33,4 +33,3 @@ Use drilldowns when:
 ## Teaching Tip
 
 Do not guess from memory. Use the report and drilldown numbers as the source of truth.
-

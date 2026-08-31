@@ -51,14 +51,14 @@ Purpose: top-level business overview.
 
 Billing owns client-facing commercial documents and Accounts Receivable workflows:
 
-| Route | Purpose |
-|---|---|
-| `/billing/quotes` | Client quotations |
-| `/billing/invoices` | Client invoices |
-| `/billing/payments` | Client payments and invoice allocations |
-| `/billing/credits` | Credit notes, overpayments, refunds, and applications |
-| `/billing/statements` | Client statements and aged receivables |
-| `/billing/items` | Reusable billable services/items |
+| Route                 | Purpose                                               |
+| --------------------- | ----------------------------------------------------- |
+| `/billing/quotes`     | Client quotations                                     |
+| `/billing/invoices`   | Client invoices                                       |
+| `/billing/payments`   | Client payments and invoice allocations               |
+| `/billing/credits`    | Credit notes, overpayments, refunds, and applications |
+| `/billing/statements` | Client statements and aged receivables                |
+| `/billing/items`      | Reusable billable services/items                      |
 
 ---
 
@@ -74,12 +74,12 @@ Billing owns client-facing commercial documents and Accounts Receivable workflow
 
 Finance owns cash movement and owner/business financial management:
 
-| Route | Purpose |
-|---|---|
-| `/finance/overview` | Finance summary and key metrics |
-| `/finance/income` | All money received / cash receipts |
-| `/finance/expenses` | Business expenses |
-| `/finance/categories` | Expense categories |
+| Route                    | Purpose                                                  |
+| ------------------------ | -------------------------------------------------------- |
+| `/finance/overview`      | Finance summary and key metrics                          |
+| `/finance/income`        | All money received / cash receipts                       |
+| `/finance/expenses`      | Business expenses                                        |
+| `/finance/categories`    | Expense categories                                       |
 | `/finance/distributions` | PMG Share, Owner Drawings, Reinvestment, Activity, Rules |
 
 ---
@@ -98,15 +98,15 @@ Finance owns cash movement and owner/business financial management:
 
 Accounting owns the future accountant-grade system:
 
-| Route | Purpose | Initial status |
-|---|---|---|
-| `/finance/accounting/chart-of-accounts` | Real accounting accounts | Coming Soon |
-| `/finance/accounting/journals` | Journal entries | Coming Soon |
-| `/finance/accounting/general-ledger` | Debit/credit ledger | Coming Soon |
-| `/finance/accounting/trial-balance` | Debit/credit balance report | Coming Soon |
-| `/finance/accounting/profit-and-loss` | Income, expenses, net profit | Coming Soon |
-| `/finance/accounting/periods` | Open/close/lock accounting months | Coming Soon |
-| `/finance/accounting/exports` | Accountant exports | Coming Soon |
+| Route                                   | Purpose                           | Initial status |
+| --------------------------------------- | --------------------------------- | -------------- |
+| `/finance/accounting/chart-of-accounts` | Real accounting accounts          | Coming Soon    |
+| `/finance/accounting/journals`          | Journal entries                   | Coming Soon    |
+| `/finance/accounting/general-ledger`    | Debit/credit ledger               | Coming Soon    |
+| `/finance/accounting/trial-balance`     | Debit/credit balance report       | Coming Soon    |
+| `/finance/accounting/profit-and-loss`   | Income, expenses, net profit      | Coming Soon    |
+| `/finance/accounting/periods`           | Open/close/lock accounting months | Coming Soon    |
+| `/finance/accounting/exports`           | Accountant exports                | Coming Soon    |
 
 ---
 
@@ -186,11 +186,11 @@ The existing buckets are not formal accounting accounts. They are management dis
 
 Recommended simplified distribution categories:
 
-| Distribution | Meaning |
-|---|---|
-| PMG Share | 25% of gross revenue allocated to PMG |
-| Owner Drawings | Money taken personally by the owner |
-| Reinvestment | Money kept for business growth, tools, development, marketing, systems, etc. |
+| Distribution   | Meaning                                                                      |
+| -------------- | ---------------------------------------------------------------------------- |
+| PMG Share      | 25% of gross revenue allocated to PMG                                        |
+| Owner Drawings | Money taken personally by the owner                                          |
+| Reinvestment   | Money kept for business growth, tools, development, marketing, systems, etc. |
 
 Tax Reserve is intentionally excluded for now.
 
@@ -208,13 +208,13 @@ The system must automatically generate the payment reference from invoice docume
 
 Examples:
 
-| Scenario | Auto-generated reference |
-|---|---|
-| One invoice paid | `Payment for INV-2026-001` |
-| Multiple invoices paid | `Payment for INV-2026-001, INV-2026-002` |
+| Scenario                             | Auto-generated reference                               |
+| ------------------------------------ | ------------------------------------------------------ |
+| One invoice paid                     | `Payment for INV-2026-001`                             |
+| Multiple invoices paid               | `Payment for INV-2026-001, INV-2026-002`               |
 | Invoice paid plus unallocated credit | `Payment for INV-2026-001; Unallocated credit R500.00` |
-| No invoice allocation | `Unallocated client credit / deposit` |
-| Optional bank reference entered | `Payment for INV-2026-001 | Bank ref: EFT-89201` |
+| No invoice allocation                | `Unallocated client credit / deposit`                  |
+| Optional bank reference entered      | `Payment for INV-2026-001                              | Bank ref: EFT-89201` |
 
 ### 4.3 UI changes
 
@@ -281,14 +281,14 @@ A credit that originated from a locked/closed financial period may still be appl
 
 The closed period must block changes to the original source transaction, not the later use of the remaining credit.
 
-| Action | Rule |
-|---|---|
-| Edit original payment in closed period | Block |
-| Delete original payment in closed period | Block |
-| Void old credit source | Block or reversal-only |
-| Apply active credit in open period | Allow |
-| Refund active credit in open period | Allow |
-| Apply expired credit | Block unless reactivated/extended |
+| Action                                   | Rule                              |
+| ---------------------------------------- | --------------------------------- |
+| Edit original payment in closed period   | Block                             |
+| Delete original payment in closed period | Block                             |
+| Void old credit source                   | Block or reversal-only            |
+| Apply active credit in open period       | Allow                             |
+| Refund active credit in open period      | Allow                             |
+| Apply expired credit                     | Block unless reactivated/extended |
 
 ---
 

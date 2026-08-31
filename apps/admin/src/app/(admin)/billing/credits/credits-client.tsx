@@ -35,7 +35,15 @@ import {
 } from '@/components/ui/alert-dialog';
 import { IssueCreditNoteDialog } from '@/components/billing/issue-credit-note-dialog';
 import { CreditRefundDialog } from '@/components/billing/credit-refund-dialog';
-import { Wallet, AlertCircle, Clock, CheckCircle2, Download, Trash2, ExternalLink } from 'lucide-react';
+import {
+  Wallet,
+  AlertCircle,
+  Clock,
+  CheckCircle2,
+  Download,
+  Trash2,
+  ExternalLink,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CreditNoteEntry {
@@ -108,12 +116,18 @@ function getStatusBadge(status: string) {
 
 function getTypeLabel(type: string) {
   switch (type) {
-    case 'overpayment': return 'Overpayment';
-    case 'manual_adjustment': return 'Manual Adjustment';
-    case 'credit_note': return 'Credit Note';
-    case 'promotional': return 'Promotional';
-    case 'refund_reversal': return 'Refund Reversal';
-    default: return type;
+    case 'overpayment':
+      return 'Overpayment';
+    case 'manual_adjustment':
+      return 'Manual Adjustment';
+    case 'credit_note':
+      return 'Credit Note';
+    case 'promotional':
+      return 'Promotional';
+    case 'refund_reversal':
+      return 'Refund Reversal';
+    default:
+      return type;
   }
 }
 
@@ -146,7 +160,16 @@ export function CreditsClient({
   const divisionMap = new Map(divisions.map((d) => [d.id, d.name]));
 
   function exportCreditsToCSV() {
-    const headers = ['Document #', 'Client', 'Type', 'Reason', 'Amount', 'Remaining', 'Status', 'Date'];
+    const headers = [
+      'Document #',
+      'Client',
+      'Type',
+      'Reason',
+      'Amount',
+      'Remaining',
+      'Status',
+      'Date',
+    ];
     const rows = filteredNotes.map((note) => [
       note.documentNumber,
       clientMap.get(note.clientId) ?? 'Unknown',
@@ -178,7 +201,8 @@ export function CreditsClient({
       const clientName = clientMap.get(note.clientId)?.toLowerCase() ?? '';
       const docNumber = note.documentNumber.toLowerCase();
       const reason = note.reason?.toLowerCase() ?? '';
-      if (!clientName.includes(query) && !docNumber.includes(query) && !reason.includes(query)) return false;
+      if (!clientName.includes(query) && !docNumber.includes(query) && !reason.includes(query))
+        return false;
     }
     return true;
   });
@@ -201,25 +225,35 @@ export function CreditsClient({
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Active Credits</CardTitle>
+            <CardTitle className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">
+              Active Credits
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <span className="text-2xl font-bold text-emerald-600 tabular-nums">{formatZAR(activeCredit)}</span>
+            <span className="text-2xl font-bold text-emerald-600 tabular-nums">
+              {formatZAR(activeCredit)}
+            </span>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Expired Credits</CardTitle>
+            <CardTitle className="text-xs font-semibold text-amber-600 uppercase tracking-wider">
+              Expired Credits
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <span className="text-2xl font-bold text-amber-600 tabular-nums">{formatZAR(expiredCredit)}</span>
+            <span className="text-2xl font-bold text-amber-600 tabular-nums">
+              {formatZAR(expiredCredit)}
+            </span>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Credit Notes</CardTitle>
+            <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Credit Notes
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <span className="text-2xl font-bold tabular-nums">{creditNotes.length}</span>
@@ -301,7 +335,10 @@ export function CreditsClient({
               <TableBody>
                 {filteredNotes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="h-24 text-center text-muted-foreground text-xs">
+                    <TableCell
+                      colSpan={9}
+                      className="h-24 text-center text-muted-foreground text-xs"
+                    >
                       {creditNotes.length === 0
                         ? 'No credit notes found. Click "Issue Credit Note" to create one.'
                         : 'No credit notes match the current filters.'}
@@ -309,8 +346,12 @@ export function CreditsClient({
                   </TableRow>
                 ) : (
                   filteredNotes.map((note) => {
-                    const amountRemainingNum = typeof note.amountRemaining === 'number' ? note.amountRemaining : parseFloat(note.amountRemaining);
-                    const isRefundable = note.status !== 'void' && note.status !== 'expired' && amountRemainingNum > 0;
+                    const amountRemainingNum =
+                      typeof note.amountRemaining === 'number'
+                        ? note.amountRemaining
+                        : parseFloat(note.amountRemaining);
+                    const isRefundable =
+                      note.status !== 'void' && note.status !== 'expired' && amountRemainingNum > 0;
 
                     return (
                       <TableRow key={note.id} className="hover:bg-muted/40 transition-colors group">
@@ -323,9 +364,14 @@ export function CreditsClient({
                             <ExternalLink className="size-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                           </Link>
                         </TableCell>
-                        <TableCell className="text-xs">{clientMap.get(note.clientId) ?? 'Unknown'}</TableCell>
+                        <TableCell className="text-xs">
+                          {clientMap.get(note.clientId) ?? 'Unknown'}
+                        </TableCell>
                         <TableCell className="text-xs">{getTypeLabel(note.type)}</TableCell>
-                        <TableCell className="text-xs truncate max-w-[200px]" title={note.reason ?? ''}>
+                        <TableCell
+                          className="text-xs truncate max-w-[200px]"
+                          title={note.reason ?? ''}
+                        >
                           {note.reason ?? '-'}
                         </TableCell>
                         <TableCell className="text-right tabular-nums font-semibold text-xs">
@@ -333,7 +379,9 @@ export function CreditsClient({
                         </TableCell>
                         <TableCell className="text-right tabular-nums text-xs">
                           {amountRemainingNum > 0 ? (
-                            <span className="font-bold text-emerald-600">{formatZAR(amountRemainingNum)}</span>
+                            <span className="font-bold text-emerald-600">
+                              {formatZAR(amountRemainingNum)}
+                            </span>
                           ) : (
                             <span className="text-muted-foreground">-</span>
                           )}
@@ -363,54 +411,58 @@ export function CreditsClient({
                                 Refund
                               </Button>
                             )}
-                            {note.status !== 'void' && note.status !== 'expired' && amountRemainingNum >= note.amount && amountRemainingNum > 0 && (
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-xs text-red-500 hover:text-red-600 h-7 px-2"
-                                    title="Void credit note"
-                                  >
-                                    <Trash2 className="size-3.5" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Void Credit Note</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Voiding <strong>{note.documentNumber}</strong> will mark it as void.
-                                      This cannot be undone.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={async () => {
-                                        setIsVoiding(true);
-                                        try {
-                                          const { voidCreditNote } = await import('@/app/actions/credit-management');
-                                          const res = await voidCreditNote(note.id);
-                                          if (res.error) {
-                                            toast.error(res.error);
-                                          } else {
-                                            toast.success(`${note.documentNumber} voided`);
-                                            router.refresh();
-                                          }
-                                        } catch {
-                                          toast.error('Failed to void');
-                                        } finally {
-                                          setIsVoiding(false);
-                                        }
-                                      }}
-                                      disabled={isVoiding}
+                            {note.status !== 'void' &&
+                              note.status !== 'expired' &&
+                              amountRemainingNum >= note.amount &&
+                              amountRemainingNum > 0 && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-xs text-red-500 hover:text-red-600 h-7 px-2"
+                                      title="Void credit note"
                                     >
-                                      {isVoiding ? 'Voiding...' : 'Confirm Void'}
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            )}
+                                      <Trash2 className="size-3.5" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Void Credit Note</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Voiding <strong>{note.documentNumber}</strong> will mark it
+                                        as void. This cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={async () => {
+                                          setIsVoiding(true);
+                                          try {
+                                            const { voidCreditNote } =
+                                              await import('@/app/actions/credit-management');
+                                            const res = await voidCreditNote(note.id);
+                                            if (res.error) {
+                                              toast.error(res.error);
+                                            } else {
+                                              toast.success(`${note.documentNumber} voided`);
+                                              router.refresh();
+                                            }
+                                          } catch {
+                                            toast.error('Failed to void');
+                                          } finally {
+                                            setIsVoiding(false);
+                                          }
+                                        }}
+                                        disabled={isVoiding}
+                                      >
+                                        {isVoiding ? 'Voiding...' : 'Confirm Void'}
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
                           </div>
                         </TableCell>
                       </TableRow>

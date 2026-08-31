@@ -1,38 +1,44 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Field, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import * as React from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface ClientAddFormProps {
-  createAction: (formData: FormData) => Promise<{ error?: string }>
-  onCancel?: () => void
-  divisions: { id: string; name: string }[]
+  createAction: (formData: FormData) => Promise<{ error?: string }>;
+  onCancel?: () => void;
+  divisions: { id: string; name: string }[];
 }
 
 export function ClientAddForm({ createAction, onCancel, divisions }: ClientAddFormProps) {
-  const formRef = React.useRef<HTMLFormElement>(null)
-  const [isPending, startTransition] = React.useTransition()
-  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
-  const [divisionId, setDivisionId] = React.useState('__none__')
+  const formRef = React.useRef<HTMLFormElement>(null);
+  const [isPending, startTransition] = React.useTransition();
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [divisionId, setDivisionId] = React.useState('__none__');
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setErrorMessage(null)
+    e.preventDefault();
+    setErrorMessage(null);
 
     startTransition(async () => {
-      const fd = new FormData(formRef.current!)
-      const result = await createAction(fd)
+      const fd = new FormData(formRef.current!);
+      const result = await createAction(fd);
       if (result.error) {
-        setErrorMessage(result.error)
+        setErrorMessage(result.error);
       } else {
-        formRef.current?.reset()
-        setDivisionId('__none__')
+        formRef.current?.reset();
+        setDivisionId('__none__');
       }
-    })
+    });
   }
 
   return (
@@ -96,7 +102,9 @@ export function ClientAddForm({ createAction, onCancel, divisions }: ClientAddFo
               <SelectValue placeholder="No division linked (auto-detect)" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__none__" className="text-xs text-muted-foreground">No division linked</SelectItem>
+              <SelectItem value="__none__" className="text-xs text-muted-foreground">
+                No division linked
+              </SelectItem>
               {divisions.map((d) => (
                 <SelectItem key={d.id} value={d.id} className="text-xs">
                   {d.name}
@@ -104,9 +112,15 @@ export function ClientAddForm({ createAction, onCancel, divisions }: ClientAddFo
               ))}
             </SelectContent>
           </Select>
-          <input id="client-add-division-hidden" type="hidden" name="divisionId" value={divisionId} />
+          <input
+            id="client-add-division-hidden"
+            type="hidden"
+            name="divisionId"
+            value={divisionId}
+          />
           <p className="text-xs text-muted-foreground mt-1">
-            When set, statements will use this division&apos;s branding. If unset, the first invoice&apos;s division is used.
+            When set, statements will use this division&apos;s branding. If unset, the first
+            invoice&apos;s division is used.
           </p>
         </Field>
 
@@ -147,13 +161,7 @@ export function ClientAddForm({ createAction, onCancel, divisions }: ClientAddFo
 
       <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4 mt-2">
         {onCancel && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isPending}
-            size="sm"
-          >
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isPending} size="sm">
             Cancel
           </Button>
         )}
@@ -168,5 +176,5 @@ export function ClientAddForm({ createAction, onCancel, divisions }: ClientAddFo
         </Alert>
       )}
     </form>
-  )
+  );
 }

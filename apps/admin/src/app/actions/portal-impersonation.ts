@@ -6,7 +6,9 @@ import { createHmac } from 'node:crypto';
 import { getPortalBaseUrl } from '@/lib/portal-url';
 import { getDb, clients, eq } from '@pmg/db';
 
-export async function generateImpersonationLink(clientId: string): Promise<{ url?: string; error?: string }> {
+export async function generateImpersonationLink(
+  clientId: string,
+): Promise<{ url?: string; error?: string }> {
   try {
     const session = await auth.api.getSession({ headers: await getHeaders() });
     if (!session?.user) return { error: 'Not authenticated' };

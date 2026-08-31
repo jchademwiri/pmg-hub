@@ -11,6 +11,7 @@
 **What happened:** A client paid you for services.
 
 **What to do:**
+
 1. If the payment belongs to an invoice, go to **Billing → Payments** and record it there
 2. Allocate the payment to the correct invoice
 3. If it is not invoice-related income, go to **Finance → Income** and record it there
@@ -19,8 +20,9 @@
 For normal invoice payments, Billing is the best starting point because it updates the invoice status and the client balance.
 
 The system automatically creates a journal entry:
-   - DR Business Cheque Account (money came in)
-   - CR Sales Revenue or Accounts Receivable (depending on the source)
+
+- DR Business Cheque Account (money came in)
+- CR Sales Revenue or Accounts Receivable (depending on the source)
 
 **You don't need to manually create journal entries for normal income.** Billing and Finance handle it.
 
@@ -31,6 +33,7 @@ The system automatically creates a journal entry:
 **What happened:** You paid for something business-related.
 
 **What to do:**
+
 1. Go to **Finance → Expenses**
 2. Record the expense
 3. Select the correct expense category (e.g., Office & Supplies, Travel)
@@ -48,17 +51,18 @@ The system automatically creates a journal entry:
 
 Sometimes you need to create a manual journal entry. Common situations:
 
-| Situation | Journal Entry |
-|-----------|--------------|
-| Transfer money between your own bank accounts | DR New Account, CR Old Account |
-| A client pays a deposit upfront | DR Bank, CR Client Deposits (Liability) |
-| Owner puts personal money into the business | DR Bank, CR Owner's Capital (Equity) |
-| Owner takes money out for personal use | DR Owner's Drawings (Equity), CR Bank |
-| You receive interest on your bank account | DR Bank, CR Interest Income (Revenue) |
-| A client owes you money (invoice sent) | DR Accounts Receivable, CR Sales Revenue |
-| You pay an outstanding invoice | DR Accounts Payable, CR Bank |
+| Situation                                     | Journal Entry                            |
+| --------------------------------------------- | ---------------------------------------- |
+| Transfer money between your own bank accounts | DR New Account, CR Old Account           |
+| A client pays a deposit upfront               | DR Bank, CR Client Deposits (Liability)  |
+| Owner puts personal money into the business   | DR Bank, CR Owner's Capital (Equity)     |
+| Owner takes money out for personal use        | DR Owner's Drawings (Equity), CR Bank    |
+| You receive interest on your bank account     | DR Bank, CR Interest Income (Revenue)    |
+| A client owes you money (invoice sent)        | DR Accounts Receivable, CR Sales Revenue |
+| You pay an outstanding invoice                | DR Accounts Payable, CR Bank             |
 
 **How to create a manual journal entry:**
+
 1. Go to `/accounting/journals/new`
 2. Set the date
 3. Add a clear description
@@ -83,31 +87,37 @@ At the end of each week, spend 5 minutes:
 Spend 30 minutes at the end of each month:
 
 ### Step 1: Record All Remaining Transactions
+
 - Go through your bank statements
 - Make sure every transaction is recorded as income or expense
 - Create manual journal entries for anything special
 
 ### Step 2: Reconcile with Bank
+
 - Compare your Business Cheque Account (1010) in the General Ledger with your actual bank statement
 - They should match (or be very close)
 - If they don't match, find and fix the discrepancy
 
 ### Step 3: Review the Trial Balance
+
 - Navigate to `/accounting/trial-balance`
 - Confirm Debits = Credits (Difference should be R0.00)
 - Review the balances — do they make sense?
 
 ### Step 4: Review the Profit & Loss
+
 - Navigate to `/accounting/profit-and-loss`
 - Filter to the current month
 - Ask yourself: "Does this match what I know about this month?"
 
 ### Step 5: Close the Period
+
 - Use the dashboard close-month flow to close the completed month and create a snapshot
 - Use `/accounting/periods` when an accounting period itself needs to be closed or reviewed
 - Keep the current month open
 
 ### Step 6: Export a Backup
+
 - Navigate to Settings → Data for database backups
 - Use Accounting Exports when your accountant needs CSV files
 - Confirm automatic backups are running if Cloudflare R2 is configured
@@ -142,36 +152,36 @@ At the end of the financial year:
 
 ## Quick Reference: Where Do I Go?
 
-| I want to... | Go to... |
-|-------------|----------|
-| Record invoice payment | `/billing/payments` |
-| Record non-invoice income | `/finance/income` |
-| Record an expense | `/finance/expenses` |
-| Create a manual journal entry | `/accounting/journals/new` |
-| View all journal entries | `/accounting/journals` |
-| See all transactions | `/accounting/general-ledger` |
-| Check if my books are balanced | `/accounting/trial-balance` |
-| See if I'm making money | `/accounting/profit-and-loss` |
-| Manage accounting periods | `/accounting/periods` |
-| Export data | `/accounting/exports` |
-| Manage backups | Settings → Data |
-| View/edit account categories | `/accounting/chart-of-accounts` |
+| I want to...                   | Go to...                        |
+| ------------------------------ | ------------------------------- |
+| Record invoice payment         | `/billing/payments`             |
+| Record non-invoice income      | `/finance/income`               |
+| Record an expense              | `/finance/expenses`             |
+| Create a manual journal entry  | `/accounting/journals/new`      |
+| View all journal entries       | `/accounting/journals`          |
+| See all transactions           | `/accounting/general-ledger`    |
+| Check if my books are balanced | `/accounting/trial-balance`     |
+| See if I'm making money        | `/accounting/profit-and-loss`   |
+| Manage accounting periods      | `/accounting/periods`           |
+| Export data                    | `/accounting/exports`           |
+| Manage backups                 | Settings → Data                 |
+| View/edit account categories   | `/accounting/chart-of-accounts` |
 
 ---
 
 ## Quick Reference: Account Codes
 
-| Code | Account | When to Use |
-|------|---------|-------------|
-| 1010 | Business Cheque Account | Every bank transaction |
-| 1030 | Accounts Receivable | Client owes you money |
-| 2010 | Accounts Payable | You owe a supplier |
-| 3010 | Owner's Capital | Owner invests in business |
-| 3030 | Owner's Drawings | Owner takes money out |
-| 4010 | Sales Revenue | Every sale/income |
-| 5030 | Office & Supplies | Printing, stationery |
-| 5070 | Travel & Transport | Uber, petrol, flights |
-| 5140 | Miscellaneous Expense | Doesn't fit other categories |
+| Code | Account                 | When to Use                  |
+| ---- | ----------------------- | ---------------------------- |
+| 1010 | Business Cheque Account | Every bank transaction       |
+| 1030 | Accounts Receivable     | Client owes you money        |
+| 2010 | Accounts Payable        | You owe a supplier           |
+| 3010 | Owner's Capital         | Owner invests in business    |
+| 3030 | Owner's Drawings        | Owner takes money out        |
+| 4010 | Sales Revenue           | Every sale/income            |
+| 5030 | Office & Supplies       | Printing, stationery         |
+| 5070 | Travel & Transport      | Uber, petrol, flights        |
+| 5140 | Miscellaneous Expense   | Doesn't fit other categories |
 
 ---
 
@@ -189,11 +199,11 @@ At the end of the financial year:
 
 ## Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
-| "The Trial Balance doesn't balance" | Check recent journal entries for errors |
-| "I can't post to a closed period" | Reopen the period, post the entry, then close it again |
+| Problem                                      | Solution                                                                 |
+| -------------------------------------------- | ------------------------------------------------------------------------ |
+| "The Trial Balance doesn't balance"          | Check recent journal entries for errors                                  |
+| "I can't post to a closed period"            | Reopen the period, post the entry, then close it again                   |
 | "I recorded an expense to the wrong account" | Create a correcting journal entry (DR correct account, CR wrong account) |
-| "The P&L shows zero" | Check that journal entries are posted (not just draft) |
-| "I don't see my income on the P&L" | Make sure the journal entry status is "posted" not "draft" |
-| "I need to undo a posted entry" | Create a reversing journal entry (swap the debits and credits) |
+| "The P&L shows zero"                         | Check that journal entries are posted (not just draft)                   |
+| "I don't see my income on the P&L"           | Make sure the journal entry status is "posted" not "draft"               |
+| "I need to undo a posted entry"              | Create a reversing journal entry (swap the debits and credits)           |

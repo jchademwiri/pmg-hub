@@ -56,7 +56,7 @@ Each layer builds on the previous; no orphaned code.
   - [x] 1.6 Write property test for `getAllClients` sort order
     - **Property 13: getAllClients returns all clients sorted by name ASC**
     - **Validates: Requirements 8.5**
-    - Use `fc.array(fc.record({ name: fc.string(), businessName: fc.option(fc.string()) }))` 
+    - Use `fc.array(fc.record({ name: fc.string(), businessName: fc.option(fc.string()) }))`
     - Tag: `// Feature: income-management, Property 13: getAllClients sort`
     - Minimum 100 iterations
 

@@ -96,7 +96,7 @@ and calendar month, so that the stacked area chart has the time-series data it n
 4. THE function SHALL query the `income` table joined to the `divisions` table, grouping
    by `TO_CHAR(date, 'YYYY-MM')` and `divisions.name`.
 5. THE function SHALL filter rows where `date >= DATE_TRUNC('month', NOW()) - INTERVAL
-   '{months-1} months'` to include only the last `months` calendar months.
+'{months-1} months'` to include only the last `months` calendar months.
 6. THE function SHALL order results by `month ASC`, then `divisionName ASC`.
 7. IF no income rows exist for a given division in a given month, THEN THE function SHALL
    omit that division-month combination from the result (sparse result set is acceptable;

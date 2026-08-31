@@ -77,10 +77,7 @@ export async function getPaginatedSignInLogs({
 
   try {
     // 1. Count total sign-in records at DB level
-    const countResult = await db
-      .select({ total: count() })
-      .from(session)
-      .where(whereClause);
+    const countResult = await db.select({ total: count() }).from(session).where(whereClause);
     const totalCount = Number(countResult[0]?.total ?? 0);
     const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
@@ -294,7 +291,8 @@ export async function getPaginatedActiveSessions({
       if (s.userAgent) {
         if (s.userAgent.includes('Windows')) device = 'Chrome on Windows';
         else if (s.userAgent.includes('Mac')) device = 'Safari on macOS';
-        else if (s.userAgent.includes('iPhone') || s.userAgent.includes('Android')) device = 'Mobile Browser';
+        else if (s.userAgent.includes('iPhone') || s.userAgent.includes('Android'))
+          device = 'Mobile Browser';
       }
 
       return {

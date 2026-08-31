@@ -23,8 +23,19 @@ const dbMock = {
 
 vi.mock('@pmg/db', () => ({
   getDb: () => dbMock,
-  billingItems: { id: 'billing_item_id', name: 'name', status: 'status', unitPrice: 'unitPrice', description: 'description', unitLabel: 'unitLabel' },
-  billingLineItems: { id: 'billing_line_item_id', documentType: 'documentType', description: 'description' },
+  billingItems: {
+    id: 'billing_item_id',
+    name: 'name',
+    status: 'status',
+    unitPrice: 'unitPrice',
+    description: 'description',
+    unitLabel: 'unitLabel',
+  },
+  billingLineItems: {
+    id: 'billing_line_item_id',
+    documentType: 'documentType',
+    description: 'description',
+  },
   eq: vi.fn(),
   and: vi.fn(),
   getAllItems: vi.fn(),
@@ -73,7 +84,13 @@ import { confirm } from '@/components/ui/confirm-dialog';
 vi.setConfig({ testTimeout: 15_000 });
 
 // ─── Import Code Under Test ──────────────────────────────────────────────────
-import { createItem, updateItem, archiveItem, unarchiveItem, deleteItem } from '@/app/actions/billing-items';
+import {
+  createItem,
+  updateItem,
+  archiveItem,
+  unarchiveItem,
+  deleteItem,
+} from '@/app/actions/billing-items';
 import ItemsPage from '@/app/(admin)/billing/items/page';
 import { ItemEditClient } from '@/app/(admin)/billing/items/[id]/item-edit-client';
 
@@ -195,7 +212,14 @@ describe('Billing Items Module', () => {
   describe('Pages and Forms', () => {
     it('ItemsPage - renders table of items', async () => {
       vi.mocked(getAllItems).mockResolvedValue([
-        { id: '1', name: 'Item Alpha', description: 'Desc A', unitPrice: '120.00', status: 'active', unitLabel: 'hour' },
+        {
+          id: '1',
+          name: 'Item Alpha',
+          description: 'Desc A',
+          unitPrice: '120.00',
+          status: 'active',
+          unitLabel: 'hour',
+        },
       ] as any);
 
       const page = await ItemsPage({ searchParams: Promise.resolve({ status: 'active' }) });
@@ -212,7 +236,9 @@ describe('Billing Items Module', () => {
       render(page as React.ReactElement);
 
       expect(
-        screen.getByText('No items yet. Create your first service item using the New Item button above.')
+        screen.getByText(
+          'No items yet. Create your first service item using the New Item button above.',
+        ),
       ).toBeInTheDocument();
     });
 

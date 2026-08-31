@@ -10,8 +10,9 @@ export async function getPortalSession() {
   if (process.env.NODE_ENV === 'development') {
     const cookieStore = await cookies();
     // Check both the dev cookie AND the production impersonate cookie (set by /impersonate route)
-    const impersonateId = cookieStore.get('dev_impersonate_client_id')?.value
-      ?? cookieStore.get('impersonate_client_id')?.value;
+    const impersonateId =
+      cookieStore.get('dev_impersonate_client_id')?.value ??
+      cookieStore.get('impersonate_client_id')?.value;
 
     if (impersonateId) {
       const [client] = await db
@@ -83,11 +84,7 @@ export async function getPortalSession() {
     .limit(1);
 
   // Check if they are an admin/super_admin in the user table
-  const [dbUser] = await db
-    .select()
-    .from(user)
-    .where(eq(user.id, session.user.id))
-    .limit(1);
+  const [dbUser] = await db.select().from(user).where(eq(user.id, session.user.id)).limit(1);
   const isAdmin = !!(dbUser && ['admin', 'super_admin'].includes(dbUser.role || ''));
 
   // If they are an admin/super_admin, allow impersonation
@@ -105,7 +102,6 @@ export async function getPortalSession() {
         client = targetClient;
       }
     }
-
   }
 
   // Enforce that only active clients (or impersonated clients) can access the portal

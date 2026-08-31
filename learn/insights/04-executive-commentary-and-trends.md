@@ -26,10 +26,9 @@ AI commentary is a review aid, not the accounting source of truth. The actual re
 
 ## Trend Patterns
 
-| Pattern | Meaning | Action |
-|---------|---------|--------|
-| Revenue up, expenses steady | Healthy growth | Keep monitoring |
-| Revenue up, expenses up faster | Costs may be rising too fast | Review expenses |
-| Revenue down, expenses steady | Sales may be slowing | Review pipeline |
-| Profit/Loss negative | The month lost money | Investigate urgently |
-
+| Pattern                        | Meaning                      | Action               |
+| ------------------------------ | ---------------------------- | -------------------- |
+| Revenue up, expenses steady    | Healthy growth               | Keep monitoring      |
+| Revenue up, expenses up faster | Costs may be rising too fast | Review expenses      |
+| Revenue down, expenses steady  | Sales may be slowing         | Review pipeline      |
+| Profit/Loss negative           | The month lost money         | Investigate urgently |

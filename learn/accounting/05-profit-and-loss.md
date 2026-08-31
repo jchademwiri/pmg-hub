@@ -26,10 +26,10 @@ Net Profit (or Loss)
 
 This section lists all the money your business has **earned**. Revenue accounts (4xxx) show up here.
 
-| Code | Account | Amount |
-|------|---------|--------|
-| 4010 | Sales Revenue | R20,500.00 |
-| | **Total Revenue** | **R20,500.00** |
+| Code | Account           | Amount         |
+| ---- | ----------------- | -------------- |
+| 4010 | Sales Revenue     | R20,500.00     |
+|      | **Total Revenue** | **R20,500.00** |
 
 **What this means:** Your business earned R20,500 from sales/services during this period.
 
@@ -37,12 +37,12 @@ This section lists all the money your business has **earned**. Revenue accounts 
 
 This section lists all the money your business has **spent** on operations. Expense accounts (5xxx) show up here.
 
-| Code | Account | Amount |
-|------|---------|--------|
-| 5030 | Office & Supplies | R1,785.00 |
-| 5070 | Travel & Transport | R215.00 |
-| 5140 | Miscellaneous Expense | R360.00 |
-| | **Total Expenses** | **R2,360.00** |
+| Code | Account               | Amount        |
+| ---- | --------------------- | ------------- |
+| 5030 | Office & Supplies     | R1,785.00     |
+| 5070 | Travel & Transport    | R215.00       |
+| 5140 | Miscellaneous Expense | R360.00       |
+|      | **Total Expenses**    | **R2,360.00** |
 
 **What this means:** Your business spent R2,360 on operations during this period.
 
@@ -103,19 +103,19 @@ Without a filter, it shows **all-time** totals.
 
 ## Your Current P&L Summary
 
-| Category | Amount |
-|----------|--------|
-| **Revenue** | |
-| Sales Revenue (4010) | R20,500.00 |
-| **Total Revenue** | **R20,500.00** |
-| | |
-| **Expenses** | |
-| Office & Supplies (5030) | R1,785.00 |
-| Travel & Transport (5070) | R215.00 |
-| Miscellaneous Expense (5140) | R360.00 |
-| **Total Expenses** | **R2,360.00** |
-| | |
-| **Net Profit** | **R18,140.00** |
+| Category                     | Amount         |
+| ---------------------------- | -------------- |
+| **Revenue**                  |                |
+| Sales Revenue (4010)         | R20,500.00     |
+| **Total Revenue**            | **R20,500.00** |
+|                              |                |
+| **Expenses**                 |                |
+| Office & Supplies (5030)     | R1,785.00      |
+| Travel & Transport (5070)    | R215.00        |
+| Miscellaneous Expense (5140) | R360.00        |
+| **Total Expenses**           | **R2,360.00**  |
+|                              |                |
+| **Net Profit**               | **R18,140.00** |
 
 ### What This Means for Your Business
 
@@ -128,32 +128,32 @@ Without a filter, it shows **all-time** totals.
 
 ## Profit vs Loss
 
-| Result | Colour | What It Means |
-|--------|--------|---------------|
+| Result                    | Colour   | What It Means                      |
+| ------------------------- | -------- | ---------------------------------- |
 | **Net Profit** (positive) | 🟢 Green | You made money! Revenue > Expenses |
-| **Net Loss** (negative) | 🔴 Red | You lost money. Expenses > Revenue |
+| **Net Loss** (negative)   | 🔴 Red   | You lost money. Expenses > Revenue |
 
 ---
 
 ## When to Review the P&L
 
-| When | Why |
-|------|-----|
-| **End of each month** | See how the month went |
-| **Before making big decisions** | "Can we afford to hire someone?" |
-| **Tax preparation** | This is what SARS cares about |
-| **Investor/stakeholder reporting** | Show business performance |
-| **Comparing periods** | "Are we doing better than last month?" |
+| When                               | Why                                    |
+| ---------------------------------- | -------------------------------------- |
+| **End of each month**              | See how the month went                 |
+| **Before making big decisions**    | "Can we afford to hire someone?"       |
+| **Tax preparation**                | This is what SARS cares about          |
+| **Investor/stakeholder reporting** | Show business performance              |
+| **Comparing periods**              | "Are we doing better than last month?" |
 
 ---
 
 ## P&L vs Other Reports
 
-| Report | Question It Answers |
-|--------|-------------------|
-| **Profit & Loss** | "Did we make money?" |
-| **Trial Balance** | "Are our books balanced?" |
-| **General Ledger** | "What exactly happened?" |
+| Report             | Question It Answers       |
+| ------------------ | ------------------------- |
+| **Profit & Loss**  | "Did we make money?"      |
+| **Trial Balance**  | "Are our books balanced?" |
+| **General Ledger** | "What exactly happened?"  |
 
 The P&L is the **most important report for business decisions**. It tells you if your business model is working.
 

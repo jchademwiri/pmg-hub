@@ -5,7 +5,11 @@ import { revalidatePath } from 'next/cache';
 import { db, expenses, eq, getExpenseById } from '@pmg/db';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTToday } from '@/lib/format';
-import { postExpenseJournalEntry, voidExpenseJournalEntries, updateExpenseJournalEntry } from '@/lib/accounting/posting';
+import {
+  postExpenseJournalEntry,
+  voidExpenseJournalEntries,
+  updateExpenseJournalEntry,
+} from '@/lib/accounting/posting';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { uploadReceiptToR2 } from '@/lib/r2';
 
@@ -45,17 +49,20 @@ export async function createExpense(formData: FormData): Promise<{ error?: strin
       return { error: receiptData.error };
     }
 
-    const [inserted] = await db.insert(expenses).values({
-      date: parsed.date,
-      divisionId: parsed.divisionId,
-      clientId: parsed.clientId ?? null,
-      category: parsed.category,
-      description: parsed.description ?? null,
-      amount: String(parsed.amount),
-      receiptUrl: receiptData.url ?? null,
-      receiptFileName: receiptData.fileName ?? null,
-      receiptFileSize: receiptData.fileSize ? String(receiptData.fileSize) : null,
-    }).returning({ id: expenses.id });
+    const [inserted] = await db
+      .insert(expenses)
+      .values({
+        date: parsed.date,
+        divisionId: parsed.divisionId,
+        clientId: parsed.clientId ?? null,
+        category: parsed.category,
+        description: parsed.description ?? null,
+        amount: String(parsed.amount),
+        receiptUrl: receiptData.url ?? null,
+        receiptFileName: receiptData.fileName ?? null,
+        receiptFileSize: receiptData.fileSize ? String(receiptData.fileSize) : null,
+      })
+      .returning({ id: expenses.id });
 
     // Auto-post: Dr Expense / Cr Bank
     if (inserted) {
@@ -123,10 +130,7 @@ export async function updateExpense(id: string, formData: FormData): Promise<{ e
       updatePayload.receiptFileSize = String(receiptData.fileSize);
     }
 
-    await db
-      .update(expenses)
-      .set(updatePayload)
-      .where(eq(expenses.id, id));
+    await db.update(expenses).set(updatePayload).where(eq(expenses.id, id));
 
     // Auto-post: void old entry, post new one
     await updateExpenseJournalEntry({
@@ -177,12 +181,17 @@ export async function deleteExpense(id: string): Promise<{ error?: string }> {
   }
 }
 
-export async function fetchExpensesByMonth(year: number, month: number, divisionId?: string, category?: string) {
+export async function fetchExpensesByMonth(
+  year: number,
+  month: number,
+  divisionId?: string,
+  category?: string,
+) {
   await getSessionOrRedirect();
   const { getAllExpenses } = await import('@pmg/db');
   const expensesResult = await getAllExpenses(
     { month: `${year}-${month.toString().padStart(2, '0')}`, divisionId, category },
-    { page: 1, pageSize: 5000 }
+    { page: 1, pageSize: 5000 },
   );
   return { data: expensesResult.data };
 }
@@ -192,7 +201,7 @@ export async function fetchExpensesByYear(year: number, divisionId?: string, cat
   const { getAllExpenses } = await import('@pmg/db');
   const expensesResult = await getAllExpenses(
     { year, divisionId, category },
-    { page: 1, pageSize: 5000 }
+    { page: 1, pageSize: 5000 },
   );
   return { data: expensesResult.data };
 }

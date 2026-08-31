@@ -79,7 +79,7 @@ server actions, so that client data is validated and persisted consistently.
 
 1. THE ClientsActions SHALL export a `createClient(formData: FormData)` ServerAction
    that validates input with Zod schema `{ name: string (min 1), businessName?: string,
-   email?: string (valid email format), phone?: string }`.
+email?: string (valid email format), phone?: string }`.
 2. WHEN `createClient` validation passes, THE ClientsActions SHALL insert a new row into
    the `clients` table and call `revalidatePath('/clients')`.
 3. THE ClientsActions SHALL export an `updateClient(id: string, formData: FormData)`
@@ -201,7 +201,7 @@ so that revenue is always attributable and client reporting is accurate.
    so that a client with associated income entries cannot be deleted.
 3. THE DB SHALL include a Drizzle migration that first assigns a fallback client to any
    income rows where `client_id IS NULL`, then executes `ALTER TABLE income ALTER COLUMN
-   client_id SET NOT NULL`.
+client_id SET NOT NULL`.
 
 ---
 
@@ -255,7 +255,7 @@ expense categories are controlled vocabulary and cannot drift due to typos.
    `packages/db/src/schema/index.ts`.
 3. THE DB SHALL include a Drizzle migration that creates the `expense_categories` table
    and seeds it with `INSERT INTO expense_categories (name) SELECT DISTINCT category
-   FROM expenses WHERE category IS NOT NULL ORDER BY category` to preserve all existing
+FROM expenses WHERE category IS NOT NULL ORDER BY category` to preserve all existing
    category names.
 
 ---

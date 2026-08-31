@@ -34,7 +34,10 @@ export function ProfileEditForm({ initialClient }: ProfileEditFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4 pt-4 border-t border-white/5">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="contact-name" className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+          <label
+            htmlFor="contact-name"
+            className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5"
+          >
             Contact Person
           </label>
           <input
@@ -49,7 +52,10 @@ export function ProfileEditForm({ initialClient }: ProfileEditFormProps) {
         </div>
 
         <div>
-          <label htmlFor="contact-phone" className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+          <label
+            htmlFor="contact-phone"
+            className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5"
+          >
             Phone Number
           </label>
           <input
@@ -69,7 +75,11 @@ export function ProfileEditForm({ initialClient }: ProfileEditFormProps) {
           disabled={isPending}
           className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
         >
-          {isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+          {isPending ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Save className="size-3.5" />
+          )}
           <span>Save Changes</span>
         </button>
       </div>

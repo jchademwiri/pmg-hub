@@ -70,7 +70,9 @@ export function EmailPreviewPanel({
   const [mode, setMode] = React.useState<PreviewMode>('desktop');
 
   return (
-    <div className={`mx-auto flex h-full w-full max-w-[720px] flex-col rounded-md border bg-background ${minHeightClassName}`}>
+    <div
+      className={`mx-auto flex h-full w-full max-w-[720px] flex-col rounded-md border bg-background ${minHeightClassName}`}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3 border-b px-3 py-2">
         <div>
           <span className="text-sm font-medium">{title}</span>
@@ -100,7 +102,12 @@ export function EmailPreviewPanel({
           </Tabs>
           <Dialog>
             <DialogTrigger asChild>
-              <Button type="button" variant="outline" size="icon-sm" disabled={!html || Boolean(error)}>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                disabled={!html || Boolean(error)}
+              >
                 <Expand />
                 <span className="sr-only">Open full preview</span>
               </Button>

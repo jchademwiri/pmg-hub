@@ -11,7 +11,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { addComplianceRecord, updateComplianceRecord } from '@/app/actions/compliance';
 import { toast } from 'sonner';
 
@@ -91,32 +97,30 @@ export function ComplianceFormDialog({ clientId, record }: { clientId: string; r
               </SelectTrigger>
               <SelectContent>
                 {DEFAULT_TYPES.map((t) => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          
+
           {documentType === 'CUSTOM' && (
             <div className="space-y-2">
               <label className="text-sm font-medium">Custom Document Name</label>
-              <Input 
-                placeholder="e.g. Industry License" 
+              <Input
+                placeholder="e.g. Industry License"
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
               />
             </div>
           )}
-          
+
           <div className="space-y-2">
             <label className="text-sm font-medium">Expiry Date</label>
-            <Input 
-              type="date" 
-              value={expiryDate}
-              onChange={(e) => setExpiryDate(e.target.value)}
-            />
+            <Input type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
           </div>
-          
+
           <Button type="submit" disabled={isPending} className="w-full">
             {isPending ? 'Saving...' : 'Save Record'}
           </Button>

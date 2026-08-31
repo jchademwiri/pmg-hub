@@ -8,7 +8,7 @@ import {
   DOMAINS,
   BRAND_FROM_EMAIL,
   BRAND_REPLY_TO,
-  getResendApiKey
+  getResendApiKey,
 } from '@pmg/emails';
 import { getDb, leads, divisions, bridgeDatabaseEnv, eq } from '@pmg/db';
 import React from 'react';
@@ -16,7 +16,7 @@ import React from 'react';
 // Sourced API keys and verified branding from @pmg/emails central config
 const apiKey = import.meta.env.PMG_RESEND_API_KEY || getResendApiKey('pmg') || '';
 const fromEmail = BRAND_FROM_EMAIL.pmg; // noreply@info.playhousemedia.co.za
-const adminEmail = BRAND_REPLY_TO.pmg;  // info@playhousemedia.co.za
+const adminEmail = BRAND_REPLY_TO.pmg; // info@playhousemedia.co.za
 const websiteUrl = `https://${DOMAINS.pmg}`;
 
 const emailClient = createEmailClient({
@@ -35,13 +35,13 @@ export const server = {
   submitContactForm: defineAction({
     accept: 'form',
     input: z.object({
-      name:         z.string().min(1, 'Name is required'),
-      phone:        z.string().optional().nullable(),
-      email:        z.string().email('Invalid email address'),
-      message:      z.string().min(1, 'Message is required'),
+      name: z.string().min(1, 'Name is required'),
+      phone: z.string().optional().nullable(),
+      email: z.string().email('Invalid email address'),
+      message: z.string().min(1, 'Message is required'),
       _company_url: z.string().optional().or(z.literal('')).nullable(),
-      _loadedAt:    z.string().optional().or(z.literal('')).nullable(),
-      _turnstile:   z.string().optional().or(z.literal('')).nullable(),
+      _loadedAt: z.string().optional().or(z.literal('')).nullable(),
+      _turnstile: z.string().optional().or(z.literal('')).nullable(),
     }),
     handler: async (input) => {
       // ── Bot protection ──────────────────────────────────────────────
@@ -71,10 +71,8 @@ export const server = {
           .limit(1);
 
         const existingLead = await db.query.leads.findFirst({
-          where: (cols, { and, eq }) => and(
-            eq(cols.email, input.email),
-            eq(cols.divisionId, pmgDivision?.id ?? null),
-          ),
+          where: (cols, { and, eq }) =>
+            and(eq(cols.email, input.email), eq(cols.divisionId, pmgDivision?.id ?? null)),
         });
 
         if (existingLead) {
@@ -89,17 +87,15 @@ export const server = {
             })
             .where(eq(leads.id, existingLead.id));
         } else {
-          await db
-            .insert(leads)
-            .values({
-              name: input.name,
-              email: input.email,
-              phone: input.phone || null,
-              message: input.message,
-              source: 'pmg',
-              status: 'new',
-              divisionId: pmgDivision?.id ?? null,
-            });
+          await db.insert(leads).values({
+            name: input.name,
+            email: input.email,
+            phone: input.phone || null,
+            message: input.message,
+            source: 'pmg',
+            status: 'new',
+            divisionId: pmgDivision?.id ?? null,
+          });
         }
         dbSaved = true;
       } catch (dbErr) {

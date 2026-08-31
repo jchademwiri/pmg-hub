@@ -86,7 +86,9 @@ function normalizePrefix(prefix: string) {
 }
 
 function canonicalQueryString(params: Record<string, string>) {
-  return new URLSearchParams(Object.entries(params).sort(([a], [b]) => a.localeCompare(b))).toString();
+  return new URLSearchParams(
+    Object.entries(params).sort(([a], [b]) => a.localeCompare(b)),
+  ).toString();
 }
 
 function getR2Config(): R2Config | null {
@@ -257,12 +259,14 @@ export async function buildDatabaseBackupPayload(): Promise<BackupPayload> {
 
 function parseXmlTag(value: string, tag: string) {
   const match = value.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`));
-  return match?.[1]
-    ?.replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'") ?? '';
+  return (
+    match?.[1]
+      ?.replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'") ?? ''
+  );
 }
 
 function parseR2ListObjects(xml: string): BackupObject[] {
@@ -345,20 +349,12 @@ async function signedR2Request({
     `x-amz-date:${timestamp}`,
     '',
   ].join('\n');
-  const canonicalRequest = [
-    method,
-    path,
-    query,
-    canonicalHeaders,
-    signedHeaders,
-    payloadHash,
-  ].join('\n');
-  const stringToSign = [
-    'AWS4-HMAC-SHA256',
-    timestamp,
-    scope,
-    sha256Hex(canonicalRequest),
-  ].join('\n');
+  const canonicalRequest = [method, path, query, canonicalHeaders, signedHeaders, payloadHash].join(
+    '\n',
+  );
+  const stringToSign = ['AWS4-HMAC-SHA256', timestamp, scope, sha256Hex(canonicalRequest)].join(
+    '\n',
+  );
 
   const dateKey = hmac(`AWS4${config.secretAccessKey}`, shortDate);
   const regionKey = hmac(dateKey, region);
@@ -534,7 +530,8 @@ async function getTableDependencies(tableNames: string[]) {
 
 async function getCascadeTruncatedTables(tableNames: string[]) {
   const selectedTables = tableNames.map((table) => `(${quoteSqlLiteral(table)})`).join(', ');
-  const rows = await getRows(sql.raw(`
+  const rows = await getRows(
+    sql.raw(`
     WITH RECURSIVE truncate_targets(table_name) AS (
       SELECT selected.table_name
       FROM (VALUES ${selectedTables}) AS selected(table_name)
@@ -556,7 +553,8 @@ async function getCascadeTruncatedTables(tableNames: string[]) {
     SELECT table_name AS name
     FROM truncate_targets
     ORDER BY table_name ASC
-  `));
+  `),
+  );
 
   return rows.map((row) => String(row.name));
 }

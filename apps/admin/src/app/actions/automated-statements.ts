@@ -38,7 +38,7 @@ import React from 'react';
  */
 export async function triggerAutomatedStatementsRun(
   asOfDate?: string,
-  options?: { isInternal?: boolean }
+  options?: { isInternal?: boolean },
 ): Promise<{ error?: string; generatedCount?: number; skippedZeroBalance?: number }> {
   try {
     if (!options?.isInternal) {
@@ -46,15 +46,15 @@ export async function triggerAutomatedStatementsRun(
     }
     const db = getDb();
     const todayStr = asOfDate || getSASTToday();
-    
+
     const d = new Date(todayStr);
     const tomorrow = new Date(d);
     tomorrow.setDate(tomorrow.getDate() + 1);
     const isLastDayOfMonth = tomorrow.getMonth() !== d.getMonth();
-    
+
     const todayDay = parseInt(todayStr.slice(8, 10), 10);
 
-    const cycleCondition = isLastDayOfMonth 
+    const cycleCondition = isLastDayOfMonth
       ? sql`${divisionBillingSettings.statementCycleDay} >= ${todayDay}`
       : eq(divisionBillingSettings.statementCycleDay, todayDay);
 
@@ -63,12 +63,7 @@ export async function triggerAutomatedStatementsRun(
     const activeDivisions = await db
       .select()
       .from(divisionBillingSettings)
-      .where(
-        and(
-          eq(divisionBillingSettings.autoSendStatements, true),
-          cycleCondition
-        )
-      );
+      .where(and(eq(divisionBillingSettings.autoSendStatements, true), cycleCondition));
 
     if (activeDivisions.length === 0) {
       return { generatedCount: 0, skippedZeroBalance: 0 };
@@ -79,8 +74,9 @@ export async function triggerAutomatedStatementsRun(
 
     for (const divSetting of activeDivisions) {
       const divisionId = divSetting.divisionId;
-      const statementType = (divSetting.statementType as 'outstanding' | 'activity') || 'outstanding';
-      
+      const statementType =
+        (divSetting.statementType as 'outstanding' | 'activity') || 'outstanding';
+
       const [division] = await db.select().from(divisions).where(eq(divisions.id, divisionId));
       if (!division) continue;
       const divisionName = division.name;
@@ -93,8 +89,8 @@ export async function triggerAutomatedStatementsRun(
           and(
             eq(clients.divisionId, divisionId),
             eq(clients.isActive, true),
-            eq(clients.excludeFromAutoStatements, false)
-          )
+            eq(clients.excludeFromAutoStatements, false),
+          ),
         );
 
       for (const client of divisionClients) {
@@ -137,7 +133,7 @@ export async function triggerAutomatedStatementsRun(
 
         const portalUrl = `${getPortalBaseUrl()}/statement`;
 
-        const invoicesList = outstandingInvoices.map(inv => ({
+        const invoicesList = outstandingInvoices.map((inv) => ({
           documentNumber: inv.documentNumber,
           invoiceDate: fmtDate(inv.invoiceDate),
           outstanding: formatZAR(inv.outstanding),
@@ -154,7 +150,8 @@ export async function triggerAutomatedStatementsRun(
           websiteUrl: divSetting.divisionWebsite || DEFAULT_WEBSITE_URL,
           logoUrl: divSetting.logoUrl || undefined,
           portalUrl,
-          personalMessage: 'Here is your automated monthly statement summarizing your current open balance.',
+          personalMessage:
+            'Here is your automated monthly statement summarizing your current open balance.',
           bankDetails: {
             bankName: divSetting.bankName || '',
             accountName: divSetting.bankAccountName || '',
@@ -168,7 +165,7 @@ export async function triggerAutomatedStatementsRun(
           {
             filename: `Statement-${clientCleanName}-${todayStr}.pdf`,
             content: statementPdf.buffer,
-          }
+          },
         ];
 
         const adminCc = resolveDivisionAdminEmail(divisionName, divSetting.salesRepEmail ?? null);
@@ -183,7 +180,10 @@ export async function triggerAutomatedStatementsRun(
         });
 
         if (error) {
-          console.error(`Failed to deliver automated statement email to ${client.email}:`, error.message);
+          console.error(
+            `Failed to deliver automated statement email to ${client.email}:`,
+            error.message,
+          );
         } else {
           generatedCount++;
         }

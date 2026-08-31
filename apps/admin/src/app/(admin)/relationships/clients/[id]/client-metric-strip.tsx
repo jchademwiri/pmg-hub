@@ -11,7 +11,7 @@ interface ClientMetricStripProps {
   totalPaid: number;
   outstandingBalance: number;
   overdueBalance: number;
-  healthScore: string;          // 'Excellent' | 'Good' | 'At Risk' | 'Critical'
+  healthScore: string; // 'Excellent' | 'Good' | 'At Risk' | 'Critical'
   avgDaysToPay: number;
   lastPaymentDate: string | null;
   lastPaymentAmount: number | null;
@@ -70,12 +70,13 @@ export function ClientMetricStrip({
     },
   ];
 
-  const healthBadgeClass = {
-    'Excellent': 'bg-green-500 text-white hover:bg-green-500',
-    'Good': 'bg-blue-500 text-white hover:bg-blue-500',
-    'At Risk': 'bg-orange-500 text-white hover:bg-orange-500',
-    'Critical': 'bg-red-500 text-white hover:bg-red-500',
-  }[healthScore] ?? 'bg-muted text-muted-foreground';
+  const healthBadgeClass =
+    {
+      Excellent: 'bg-green-500 text-white hover:bg-green-500',
+      Good: 'bg-blue-500 text-white hover:bg-blue-500',
+      'At Risk': 'bg-orange-500 text-white hover:bg-orange-500',
+      Critical: 'bg-red-500 text-white hover:bg-red-500',
+    }[healthScore] ?? 'bg-muted text-muted-foreground';
 
   return (
     <div className="flex flex-col gap-3">
@@ -115,7 +116,8 @@ export function ClientMetricStrip({
         </span>
         <span className="text-muted-foreground/40">·</span>
         <span>
-          Avg Pay: <span className="font-semibold text-foreground">
+          Avg Pay:{' '}
+          <span className="font-semibold text-foreground">
             {avgDaysToPay > 0 ? `${avgDaysToPay} days` : 'Immediate'}
           </span>
         </span>
@@ -139,17 +141,42 @@ export function ClientMetricStrip({
                 Accounts Receivable Ageing Breakdown
               </span>
             </div>
-            
+
             {/* Visual proportions bar */}
             <div className="h-1.5 w-full flex bg-muted rounded-full overflow-hidden">
               {(() => {
                 const total = outstandingBalance + overdueBalance;
                 const segments = [
-                  { bucket: 'current', label: 'Current', total: agingBuckets.current, colorClass: 'bg-emerald-500' },
-                  { bucket: '1_14', label: '1–14 Days', total: agingBuckets.bucket_1_14, colorClass: 'bg-amber-400' },
-                  { bucket: '15_30', label: '15–30 Days', total: agingBuckets.bucket_15_30, colorClass: 'bg-orange-500' },
-                  { bucket: '31_60', label: '31–60 Days', total: agingBuckets.bucket_31_60, colorClass: 'bg-rose-500' },
-                  { bucket: '61_plus', label: '61+ Days', total: agingBuckets.bucket_61_plus, colorClass: 'bg-red-600' },
+                  {
+                    bucket: 'current',
+                    label: 'Current',
+                    total: agingBuckets.current,
+                    colorClass: 'bg-emerald-500',
+                  },
+                  {
+                    bucket: '1_14',
+                    label: '1–14 Days',
+                    total: agingBuckets.bucket_1_14,
+                    colorClass: 'bg-amber-400',
+                  },
+                  {
+                    bucket: '15_30',
+                    label: '15–30 Days',
+                    total: agingBuckets.bucket_15_30,
+                    colorClass: 'bg-orange-500',
+                  },
+                  {
+                    bucket: '31_60',
+                    label: '31–60 Days',
+                    total: agingBuckets.bucket_31_60,
+                    colorClass: 'bg-rose-500',
+                  },
+                  {
+                    bucket: '61_plus',
+                    label: '61+ Days',
+                    total: agingBuckets.bucket_61_plus,
+                    colorClass: 'bg-red-600',
+                  },
                 ];
                 return segments.map((seg) => {
                   const percent = total > 0 ? (seg.total / total) * 100 : 0;
@@ -169,15 +196,42 @@ export function ClientMetricStrip({
             {/* Legend with values */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1 text-[11px]">
               {[
-                { label: 'Current', total: agingBuckets.current, colorClass: 'text-emerald-600 font-semibold' },
-                { label: '1–14 Days', total: agingBuckets.bucket_1_14, colorClass: 'text-amber-600 font-semibold' },
-                { label: '15–30 Days', total: agingBuckets.bucket_15_30, colorClass: 'text-orange-600 font-semibold' },
-                { label: '31–60 Days', total: agingBuckets.bucket_31_60, colorClass: 'text-rose-600 font-semibold' },
-                { label: '61+ Days', total: agingBuckets.bucket_61_plus, colorClass: 'text-red-600 font-semibold' },
+                {
+                  label: 'Current',
+                  total: agingBuckets.current,
+                  colorClass: 'text-emerald-600 font-semibold',
+                },
+                {
+                  label: '1–14 Days',
+                  total: agingBuckets.bucket_1_14,
+                  colorClass: 'text-amber-600 font-semibold',
+                },
+                {
+                  label: '15–30 Days',
+                  total: agingBuckets.bucket_15_30,
+                  colorClass: 'text-orange-600 font-semibold',
+                },
+                {
+                  label: '31–60 Days',
+                  total: agingBuckets.bucket_31_60,
+                  colorClass: 'text-rose-600 font-semibold',
+                },
+                {
+                  label: '61+ Days',
+                  total: agingBuckets.bucket_61_plus,
+                  colorClass: 'text-red-600 font-semibold',
+                },
               ].map((seg, idx) => (
                 <div key={idx} className="flex justify-between items-center sm:block">
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">{seg.label}</span>
-                  <p className={cn('tabular-nums sm:mt-0.5', seg.total > 0 ? seg.colorClass : 'text-muted-foreground/35')}>
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                    {seg.label}
+                  </span>
+                  <p
+                    className={cn(
+                      'tabular-nums sm:mt-0.5',
+                      seg.total > 0 ? seg.colorClass : 'text-muted-foreground/35',
+                    )}
+                  >
                     {seg.total > 0 ? formatZAR(seg.total) : '—'}
                   </p>
                 </div>

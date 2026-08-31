@@ -1,11 +1,11 @@
-'use client'
+'use client';
 
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 interface ErrorProps {
-  error: Error & { digest?: string }
-  reset: () => void
+  error: Error & { digest?: string };
+  reset: () => void;
 }
 
 export default function AdminError({ error, reset }: ErrorProps) {
@@ -17,9 +17,7 @@ export default function AdminError({ error, reset }: ErrorProps) {
           An unexpected error occurred. You can try again or return to the dashboard.
         </p>
         {error.digest && (
-          <p className="text-xs text-muted-foreground/60 font-mono">
-            Reference: {error.digest}
-          </p>
+          <p className="text-xs text-muted-foreground/60 font-mono">Reference: {error.digest}</p>
         )}
       </div>
       <div className="flex items-center gap-3">
@@ -29,5 +27,5 @@ export default function AdminError({ error, reset }: ErrorProps) {
         </Button>
       </div>
     </div>
-  )
+  );
 }

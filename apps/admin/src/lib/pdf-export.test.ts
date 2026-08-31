@@ -13,13 +13,17 @@ describe('pdf-export helpers', () => {
   it('finds printable elements by explicit id', () => {
     document.body.innerHTML = '<div id="printable-area"></div><div class="print-document"></div>';
 
-    expect(getPrintableElementById('printable-area')).toBe(document.getElementById('printable-area'));
+    expect(getPrintableElementById('printable-area')).toBe(
+      document.getElementById('printable-area'),
+    );
   });
 
   it('throws when the requested printable element is missing', () => {
     document.body.innerHTML = '<div class="print-document"></div>';
 
-    expect(() => getPrintableElementById('missing-printable')).toThrow("Printable element '#missing-printable' not found.");
+    expect(() => getPrintableElementById('missing-printable')).toThrow(
+      "Printable element '#missing-printable' not found.",
+    );
   });
 
   it('sanitizes PDF filenames', () => {
@@ -29,7 +33,9 @@ describe('pdf-export helpers', () => {
 
   it('extracts base64 PDF data from data URIs', () => {
     expect(extractPdfBase64('data:application/pdf;base64,abc123')).toBe('abc123');
-    expect(() => extractPdfBase64('data:application/pdf;base64')).toThrow('PDF base64 conversion failed.');
+    expect(() => extractPdfBase64('data:application/pdf;base64')).toThrow(
+      'PDF base64 conversion failed.',
+    );
   });
 
   it('calculates base64 byte sizes', () => {

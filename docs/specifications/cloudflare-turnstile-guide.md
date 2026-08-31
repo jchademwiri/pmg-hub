@@ -15,14 +15,14 @@ background telemetry and cryptographic challenges without requiring users to cli
 
 ### Key Facts
 
-| Property | Value |
-|----------|-------|
-| Cost | **Free** — unlimited validations, no paid tier |
-| Widget limit | 20 widgets per Cloudflare account |
-| User friction | Zero — invisible / managed mode |
-| Compatibility | Works with any hosting (Vercel, Netlify, etc.) |
-| Cloudflare CDN required? | **No** — works independently |
-| Effective against | Sophisticated bots, headless browsers, script farms |
+| Property                 | Value                                               |
+| ------------------------ | --------------------------------------------------- |
+| Cost                     | **Free** — unlimited validations, no paid tier      |
+| Widget limit             | 20 widgets per Cloudflare account                   |
+| User friction            | Zero — invisible / managed mode                     |
+| Compatibility            | Works with any hosting (Vercel, Netlify, etc.)      |
+| Cloudflare CDN required? | **No** — works independently                        |
+| Effective against        | Sophisticated bots, headless browsers, script farms |
 
 ---
 
@@ -40,11 +40,11 @@ Navigate to **Turnstile** in the dashboard (Security → Bots → Turnstile).
 
 Create **3 widgets** (one per site):
 
-| Widget Name | Domain(s) | Mode |
-|-------------|-----------|------|
+| Widget Name | Domain(s)                       | Mode    |
+| ----------- | ------------------------------- | ------- |
 | `tes-forms` | `www.tenderedgesolutions.co.za` | Managed |
-| `aws-forms` | `apexwebsolutions.co.za` | Managed |
-| `pmg-forms` | `playhousemedia.co.za` | Managed |
+| `aws-forms` | `apexwebsolutions.co.za`        | Managed |
+| `pmg-forms` | `playhousemedia.co.za`          | Managed |
 
 For each widget, note the **Site Key** and **Secret Key**.
 
@@ -97,13 +97,13 @@ For Astro, this can go in the Layout component's `<head>`:
 Inside each `<form>`, add the Turnstile widget div:
 
 ```html
-<form method="POST" action={actions.enquireLead}>
+<form method="POST" action="{actions.enquireLead}">
   <!-- ... existing fields ... -->
 
   <!-- Cloudflare Turnstile -->
   <div
     class="cf-turnstile"
-    data-sitekey={import.meta.env.TURNSTILE_SITE_KEY}
+    data-sitekey="{import.meta.env.TURNSTILE_SITE_KEY}"
     data-theme="auto"
   ></div>
 
@@ -120,7 +120,7 @@ the widget div:
 ```html
 <div
   class="cf-turnstile"
-  data-sitekey={import.meta.env.TURNSTILE_SITE_KEY}
+  data-sitekey="{import.meta.env.TURNSTILE_SITE_KEY}"
   data-action="_turnstile"
   data-theme="auto"
 ></div>
@@ -133,11 +133,11 @@ The token is included in the `FormData` automatically.
 
 ### 3. Widget Modes
 
-| Mode | Behaviour | Use When |
-|------|-----------|----------|
-| **Managed** (recommended) | Decides interactively whether to challenge | Default — best UX |
-| **Non-interactive** | Always runs, never shows a challenge | High-trust environments |
-| **Invisible** | Completely hidden, runs on submit | Maximum stealth |
+| Mode                      | Behaviour                                  | Use When                |
+| ------------------------- | ------------------------------------------ | ----------------------- |
+| **Managed** (recommended) | Decides interactively whether to challenge | Default — best UX       |
+| **Non-interactive**       | Always runs, never shows a challenge       | High-trust environments |
+| **Invisible**             | Completely hidden, runs on submit          | Maximum stealth         |
 
 Start with **Managed** mode. It only shows a challenge when Cloudflare suspects a bot.
 
@@ -157,7 +157,7 @@ async function verifyTurnstile(token: string, ip?: string): Promise<boolean> {
   const secretKey = import.meta.env.TURNSTILE_SECRET_KEY;
   if (!secretKey) {
     console.error('[turnstile] TURNSTILE_SECRET_KEY not configured');
-    return true;  // fail open if not configured (dev mode)
+    return true; // fail open if not configured (dev mode)
   }
 
   const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
@@ -182,12 +182,12 @@ handler: async (input) => {
   // ── Bot protection ────────────────────────────────────────
 
   // Turnstile verification
-  const turnstileToken = input._turnstile;  // from cf-turnstile-response
+  const turnstileToken = input._turnstile; // from cf-turnstile-response
   if (turnstileToken) {
     const isHuman = await verifyTurnstile(turnstileToken);
     if (!isHuman) {
       console.log('[bot-check] Turnstile verification failed');
-      return { success: true, message: 'Submission received.' };  // lie to bot
+      return { success: true, message: 'Submission received.' }; // lie to bot
     }
   }
 
@@ -208,7 +208,7 @@ handler: async (input) => {
   }
 
   // ... normal processing
-}
+};
 ```
 
 ### Zod Schema Update
@@ -292,11 +292,11 @@ the function to return `false` when the secret key is missing.
 
 ## Cost & Limits
 
-| Metric | Limit |
-|--------|-------|
-| Validations per month | **Unlimited** |
-| Widgets per account | 20 |
-| Cost | **$0** |
+| Metric                   | Limit                         |
+| ------------------------ | ----------------------------- |
+| Validations per month    | **Unlimited**                 |
+| Widgets per account      | 20                            |
+| Cost                     | **$0**                        |
 | Rate limit on verify API | 1,000 requests per 10 seconds |
 
 With 3 widgets (one per site), you have 17 widgets remaining for future use.
@@ -305,15 +305,15 @@ With 3 widgets (one per site), you have 17 widgets remaining for future use.
 
 ## Comparison: Layered Defense vs Turnstile
 
-| Aspect | Layered Defense | + Turnstile |
-|--------|----------------|-------------|
-| Bot detection rate | ~90% | ~99%+ |
-| Setup complexity | Low | Medium |
-| External dependencies | None | Cloudflare account |
-| User friction | Zero | Zero (managed mode) |
-| Cost | Free | Free |
-| Sophisticated bots | May bypass | Very hard to bypass |
-| Headless browsers | May bypass | Detects them |
+| Aspect                | Layered Defense | + Turnstile         |
+| --------------------- | --------------- | ------------------- |
+| Bot detection rate    | ~90%            | ~99%+               |
+| Setup complexity      | Low             | Medium              |
+| External dependencies | None            | Cloudflare account  |
+| User friction         | Zero            | Zero (managed mode) |
+| Cost                  | Free            | Free                |
+| Sophisticated bots    | May bypass      | Very hard to bypass |
+| Headless browsers     | May bypass      | Detects them        |
 
 **Recommendation:** Start with the layered defense (honeypot + time checks + rate
 limiting). Add Turnstile later if spam persists, especially from sophisticated bots
@@ -337,4 +337,4 @@ Each layer is independent and can be added/removed without affecting the others.
 
 ---
 
-*Last updated: June 2026 · Playhouse Media Group (PTY) Ltd*
+_Last updated: June 2026 · Playhouse Media Group (PTY) Ltd_

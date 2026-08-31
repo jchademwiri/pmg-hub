@@ -4,11 +4,11 @@
 
 ## Common Divisions
 
-| Acronym | Division |
-|---------|----------|
-| AWS | Apex Web Solutions |
-| TES | Tender Edge Solutions |
-| PMG | Playhouse Media Group |
+| Acronym | Division              |
+| ------- | --------------------- |
+| AWS     | Apex Web Solutions    |
+| TES     | Tender Edge Solutions |
+| PMG     | Playhouse Media Group |
 
 ## What To Configure
 
@@ -35,10 +35,9 @@ They affect:
 
 ## Common Problems
 
-| Problem | What To Check |
-|---------|---------------|
-| Wrong logo on document | Division billing setup and organisation logo |
-| Missing bank details | Billing settings for that division |
-| Email looks incomplete | Sender/contact settings |
-| Wrong division identity | Source quote or invoice division |
-
+| Problem                 | What To Check                                |
+| ----------------------- | -------------------------------------------- |
+| Wrong logo on document  | Division billing setup and organisation logo |
+| Missing bank details    | Billing settings for that division           |
+| Email looks incomplete  | Sender/contact settings                      |
+| Wrong division identity | Source quote or invoice division             |

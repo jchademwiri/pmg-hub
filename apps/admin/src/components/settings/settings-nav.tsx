@@ -2,7 +2,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Building2, CreditCard, Database, FileText, Landmark, Mail, Receipt, Shield, Users } from 'lucide-react';
+import {
+  Building2,
+  CreditCard,
+  Database,
+  FileText,
+  Landmark,
+  Mail,
+  Receipt,
+  Shield,
+  Users,
+} from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';

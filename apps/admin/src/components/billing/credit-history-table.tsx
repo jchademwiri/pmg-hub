@@ -60,54 +60,52 @@ export function CreditHistoryTable({ entries }: CreditHistoryTableProps) {
         </div>
       )}
       <div className="border rounded-md overflow-hidden bg-card">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Date</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
-            <TableHead className="text-right">Balance</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {entries.length === 0 ? (
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center text-muted-foreground text-xs">
-                No credit movements found.
-              </TableCell>
+              <TableHead>Date</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
+              <TableHead className="text-right">Balance</TableHead>
             </TableRow>
-          ) : (
-            entries.map((entry) => {
-              const isPositive = entry.amount > 0;
-              return (
-                <TableRow key={entry.id} className="hover:bg-muted/40 transition-colors">
-                  <TableCell className="text-xs text-muted-foreground">
-                    {fmtDate(new Date(entry.date))}
-                  </TableCell>
-                  <TableCell className="text-xs font-medium">
-                    {entry.type}
-                  </TableCell>
-                  <TableCell className="text-xs max-w-sm truncate" title={entry.description}>
-                    {entry.description}
-                  </TableCell>
-                  <TableCell
-                    className={`text-right tabular-nums font-semibold text-xs ${
-                      isPositive ? 'text-emerald-600' : 'text-zinc-600'
-                    }`}
-                  >
-                    {isPositive ? '+' : ''}
-                    {formatZAR(entry.amount)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums text-xs font-medium">
-                    {formatZAR(entry.balanceAfter)}
-                  </TableCell>
-                </TableRow>
-              );
-            })
-          )}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {entries.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground text-xs">
+                  No credit movements found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              entries.map((entry) => {
+                const isPositive = entry.amount > 0;
+                return (
+                  <TableRow key={entry.id} className="hover:bg-muted/40 transition-colors">
+                    <TableCell className="text-xs text-muted-foreground">
+                      {fmtDate(new Date(entry.date))}
+                    </TableCell>
+                    <TableCell className="text-xs font-medium">{entry.type}</TableCell>
+                    <TableCell className="text-xs max-w-sm truncate" title={entry.description}>
+                      {entry.description}
+                    </TableCell>
+                    <TableCell
+                      className={`text-right tabular-nums font-semibold text-xs ${
+                        isPositive ? 'text-emerald-600' : 'text-zinc-600'
+                      }`}
+                    >
+                      {isPositive ? '+' : ''}
+                      {formatZAR(entry.amount)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-xs font-medium">
+                      {formatZAR(entry.balanceAfter)}
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

@@ -78,15 +78,15 @@ export async function getDivisionsWithStats(): Promise<DivisionRow[]> {
       invoiceCount: string;
     }>
   ).map((row) => ({
-    id:            row.id,
-    name:          row.name,
-    isActive:      row.isActive,
-    totalIncome:   Number(row.totalIncome),
+    id: row.id,
+    name: row.name,
+    isActive: row.isActive,
+    totalIncome: Number(row.totalIncome),
     totalExpenses: Number(row.totalExpenses),
-    netProfit:     Number(row.netProfit),
-    leadCount:     Number(row.leadCount),
-    paymentCount:  Number(row.paymentCount),
-    invoiceCount:  Number(row.invoiceCount),
+    netProfit: Number(row.netProfit),
+    leadCount: Number(row.leadCount),
+    paymentCount: Number(row.paymentCount),
+    invoiceCount: Number(row.invoiceCount),
   }));
 }
 
@@ -150,15 +150,15 @@ export async function getDivisionWithStatsById(id: string): Promise<DivisionRow 
   if (!row) return null;
 
   return {
-    id:            row.id,
-    name:          row.name,
-    isActive:      row.isActive,
-    totalIncome:   Number(row.totalIncome),
+    id: row.id,
+    name: row.name,
+    isActive: row.isActive,
+    totalIncome: Number(row.totalIncome),
     totalExpenses: Number(row.totalExpenses),
-    netProfit:     Number(row.netProfit),
-    leadCount:     Number(row.leadCount),
-    paymentCount:  Number(row.paymentCount),
-    invoiceCount:  Number(row.invoiceCount),
+    netProfit: Number(row.netProfit),
+    leadCount: Number(row.leadCount),
+    paymentCount: Number(row.paymentCount),
+    invoiceCount: Number(row.invoiceCount),
   };
 }
 
@@ -262,7 +262,9 @@ export async function getDivisionRevenueYTD(): Promise<
     })
     .from(income)
     .innerJoin(divisions, eq(income.divisionId, divisions.id))
-    .where(sql`${income.date} >= DATE_TRUNC('year', timezone('Africa/Johannesburg', now()) - INTERVAL '2 months') + INTERVAL '2 months'`)
+    .where(
+      sql`${income.date} >= DATE_TRUNC('year', timezone('Africa/Johannesburg', now()) - INTERVAL '2 months') + INTERVAL '2 months'`,
+    )
     .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`, divisions.name)
     .orderBy(sql`TO_CHAR(${income.date}, 'YYYY-MM') ASC`, asc(divisions.name));
   return result.map((r) => ({

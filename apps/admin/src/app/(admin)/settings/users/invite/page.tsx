@@ -1,18 +1,18 @@
-import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
-import { UserPlus } from 'lucide-react'
-import { getSessionOrRedirect, requireRole } from '@/lib/auth'
-import { InviteUserForm } from '@/components/users/invite-form'
-import { SettingsPageHeader } from '@/components/settings/settings-page-header'
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { UserPlus } from 'lucide-react';
+import { getSessionOrRedirect, requireRole } from '@/lib/auth';
+import { InviteUserForm } from '@/components/users/invite-form';
+import { SettingsPageHeader } from '@/components/settings/settings-page-header';
 
-export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Invite User' }
+export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Invite User' };
 
 export default async function InviteUserPage() {
-  const session = await getSessionOrRedirect()
+  const session = await getSessionOrRedirect();
 
   if (!requireRole(session, 'super_admin')) {
-    notFound()
+    notFound();
   }
 
   return (
@@ -26,5 +26,5 @@ export default async function InviteUserPage() {
       />
       <InviteUserForm />
     </div>
-  )
+  );
 }

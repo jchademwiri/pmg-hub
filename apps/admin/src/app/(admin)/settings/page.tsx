@@ -1,17 +1,10 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import {
-  Building2,
-  Shield,
-  Receipt,
-  Database,
-  ChevronRight,
-  Users,
-} from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { Building2, Shield, Receipt, Database, ChevronRight, Users } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
-export const metadata: Metadata = { title: 'Settings' }
+export const metadata: Metadata = { title: 'Settings' };
 
 const sections = [
   {
@@ -54,7 +47,7 @@ const sections = [
     status: 'Read-only preview',
     badge: 'Soon',
   },
-]
+];
 
 export default function SettingsPage() {
   return (
@@ -71,10 +64,7 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {sections.map((section) => (
           <Link key={section.id} href={`/settings/${section.id}`}>
-            <Card
-              size="sm"
-              className="cursor-pointer transition-colors hover:bg-muted/40"
-            >
+            <Card size="sm" className="cursor-pointer transition-colors hover:bg-muted/40">
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
@@ -101,7 +91,6 @@ export default function SettingsPage() {
           </Link>
         ))}
       </div>
-
     </div>
-  )
+  );
 }

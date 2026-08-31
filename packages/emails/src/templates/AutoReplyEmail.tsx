@@ -1,12 +1,7 @@
-import * as React from "react";
-import {
-  Button,
-  Heading,
-  Section,
-  Text,
-} from "@react-email/components";
-import type { BrandingProps } from "../types";
-import { EmailLayout } from "./EmailLayout";
+import * as React from 'react';
+import { Button, Heading, Section, Text } from '@react-email/components';
+import type { BrandingProps } from '../types';
+import { EmailLayout } from './EmailLayout';
 
 export type AutoReplyEmailProps = {
   name: string;
@@ -17,15 +12,13 @@ const AutoReplyEmail = (props: AutoReplyEmailProps) => {
   const {
     name,
     whatsappNumber,
-    companyName = "Playhouse Media Group",
-    primaryColor = "#1d4ed8",
-    websiteUrl = "https://playhousemedia.co.za",
+    companyName = 'Playhouse Media Group',
+    primaryColor = '#1d4ed8',
+    websiteUrl = 'https://playhousemedia.co.za',
     logoUrl,
   } = props;
 
-  const waHref = whatsappNumber
-    ? `https://wa.me/${whatsappNumber.replace(/\D/g, "")}`
-    : undefined;
+  const waHref = whatsappNumber ? `https://wa.me/${whatsappNumber.replace(/\D/g, '')}` : undefined;
 
   return (
     <EmailLayout
@@ -37,13 +30,11 @@ const AutoReplyEmail = (props: AutoReplyEmailProps) => {
       showFooterButton={!waHref} // Hide footer button if we have a WhatsApp CTA
     >
       {/* Greeting & Header */}
-      <Heading className="m-0 mb-[16px] text-[20px] font-bold text-[#020304]">
-        Hi {name},
-      </Heading>
-      
+      <Heading className="m-0 mb-[16px] text-[20px] font-bold text-[#020304]">Hi {name},</Heading>
+
       <Text className="m-0 mb-[24px] text-[15px] leading-[24px] text-[#334155]">
-        Thank you for reaching out to <strong>{companyName}</strong>. We've received your
-        enquiry and will get back to you within 24 hours.
+        Thank you for reaching out to <strong>{companyName}</strong>. We've received your enquiry
+        and will get back to you within 24 hours.
       </Text>
 
       {/* WhatsApp CTA - only rendered if a number is provided */}
@@ -93,11 +84,11 @@ const AutoReplyEmail = (props: AutoReplyEmailProps) => {
 };
 
 AutoReplyEmail.PreviewProps = {
-  name: "Sipho Dlamini",
-  whatsappNumber: "27745017094",
-  companyName: "Tender Edge Solutions",
-  primaryColor: "#c9a227",
-  websiteUrl: "https://www.tenderedgesolutions.co.za",
+  name: 'Sipho Dlamini',
+  whatsappNumber: '27745017094',
+  companyName: 'Tender Edge Solutions',
+  primaryColor: '#c9a227',
+  websiteUrl: 'https://www.tenderedgesolutions.co.za',
 };
 
 export default AutoReplyEmail;

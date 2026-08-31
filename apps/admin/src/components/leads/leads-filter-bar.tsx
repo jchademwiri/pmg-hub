@@ -1,20 +1,20 @@
-'use client'
+'use client';
 
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 
 interface LeadsFilterBarProps {
-  divisions: { id: string; name: string }[]
-  sources: string[]
-  currentDivisionId?: string
-  currentSource?: string
-  currentStatus?: string
+  divisions: { id: string; name: string }[];
+  sources: string[];
+  currentDivisionId?: string;
+  currentSource?: string;
+  currentStatus?: string;
 }
 
 export function LeadsFilterBar({
@@ -24,30 +24,27 @@ export function LeadsFilterBar({
   currentSource,
   currentStatus,
 }: LeadsFilterBarProps) {
-  const router = useRouter()
+  const router = useRouter();
 
   function handleDivisionChange(value: string) {
-    const params = new URLSearchParams()
-    if (value !== 'all') params.set('divisionId', value)
-    if (currentSource) params.set('source', currentSource)
-    if (currentStatus) params.set('status', currentStatus)
-    router.push('/relationships/leads?' + params.toString())
+    const params = new URLSearchParams();
+    if (value !== 'all') params.set('divisionId', value);
+    if (currentSource) params.set('source', currentSource);
+    if (currentStatus) params.set('status', currentStatus);
+    router.push('/relationships/leads?' + params.toString());
   }
 
   function handleSourceChange(value: string) {
-    const params = new URLSearchParams()
-    if (currentDivisionId) params.set('divisionId', currentDivisionId)
-    if (value !== 'all') params.set('source', value)
-    if (currentStatus) params.set('status', currentStatus)
-    router.push('/relationships/leads?' + params.toString())
+    const params = new URLSearchParams();
+    if (currentDivisionId) params.set('divisionId', currentDivisionId);
+    if (value !== 'all') params.set('source', value);
+    if (currentStatus) params.set('status', currentStatus);
+    router.push('/relationships/leads?' + params.toString());
   }
 
   return (
     <div className="flex flex-wrap gap-3">
-      <Select
-        value={currentDivisionId ?? 'all'}
-        onValueChange={handleDivisionChange}
-      >
+      <Select value={currentDivisionId ?? 'all'} onValueChange={handleDivisionChange}>
         <SelectTrigger className="w-48">
           <SelectValue placeholder="All divisions" />
         </SelectTrigger>
@@ -61,10 +58,7 @@ export function LeadsFilterBar({
         </SelectContent>
       </Select>
 
-      <Select
-        value={currentSource ?? 'all'}
-        onValueChange={handleSourceChange}
-      >
+      <Select value={currentSource ?? 'all'} onValueChange={handleSourceChange}>
         <SelectTrigger className="w-48">
           <SelectValue placeholder="All sources" />
         </SelectTrigger>
@@ -78,5 +72,5 @@ export function LeadsFilterBar({
         </SelectContent>
       </Select>
     </div>
-  )
+  );
 }

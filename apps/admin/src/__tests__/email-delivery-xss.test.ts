@@ -8,7 +8,14 @@ vi.mock('@pmg/db', () => {
     db: {
       select: vi.fn(),
     },
-    income: { id: 'id', date: 'date', amount: 'amount', description: 'description', clientId: 'clientId', divisionId: 'divisionId' },
+    income: {
+      id: 'id',
+      date: 'date',
+      amount: 'amount',
+      description: 'description',
+      clientId: 'clientId',
+      divisionId: 'divisionId',
+    },
     divisions: { id: 'id', name: 'name' },
     clients: { id: 'id', name: 'name', businessName: 'businessName' },
     eq: vi.fn(),

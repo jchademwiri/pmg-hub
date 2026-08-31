@@ -42,7 +42,9 @@ export function IssueCreditNoteDialog({
   const [isPending, startTransition] = useTransition();
   const [clientId, setClientId] = useState(clients.length === 1 ? clients[0].id : '');
   const [divisionId, setDivisionId] = useState(divisions[0]?.id ?? '');
-  const [creditType, setCreditType] = useState<'manual_adjustment' | 'credit_note' | 'promotional'>('credit_note');
+  const [creditType, setCreditType] = useState<'manual_adjustment' | 'credit_note' | 'promotional'>(
+    'credit_note',
+  );
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
 
@@ -160,7 +162,9 @@ export function IssueCreditNoteDialog({
               Amount (ZAR) <span className="text-destructive">*</span>
             </FieldLabel>
             <div className="relative">
-              <span className="absolute left-3 top-2.5 text-sm font-semibold text-muted-foreground">R</span>
+              <span className="absolute left-3 top-2.5 text-sm font-semibold text-muted-foreground">
+                R
+              </span>
               <Input
                 type="number"
                 step="0.01"
@@ -193,7 +197,10 @@ export function IssueCreditNoteDialog({
               <span className="font-semibold">✓</span>
               <span>
                 This will issue a {formatZAR(amountNum)} credit note for{' '}
-                {clients.find((c) => c.id === clientId)?.businessName ?? clients.find((c) => c.id === clientId)?.name ?? 'the selected client'}.
+                {clients.find((c) => c.id === clientId)?.businessName ??
+                  clients.find((c) => c.id === clientId)?.name ??
+                  'the selected client'}
+                .
               </span>
             </div>
           )}

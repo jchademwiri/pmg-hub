@@ -59,8 +59,12 @@ export default async function CreditNotesPage() {
                 <tbody className="divide-y divide-white/5 text-xs">
                   {allCredits.map((credit) => (
                     <tr key={credit.id} className="hover:bg-white/[0.01] transition-colors">
-                      <td className="px-6 py-4 font-semibold text-white">{credit.documentNumber}</td>
-                      <td className="px-6 py-4 text-muted-foreground">{formatDate(credit.createdAt)}</td>
+                      <td className="px-6 py-4 font-semibold text-white">
+                        {credit.documentNumber}
+                      </td>
+                      <td className="px-6 py-4 text-muted-foreground">
+                        {formatDate(credit.createdAt)}
+                      </td>
                       <td className="px-6 py-4 text-right text-muted-foreground">
                         {formatCurrency(credit.amount)}
                       </td>
@@ -68,9 +72,13 @@ export default async function CreditNotesPage() {
                         {formatCurrency(credit.amountRemaining ?? '0.00')}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
-                          credit.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/10 text-muted-foreground'
-                        }`}>
+                        <span
+                          className={`inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
+                            credit.status === 'active'
+                              ? 'bg-emerald-500/10 text-emerald-400'
+                              : 'bg-white/10 text-muted-foreground'
+                          }`}
+                        >
                           {credit.status}
                         </span>
                       </td>

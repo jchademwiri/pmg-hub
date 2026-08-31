@@ -4,14 +4,14 @@ Send emails to audience segments. Broadcasts follow a two-step lifecycle: **crea
 
 ## SDK Methods
 
-| Operation | Node.js | Python |
-|-----------|---------|--------|
-| Create | `resend.broadcasts.create(params)` | `resend.Broadcasts.create(params)` |
-| Get | `resend.broadcasts.get(id)` | `resend.Broadcasts.get(id)` |
-| List | `resend.broadcasts.list(params)` | `resend.Broadcasts.list(params)` |
-| Send | `resend.broadcasts.send(id, params?)` | `resend.Broadcasts.send(params)` |
-| Update | `resend.broadcasts.update(id, params)` | `resend.Broadcasts.update(params)` |
-| Delete | `resend.broadcasts.remove(id)` | `resend.Broadcasts.remove(id)` |
+| Operation | Node.js                                | Python                             |
+| --------- | -------------------------------------- | ---------------------------------- |
+| Create    | `resend.broadcasts.create(params)`     | `resend.Broadcasts.create(params)` |
+| Get       | `resend.broadcasts.get(id)`            | `resend.Broadcasts.get(id)`        |
+| List      | `resend.broadcasts.list(params)`       | `resend.Broadcasts.list(params)`   |
+| Send      | `resend.broadcasts.send(id, params?)`  | `resend.Broadcasts.send(params)`   |
+| Update    | `resend.broadcasts.update(id, params)` | `resend.Broadcasts.update(params)` |
+| Delete    | `resend.broadcasts.remove(id)`         | `resend.Broadcasts.remove(id)`     |
 
 ## Create Parameters
 
@@ -32,7 +32,7 @@ const { data: broadcast, error: createError } = await resend.broadcasts.create({
   subject: 'Hi {{{FIRST_NAME|there}}}, here is your March update',
   html: '<p>Hi {{{FIRST_NAME|there}}}</p><a href="{{{RESEND_UNSUBSCRIBE_URL}}}">Unsubscribe</a>',
   segmentId: 'seg_abc123',
-  topicId: 'top_xyz789',     // optional: controls topic-level unsubscribes
+  topicId: 'top_xyz789', // optional: controls topic-level unsubscribes
 });
 
 if (createError) {
@@ -42,7 +42,7 @@ if (createError) {
 
 // Step 2: Send it (or schedule)
 const { data: sent, error: sendError } = await resend.broadcasts.send(broadcast.id, {
-  scheduledAt: 'in 1 hour',  // optional: ISO 8601 or natural language
+  scheduledAt: 'in 1 hour', // optional: ISO 8601 or natural language
 });
 
 if (sendError) {
@@ -113,13 +113,13 @@ Use triple-mustache with a pipe for fallbacks: `{{{PROPERTY_KEY|fallback}}}`
 
 ## Common Mistakes
 
-| Mistake | Fix |
-|---------|-----|
-| Expecting `create` to send the broadcast | `create` makes a draft. Call `send` separately, or pass `send: true` |
-| Calling `.delete()` instead of `.remove()` | Node.js SDK uses `.remove()` for all delete operations |
-| Deleting a sent/scheduled broadcast | Only drafts can be deleted |
-| Missing `segmentId` | Required - broadcasts target segments, not all contacts |
-| Missing unsubscribe link | Include `{{{RESEND_UNSUBSCRIBE_URL}}}` in HTML |
-| `{{VAR}}` instead of `{{{VAR}}}` | Triple braces required for variable interpolation |
-| Ignoring `error` return | Node.js SDK returns `{ data, error }` - always check `error` |
-| `scheduledAt` format confusion | Accepts both ISO 8601 (`2025-03-15T10:00:00Z`) and natural language (`in 1 hour`) |
+| Mistake                                    | Fix                                                                               |
+| ------------------------------------------ | --------------------------------------------------------------------------------- |
+| Expecting `create` to send the broadcast   | `create` makes a draft. Call `send` separately, or pass `send: true`              |
+| Calling `.delete()` instead of `.remove()` | Node.js SDK uses `.remove()` for all delete operations                            |
+| Deleting a sent/scheduled broadcast        | Only drafts can be deleted                                                        |
+| Missing `segmentId`                        | Required - broadcasts target segments, not all contacts                           |
+| Missing unsubscribe link                   | Include `{{{RESEND_UNSUBSCRIBE_URL}}}` in HTML                                    |
+| `{{VAR}}` instead of `{{{VAR}}}`           | Triple braces required for variable interpolation                                 |
+| Ignoring `error` return                    | Node.js SDK returns `{ data, error }` - always check `error`                      |
+| `scheduledAt` format confusion             | Accepts both ISO 8601 (`2025-03-15T10:00:00Z`) and natural language (`in 1 hour`) |

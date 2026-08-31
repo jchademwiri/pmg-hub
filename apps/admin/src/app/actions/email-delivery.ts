@@ -770,7 +770,9 @@ export async function sendReceiptEmailAction(rawPayload: unknown) {
 
     const clientName = client?.businessName || client?.name || 'Client';
     const safeClientName = escapeHtml(clientName);
-    const safeReceiptNumber = escapeHtml(generateReceiptNumber(incomeRow.id, incomeRow.divisionName));
+    const safeReceiptNumber = escapeHtml(
+      generateReceiptNumber(incomeRow.id, incomeRow.divisionName),
+    );
     const safeDescription = escapeHtml(incomeRow.description ?? 'Client payment');
     const safeDivisionName = escapeHtml(incomeRow.divisionName);
     const safePersonalMessage = personalMessage ? escapeHtml(personalMessage) : '';
@@ -879,7 +881,9 @@ export async function getReceiptEmailPreviewAction(rawPayload: unknown): Promise
 
     const clientName = client?.businessName || client?.name || 'Client';
     const safeClientName = escapeHtml(clientName);
-    const safeReceiptNumber = escapeHtml(generateReceiptNumber(incomeRow.id, incomeRow.divisionName));
+    const safeReceiptNumber = escapeHtml(
+      generateReceiptNumber(incomeRow.id, incomeRow.divisionName),
+    );
     const safeDescription = escapeHtml(incomeRow.description ?? 'Client payment');
     const safeDivisionName = escapeHtml(incomeRow.divisionName);
     const safePersonalMessage = personalMessage ? escapeHtml(personalMessage) : '';

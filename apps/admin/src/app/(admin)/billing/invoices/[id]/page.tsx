@@ -10,11 +10,35 @@ import { DocumentPreview } from '@/components/billing/document-preview';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { MobileReceiptPreview } from '@/components/billing/mobile-receipt-preview';
-import { getInvoiceById, getDivisionBillingSettings, getDb, paymentAllocations, income, sql, desc, eq, getClientStatement, getAllIncome, getOrganisationSettings } from '@pmg/db';
+import {
+  getInvoiceById,
+  getDivisionBillingSettings,
+  getDb,
+  paymentAllocations,
+  income,
+  sql,
+  desc,
+  eq,
+  getClientStatement,
+  getAllIncome,
+  getOrganisationSettings,
+} from '@pmg/db';
 import { UniversalEmailDialog } from '@/components/billing/universal-email-dialog';
-import { issueInvoice, markInvoicePaid, voidInvoice, writeOffInvoice, restoreWriteOffInvoice } from '@/app/actions/billing-invoices';
+import {
+  issueInvoice,
+  markInvoicePaid,
+  voidInvoice,
+  writeOffInvoice,
+  restoreWriteOffInvoice,
+} from '@/app/actions/billing-invoices';
 import { fmtDate, fmtDateTime, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
-import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, buildBankingProps } from '@/lib/client-billing-helpers';
+import {
+  buildOrgProps,
+  determineStatementStatus,
+  buildIncomeInvoiceMap,
+  buildTransactionHistory,
+  buildBankingProps,
+} from '@/lib/client-billing-helpers';
 import { calculateAgeing } from '@/lib/billing-ageing';
 import { InvoiceDetailActions } from './invoice-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
@@ -29,7 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const invoice = await getInvoiceById(id);
   if (!invoice) return { title: 'Invoice' };
-  
+
   return { title: `Invoice ${invoice.documentNumber}` };
 }
 
@@ -79,7 +103,10 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
       const transactions = buildTransactionHistory(txRaw, statement.summary.openingBalance ?? 0);
 
-      const docStatus = determineStatementStatus(statement.summary.totalOutstanding, statement.invoices);
+      const docStatus = determineStatementStatus(
+        statement.summary.totalOutstanding,
+        statement.invoices,
+      );
 
       const ageing = calculateAgeing(
         statement.outstandingInvoices ?? statement.invoices,
@@ -130,8 +157,15 @@ export default async function InvoiceDetailPage({ params }: Props) {
   const totalAllocated = allocations.reduce((sum, a) => sum + parseFloat(a.amount), 0);
   const writeOffAmt = parseFloat(invoice.writeOffAmount ?? '0');
   const isWrittenOff = invoice.status === 'written_off' || writeOffAmt > 0;
-  const effectiveWriteOff = isWrittenOff ? (writeOffAmt > 0 ? writeOffAmt : Math.max(0, parseFloat(invoice.total) - totalAllocated)) : 0;
-  const outstandingBalance = Math.max(0, parseFloat(invoice.total) - totalAllocated - effectiveWriteOff);
+  const effectiveWriteOff = isWrittenOff
+    ? writeOffAmt > 0
+      ? writeOffAmt
+      : Math.max(0, parseFloat(invoice.total) - totalAllocated)
+    : 0;
+  const outstandingBalance = Math.max(
+    0,
+    parseFloat(invoice.total) - totalAllocated - effectiveWriteOff,
+  );
   const availableCredit = invoice.clientId ? await getClientCreditBalanceV2(invoice.clientId) : 0;
   const invoicePdfUrl = `/api/billing/pdf/invoice/${invoice.id}`;
   const statementPdfUrl = invoice.clientId
@@ -197,22 +231,14 @@ export default async function InvoiceDetailPage({ params }: Props) {
                 </Link>
               )}
             </div>
-            <p className="text-sm text-muted-foreground">
-              Issued {fmtDate(invoice.invoiceDate)}
-            </p>
+            <p className="text-sm text-muted-foreground">Issued {fmtDate(invoice.invoiceDate)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
           <div className="hidden sm:block">
-            <PrintButton 
-              label="Print"
-              documentTitle={`Invoice-${invoice.documentNumber}`} 
-            />
+            <PrintButton label="Print" documentTitle={`Invoice-${invoice.documentNumber}`} />
           </div>
-          <ExportPdfButton 
-            fileName={`Invoice-${invoice.documentNumber}`}
-            pdfUrl={invoicePdfUrl}
-          />
+          <ExportPdfButton fileName={`Invoice-${invoice.documentNumber}`} pdfUrl={invoicePdfUrl} />
           <UniversalEmailDialog
             documentId={invoice.id}
             documentNumber={invoice.documentNumber}
@@ -256,21 +282,32 @@ export default async function InvoiceDetailPage({ params }: Props) {
         <div className="flex flex-col gap-4 lg:sticky lg:top-16 lg:self-start">
           {/* Outstanding Balance & Record Payment / Write-off Summary */}
           {invoice.status !== 'void' && (
-            <Card size="sm" className={effectiveWriteOff > 0 ? "border-rose-200/50 bg-rose-50/10" : "border-amber-200/50 bg-amber-50/10"}>
+            <Card
+              size="sm"
+              className={
+                effectiveWriteOff > 0
+                  ? 'border-rose-200/50 bg-rose-50/10'
+                  : 'border-amber-200/50 bg-amber-50/10'
+              }
+            >
               <CardHeader className="pb-2">
                 <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {effectiveWriteOff > 0 ? "Write-off & Payment Summary" : "Outstanding Balance"}
+                  {effectiveWriteOff > 0 ? 'Write-off & Payment Summary' : 'Outstanding Balance'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
-                <span className={`text-2xl font-bold tracking-tight tabular-nums ${effectiveWriteOff > 0 ? (outstandingBalance === 0 ? "text-emerald-600" : "text-rose-600") : "text-amber-600"}`}>
+                <span
+                  className={`text-2xl font-bold tracking-tight tabular-nums ${effectiveWriteOff > 0 ? (outstandingBalance === 0 ? 'text-emerald-600' : 'text-rose-600') : 'text-amber-600'}`}
+                >
                   {formatZAR(outstandingBalance)}
                 </span>
                 {effectiveWriteOff > 0 && (
                   <div className="flex flex-col gap-1.5 pt-1 text-xs border-t border-border/50">
                     <div className="flex justify-between text-muted-foreground">
                       <span>Total Invoiced</span>
-                      <span className="font-semibold text-foreground">{formatZAR(parseFloat(invoice.total))}</span>
+                      <span className="font-semibold text-foreground">
+                        {formatZAR(parseFloat(invoice.total))}
+                      </span>
                     </div>
                     <div className="flex justify-between text-emerald-600 font-medium">
                       <span>Total Paid</span>
@@ -285,7 +322,9 @@ export default async function InvoiceDetailPage({ params }: Props) {
                 {outstandingBalance > 0 && invoice.status !== 'draft' && (
                   <div className="flex flex-col gap-2 w-full">
                     <Button asChild size="sm" className="w-full">
-                      <Link href={`/billing/payments/add?clientId=${invoice.clientId}&amount=${outstandingBalance.toFixed(2)}`}>
+                      <Link
+                        href={`/billing/payments/add?clientId=${invoice.clientId}&amount=${outstandingBalance.toFixed(2)}`}
+                      >
                         Record Payment
                       </Link>
                     </Button>
@@ -312,17 +351,24 @@ export default async function InvoiceDetailPage({ params }: Props) {
                   {allocations.map((a, index) => {
                     const totalInvoiceAmt = parseFloat(invoice.total);
                     const remainingAllocations = allocations.slice(index);
-                    const totalPaidUpToThis = remainingAllocations.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+                    const totalPaidUpToThis = remainingAllocations.reduce(
+                      (sum, item) => sum + parseFloat(item.amount),
+                      0,
+                    );
                     const remBalAfter = Math.max(0, totalInvoiceAmt - totalPaidUpToThis);
 
                     return (
                       <div key={a.id} className="flex justify-between py-2 items-center gap-2">
                         <div className="flex flex-col gap-0.5 min-w-0">
-                          <span className="font-semibold truncate text-foreground">{a.description}</span>
+                          <span className="font-semibold truncate text-foreground">
+                            {a.description}
+                          </span>
                           <div className="flex items-center gap-1.5 text-muted-foreground text-[10px]">
                             <span>{fmtDate(a.date)}</span>
                             <span>•</span>
-                            <span className="font-medium text-muted-foreground">Bal: {formatZAR(remBalAfter)}</span>
+                            <span className="font-medium text-muted-foreground">
+                              Bal: {formatZAR(remBalAfter)}
+                            </span>
                           </div>
                         </div>
                         <span className="font-bold text-emerald-600 shrink-0 tabular-nums">
@@ -363,7 +409,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
                   <div className="flex flex-col gap-0.5">
                     <span className="text-sm">Invoice paid</span>
                     <span className="text-xs text-muted-foreground">
-                    {fmtDateTime(invoice.paidAt)}
+                      {fmtDateTime(invoice.paidAt)}
                     </span>
                   </div>
                 )}
@@ -399,8 +445,8 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
       {/* Hidden print container for Client Statement PDF compilation */}
       {statementProps && (
-        <div 
-          id="printable-statement-area" 
+        <div
+          id="printable-statement-area"
           className="absolute pointer-events-none"
           style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '800px' }}
         >

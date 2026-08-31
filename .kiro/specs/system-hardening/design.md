@@ -40,6 +40,7 @@ The admin app follows a layered architecture:
 ```
 
 Next.js conventions used:
+
 - `error.tsx` at the route group level catches unhandled errors within the
   `(admin)` segment tree via React's error boundary mechanism.
 - `loading.tsx` at the route group level wraps each page in a Suspense boundary,
@@ -56,15 +57,16 @@ Next.js conventions used:
 A `'use client'` component required by Next.js for error boundary files.
 
 ```tsx
-'use client'
+'use client';
 interface ErrorProps {
-  error: Error & { digest?: string }
-  reset: () => void
+  error: Error & { digest?: string };
+  reset: () => void;
 }
-export default function AdminError({ error, reset }: ErrorProps)
+export default function AdminError({ error, reset }: ErrorProps);
 ```
 
 Renders:
+
 - A safe, non-technical user message (no stack trace, no `error.message` in
   production)
 - A "Try again" button that calls `reset()`
@@ -76,10 +78,11 @@ A server component (no `'use client'` needed) that renders a skeleton matching
 the general admin page layout.
 
 ```tsx
-export default function AdminLoading()
+export default function AdminLoading();
 ```
 
 Uses `<Skeleton>` from `@/components/ui/skeleton` to mirror:
+
 - A page header bar (title + optional action button)
 - A table skeleton (header row + 5 placeholder rows)
 
@@ -92,11 +95,11 @@ A reusable presentational component.
 
 ```tsx
 interface EmptyStateProps {
-  message: string
-  ctaLabel?: string
-  ctaHref?: string
+  message: string;
+  ctaLabel?: string;
+  ctaHref?: string;
 }
-export function EmptyState({ message, ctaLabel, ctaHref }: EmptyStateProps)
+export function EmptyState({ message, ctaLabel, ctaHref }: EmptyStateProps);
 ```
 
 Renders a centered card with an icon, the descriptive message, and an optional
@@ -108,9 +111,11 @@ the CTA.
 All existing form components already follow the pattern:
 
 ```tsx
-const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
+const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 // ...
-{errorMessage && <p className="w-full text-sm text-destructive">{errorMessage}</p>}
+{
+  errorMessage && <p className="w-full text-sm text-destructive">{errorMessage}</p>;
+}
 ```
 
 The hardening work ensures this pattern is consistently applied to every form
@@ -123,11 +128,12 @@ state (not reset on error).
 The existing `LeadStatusForm` component is upgraded to use `useOptimistic`:
 
 ```tsx
-'use client'
-const [optimisticStatus, setOptimisticStatus] = useOptimistic(currentStatus)
+'use client';
+const [optimisticStatus, setOptimisticStatus] = useOptimistic(currentStatus);
 ```
 
 Flow:
+
 1. User selects new status → `setOptimisticStatus(newStatus)` applied immediately
 2. `startTransition` calls the Server Action
 3. While pending: selector disabled, optimistic status displayed
@@ -137,6 +143,7 @@ Flow:
 ### 6. `packages/db/src/seed.ts` - Updated Seed
 
 New seed data added (with upsert semantics via `onConflictDoNothing()`):
+
 - `expenses`: rows covering PMG, TES, and AWS divisions across categories
   (Salaries, Software, Marketing, Office, Travel)
 - `leads`: one row per status (`new`, `contacted`, `converted`, `lost`)
@@ -153,36 +160,36 @@ No schema changes. All tables already exist from Phases 4–8.
 ```ts
 // packages/db/src/schema/leads.ts
 type Lead = {
-  id: string
-  status: 'new' | 'contacted' | 'converted' | 'lost'
-  name: string | null
-  email: string | null
+  id: string;
+  status: 'new' | 'contacted' | 'converted' | 'lost';
+  name: string | null;
+  email: string | null;
   // ...
-}
+};
 
 // packages/db/src/schema/expenses.ts
 type Expense = {
-  id: string
-  divisionId: string
-  category: string
-  amount: string  // numeric stored as string
+  id: string;
+  divisionId: string;
+  category: string;
+  amount: string; // numeric stored as string
   // ...
-}
+};
 
 // packages/db/src/schema/snapshots.ts
 type Snapshot = {
-  id: string
-  period: string          // e.g. "2025-03"
-  revenue: string
-  expenses: string
-  pmgShare: string
-  profitPool: string
-  salary: string
-  reinvest: string
-  reserve: string
-  flex: string
-  createdAt: Date
-}
+  id: string;
+  period: string; // e.g. "2025-03"
+  revenue: string;
+  expenses: string;
+  pmgShare: string;
+  profitPool: string;
+  salary: string;
+  reinvest: string;
+  reserve: string;
+  flex: string;
+  createdAt: Date;
+};
 ```
 
 ### Server Action return contract
@@ -195,14 +202,14 @@ unhandled exceptions.
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all
+_A property is a characteristic or behavior that should hold true across all
 valid executions of a system - essentially, a formal statement about what the
 system should do. Properties serve as the bridge between human-readable
-specifications and machine-verifiable correctness guarantees.*
+specifications and machine-verifiable correctness guarantees._
 
 ### Property 1: Server Actions never throw - they always return `{ error? }`
 
-*For any* Server Action in `app/actions/` and *for any* input (valid, invalid,
+_For any_ Server Action in `app/actions/` and _for any_ input (valid, invalid,
 or malformed), calling the action must return an object of shape
 `{ error?: string }` and must never propagate an unhandled exception to the
 caller.
@@ -211,7 +218,7 @@ caller.
 
 ### Property 2: EmptyState renders its message and CTA for any input
 
-*For any* non-empty `message` string and any `ctaLabel`/`ctaHref` pair, the
+_For any_ non-empty `message` string and any `ctaLabel`/`ctaHref` pair, the
 `EmptyState` component must render the message text and the CTA link in its
 output.
 
@@ -263,24 +270,29 @@ output.
 Located in `apps/admin/src/__tests__/`.
 
 **Error Boundary:**
+
 - Render `AdminError` with a mock error and `reset` spy; assert safe message
   shown, "Try again" calls `reset`, dashboard link present.
 
 **Loading UI:**
+
 - Render `AdminLoading`; assert `Skeleton` elements are present.
 
 **EmptyState component:**
+
 - Render with message + CTA; assert both appear.
 - Render without CTA; assert no link rendered.
 - Render with `filtered=true`; assert filter-specific message shown.
 
 **Form inline errors:**
+
 - For each form component (income, expense, division, lead status): render with
   a mock action returning `{ error: 'test error' }`, submit, assert error text
   appears and field values are preserved.
 - Submit with mock action returning `{}` (success); assert error is cleared.
 
 **LeadStatusForm optimistic update:**
+
 - Render with `currentStatus='new'`, select `'contacted'`, assert UI shows
   `'contacted'` before action resolves.
 - Trigger action returning `{ error: '...' }`, assert status reverts to `'new'`
@@ -301,6 +313,7 @@ Feature: system-hardening, Property 1: Server Actions never throw
 For each action (`createIncome`, `updateIncome`, `deleteIncome`,
 `createExpense`, `updateExpense`, `deleteExpense`, `updateLeadStatus`,
 `updateLeadNotes`, `createDivision`):
+
 - Generate arbitrary `FormData` payloads using `fc.dictionary` / `fc.string`
 - Mock the `db` module to either succeed or throw randomly
 - Assert the action always returns `{ error?: string }` and never throws

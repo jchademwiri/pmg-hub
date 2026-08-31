@@ -1,5 +1,5 @@
-import { Skeleton } from '@/components/ui/skeleton'
-import { Card, CardHeader, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 
 export default function DashboardLoading() {
   return (
@@ -43,5 +43,5 @@ export default function DashboardLoading() {
       {/* Expense breakdown */}
       <Skeleton className="hidden md:block h-40 w-full rounded-xl" />
     </div>
-  )
+  );
 }

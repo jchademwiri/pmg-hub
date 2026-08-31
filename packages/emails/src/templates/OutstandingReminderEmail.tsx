@@ -1,13 +1,8 @@
-import * as React from "react";
-import {
-  Button,
-  Heading,
-  Section,
-  Text,
-} from "@react-email/components";
-import type { BrandingProps } from "../types";
-import { DEFAULT_WEBSITE_URL } from "../domains";
-import { EmailLayout } from "./EmailLayout";
+import * as React from 'react';
+import { Button, Heading, Section, Text } from '@react-email/components';
+import type { BrandingProps } from '../types';
+import { DEFAULT_WEBSITE_URL } from '../domains';
+import { EmailLayout } from './EmailLayout';
 
 export type OutstandingReminderEmailProps = {
   clientName: string;
@@ -16,7 +11,7 @@ export type OutstandingReminderEmailProps = {
   dueDate: string;
   totalAmount: string;
   outstandingAmount: string;
-  reminderType: "pre-due" | "due-today" | "overdue";
+  reminderType: 'pre-due' | 'due-today' | 'overdue';
   personalMessage?: string;
   portalUrl?: string;
   bankDetails?: {
@@ -39,49 +34,57 @@ const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
     personalMessage,
     portalUrl,
     bankDetails,
-    companyName = "Playhouse Media Group",
-    primaryColor = "#1d4ed8",
+    companyName = 'Playhouse Media Group',
+    primaryColor = '#1d4ed8',
     websiteUrl = DEFAULT_WEBSITE_URL,
     logoUrl,
   } = props;
 
   const headerConfigs = {
-    "pre-due": {
-      title: "Upcoming Invoice Reminder",
-      bannerBg: "bg-[#F8FAFC] border-l-4 border-solid border-slate-400",
-      bannerText: "text-[#020304]",
+    'pre-due': {
+      title: 'Upcoming Invoice Reminder',
+      bannerBg: 'bg-[#F8FAFC] border-l-4 border-solid border-slate-400',
+      bannerText: 'text-[#020304]',
       previewText: `Friendly reminder: Invoice ${documentNumber} is due soon.`,
       intro: (
         <>
-          This is a friendly reminder that invoice <strong>{documentNumber}</strong> from <strong>{companyName}</strong> is due in 3 days.
+          This is a friendly reminder that invoice <strong>{documentNumber}</strong> from{' '}
+          <strong>{companyName}</strong> is due in 3 days.
         </>
       ),
     },
-    "due-today": {
-      title: "Invoice Due Today",
-      bannerBg: "bg-[#F8FAFC] border-l-4 border-solid border-brand",
-      bannerText: "text-[#020304]",
+    'due-today': {
+      title: 'Invoice Due Today',
+      bannerBg: 'bg-[#F8FAFC] border-l-4 border-solid border-brand',
+      bannerText: 'text-[#020304]',
       previewText: `Notice: Invoice ${documentNumber} is due for payment today.`,
       intro: (
         <>
-          Please be advised that invoice <strong>{documentNumber}</strong> from <strong>{companyName}</strong> is due for payment today.
+          Please be advised that invoice <strong>{documentNumber}</strong> from{' '}
+          <strong>{companyName}</strong> is due for payment today.
         </>
       ),
     },
-    "overdue": {
-      title: "Overdue Invoice Notice",
-      bannerBg: "bg-[#F8FAFC] border-l-4 border-solid border-red-500",
-      bannerText: "text-[#020304]",
+    overdue: {
+      title: 'Overdue Invoice Notice',
+      bannerBg: 'bg-[#F8FAFC] border-l-4 border-solid border-red-500',
+      bannerText: 'text-[#020304]',
       previewText: `Action Required: Invoice ${documentNumber} is past due.`,
       intro: (
         <>
-          We noticed that payment for invoice <strong>{documentNumber}</strong> has not yet been received and is now past due. We kindly request that you settle the outstanding amount as soon as possible. <em>If you have already made payment, please disregard this notice as we may still be processing it.</em>
+          We noticed that payment for invoice <strong>{documentNumber}</strong> has not yet been
+          received and is now past due. We kindly request that you settle the outstanding amount as
+          soon as possible.{' '}
+          <em>
+            If you have already made payment, please disregard this notice as we may still be
+            processing it.
+          </em>
         </>
       ),
     },
   };
 
-  const currentConfig = headerConfigs[reminderType] || headerConfigs["pre-due"];
+  const currentConfig = headerConfigs[reminderType] || headerConfigs['pre-due'];
 
   return (
     <EmailLayout
@@ -106,13 +109,13 @@ const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
       )}
 
       {/* Alert Banner / Title */}
-      <Section className={`mb-[24px] rounded-[6px] border border-solid p-[16px] ${currentConfig.bannerBg}`}>
+      <Section
+        className={`mb-[24px] rounded-[6px] border border-solid p-[16px] ${currentConfig.bannerBg}`}
+      >
         <Heading className={`m-0 mb-[6px] text-[16px] font-bold ${currentConfig.bannerText}`}>
           {currentConfig.title}
         </Heading>
-        <Text className="m-0 text-[14px] leading-[22px] text-[#475569]">
-          {currentConfig.intro}
-        </Text>
+        <Text className="m-0 text-[14px] leading-[22px] text-[#475569]">{currentConfig.intro}</Text>
       </Section>
 
       {portalUrl && (
@@ -155,7 +158,9 @@ const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
             </tr>
             <tr>
               <td className="py-2 font-bold text-[#020304]">Outstanding Balance:</td>
-              <td className="py-2 text-[16px] font-bold text-brand text-right">{outstandingAmount}</td>
+              <td className="py-2 text-[16px] font-bold text-brand text-right">
+                {outstandingAmount}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -168,7 +173,8 @@ const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
             Payment Instructions (EFT/Bank Transfer)
           </Heading>
           <Text className="m-0 mb-[12px] text-[13px] leading-[20px] text-[#475569]">
-            Please make payment directly to our bank account. Use invoice number <strong>{documentNumber}</strong> as your deposit reference.
+            Please make payment directly to our bank account. Use invoice number{' '}
+            <strong>{documentNumber}</strong> as your deposit reference.
           </Text>
           <table className="w-full text-[13px] text-[#020304]">
             <tbody>
@@ -198,10 +204,12 @@ const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
       {/* Footer Sign-off */}
       <Section className="border-none border-t border-solid border-[#E2E8F0] pt-[20px]">
         <Text className="m-0 text-[14px] text-[#475569]">
-          If you have already made payment, please disregard this reminder and we thank you for your payment.
+          If you have already made payment, please disregard this reminder and we thank you for your
+          payment.
         </Text>
         <Text className="m-0 mt-[12px] text-[14px] text-[#020304]">
-          Kind regards,<br />
+          Kind regards,
+          <br />
           <strong>{companyName}</strong>
         </Text>
       </Section>
@@ -210,22 +218,22 @@ const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
 };
 
 OutstandingReminderEmail.PreviewProps = {
-  clientName: "Acme Corporation",
-  documentNumber: "INV-2026-005",
-  invoiceDate: "10 May 2026",
-  dueDate: "24 May 2026",
-  totalAmount: "R 10,000.00",
-  outstandingAmount: "R 5,000.00",
-  reminderType: "overdue",
-  portalUrl: "https://portal.playhousemedia.co.za/invoices/inv-123",
+  clientName: 'Acme Corporation',
+  documentNumber: 'INV-2026-005',
+  invoiceDate: '10 May 2026',
+  dueDate: '24 May 2026',
+  totalAmount: 'R 10,000.00',
+  outstandingAmount: 'R 5,000.00',
+  reminderType: 'overdue',
+  portalUrl: 'https://portal.playhousemedia.co.za/invoices/inv-123',
   bankDetails: {
-    bankName: "First National Bank",
-    accountName: "Playhouse Media Group",
-    accountNumber: "62891234567",
-    branchCode: "250655",
+    bankName: 'First National Bank',
+    accountName: 'Playhouse Media Group',
+    accountNumber: '62891234567',
+    branchCode: '250655',
   },
-  companyName: "Playhouse Media Group",
-  primaryColor: "#1d4ed8",
+  companyName: 'Playhouse Media Group',
+  primaryColor: '#1d4ed8',
   websiteUrl: DEFAULT_WEBSITE_URL,
 };
 

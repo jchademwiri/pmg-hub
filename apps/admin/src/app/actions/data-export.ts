@@ -49,9 +49,7 @@ export async function cleanupOldCloudflareBackups(): Promise<{
   }
 }
 
-export async function restoreDatabaseFromCloudflare(
-  formData: FormData,
-): Promise<{
+export async function restoreDatabaseFromCloudflare(formData: FormData): Promise<{
   error?: string;
   key?: string;
   restoredAt?: string;

@@ -25,16 +25,16 @@ Phases 0–6 and a cross-cutting document number prefix refactor are now complet
 
 ### Completed phases
 
-| Phase | Status | Summary |
-|---|---|---|
-| Phase 0 — Pre-implementation Audit | ✅ Done | All old route references mapped; `ACCOUNT_RATES`, `PROFIT_POOL_RATES`, and `general.ts` consumer identified. |
-| Phase 1 — Route Skeleton & Coming Soon | ✅ Done | New route groups added; Coming Soon pages created for all accounting and finance routes. |
-| Phase 2 — Replace Old Accounts/Ledger | ✅ Done | `/finance/distributions` built with PMG Share, Owner Drawings, Reinvestment, Activity, Rules tabs. Old `/finance/accounts`, `/finance/accounts/[account]`, `/finance/ledger` deleted. All internal links updated. Tests renamed. |
-| Phase 3 — Payment Reference Automation | ✅ Done | Field renamed to "Payment Note / Bank Reference Optional". Auto-reference preview added. `recordClientPayment()` generates trusted invoice-based reference server-side. |
-| Phase 4 — Finance Income Page | ✅ Done | `/finance/income` page built with allocation tracking (allocated vs unallocated), filters (month, division, client), source badges, closed period indicator, and links to billing payment detail. |
-| Phase 5 — Billing Credits MVP | ✅ Done | Credit schema (`credit_notes`, `credit_applications`, `credit_refunds`) implemented. Server actions: `createCreditNote`, `applyCreditToInvoice`, `applyCreditToInvoices`, `getClientCreditSummary`, `getClientCreditBalanceV2`, `getClientCreditHistory`, `voidCreditNote`, `refundCredit`, `expireCreditNotes`. UI: `/billing/credits` page, `IssueCreditNoteDialog`, `CreditRefundDialog`, `CreditHistoryTable`, credits tab in client billing workspace. Cron job for credit expiry. Tests for credit management. |
-| Phase 6 — Distribution Rules and Settings | ✅ Done | `distribution_settings` table with effective dates seeded. Server action `updateDistributionRate` for rate changes from UI. Editable Rules tab with inline rate editors, effective date pickers, descriptions, and rate history. Dynamic text replaces hardcoded percentages. Historical rates preserved via effective_from/effective_to. |
-| **Cross-cutting: Document Number Prefixes** | ✅ Done | Shared `@pmg/utils` package created with `deriveDivisionPrefix`, `generateReceiptNumber`, `generateCreditNoteNumber`. All receipts now show division prefix (e.g., `TES-REC-A1B2C3D4`). Credit notes show division prefix (e.g., `PMG-CN-2026-0042`). Invoices/quotes already had division prefixes. |
+| Phase                                       | Status  | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase 0 — Pre-implementation Audit          | ✅ Done | All old route references mapped; `ACCOUNT_RATES`, `PROFIT_POOL_RATES`, and `general.ts` consumer identified.                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Phase 1 — Route Skeleton & Coming Soon      | ✅ Done | New route groups added; Coming Soon pages created for all accounting and finance routes.                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Phase 2 — Replace Old Accounts/Ledger       | ✅ Done | `/finance/distributions` built with PMG Share, Owner Drawings, Reinvestment, Activity, Rules tabs. Old `/finance/accounts`, `/finance/accounts/[account]`, `/finance/ledger` deleted. All internal links updated. Tests renamed.                                                                                                                                                                                                                                                                                     |
+| Phase 3 — Payment Reference Automation      | ✅ Done | Field renamed to "Payment Note / Bank Reference Optional". Auto-reference preview added. `recordClientPayment()` generates trusted invoice-based reference server-side.                                                                                                                                                                                                                                                                                                                                              |
+| Phase 4 — Finance Income Page               | ✅ Done | `/finance/income` page built with allocation tracking (allocated vs unallocated), filters (month, division, client), source badges, closed period indicator, and links to billing payment detail.                                                                                                                                                                                                                                                                                                                    |
+| Phase 5 — Billing Credits MVP               | ✅ Done | Credit schema (`credit_notes`, `credit_applications`, `credit_refunds`) implemented. Server actions: `createCreditNote`, `applyCreditToInvoice`, `applyCreditToInvoices`, `getClientCreditSummary`, `getClientCreditBalanceV2`, `getClientCreditHistory`, `voidCreditNote`, `refundCredit`, `expireCreditNotes`. UI: `/billing/credits` page, `IssueCreditNoteDialog`, `CreditRefundDialog`, `CreditHistoryTable`, credits tab in client billing workspace. Cron job for credit expiry. Tests for credit management. |
+| Phase 6 — Distribution Rules and Settings   | ✅ Done | `distribution_settings` table with effective dates seeded. Server action `updateDistributionRate` for rate changes from UI. Editable Rules tab with inline rate editors, effective date pickers, descriptions, and rate history. Dynamic text replaces hardcoded percentages. Historical rates preserved via effective_from/effective_to.                                                                                                                                                                            |
+| **Cross-cutting: Document Number Prefixes** | ✅ Done | Shared `@pmg/utils` package created with `deriveDivisionPrefix`, `generateReceiptNumber`, `generateCreditNoteNumber`. All receipts now show division prefix (e.g., `TES-REC-A1B2C3D4`). Credit notes show division prefix (e.g., `PMG-CN-2026-0042`). Invoices/quotes already had division prefixes.                                                                                                                                                                                                                 |
 
 ### Next phase
 
@@ -86,14 +86,14 @@ Purpose: top-level business overview.
 
 Billing owns client-facing commercial documents and Accounts Receivable workflows:
 
-| Route | Purpose |
-|---|---|
-| `/billing/quotes` | Client quotations |
-| `/billing/invoices` | Client invoices |
-| `/billing/payments` | Client payments and invoice allocations |
-| `/billing/credits` | Credit notes, overpayments, refunds, and applications |
-| `/billing/statements` | Client statements and aged receivables |
-| `/billing/items` | Reusable billable services/items |
+| Route                 | Purpose                                               |
+| --------------------- | ----------------------------------------------------- |
+| `/billing/quotes`     | Client quotations                                     |
+| `/billing/invoices`   | Client invoices                                       |
+| `/billing/payments`   | Client payments and invoice allocations               |
+| `/billing/credits`    | Credit notes, overpayments, refunds, and applications |
+| `/billing/statements` | Client statements and aged receivables                |
+| `/billing/items`      | Reusable billable services/items                      |
 
 ---
 
@@ -109,22 +109,22 @@ Billing owns client-facing commercial documents and Accounts Receivable workflow
 
 Finance owns cash movement and owner/business financial management:
 
-| Route | Purpose |
-|---|---|
-| `/finance/overview` | Finance summary and key metrics |
-| `/finance/income` | All money received / cash receipts |
-| `/finance/expenses` | Business expenses |
-| `/finance/categories` | Expense categories |
+| Route                    | Purpose                                                  |
+| ------------------------ | -------------------------------------------------------- |
+| `/finance/overview`      | Finance summary and key metrics                          |
+| `/finance/income`        | All money received / cash receipts                       |
+| `/finance/expenses`      | Business expenses                                        |
+| `/finance/categories`    | Expense categories                                       |
 | `/finance/distributions` | PMG Share, Owner Drawings, Reinvestment, Activity, Rules |
 
 ### 2.3.1 Dashboard vs Finance Overview — boundary rule
 
 These two pages must not become duplicates of each other:
 
-| Page | Scope | Content |
-|---|---|---|
-| `/dashboard` | Quick glance only | Top-line KPIs across the whole business: current month revenue, current month expenses, outstanding AR, leads in pipeline, distribution status badges. No charts requiring drill-down, no filters, no historical comparison tables. |
-| `/finance/overview` | Detailed financial reports | Month-over-month trends, revenue by division series, expenses by category breakdown, distribution history, links into `/finance/income`, `/finance/expenses`, `/finance/distributions` for full detail. |
+| Page                | Scope                      | Content                                                                                                                                                                                                                             |
+| ------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/dashboard`        | Quick glance only          | Top-line KPIs across the whole business: current month revenue, current month expenses, outstanding AR, leads in pipeline, distribution status badges. No charts requiring drill-down, no filters, no historical comparison tables. |
+| `/finance/overview` | Detailed financial reports | Month-over-month trends, revenue by division series, expenses by category breakdown, distribution history, links into `/finance/income`, `/finance/expenses`, `/finance/distributions` for full detail.                             |
 
 Rule of thumb: if a widget needs a filter, a date range picker, or more than a single number to make sense, it belongs on `/finance/overview`, not `/dashboard`.
 
@@ -144,15 +144,15 @@ Rule of thumb: if a widget needs a filter, a date range picker, or more than a s
 
 Accounting owns the future accountant-grade system:
 
-| Route | Purpose | Initial status |
-|---|---|---|
-| `/finance/accounting/chart-of-accounts` | Real accounting accounts | Coming Soon |
-| `/finance/accounting/journals` | Journal entries | Coming Soon |
-| `/finance/accounting/general-ledger` | Debit/credit ledger | Coming Soon |
-| `/finance/accounting/trial-balance` | Debit/credit balance report | Coming Soon |
-| `/finance/accounting/profit-and-loss` | Income, expenses, net profit | Coming Soon |
-| `/finance/accounting/periods` | Open/close/lock accounting months | Coming Soon |
-| `/finance/accounting/exports` | Accountant exports | Coming Soon |
+| Route                                   | Purpose                           | Initial status |
+| --------------------------------------- | --------------------------------- | -------------- |
+| `/finance/accounting/chart-of-accounts` | Real accounting accounts          | Coming Soon    |
+| `/finance/accounting/journals`          | Journal entries                   | Coming Soon    |
+| `/finance/accounting/general-ledger`    | Debit/credit ledger               | Coming Soon    |
+| `/finance/accounting/trial-balance`     | Debit/credit balance report       | Coming Soon    |
+| `/finance/accounting/profit-and-loss`   | Income, expenses, net profit      | Coming Soon    |
+| `/finance/accounting/periods`           | Open/close/lock accounting months | Coming Soon    |
+| `/finance/accounting/exports`           | Accountant exports                | Coming Soon    |
 
 ---
 
@@ -232,11 +232,11 @@ The existing buckets are not formal accounting accounts. They are management dis
 
 Recommended simplified distribution categories:
 
-| Distribution | Meaning |
-|---|---|
-| PMG Share | 25% of gross revenue allocated to PMG |
-| Owner Drawings | Money taken personally by the owner |
-| Reinvestment | Money kept for business growth, tools, development, marketing, systems, etc. |
+| Distribution   | Meaning                                                                      |
+| -------------- | ---------------------------------------------------------------------------- |
+| PMG Share      | 25% of gross revenue allocated to PMG                                        |
+| Owner Drawings | Money taken personally by the owner                                          |
+| Reinvestment   | Money kept for business growth, tools, development, marketing, systems, etc. |
 
 Tax Reserve is intentionally excluded for now.
 
@@ -254,13 +254,13 @@ The system must automatically generate the payment reference from invoice docume
 
 Examples:
 
-| Scenario | Auto-generated reference |
-|---|---|
-| One invoice paid | `Payment for INV-2026-001` |
-| Multiple invoices paid | `Payment for INV-2026-001, INV-2026-002` |
+| Scenario                             | Auto-generated reference                               |
+| ------------------------------------ | ------------------------------------------------------ |
+| One invoice paid                     | `Payment for INV-2026-001`                             |
+| Multiple invoices paid               | `Payment for INV-2026-001, INV-2026-002`               |
 | Invoice paid plus unallocated credit | `Payment for INV-2026-001; Unallocated credit R500.00` |
-| No invoice allocation | `Unallocated client credit / deposit` |
-| Optional bank reference entered | `Payment for INV-2026-001 | Bank ref: EFT-89201` |
+| No invoice allocation                | `Unallocated client credit / deposit`                  |
+| Optional bank reference entered      | `Payment for INV-2026-001                              | Bank ref: EFT-89201` |
 
 ### 4.3 UI changes
 
@@ -327,14 +327,14 @@ A credit that originated from a locked/closed financial period may still be appl
 
 The closed period must block changes to the original source transaction, not the later use of the remaining credit.
 
-| Action | Rule |
-|---|---|
-| Edit original payment in closed period | Block |
-| Delete original payment in closed period | Block |
-| Void old credit source | Block or reversal-only |
-| Apply active credit in open period | Allow |
-| Refund active credit in open period | Allow |
-| Apply expired credit | Block unless reactivated/extended |
+| Action                                   | Rule                              |
+| ---------------------------------------- | --------------------------------- |
+| Edit original payment in closed period   | Block                             |
+| Delete original payment in closed period | Block                             |
+| Void old credit source                   | Block or reversal-only            |
+| Apply active credit in open period       | Allow                             |
+| Refund active credit in open period      | Allow                             |
+| Apply expired credit                     | Block unless reactivated/extended |
 
 ### 5.4 Partial credit applications across period boundaries
 
@@ -460,6 +460,7 @@ If `/finance/income` is not fully ready in the first deploy, it can also start a
    - `apps/admin/src/app/actions/account-withdrawal.ts`
    - `apps/admin/src/lib/financial.ts`
    - `packages/db/src/queries/general.ts` (imports `ACCOUNT_RATES` directly for revenue/profit-pool math — easy to miss since it is not under `finance/accounts`)
+
 2. Classify each usage as:
    - navigation
    - page route

@@ -1,4 +1,5 @@
 # Apex Web Solutions
+
 ### Brand Profile - Division 02 of Playhouse Media Group
 
 ---
@@ -13,24 +14,24 @@ In 2025, Jacob served 3–5 web clients informally, covering website design, dev
 
 ## Quick Profile
 
-| Field | Detail |
-|---|---|
-| Brand Name | Apex Web Solutions |
-| Parent Company | Playhouse Media Group (PTY) Ltd |
-| Division | 02 - Web Design & Development |
-| Status | **Active - 3–5 clients served in 2025** |
-| Domain | apexwebsolutions.co.za *(live)* |
-| Email | info@apexwebsolutions.co.za |
-| Social Media | @apexwebsolutionssa |
-| Revenue Model | Once-off project fees + monthly maintenance retainers |
-| Tech Stack | Next.js, TypeScript, React, shadcn/ui - deployed on Vercel |
-| Strategic Focus | 30% of PMG's total effort |
+| Field           | Detail                                                     |
+| --------------- | ---------------------------------------------------------- |
+| Brand Name      | Apex Web Solutions                                         |
+| Parent Company  | Playhouse Media Group (PTY) Ltd                            |
+| Division        | 02 - Web Design & Development                              |
+| Status          | **Active - 3–5 clients served in 2025**                    |
+| Domain          | apexwebsolutions.co.za _(live)_                            |
+| Email           | info@apexwebsolutions.co.za                                |
+| Social Media    | @apexwebsolutionssa                                        |
+| Revenue Model   | Once-off project fees + monthly maintenance retainers      |
+| Tech Stack      | Next.js, TypeScript, React, shadcn/ui - deployed on Vercel |
+| Strategic Focus | 30% of PMG's total effort                                  |
 
 ---
 
 ## Tagline
 
-> *"Where Great Websites Begin"*
+> _"Where Great Websites Begin"_
 
 ---
 
@@ -46,20 +47,22 @@ Our clients range from new entrepreneurs needing their first website to contract
 
 ### Website Design & Development
 
-| Service | Price |
-|---|---|
-| Starter website (5 pages) | R4,500 |
-| Business website (10 pages + blog) | R8,500 |
-| E-commerce store | R15,000 |
-| Custom web application | R25,000+ |
+| Service                            | Price    |
+| ---------------------------------- | -------- |
+| Starter website (5 pages)          | R4,500   |
+| Business website (10 pages + blog) | R8,500   |
+| E-commerce store                   | R15,000  |
+| Custom web application             | R25,000+ |
 
 ### Hosting & Technical Setup
+
 - Website hosting and domain registration
 - Professional email setup (e.g. info@yourbusiness.co.za)
 - SSL certificates and website security
 - Website speed optimisation
 
 ### SEO & Visibility
+
 - On-page SEO (meta tags, headings, keyword structure)
 - Technical SEO and mobile optimisation
 - Google Business Profile setup and optimisation
@@ -67,13 +70,14 @@ Our clients range from new entrepreneurs needing their first website to contract
 
 ### Maintenance Retainers
 
-| Package | Price |
-|---|---|
-| Starter site maintenance | R450/mo |
-| Business site maintenance | R750/mo |
-| E-commerce maintenance | R1,200/mo |
+| Package                   | Price     |
+| ------------------------- | --------- |
+| Starter site maintenance  | R450/mo   |
+| Business site maintenance | R750/mo   |
+| E-commerce maintenance    | R1,200/mo |
 
 ### Additional Services
+
 - Landing pages and lead generation microsites
 - WordPress website development
 - Custom web apps for internal business tools
@@ -83,11 +87,11 @@ Our clients range from new entrepreneurs needing their first website to contract
 
 ## 2025 Client Reality
 
-| Activity | Detail |
-|---|---|
-| Clients served | 3–5 |
-| Services delivered | Website design, development, hosting |
-| Revenue model used | Once-off project fees (informal) |
+| Activity             | Detail                                                                        |
+| -------------------- | ----------------------------------------------------------------------------- |
+| Clients served       | 3–5                                                                           |
+| Services delivered   | Website design, development, hosting                                          |
+| Revenue model used   | Once-off project fees (informal)                                              |
 | Opportunity for 2026 | Convert existing clients to maintenance retainers + grow new project pipeline |
 
 > 20 maintenance retainer clients at R750/mo = R15,000/month in recurring income without a single new project sale.
@@ -106,25 +110,25 @@ Our clients range from new entrepreneurs needing their first website to contract
 
 ## Cross-Sell Opportunities
 
-| If the client needs... | Refer to... |
-|---|---|
-| A logo or full brand identity | Playhouse Creative Studio |
-| Tender compliance and bid preparation | Tender Edge Solutions |
-| Company registration | LaunchPad SA |
-| Social media management | Playhouse Creative Studio |
+| If the client needs...                | Refer to...               |
+| ------------------------------------- | ------------------------- |
+| A logo or full brand identity         | Playhouse Creative Studio |
+| Tender compliance and bid preparation | Tender Edge Solutions     |
+| Company registration                  | LaunchPad SA              |
+| Social media management               | Playhouse Creative Studio |
 
 ---
 
 ## Brand Identity
 
-| Element | Detail |
-|---|---|
-| Primary Colour | Midnight `#0F172A` |
-| Accent Colour | Sky Blue `#38BDF8` |
-| Secondary | Electric `#0EA5E9` |
-| Display Font | Syne ExtraBold |
-| Accent Font | Space Mono |
-| Tone | Technical, modern, results-driven, precise |
+| Element        | Detail                                     |
+| -------------- | ------------------------------------------ |
+| Primary Colour | Midnight `#0F172A`                         |
+| Accent Colour  | Sky Blue `#38BDF8`                         |
+| Secondary      | Electric `#0EA5E9`                         |
+| Display Font   | Syne ExtraBold                             |
+| Accent Font    | Space Mono                                 |
+| Tone           | Technical, modern, results-driven, precise |
 
 ---
 
@@ -134,6 +138,6 @@ Our clients range from new entrepreneurs needing their first website to contract
 
 ---
 
-*Last updated: March 2026 | Version 2.0*
-*Apex Web Solutions - a Playhouse Media Group division*
-*apexwebsolutions.co.za | info@apexwebsolutions.co.za*
+_Last updated: March 2026 | Version 2.0_
+_Apex Web Solutions - a Playhouse Media Group division_
+_apexwebsolutions.co.za | info@apexwebsolutions.co.za_

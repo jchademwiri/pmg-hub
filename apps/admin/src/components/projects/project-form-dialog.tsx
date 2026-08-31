@@ -143,7 +143,12 @@ export function ProjectFormDialog({
                   ))}
                 </SelectContent>
               </Select>
-              <input id="tender-client-hidden" type="hidden" name="clientId" value={selectedClientId} />
+              <input
+                id="tender-client-hidden"
+                type="hidden"
+                name="clientId"
+                value={selectedClientId}
+              />
             </Field>
 
             {/* Tender Reference */}
@@ -265,7 +270,12 @@ export function ProjectFormDialog({
                   ))}
                 </SelectContent>
               </Select>
-              <input id="tender-division-hidden" type="hidden" name="divisionId" value={selectedDivisionId} />
+              <input
+                id="tender-division-hidden"
+                type="hidden"
+                name="divisionId"
+                value={selectedDivisionId}
+              />
             </Field>
           </div>
 

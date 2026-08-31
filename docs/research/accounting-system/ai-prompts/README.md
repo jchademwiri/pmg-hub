@@ -3,9 +3,11 @@
 This folder contains a two-phase research and implementation framework for PMG's manual bookkeeping system.
 
 ## Phase 1: Research & Audit
+
 **File:** `01-accounting-system-research-audit-prompt.md`
 
 **Deliverables:**
+
 - Industry research summary (how accounting systems work)
 - Corrected MVP scope (required vs. deferred features)
 - PMG current-state code audit (45-point feature table)
@@ -19,9 +21,11 @@ This folder contains a two-phase research and implementation framework for PMG's
 ---
 
 ## Phase 2: Schema & Roadmap
+
 **File:** `02-accounting-system-schema-roadmap-prompt.md`
 
 **Deliverables:**
+
 - Recommended database changes (Drizzle schema plan)
 - Proposed Chart of Accounts (account codes for PMG)
 - Posting rules (double-entry guidance)
@@ -30,6 +34,7 @@ This folder contains a two-phase research and implementation framework for PMG's
 - Critical bugs & risks scan
 
 **Outputs:**
+
 - `docs/research/accounting-system/02-pmg-manual-bookkeeping-mvp-roadmap.md`
 - `docs/research/accounting-system/03-pmg-manual-bookkeeping-schema-plan.md`
 

@@ -75,12 +75,13 @@ if (error) {
 
 ## Available Templates
 
-| Template | Purpose | Add when... |
-|---|---|---|
+| Template            | Purpose                                           | Add when...             |
+| ------------------- | ------------------------------------------------- | ----------------------- |
 | `AdminNewLeadEmail` | Admin notification when a lead submits an enquiry | TES lead form goes live |
-| `AutoReplyEmail` | Auto-reply to the person who submitted a form | TES lead form goes live |
+| `AutoReplyEmail`    | Auto-reply to the person who submitted a form     | TES lead form goes live |
 
 ### Planned (add when the relevant site section is built)
+
 - `BookingConfirmationEmail` - AWS booking dialog
 - `ContactFormEmail` - AWS contact form
 - `WaitlistEmail` - AWS waitlist form

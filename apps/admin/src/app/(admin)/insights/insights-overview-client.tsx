@@ -1,21 +1,14 @@
-'use client'
+'use client';
 
-import Link from 'next/link'
-import {
-  TrendingUp,
-  BarChart3,
-  Camera,
-  Shield,
-  ArrowRight,
-  Sparkles,
-} from 'lucide-react'
-import { AnalysisKpiStrip } from '@/components/analysis/analysis-kpi-strip'
+import Link from 'next/link';
+import { TrendingUp, BarChart3, Camera, Shield, ArrowRight, Sparkles } from 'lucide-react';
+import { AnalysisKpiStrip } from '@/components/analysis/analysis-kpi-strip';
 
 interface InsightsOverviewClientProps {
-  overviewData: any
-  overviewStatus?: 'fulfilled' | 'rejected'
-  snapshotCount?: number
-  snapshotsStatus?: 'fulfilled' | 'rejected'
+  overviewData: any;
+  overviewStatus?: 'fulfilled' | 'rejected';
+  snapshotCount?: number;
+  snapshotsStatus?: 'fulfilled' | 'rejected';
 }
 
 export function InsightsOverviewClient({
@@ -24,13 +17,15 @@ export function InsightsOverviewClient({
   snapshotCount,
   snapshotsStatus,
 }: InsightsOverviewClientProps) {
-  const snapshotBadge = snapshotsStatus === 'rejected' ? 'Unavailable' : `${snapshotCount ?? 0} Saved`
+  const snapshotBadge =
+    snapshotsStatus === 'rejected' ? 'Unavailable' : `${snapshotCount ?? 0} Saved`;
 
   const modules = [
     {
       href: '/insights/analysis',
       title: 'Business Analysis',
-      description: 'Deep dive YoY performance, revenue trends, division breakdown, and client concentration.',
+      description:
+        'Deep dive YoY performance, revenue trends, division breakdown, and client concentration.',
       icon: TrendingUp,
       badge: 'Core Analytics',
       color: 'bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400',
@@ -39,7 +34,8 @@ export function InsightsOverviewClient({
     {
       href: '/insights/reports',
       title: 'Insights Reports',
-      description: 'Comprehensive financial reports, month-on-month trends, budget analysis, and ledger balances.',
+      description:
+        'Comprehensive financial reports, month-on-month trends, budget analysis, and ledger balances.',
       icon: BarChart3,
       badge: 'Financials',
       color: 'bg-violet-500/10 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400',
@@ -48,7 +44,8 @@ export function InsightsOverviewClient({
     {
       href: '/insights/snapshots',
       title: 'Closed Month Snapshots',
-      description: 'Locked point-in-time monthly snapshots for historical reporting and audit verification.',
+      description:
+        'Locked point-in-time monthly snapshots for historical reporting and audit verification.',
       icon: Camera,
       badge: snapshotBadge,
       color: 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400',
@@ -57,21 +54,27 @@ export function InsightsOverviewClient({
     {
       href: '/insights/compliance-radar',
       title: 'Compliance Radar',
-      description: 'Monitor client compliance status, document expiry timelines, and operational risks.',
+      description:
+        'Monitor client compliance status, document expiry timelines, and operational risks.',
       icon: Shield,
       badge: 'Client Health',
       color: 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400',
       accent: 'border-amber-500/20 hover:border-amber-500/40',
     },
-  ]
+  ];
 
   return (
     <div className="flex flex-col gap-8">
       {/* High-level KPI Strip */}
       {overviewStatus === 'rejected' ? (
-        <section className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive" data-testid="overview-retrieval-failure">
+        <section
+          className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive"
+          data-testid="overview-retrieval-failure"
+        >
           <p className="font-medium">Failed to load overview KPI data.</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Please refresh the page or try again later.</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Please refresh the page or try again later.
+          </p>
         </section>
       ) : overviewData ? (
         <section>
@@ -93,13 +96,14 @@ export function InsightsOverviewClient({
         <div>
           <h3 className="text-base font-semibold">Reports & Analytics Hub</h3>
           <p className="text-xs text-muted-foreground">
-            Select a module to view detailed performance metrics, generated statements, or audit records.
+            Select a module to view detailed performance metrics, generated statements, or audit
+            records.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {modules.map((mod) => {
-            const Icon = mod.icon
+            const Icon = mod.icon;
             return (
               <Link
                 key={mod.href}
@@ -108,7 +112,9 @@ export function InsightsOverviewClient({
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${mod.color}`}>
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-lg ${mod.color}`}
+                    >
                       <Icon className="h-5 w-5" />
                     </div>
                     <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground">
@@ -129,10 +135,10 @@ export function InsightsOverviewClient({
                   <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                 </div>
               </Link>
-            )
+            );
           })}
         </div>
       </section>
     </div>
-  )
+  );
 }

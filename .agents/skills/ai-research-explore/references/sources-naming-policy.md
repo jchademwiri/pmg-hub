@@ -22,4 +22,3 @@ All internal research lookup results for `ai-research-explore` are saved under `
 - `sources/` is an exploratory audit trail, not a trusted literature database
 - source cache entries must not imply benchmark completeness
 - source cache entries must not imply novelty proof
-

@@ -37,9 +37,7 @@ export function ApplyCreditDialog({
 }: ApplyCreditDialogProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [amount, setAmount] = useState(
-    Math.min(availableCredit, outstandingBalance).toFixed(2)
-  );
+  const [amount, setAmount] = useState(Math.min(availableCredit, outstandingBalance).toFixed(2));
 
   const amountNum = parseFloat(amount) || 0;
   const isValid = amountNum > 0 && amountNum <= availableCredit && amountNum <= outstandingBalance;
@@ -57,9 +55,7 @@ export function ApplyCreditDialog({
         return;
       }
 
-      toast.success(
-        `Credit of ${formatZAR(amountNum)} applied successfully!`
-      );
+      toast.success(`Credit of ${formatZAR(amountNum)} applied successfully!`);
       onOpenChange(false);
       router.refresh();
     });
@@ -128,9 +124,7 @@ export function ApplyCreditDialog({
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Invoice Balance:</span>
-              <span className="font-semibold tabular-nums">
-                {formatZAR(remainingOutstanding)}
-              </span>
+              <span className="font-semibold tabular-nums">{formatZAR(remainingOutstanding)}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Credit Remaining:</span>
@@ -144,7 +138,8 @@ export function ApplyCreditDialog({
             <div className="flex items-center gap-2 p-2.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
               <span className="font-semibold">✓</span>
               <span>
-                This will apply {formatZAR(amountNum)} from the client&apos;s existing credit to this invoice.
+                This will apply {formatZAR(amountNum)} from the client&apos;s existing credit to
+                this invoice.
               </span>
             </div>
           )}

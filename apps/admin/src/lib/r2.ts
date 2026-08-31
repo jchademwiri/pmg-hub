@@ -31,7 +31,13 @@ export function getR2Client() {
 }
 
 const MAX_RECEIPT_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_MIME_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/webp',
+];
 
 export async function uploadReceiptToR2(file: File | null): Promise<{
   url?: string;
@@ -82,7 +88,10 @@ export async function uploadReceiptToR2(file: File | null): Promise<{
   }
 }
 
-export async function generateReceiptPresignedUrl(key: string, expiresInSeconds = 300): Promise<string> {
+export async function generateReceiptPresignedUrl(
+  key: string,
+  expiresInSeconds = 300,
+): Promise<string> {
   const { client, bucket } = getR2Client();
   const command = new GetObjectCommand({
     Bucket: bucket,

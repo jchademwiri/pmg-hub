@@ -8,7 +8,13 @@ vi.mock('next/headers', () => ({
 
 vi.mock('@pmg/db', () => ({
   getDb: vi.fn(),
-  clients: { id: 'id', name: 'name', businessName: 'businessName', email: 'email', isActive: 'isActive' },
+  clients: {
+    id: 'id',
+    name: 'name',
+    businessName: 'businessName',
+    email: 'email',
+    isActive: 'isActive',
+  },
   eq: vi.fn(),
 }));
 

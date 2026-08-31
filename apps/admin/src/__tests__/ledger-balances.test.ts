@@ -14,7 +14,12 @@ vi.mock('@pmg/db', () => ({
   },
 }));
 
-import { getTotalRevenue, getTotalExpenses, getLedgerTotalByAllocation, getActiveRates } from '@pmg/db';
+import {
+  getTotalRevenue,
+  getTotalExpenses,
+  getLedgerTotalByAllocation,
+  getActiveRates,
+} from '@pmg/db';
 import { getLedgerBalances } from '@/lib/financial';
 
 describe('getLedgerBalances', () => {

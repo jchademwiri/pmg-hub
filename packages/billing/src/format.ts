@@ -14,15 +14,18 @@ export function formatZAR(amount: number | string | null | undefined): string {
  * The T00:00:00 suffix prevents timezone-offset day-shift on ISO strings.
  */
 export function fmtDate(value: string | Date | null | undefined): string {
-  if (!value) return '-'
+  if (!value) return '-';
   try {
-    const date = typeof value === 'string'
-      ? (value.length === 10 ? new Date(value + 'T00:00:00') : new Date(value))
-      : value
-    if (isNaN(date.getTime())) return '-'
-    return date.toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })
+    const date =
+      typeof value === 'string'
+        ? value.length === 10
+          ? new Date(value + 'T00:00:00')
+          : new Date(value)
+        : value;
+    if (isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' });
   } catch {
-    return '-'
+    return '-';
   }
 }
 
@@ -32,15 +35,18 @@ export function fmtDate(value: string | Date | null | undefined): string {
  * full month name reads better on paper.
  */
 export function fmtDateLong(value: string | Date | null | undefined): string {
-  if (!value) return '-'
+  if (!value) return '-';
   try {
-    const date = typeof value === 'string'
-      ? (value.length === 10 ? new Date(value + 'T00:00:00') : new Date(value))
-      : value
-    if (isNaN(date.getTime())) return '-'
-    return date.toLocaleDateString('en-ZA', { day: '2-digit', month: 'long', year: 'numeric' })
+    const date =
+      typeof value === 'string'
+        ? value.length === 10
+          ? new Date(value + 'T00:00:00')
+          : new Date(value)
+        : value;
+    if (isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString('en-ZA', { day: '2-digit', month: 'long', year: 'numeric' });
   } catch {
-    return '-'
+    return '-';
   }
 }
 
@@ -49,21 +55,24 @@ export function fmtDateLong(value: string | Date | null | undefined): string {
  * Standardizes time-stamped activity views across the control center.
  */
 export function fmtDateTime(value: string | Date | null | undefined): string {
-  if (!value) return '-'
+  if (!value) return '-';
   try {
-    const date = typeof value === 'string'
-      ? (value.length === 10 ? new Date(value + 'T00:00:00') : new Date(value))
-      : value
-    if (isNaN(date.getTime())) return '-'
+    const date =
+      typeof value === 'string'
+        ? value.length === 10
+          ? new Date(value + 'T00:00:00')
+          : new Date(value)
+        : value;
+    if (isNaN(date.getTime())) return '-';
     return date.toLocaleString('en-ZA', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-    })
+    });
   } catch {
-    return '-'
+    return '-';
   }
 }
 
@@ -71,24 +80,27 @@ export function fmtDateTime(value: string | Date | null | undefined): string {
  * Format a date string (YYYY-MM-DD or YYYY-MM) or Date object as "Month YYYY" (e.g. "May 2026").
  * Safeguards against timezone daylight/offset shifting.
  */
-export function fmtMonthYear(value: string | Date | null | undefined, options?: { short?: boolean }): string {
-  if (!value) return '-'
+export function fmtMonthYear(
+  value: string | Date | null | undefined,
+  options?: { short?: boolean },
+): string {
+  if (!value) return '-';
   try {
-    let date: Date
+    let date: Date;
     if (typeof value === 'string') {
-      const dateStr = value.includes('-') && value.split('-').length === 2 ? value + '-01' : value
-      const finalStr = dateStr.length === 10 ? dateStr + 'T00:00:00' : dateStr
-      date = new Date(finalStr)
+      const dateStr = value.includes('-') && value.split('-').length === 2 ? value + '-01' : value;
+      const finalStr = dateStr.length === 10 ? dateStr + 'T00:00:00' : dateStr;
+      date = new Date(finalStr);
     } else {
-      date = value
+      date = value;
     }
-    if (isNaN(date.getTime())) return '-'
+    if (isNaN(date.getTime())) return '-';
     return date.toLocaleString('en-ZA', {
       month: options?.short ? 'short' : 'long',
-      year: 'numeric'
-    })
+      year: 'numeric',
+    });
   } catch {
-    return '-'
+    return '-';
   }
 }
 
@@ -121,7 +133,9 @@ export function getEndOfMonth(dateStr?: string | Date | null): string {
   const d = !dateStr
     ? new Date()
     : typeof dateStr === 'string'
-      ? (dateStr.length === 10 ? new Date(dateStr + 'T00:00:00') : new Date(dateStr))
+      ? dateStr.length === 10
+        ? new Date(dateStr + 'T00:00:00')
+        : new Date(dateStr)
       : dateStr;
   const year = d.getFullYear();
   const month = d.getMonth();
@@ -137,8 +151,14 @@ export function getEndOfMonth(dateStr?: string | Date | null): string {
  * Returns `undefined` if no address parts are available.
  */
 export function formatOrgAddress(
-  settings?: { addressStreet?: string | null; addressCity?: string | null; addressPostal?: string | null } | null,
+  settings?: {
+    addressStreet?: string | null;
+    addressCity?: string | null;
+    addressPostal?: string | null;
+  } | null,
 ): string | undefined {
-  const parts = [settings?.addressStreet, settings?.addressCity, settings?.addressPostal].filter(Boolean);
+  const parts = [settings?.addressStreet, settings?.addressCity, settings?.addressPostal].filter(
+    Boolean,
+  );
   return parts.length > 0 ? parts.join(', ') : undefined;
 }

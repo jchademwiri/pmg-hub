@@ -24,11 +24,11 @@ Most users do not need to create accounting entries manually. Issued invoices an
 
 Every quote and invoice belongs to a division.
 
-| Acronym | Division |
-|---------|----------|
-| AWS | Apex Web Solutions |
-| TES | Tender Edge Solutions |
-| PMG | Playhouse Media Group |
+| Acronym | Division              |
+| ------- | --------------------- |
+| AWS     | Apex Web Solutions    |
+| TES     | Tender Edge Solutions |
+| PMG     | Playhouse Media Group |
 
 The division affects document numbers, logos, reporting, income, and division performance.
 
@@ -40,4 +40,3 @@ The division affects document numbers, logos, reporting, income, and division pe
 4. Create or issue an invoice when it is time to bill.
 5. Record payment only after money arrives.
 6. Check the client statement if there is confusion about what is owed.
-

@@ -2,19 +2,19 @@
 
 import * as React from 'react';
 import { useOptimistic, useTransition } from 'react';
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  Plus, 
-  Check, 
-  X, 
-  Trash2, 
-  Edit2, 
+import {
+  ChevronDown,
+  ChevronRight,
+  Plus,
+  Check,
+  X,
+  Trash2,
+  Edit2,
   GripVertical,
   CheckCircle2,
   Circle,
   PlayCircle,
-  HelpCircle
+  HelpCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
@@ -28,7 +28,7 @@ import {
   deleteProgressItemAction,
   toggleProgressItemAction,
   updateProgressItemTextAction,
-  updateProgressSectionStatusAction
+  updateProgressSectionStatusAction,
 } from '@/app/actions/project-progress';
 
 type BucketType = 'backlog' | 'in_progress' | 'completed';
@@ -96,7 +96,10 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
   React.useEffect(() => {
     if (onProgressChange) {
       const total = sections.reduce((acc, s) => acc + s.items.length, 0);
-      const completed = sections.reduce((acc, s) => acc + s.items.filter(i => i.isCompleted).length, 0);
+      const completed = sections.reduce(
+        (acc, s) => acc + s.items.filter((i) => i.isCompleted).length,
+        0,
+      );
       onProgressChange(completed, total, sections);
     }
   }, [sections, onProgressChange]);
@@ -104,26 +107,29 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
   // React 19 Optimistic State for sections (handling additions, deletions, checkbox toggling & drag-drop)
   const [optimisticSections, setOptimisticSections] = useOptimistic(
     sections,
-    (state, action: 
-      | { type: 'MOVE_TASK'; taskId: string; targetStatus: BucketType }
-      | { type: 'ADD_MAIN_TASK'; newTask: MainTask }
-      | { type: 'DELETE_MAIN_TASK'; sectionId: string }
-      | { type: 'RENAME_MAIN_TASK'; sectionId: string; title: string }
-      | { type: 'ADD_SUB_TASK'; sectionId: string; newItem: SubTask }
-      | { type: 'DELETE_SUB_TASK'; sectionId: string; itemId: string }
-      | { type: 'TOGGLE_SUB_TASK'; itemId: string; isCompleted: boolean }
-      | { type: 'RENAME_SUB_TASK'; itemId: string; task: string }
+    (
+      state,
+      action:
+        | { type: 'MOVE_TASK'; taskId: string; targetStatus: BucketType }
+        | { type: 'ADD_MAIN_TASK'; newTask: MainTask }
+        | { type: 'DELETE_MAIN_TASK'; sectionId: string }
+        | { type: 'RENAME_MAIN_TASK'; sectionId: string; title: string }
+        | { type: 'ADD_SUB_TASK'; sectionId: string; newItem: SubTask }
+        | { type: 'DELETE_SUB_TASK'; sectionId: string; itemId: string }
+        | { type: 'TOGGLE_SUB_TASK'; itemId: string; isCompleted: boolean }
+        | { type: 'RENAME_SUB_TASK'; itemId: string; task: string },
     ) => {
       switch (action.type) {
         case 'MOVE_TASK':
-          return state.map(s => {
+          return state.map((s) => {
             if (s.id === action.taskId) {
               return {
                 ...s,
                 status: action.targetStatus,
-                items: action.targetStatus === 'completed'
-                  ? s.items.map(i => ({ ...i, isCompleted: true, completedAt: new Date() }))
-                  : s.items.map(i => ({ ...i, isCompleted: false, completedAt: null }))
+                items:
+                  action.targetStatus === 'completed'
+                    ? s.items.map((i) => ({ ...i, isCompleted: true, completedAt: new Date() }))
+                    : s.items.map((i) => ({ ...i, isCompleted: false, completedAt: null })),
               };
             }
             return s;
@@ -131,27 +137,27 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
         case 'ADD_MAIN_TASK':
           return [...state, action.newTask];
         case 'DELETE_MAIN_TASK':
-          return state.filter(s => s.id !== action.sectionId);
+          return state.filter((s) => s.id !== action.sectionId);
         case 'RENAME_MAIN_TASK':
-          return state.map(s => s.id === action.sectionId ? { ...s, title: action.title } : s);
+          return state.map((s) => (s.id === action.sectionId ? { ...s, title: action.title } : s));
         case 'ADD_SUB_TASK':
-          return state.map(s => {
+          return state.map((s) => {
             if (s.id === action.sectionId) {
               return {
                 ...s,
                 // If section was completed, it now moves to in_progress because a new uncompleted sub-task is added
-                status: s.status === 'completed' ? 'in_progress' as const : s.status,
-                items: [...s.items, action.newItem]
+                status: s.status === 'completed' ? ('in_progress' as const) : s.status,
+                items: [...s.items, action.newItem],
               };
             }
             return s;
           });
         case 'DELETE_SUB_TASK':
-          return state.map(s => {
+          return state.map((s) => {
             if (s.id === action.sectionId) {
-              const remaining = s.items.filter(i => i.id !== action.itemId);
+              const remaining = s.items.filter((i) => i.id !== action.itemId);
               const total = remaining.length;
-              const completed = remaining.filter(i => i.isCompleted).length;
+              const completed = remaining.filter((i) => i.isCompleted).length;
               let nextStatus = s.status;
               if (total === 0) nextStatus = 'backlog';
               else if (completed === total) nextStatus = 'completed';
@@ -160,29 +166,35 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
             return s;
           });
         case 'TOGGLE_SUB_TASK':
-          return state.map(s => {
-            const hasItem = s.items.some(i => i.id === action.itemId);
+          return state.map((s) => {
+            const hasItem = s.items.some((i) => i.id === action.itemId);
             if (!hasItem) return s;
 
-            const updatedItems = s.items.map(i => 
-              i.id === action.itemId 
-                ? { ...i, isCompleted: action.isCompleted, completedAt: action.isCompleted ? new Date() : null } 
-                : i
+            const updatedItems = s.items.map((i) =>
+              i.id === action.itemId
+                ? {
+                    ...i,
+                    isCompleted: action.isCompleted,
+                    completedAt: action.isCompleted ? new Date() : null,
+                  }
+                : i,
             );
 
             const total = updatedItems.length;
-            const completed = updatedItems.filter(i => i.isCompleted).length;
+            const completed = updatedItems.filter((i) => i.isCompleted).length;
             let nextStatus: BucketType = 'in_progress';
             if (completed === total && total > 0) nextStatus = 'completed';
 
             return { ...s, status: nextStatus, items: updatedItems };
           });
         case 'RENAME_SUB_TASK':
-          return state.map(s => {
-            if (s.items.some(i => i.id === action.itemId)) {
+          return state.map((s) => {
+            if (s.items.some((i) => i.id === action.itemId)) {
               return {
                 ...s,
-                items: s.items.map(i => i.id === action.itemId ? { ...i, task: action.task } : i)
+                items: s.items.map((i) =>
+                  i.id === action.itemId ? { ...i, task: action.task } : i,
+                ),
               };
             }
             return s;
@@ -190,11 +202,11 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
         default:
           return state;
       }
-    }
+    },
   );
 
   const toggleExpand = (bucket: BucketType, taskId: string) => {
-    setExpandedTasks(prev => ({
+    setExpandedTasks((prev) => ({
       ...prev,
       [bucket]: prev[bucket] === taskId ? null : taskId,
     }));
@@ -218,7 +230,7 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
     setDraggedSectionId(null);
 
     // If already in that status, do nothing
-    const currentSection = sections.find(s => s.id === taskId);
+    const currentSection = sections.find((s) => s.id === taskId);
     if (currentSection?.status === targetStatus) return;
 
     startTransition(async () => {
@@ -232,18 +244,21 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
       } else {
         toast.success(`Task moved to ${targetStatus.replace('_', ' ')}`);
         // Update actual state
-        setSections(prev => prev.map(s => {
-          if (s.id === taskId) {
-            return { 
-              ...s, 
-              status: targetStatus,
-              items: targetStatus === 'completed' 
-                ? s.items.map(i => ({ ...i, isCompleted: true, completedAt: new Date() })) 
-                : s.items.map(i => ({ ...i, isCompleted: false, completedAt: null }))
-            };
-          }
-          return s;
-        }));
+        setSections((prev) =>
+          prev.map((s) => {
+            if (s.id === taskId) {
+              return {
+                ...s,
+                status: targetStatus,
+                items:
+                  targetStatus === 'completed'
+                    ? s.items.map((i) => ({ ...i, isCompleted: true, completedAt: new Date() }))
+                    : s.items.map((i) => ({ ...i, isCompleted: false, completedAt: null })),
+              };
+            }
+            return s;
+          }),
+        );
       }
     });
   };
@@ -264,7 +279,7 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
     };
 
     // Clear input
-    setNewMainTaskTitles(prev => ({ ...prev, [bucket]: '' }));
+    setNewMainTaskTitles((prev) => ({ ...prev, [bucket]: '' }));
 
     startTransition(async () => {
       setOptimisticSections({ type: 'ADD_MAIN_TASK', newTask: tempTask });
@@ -276,15 +291,18 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
         if (bucket !== 'backlog') {
           await updateProgressSectionStatusAction(res.section.id, bucket);
         }
-        
-        setSections(prev => [...prev, { 
-          ...res.section, 
-          status: bucket, 
-          items: [] 
-        } as MainTask]);
-        
+
+        setSections((prev) => [
+          ...prev,
+          {
+            ...res.section,
+            status: bucket,
+            items: [],
+          } as MainTask,
+        ]);
+
         // Auto-expand the newly created task
-        setExpandedTasks(prev => ({ ...prev, [bucket]: res.section.id }));
+        setExpandedTasks((prev) => ({ ...prev, [bucket]: res.section.id }));
         toast.success('Task added');
       }
     });
@@ -300,7 +318,7 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
       if (res.error) {
         toast.error(res.error);
       } else {
-        setSections(prev => prev.filter(s => s.id !== sectionId));
+        setSections((prev) => prev.filter((s) => s.id !== sectionId));
         toast.success('Task deleted');
       }
     });
@@ -319,7 +337,7 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
       if (res.error) {
         toast.error(res.error);
       } else {
-        setSections(prev => prev.map(s => s.id === sectionId ? { ...s, title } : s));
+        setSections((prev) => prev.map((s) => (s.id === sectionId ? { ...s, title } : s)));
         toast.success('Task renamed');
       }
     });
@@ -341,7 +359,7 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
     };
 
     // Clear input
-    setNewSubTaskTexts(prev => ({ ...prev, [sectionId]: '' }));
+    setNewSubTaskTexts((prev) => ({ ...prev, [sectionId]: '' }));
 
     startTransition(async () => {
       setOptimisticSections({ type: 'ADD_SUB_TASK', sectionId, newItem: tempItem });
@@ -349,17 +367,19 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
       if (res.error) {
         toast.error(res.error);
       } else if (res.item) {
-        setSections(prev => prev.map(s => {
-          if (s.id === sectionId) {
-            const nextStatus = s.status === 'completed' ? 'in_progress' as const : s.status;
-            return {
-              ...s,
-              status: nextStatus,
-              items: [...s.items.filter(i => i.id !== tempId), res.item as SubTask]
-            };
-          }
-          return s;
-        }));
+        setSections((prev) =>
+          prev.map((s) => {
+            if (s.id === sectionId) {
+              const nextStatus = s.status === 'completed' ? ('in_progress' as const) : s.status;
+              return {
+                ...s,
+                status: nextStatus,
+                items: [...s.items.filter((i) => i.id !== tempId), res.item as SubTask],
+              };
+            }
+            return s;
+          }),
+        );
         toast.success('Sub-task added');
       }
     });
@@ -373,18 +393,20 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
       if (res.error) {
         toast.error(res.error);
       } else {
-        setSections(prev => prev.map(s => {
-          if (s.id === sectionId) {
-            const remaining = s.items.filter(i => i.id !== itemId);
-            const total = remaining.length;
-            const completed = remaining.filter(i => i.isCompleted).length;
-            let nextStatus = s.status;
-            if (total === 0) nextStatus = 'backlog';
-            else if (completed === total) nextStatus = 'completed';
-            return { ...s, status: nextStatus, items: remaining };
-          }
-          return s;
-        }));
+        setSections((prev) =>
+          prev.map((s) => {
+            if (s.id === sectionId) {
+              const remaining = s.items.filter((i) => i.id !== itemId);
+              const total = remaining.length;
+              const completed = remaining.filter((i) => i.isCompleted).length;
+              let nextStatus = s.status;
+              if (total === 0) nextStatus = 'backlog';
+              else if (completed === total) nextStatus = 'completed';
+              return { ...s, status: nextStatus, items: remaining };
+            }
+            return s;
+          }),
+        );
         toast.success('Sub-task deleted');
       }
     });
@@ -399,23 +421,25 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
         toast.error(res.error);
       } else if (res.item) {
         // Fetch fresh state from DB to sync everything correctly
-        setSections(prev => prev.map(s => {
-          const hasItem = s.items.some(i => i.id === itemId);
-          if (!hasItem) return s;
+        setSections((prev) =>
+          prev.map((s) => {
+            const hasItem = s.items.some((i) => i.id === itemId);
+            if (!hasItem) return s;
 
-          const updatedItems = s.items.map(i => 
-            i.id === itemId 
-              ? { ...i, isCompleted, completedAt: isCompleted ? new Date() : null } 
-              : i
-          );
+            const updatedItems = s.items.map((i) =>
+              i.id === itemId
+                ? { ...i, isCompleted, completedAt: isCompleted ? new Date() : null }
+                : i,
+            );
 
-          const total = updatedItems.length;
-          const completed = updatedItems.filter(i => i.isCompleted).length;
-          let nextStatus: BucketType = 'in_progress';
-          if (completed === total && total > 0) nextStatus = 'completed';
+            const total = updatedItems.length;
+            const completed = updatedItems.filter((i) => i.isCompleted).length;
+            let nextStatus: BucketType = 'in_progress';
+            if (completed === total && total > 0) nextStatus = 'completed';
 
-          return { ...s, status: nextStatus, items: updatedItems };
-        }));
+            return { ...s, status: nextStatus, items: updatedItems };
+          }),
+        );
       }
     });
   };
@@ -433,38 +457,40 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
       if (res.error) {
         toast.error(res.error);
       } else {
-        setSections(prev => prev.map(s => {
-          if (s.items.some(i => i.id === itemId)) {
-            return {
-              ...s,
-              items: s.items.map(i => i.id === itemId ? { ...i, task: text } : i)
-            };
-          }
-          return s;
-        }));
+        setSections((prev) =>
+          prev.map((s) => {
+            if (s.items.some((i) => i.id === itemId)) {
+              return {
+                ...s,
+                items: s.items.map((i) => (i.id === itemId ? { ...i, task: text } : i)),
+              };
+            }
+            return s;
+          }),
+        );
         toast.success('Sub-task updated');
       }
     });
   };
 
   const columns: { id: BucketType; title: string; colorClass: string; icon: React.ReactNode }[] = [
-    { 
-      id: 'backlog', 
-      title: 'Backlog', 
+    {
+      id: 'backlog',
+      title: 'Backlog',
       colorClass: 'border-t-2 border-t-sky-500 bg-sky-500/5',
-      icon: <HelpCircle className="size-4 text-sky-400" />
+      icon: <HelpCircle className="size-4 text-sky-400" />,
     },
-    { 
-      id: 'in_progress', 
-      title: 'In Progress', 
+    {
+      id: 'in_progress',
+      title: 'In Progress',
       colorClass: 'border-t-2 border-t-blue-500 bg-blue-500/5',
-      icon: <PlayCircle className="size-4 text-blue-400" />
+      icon: <PlayCircle className="size-4 text-blue-400" />,
     },
-    { 
-      id: 'completed', 
-      title: 'Completed', 
+    {
+      id: 'completed',
+      title: 'Completed',
       colorClass: 'border-t-2 border-t-emerald-500 bg-emerald-500/5',
-      icon: <CheckCircle2 className="size-4 text-emerald-400" />
+      icon: <CheckCircle2 className="size-4 text-emerald-400" />,
     },
   ];
 
@@ -472,8 +498,8 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
     <div className="space-y-6">
       {/* Board Columns Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {columns.map(col => {
-          const colTasks = optimisticSections.filter(s => s.status === col.id);
+        {columns.map((col) => {
+          const colTasks = optimisticSections.filter((s) => s.status === col.id);
           const expandedTaskId = expandedTasks[col.id];
 
           return (
@@ -496,10 +522,10 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
 
               {/* Tasks List */}
               <div className="flex-1 space-y-3 overflow-y-auto mb-4">
-                {colTasks.map(task => {
+                {colTasks.map((task) => {
                   const isExpanded = expandedTaskId === task.id;
                   const totalSub = task.items.length;
-                  const completedSub = task.items.filter(i => i.isCompleted).length;
+                  const completedSub = task.items.filter((i) => i.isCompleted).length;
                   const pct = totalSub > 0 ? Math.round((completedSub / totalSub) * 100) : 0;
 
                   return (
@@ -512,7 +538,7 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
                       }`}
                     >
                       {/* Task Header */}
-                      <div 
+                      <div
                         className="flex items-center gap-2 p-3 cursor-pointer select-none"
                         onClick={() => toggleExpand(col.id, task.id)}
                       >
@@ -521,21 +547,33 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
                         </div>
 
                         {editingSectionId === task.id ? (
-                          <div className="flex items-center gap-1.5 flex-1 min-w-0" onClick={e => e.stopPropagation()}>
+                          <div
+                            className="flex items-center gap-1.5 flex-1 min-w-0"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Input
                               className="h-7 text-xs flex-1"
                               value={editingSectionTitle}
                               onChange={(e) => setEditingSectionTitle(e.target.value)}
                               autoFocus
-                              onKeyDown={e => {
+                              onKeyDown={(e) => {
                                 if (e.key === 'Enter') handleRenameMainTask(task.id);
                                 else if (e.key === 'Escape') setEditingSectionId(null);
                               }}
                             />
-                            <Button size="icon" className="size-7 shrink-0" onClick={() => handleRenameMainTask(task.id)}>
+                            <Button
+                              size="icon"
+                              className="size-7 shrink-0"
+                              onClick={() => handleRenameMainTask(task.id)}
+                            >
                               <Check className="size-3.5" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="size-7 shrink-0" onClick={() => setEditingSectionId(null)}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 shrink-0"
+                              onClick={() => setEditingSectionId(null)}
+                            >
                               <X className="size-3.5" />
                             </Button>
                           </div>
@@ -544,7 +582,7 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
                             <span className="text-xs font-bold text-foreground flex-1 truncate">
                               {task.title}
                             </span>
-                            
+
                             {totalSub > 0 && (
                               <span className="text-[10px] font-medium text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-full shrink-0">
                                 {completedSub}/{totalSub} ({pct}%)
@@ -552,31 +590,38 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
                             )}
 
                             {task.status !== 'completed' && (
-                               <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-0.5" onClick={e => e.stopPropagation()}>
-                                 <Button
-                                   variant="ghost"
-                                   size="icon"
-                                   className="size-6 text-muted-foreground hover:text-foreground"
-                                   onClick={() => {
-                                     setEditingSectionId(task.id);
-                                     setEditingSectionTitle(task.title);
-                                   }}
-                                 >
-                                   <Edit2 className="size-3" />
-                                 </Button>
-                                 <Button
-                                   variant="ghost"
-                                   size="icon"
-                                   className="size-6 text-destructive/85 hover:text-destructive hover:bg-destructive/5"
-                                   onClick={() => handleDeleteMainTask(task.id)}
-                                 >
-                                   <Trash2 className="size-3" />
-                                 </Button>
-                                </div>
-                             )}
+                              <div
+                                className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-0.5"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-6 text-muted-foreground hover:text-foreground"
+                                  onClick={() => {
+                                    setEditingSectionId(task.id);
+                                    setEditingSectionTitle(task.title);
+                                  }}
+                                >
+                                  <Edit2 className="size-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-6 text-destructive/85 hover:text-destructive hover:bg-destructive/5"
+                                  onClick={() => handleDeleteMainTask(task.id)}
+                                >
+                                  <Trash2 className="size-3" />
+                                </Button>
+                              </div>
+                            )}
 
                             <div className="text-muted-foreground shrink-0 ml-1">
-                              {isExpanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+                              {isExpanded ? (
+                                <ChevronDown className="size-3.5" />
+                              ) : (
+                                <ChevronRight className="size-3.5" />
+                              )}
                             </div>
                           </>
                         )}
@@ -587,8 +632,11 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
                         <div className="border-t border-border/20 p-3 bg-muted/10 space-y-3 animate-in slide-in-from-top-1 duration-150">
                           {/* Sub-tasks checklist */}
                           <ul className="space-y-2">
-                            {task.items.map(item => (
-                              <li key={item.id} className="flex items-center justify-between gap-2 text-xs group/sub">
+                            {task.items.map((item) => (
+                              <li
+                                key={item.id}
+                                className="flex items-center justify-between gap-2 text-xs group/sub"
+                              >
                                 <div className="flex items-center gap-2.5 flex-1 min-w-0">
                                   <input
                                     type="checkbox"
@@ -603,23 +651,32 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
                                         value={editingItemText}
                                         onChange={(e) => setEditingItemText(e.target.value)}
                                         autoFocus
-                                        onKeyDown={e => {
+                                        onKeyDown={(e) => {
                                           if (e.key === 'Enter') handleRenameSubTask(item.id);
                                           else if (e.key === 'Escape') setEditingItemId(null);
                                         }}
                                       />
-                                      <Button size="icon" className="size-7 shrink-0" onClick={() => handleRenameSubTask(item.id)}>
+                                      <Button
+                                        size="icon"
+                                        className="size-7 shrink-0"
+                                        onClick={() => handleRenameSubTask(item.id)}
+                                      >
                                         <Check className="size-3.5" />
                                       </Button>
-                                      <Button variant="ghost" size="icon" className="size-7 shrink-0" onClick={() => setEditingItemId(null)}>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="size-7 shrink-0"
+                                        onClick={() => setEditingItemId(null)}
+                                      >
                                         <X className="size-3.5" />
                                       </Button>
                                     </div>
                                   ) : (
                                     <span
                                       className={`text-xs flex-1 truncate ${
-                                        item.isCompleted 
-                                          ? 'text-muted-foreground line-through decoration-muted-foreground/45' 
+                                        item.isCompleted
+                                          ? 'text-muted-foreground line-through decoration-muted-foreground/45'
                                           : 'text-foreground font-medium'
                                       }`}
                                       onDoubleClick={() => {
@@ -633,7 +690,7 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
                                     </span>
                                   )}
                                 </div>
-                                
+
                                 {editingItemId !== item.id && task.status !== 'completed' && (
                                   <div className="flex items-center gap-0.5 opacity-0 group-hover/sub:opacity-100 transition-opacity">
                                     <Button
@@ -662,7 +719,9 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
 
                             {task.items.length === 0 && (
                               <p className="text-[10px] text-muted-foreground italic py-1 text-center">
-                                {task.status === 'completed' ? 'No sub-tasks.' : 'No sub-tasks. Add one below.'}
+                                {task.status === 'completed'
+                                  ? 'No sub-tasks.'
+                                  : 'No sub-tasks. Add one below.'}
                               </p>
                             )}
                           </ul>
@@ -674,7 +733,12 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
                                 placeholder="New sub-task..."
                                 className="h-7 text-[11px] flex-1"
                                 value={newSubTaskTexts[task.id] || ''}
-                                onChange={(e) => setNewSubTaskTexts(prev => ({ ...prev, [task.id]: e.target.value }))}
+                                onChange={(e) =>
+                                  setNewSubTaskTexts((prev) => ({
+                                    ...prev,
+                                    [task.id]: e.target.value,
+                                  }))
+                                }
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
                                     e.preventDefault();
@@ -682,8 +746,8 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
                                   }
                                 }}
                               />
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 className="h-7 text-[11px] px-2.5"
                                 onClick={() => handleAddSubTask(task.id)}
                               >
@@ -711,7 +775,9 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
                     placeholder="Add task card..."
                     className="h-8 text-xs flex-1"
                     value={newMainTaskTitles[col.id]}
-                    onChange={(e) => setNewMainTaskTitles(prev => ({ ...prev, [col.id]: e.target.value }))}
+                    onChange={(e) =>
+                      setNewMainTaskTitles((prev) => ({ ...prev, [col.id]: e.target.value }))
+                    }
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -719,8 +785,8 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
                       }
                     }}
                   />
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     className="h-8 text-xs px-2.5"
                     onClick={() => handleAddMainTask(col.id)}
                   >

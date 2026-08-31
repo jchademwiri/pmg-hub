@@ -68,7 +68,8 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
     }
     confirm({
       title: 'Modify Category Name?',
-      description: 'Renaming this category will update all historical expenses linked to it. Future auto-postings might also use a different general ledger account if the category keywords are affected.',
+      description:
+        'Renaming this category will update all historical expenses linked to it. Future auto-postings might also use a different general ledger account if the category keywords are affected.',
       confirmText: 'Rename',
       variant: 'destructive',
     }).then((confirmed) => {
@@ -108,7 +109,9 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">Expense Categories</h2>
-          <p className="text-sm text-muted-foreground">Manage expense allocation categories and items</p>
+          <p className="text-sm text-muted-foreground">
+            Manage expense allocation categories and items
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button onClick={() => setIsAdding(true)} disabled={isSaving} size="sm">
@@ -161,7 +164,6 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-
           {categories.length === 0 && !isAdding ? (
             <TableRow>
               <TableCell colSpan={2} className="text-center text-muted-foreground py-8">

@@ -1,40 +1,40 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { toast } from 'sonner'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Field, FieldLabel } from '@/components/ui/field'
+import * as React from 'react';
+import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Field, FieldLabel } from '@/components/ui/field';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 
 interface LeadStatusFormProps {
-  currentStatus: string
-  updateAction: (formData: FormData) => Promise<{ error?: string }>
+  currentStatus: string;
+  updateAction: (formData: FormData) => Promise<{ error?: string }>;
 }
 
 export function LeadStatusForm({ currentStatus, updateAction }: LeadStatusFormProps) {
-  const [isPending, startTransition] = React.useTransition()
-  const [optimisticStatus, setOptimisticStatus] = React.useOptimistic(currentStatus)
-  const [error, setError] = React.useState<string | null>(null)
+  const [isPending, startTransition] = React.useTransition();
+  const [optimisticStatus, setOptimisticStatus] = React.useOptimistic(currentStatus);
+  const [error, setError] = React.useState<string | null>(null);
 
   function handleStatusChange(newStatus: string) {
-    setError(null)
-    setOptimisticStatus(newStatus)
+    setError(null);
+    setOptimisticStatus(newStatus);
     startTransition(async () => {
-      const formData = new FormData()
-      formData.set('status', newStatus)
-      const result = await updateAction(formData)
+      const formData = new FormData();
+      formData.set('status', newStatus);
+      const result = await updateAction(formData);
       if (result.error) {
-        setError(result.error)
+        setError(result.error);
       } else {
-        toast.success('Status updated')
+        toast.success('Status updated');
       }
-    })
+    });
   }
 
   return (
@@ -62,5 +62,5 @@ export function LeadStatusForm({ currentStatus, updateAction }: LeadStatusFormPr
         </Alert>
       )}
     </div>
-  )
+  );
 }

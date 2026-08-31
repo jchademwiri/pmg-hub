@@ -23,7 +23,7 @@ vi.mock('@pmg/db', () => {
     eq: vi.fn(),
     sql: Object.assign(
       (strings: TemplateStringsArray, ...values: unknown[]) => ({ strings, values }),
-      { raw: (s: string) => s }
+      { raw: (s: string) => s },
     ),
   };
 });
@@ -50,7 +50,7 @@ vi.mock('@/components/expense-categories/category-list', () => ({
 import {
   createExpenseCategory,
   updateExpenseCategory,
-  deleteExpenseCategory
+  deleteExpenseCategory,
 } from '@/app/actions/expense-categories';
 import ExpenseCategoriesPage from '@/app/(admin)/finance/categories/page';
 

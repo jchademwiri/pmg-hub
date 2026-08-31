@@ -59,24 +59,24 @@ pmg-hub/
 
 ## 2. DB Ownership Map
 
-| App | Framework | DB Role |
-|---|---|---|
-| `apps/admin` | Next.js 16 | Full CRUD on all tables - admin dashboard + auth |
-| `apps/tes` | Astro 6 | Inserts into `leads` (source = "tes") from enquiry form |
-| `apps/aws` | Astro 6 | Inserts into `leads` (source = "aws") from contact/booking forms |
-| `apps/pmg` | Astro 6 | Inserts into `leads` (source = "pmg") from holding site form |
+| App          | Framework  | DB Role                                                          |
+| ------------ | ---------- | ---------------------------------------------------------------- |
+| `apps/admin` | Next.js 16 | Full CRUD on all tables - admin dashboard + auth                 |
+| `apps/tes`   | Astro 6    | Inserts into `leads` (source = "tes") from enquiry form          |
+| `apps/aws`   | Astro 6    | Inserts into `leads` (source = "aws") from contact/booking forms |
+| `apps/pmg`   | Astro 6    | Inserts into `leads` (source = "pmg") from holding site form     |
 
 ### Current live tables
 
-| Table | Used by | Purpose |
-|---|---|---|
-| `divisions` | admin | Business divisions (TES, AWS, PMG…) |
-| `clients` | admin | Client contact records |
-| `income` | admin | Revenue entries per division/client |
-| `expenses` | admin | Cost entries per division/category |
-| `leads` | all apps + admin | Unified lead inbox from all public sites |
-| `withdrawals` | admin | Owner salary withdrawal records (current month tracking) |
-| `aws_pricing` | admin | Admin-managed pricing config for AWS packages |
+| Table         | Used by          | Purpose                                                  |
+| ------------- | ---------------- | -------------------------------------------------------- |
+| `divisions`   | admin            | Business divisions (TES, AWS, PMG…)                      |
+| `clients`     | admin            | Client contact records                                   |
+| `income`      | admin            | Revenue entries per division/client                      |
+| `expenses`    | admin            | Cost entries per division/category                       |
+| `leads`       | all apps + admin | Unified lead inbox from all public sites                 |
+| `withdrawals` | admin            | Owner salary withdrawal records (current month tracking) |
+| `aws_pricing` | admin            | Admin-managed pricing config for AWS packages            |
 
 > **Auth tables** (`user`, `session`, `account`, `verification`) will be added
 > when Better Auth setup is completed. They live in the same Neon database but
@@ -128,17 +128,17 @@ pmg-hub/
 ### `packages/db/drizzle.config.ts`
 
 ```ts
-import { config } from "dotenv";
-import { defineConfig } from "drizzle-kit";
+import { config } from 'dotenv';
+import { defineConfig } from 'drizzle-kit';
 
-config({ path: ".env" });
+config({ path: '.env' });
 
 export default defineConfig({
-  schema: "./src/schema/index.ts",
-  out: "./src/migrations",
-  dialect: "postgresql",
+  schema: './src/schema/index.ts',
+  out: './src/migrations',
+  dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.DATABASE_URL_UNPOOLED!,   // unpooled - required for migrations
+    url: process.env.DATABASE_URL_UNPOOLED!, // unpooled - required for migrations
   },
   verbose: true,
 });
@@ -147,21 +147,21 @@ export default defineConfig({
 ### `packages/db/src/env.ts`
 
 ```ts
-import { z } from "zod";
+import { z } from 'zod';
 
 const envSchema = z.object({
-  DATABASE_URL:          z.string().url(),
+  DATABASE_URL: z.string().url(),
   DATABASE_URL_UNPOOLED: z.string().url(),
 });
 
 const parsed = envSchema.safeParse({
-  DATABASE_URL:          process.env.DATABASE_URL,
+  DATABASE_URL: process.env.DATABASE_URL,
   DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED,
 });
 
 if (!parsed.success) {
-  console.error("❌ Invalid database env vars:", parsed.error.flatten().fieldErrors);
-  throw new Error("Invalid database environment variables");
+  console.error('❌ Invalid database env vars:', parsed.error.flatten().fieldErrors);
+  throw new Error('Invalid database environment variables');
 }
 
 export const env = parsed.data;
@@ -170,10 +170,10 @@ export const env = parsed.data;
 ### `packages/db/src/client.ts`
 
 ```ts
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
-import * as schema from "./schema/index";
-import { getEnv } from "./env";
+import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
+import * as schema from './schema/index';
+import { getEnv } from './env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -197,10 +197,10 @@ export const db = new Proxy({} as ReturnType<typeof drizzle>, {
 ### `packages/db/src/index.ts`
 
 ```ts
-export { db } from "./client";
-export type { DB } from "./client";
-export * from "./schema";
-export * from "./queries";
+export { db } from './client';
+export type { DB } from './client';
+export * from './schema';
+export * from './queries';
 export type { PeriodSummary } from './queries';
 export type { Withdrawal, NewWithdrawal } from './schema/withdrawals';
 ```
@@ -229,52 +229,56 @@ Auth tables are managed entirely by Better Auth. Do **not** write to these table
 
 ```ts
 // DO NOT write to these tables directly - managed by Better Auth.
-import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 
-export const user = pgTable("user", {
-  id:            text("id").primaryKey(),
-  name:          text("name").notNull(),
-  email:         text("email").notNull().unique(),
-  emailVerified: boolean("email_verified").notNull().default(false),
-  image:         text("image"),
-  createdAt:     timestamp("created_at").notNull().defaultNow(),
-  updatedAt:     timestamp("updated_at").notNull().defaultNow(),
+export const user = pgTable('user', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  email: text('email').notNull().unique(),
+  emailVerified: boolean('email_verified').notNull().default(false),
+  image: text('image'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
-export const session = pgTable("session", {
-  id:        text("id").primaryKey(),
-  expiresAt: timestamp("expires_at").notNull(),
-  token:     text("token").notNull().unique(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-  ipAddress: text("ip_address"),
-  userAgent: text("user_agent"),
-  userId:    text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+export const session = pgTable('session', {
+  id: text('id').primaryKey(),
+  expiresAt: timestamp('expires_at').notNull(),
+  token: text('token').notNull().unique(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
 });
 
-export const account = pgTable("account", {
-  id:                     text("id").primaryKey(),
-  accountId:              text("account_id").notNull(),
-  providerId:             text("provider_id").notNull(),
-  userId:                 text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
-  accessToken:            text("access_token"),
-  refreshToken:           text("refresh_token"),
-  idToken:                text("id_token"),
-  accessTokenExpiresAt:   timestamp("access_token_expires_at"),
-  refreshTokenExpiresAt:  timestamp("refresh_token_expires_at"),
-  scope:                  text("scope"),
-  password:               text("password"),
-  createdAt:              timestamp("created_at").notNull().defaultNow(),
-  updatedAt:              timestamp("updated_at").notNull().defaultNow(),
+export const account = pgTable('account', {
+  id: text('id').primaryKey(),
+  accountId: text('account_id').notNull(),
+  providerId: text('provider_id').notNull(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  accessToken: text('access_token'),
+  refreshToken: text('refresh_token'),
+  idToken: text('id_token'),
+  accessTokenExpiresAt: timestamp('access_token_expires_at'),
+  refreshTokenExpiresAt: timestamp('refresh_token_expires_at'),
+  scope: text('scope'),
+  password: text('password'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
-export const verification = pgTable("verification", {
-  id:         text("id").primaryKey(),
-  identifier: text("identifier").notNull(),
-  value:      text("value").notNull(),
-  expiresAt:  timestamp("expires_at").notNull(),
-  createdAt:  timestamp("created_at").defaultNow(),
-  updatedAt:  timestamp("updated_at").defaultNow(),
+export const verification = pgTable('verification', {
+  id: text('id').primaryKey(),
+  identifier: text('identifier').notNull(),
+  value: text('value').notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
 ```
 
@@ -285,26 +289,26 @@ export const verification = pgTable("verification", {
 ### `packages/db/src/schema/aws.ts`
 
 ```ts
-import { boolean, integer, jsonb, pgEnum, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgEnum, pgTable, text, uuid } from 'drizzle-orm/pg-core';
 
-export const awsPackageTypeEnum = pgEnum("aws_package_type", ["monthly", "once_off"]);
+export const awsPackageTypeEnum = pgEnum('aws_package_type', ['monthly', 'once_off']);
 
-export const awsPricing = pgTable("aws_pricing", {
-  id:          uuid("id").primaryKey().defaultRandom(),
-  name:        text("name").notNull().unique(),
-  price:       integer("price").notNull(),
-  period:      text("period"),
-  upfront:     integer("upfront"),
-  description: text("description").notNull(),
-  features:    jsonb("features").notNull().$type<string[]>(),
-  cta:         text("cta").notNull(),
-  popular:     boolean("popular").default(false),
-  type:        awsPackageTypeEnum("type").notNull(),
-  sortOrder:   integer("sort_order").default(0),
-  isActive:    boolean("is_active").default(true),
+export const awsPricing = pgTable('aws_pricing', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull().unique(),
+  price: integer('price').notNull(),
+  period: text('period'),
+  upfront: integer('upfront'),
+  description: text('description').notNull(),
+  features: jsonb('features').notNull().$type<string[]>(),
+  cta: text('cta').notNull(),
+  popular: boolean('popular').default(false),
+  type: awsPackageTypeEnum('type').notNull(),
+  sortOrder: integer('sort_order').default(0),
+  isActive: boolean('is_active').default(true),
 });
 
-export type AwsPricing    = typeof awsPricing.$inferSelect;
+export type AwsPricing = typeof awsPricing.$inferSelect;
 export type NewAwsPricing = typeof awsPricing.$inferInsert;
 ```
 
@@ -318,6 +322,7 @@ See `packages/db/src/schema/divisions.ts`, `clients.ts`, `income.ts`,
 from v2.0 of this guide).
 
 Key constraints:
+
 - `income.division_id` - NOT NULL, FK restrict (no orphan income)
 - `expenses.division_id` - NOT NULL, FK restrict (no orphan expenses)
 - `leads.division_id` - nullable, FK set null (leads can exist without division)
@@ -334,25 +339,27 @@ It is a standalone table with no foreign keys - it is intentionally simple.
 ### `packages/db/src/schema/withdrawals.ts`
 
 ```ts
-import { check, date, index, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import { check, date, index, numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 export const withdrawals = pgTable(
-  "withdrawals",
+  'withdrawals',
   {
-    id:          uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-    date:        date("date").notNull(),
-    amount:      numeric("amount", { precision: 12, scale: 2 }).notNull(),
-    description: text("description"),
-    createdAt:   timestamp("created_at", { withTimezone: true }).defaultNow(),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    date: date('date').notNull(),
+    amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+    description: text('description'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   },
   (t) => [
-    check("withdrawals_amount_positive", sql`${t.amount} > 0`),
-    index("withdrawals_date_idx").on(t.date),
+    check('withdrawals_amount_positive', sql`${t.amount} > 0`),
+    index('withdrawals_date_idx').on(t.date),
   ],
 );
 
-export type Withdrawal    = typeof withdrawals.$inferSelect;
+export type Withdrawal = typeof withdrawals.$inferSelect;
 export type NewWithdrawal = typeof withdrawals.$inferInsert;
 ```
 
@@ -401,13 +408,13 @@ On success it triggers `router.refresh()` (client-side) to reload the page data.
 ### `packages/db/src/schema/index.ts`
 
 ```ts
-export * from "./aws";
-export * from "./divisions";
-export * from "./clients";
-export * from "./income";
-export * from "./expenses";
-export * from "./leads";
-export * from "./withdrawals";
+export * from './aws';
+export * from './divisions';
+export * from './clients';
+export * from './income';
+export * from './expenses';
+export * from './leads';
+export * from './withdrawals';
 // Auth tables not yet included - add when Better Auth is wired
 ```
 
@@ -461,11 +468,11 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST/neondb?sslmode=require
 {
   "scripts": {
     "db:generate": "bun --filter @pmg/db db:generate",
-    "db:migrate":  "bun --filter @pmg/db db:migrate",
-    "db:push":     "bun --filter @pmg/db db:push",
-    "db:reset":    "bun --filter @pmg/db db:reset",
-    "db:seed":     "bun --filter @pmg/db db:seed",
-    "db:studio":   "bun --filter @pmg/db db:studio"
+    "db:migrate": "bun --filter @pmg/db db:migrate",
+    "db:push": "bun --filter @pmg/db db:push",
+    "db:reset": "bun --filter @pmg/db db:reset",
+    "db:seed": "bun --filter @pmg/db db:seed",
+    "db:studio": "bun --filter @pmg/db db:studio"
   }
 }
 ```
@@ -504,6 +511,7 @@ The seed script is at `packages/db/src/seed.ts`. It provides:
 - **21 leads** across all four statuses
 
 Run with:
+
 ```bash
 bun db:seed
 ```
@@ -526,6 +534,7 @@ bun db:seed
 ```
 
 The admin app imports from `@pmg/db` in two places:
+
 - `src/lib/financial.ts` - all dashboard data queries
 - `src/app/actions/withdraw.ts` - withdrawal mutation
 
@@ -534,6 +543,7 @@ The admin app imports from `@pmg/db` in two places:
 ## 15. Step 13 - Connect `apps/tes`
 
 POST handler at `apps/tes/src/pages/api/enquiry.ts`:
+
 - Accepts: name, email, phone, message, serviceInterest (optional)
 - Validates: name required, at least one of email or phone required
 - Inserts into `leads`: source = "tes", status = "new"
@@ -544,6 +554,7 @@ POST handler at `apps/tes/src/pages/api/enquiry.ts`:
 ## 16. Step 14 - Connect `apps/pmg`
 
 POST handler at `apps/pmg/src/pages/api/enquiry.ts`:
+
 - Accepts: name, email, phone, company, message, serviceInterest
 - Inserts into `leads`: source = "pmg", status = "new"
 
@@ -570,6 +581,7 @@ bun --filter admin add better-auth resend
 ```
 
 Files to create:
+
 - `apps/admin/src/lib/auth.ts` - betterAuth with drizzleAdapter + magicLink plugin
 - `apps/admin/src/lib/auth-client.ts` - createAuthClient with magicLinkClient
 - `apps/admin/src/app/api/auth/[...all]/route.ts` - toNextJsHandler(auth)
@@ -599,6 +611,7 @@ Run `bun install` from the monorepo root to link workspace packages.
 
 **`DATABASE_URL is not defined`**
 Check `.env` files exist in the right locations:
+
 - `packages/db/.env` - for migrations (`DATABASE_URL_UNPOOLED` required)
 - `apps/admin/.env.local` - for the admin app (`DATABASE_URL` required)
 
@@ -620,5 +633,5 @@ This is correct for Next.js 16 and is compatible with `@pmg/db` workspace import
 
 ---
 
-*Last updated: March 2026 · Playhouse Media Group (PTY) Ltd*
-*Jacob Chademwiri · 285 Erasmus Ave, Raslouw AH, Centurion, 0157*
+_Last updated: March 2026 · Playhouse Media Group (PTY) Ltd_
+_Jacob Chademwiri · 285 Erasmus Ave, Raslouw AH, Centurion, 0157_

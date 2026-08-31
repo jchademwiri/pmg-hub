@@ -43,7 +43,9 @@ export default function LeadsPageClient({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">Leads</h2>
-          <p className="text-sm text-muted-foreground">Monitor sales pipelines, prospective clients, and conversions</p>
+          <p className="text-sm text-muted-foreground">
+            Monitor sales pipelines, prospective clients, and conversions
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button onClick={() => setIsOpen(true)} size="sm">
@@ -55,7 +57,8 @@ export default function LeadsPageClient({
               <DialogHeader>
                 <DialogTitle>Add New Lead</DialogTitle>
                 <DialogDescription>
-                  Capture prospective client details, services of interest, and sales referral sources.
+                  Capture prospective client details, services of interest, and sales referral
+                  sources.
                 </DialogDescription>
               </DialogHeader>
 

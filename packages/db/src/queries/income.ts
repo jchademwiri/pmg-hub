@@ -41,15 +41,12 @@ export async function getAllIncome(
   if (filters?.year) {
     conditions.push(
       sql`${income.date} >= ${`${filters.year}-03-01`}`,
-      sql`${income.date} < ${`${filters.year + 1}-03-01`}`
+      sql`${income.date} < ${`${filters.year + 1}-03-01`}`,
     );
   }
   if (filters?.monthPeriod) {
     const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
-    conditions.push(
-      sql`${income.date} >= ${startDate}`,
-      sql`${income.date} <= ${endDate}`
-    );
+    conditions.push(sql`${income.date} >= ${startDate}`, sql`${income.date} <= ${endDate}`);
   }
 
   const query = db
@@ -105,7 +102,7 @@ export type MonthlyIncomeSummary = {
 export async function getIncomeMonthlySummaries(
   year: number,
   divisionId?: string,
-  clientId?: string
+  clientId?: string,
 ): Promise<MonthlyIncomeSummary[]> {
   const conditions = [];
 
@@ -116,7 +113,7 @@ export async function getIncomeMonthlySummaries(
   if (divisionId) {
     conditions.push(eq(income.divisionId, divisionId));
   }
-  
+
   if (clientId) {
     conditions.push(eq(income.clientId, clientId));
   }
@@ -145,7 +142,7 @@ export async function getIncomeMonthlySummaries(
 
   const [incomeResults, allocResults] = await Promise.all([incomeQuery, allocQuery]);
 
-  const allocMap = new Map(allocResults.map(r => [r.month, Number(r.totalAllocated)]));
+  const allocMap = new Map(allocResults.map((r) => [r.month, Number(r.totalAllocated)]));
 
   return incomeResults.map((r) => ({
     month: r.month,
@@ -197,13 +194,15 @@ export async function getDistinctIncomeMonths(): Promise<string[]> {
 /**
  * Returns all payment allocations for a given income/payment entry.
  */
-export async function getIncomeAllocations(incomeId: string): Promise<{
-  id: string;
-  invoiceId: string;
-  invoiceNumber: string;
-  amount: string;
-  createdAt: Date;
-}[]> {
+export async function getIncomeAllocations(incomeId: string): Promise<
+  {
+    id: string;
+    invoiceId: string;
+    invoiceNumber: string;
+    amount: string;
+    createdAt: Date;
+  }[]
+> {
   return await db
     .select({
       id: paymentAllocations.id,

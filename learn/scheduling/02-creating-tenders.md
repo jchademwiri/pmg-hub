@@ -10,23 +10,23 @@
 
 ### Required Fields
 
-| Field | What To Enter |
-|-------|---------------|
-| **Client** | Select the client from the dropdown. Only clients from **Relationships** appear here. |
-| **Tender Reference** | A unique identifier for the tender, e.g. `T12/2026` or `RFP-2026-042` |
-| **Closing Date** | The deadline for submission — this drives all date auto-calculations |
-| **Effort (days)** | How many working days you estimate the tender response will take |
-| **Start Date** | Auto-calculated from closing date − effort − buffer. You can override this manually. |
+| Field                | What To Enter                                                                         |
+| -------------------- | ------------------------------------------------------------------------------------- |
+| **Client**           | Select the client from the dropdown. Only clients from **Relationships** appear here. |
+| **Tender Reference** | A unique identifier for the tender, e.g. `T12/2026` or `RFP-2026-042`                 |
+| **Closing Date**     | The deadline for submission — this drives all date auto-calculations                  |
+| **Effort (days)**    | How many working days you estimate the tender response will take                      |
+| **Start Date**       | Auto-calculated from closing date − effort − buffer. You can override this manually.  |
 
 ### Optional Fields
 
-| Field | What It's For |
-|-------|---------------|
-| **Priority** | Urgency level: Low, Normal (default), High, or Urgent |
-| **Division** | Which team owns the tender. Leave as "Default division" to auto-detect from the client. |
-| **Buffer Days** | Extra padding before closing (default 2). More buffer = earlier start date. |
-| **Notes** | Requirements, special instructions, or key details about the tender |
-| **Blockers** | Any issues that could delay progress |
+| Field           | What It's For                                                                           |
+| --------------- | --------------------------------------------------------------------------------------- |
+| **Priority**    | Urgency level: Low, Normal (default), High, or Urgent                                   |
+| **Division**    | Which team owns the tender. Leave as "Default division" to auto-detect from the client. |
+| **Buffer Days** | Extra padding before closing (default 2). More buffer = earlier start date.             |
+| **Notes**       | Requirements, special instructions, or key details about the tender                     |
+| **Blockers**    | Any issues that could delay progress                                                    |
 
 ### Date Auto-Calculation
 
@@ -58,13 +58,13 @@ Target Completion = 7 Jul + 5 = 12 Jul
 
 Once tenders are created, use the **List** page to find them:
 
-| Filter | What It Does |
-|--------|--------------|
-| **Search** | Type a client name or reference to narrow results |
-| **Status** | Filter by Planned, In Progress, Completed, Submitted, or Cancelled |
-| **Priority** | Filter by Urgent, High, Normal, or Low |
-| **Date** | Filter by Overdue, This Week, This Month, or Future |
-| **Clear** | Reset all filters with one click |
+| Filter       | What It Does                                                       |
+| ------------ | ------------------------------------------------------------------ |
+| **Search**   | Type a client name or reference to narrow results                  |
+| **Status**   | Filter by Planned, In Progress, Completed, Submitted, or Cancelled |
+| **Priority** | Filter by Urgent, High, Normal, or Low                             |
+| **Date**     | Filter by Overdue, This Week, This Month, or Future                |
+| **Clear**    | Reset all filters with one click                                   |
 
 ---
 
@@ -89,12 +89,12 @@ Click **"Save Changes"** to apply updates.
 
 Record progress and results:
 
-| Field | What To Enter |
-|-------|---------------|
+| Field                    | What To Enter                                                |
+| ------------------------ | ------------------------------------------------------------ |
 | **Actual Effort (days)** | How many days it actually took (useful for future estimates) |
-| **Outcome** | Won, Lost, or Pending |
-| **Notes** | Observations and learnings from this tender |
-| **Blockers** | Issues that delayed progress |
+| **Outcome**              | Won, Lost, or Pending                                        |
+| **Notes**                | Observations and learnings from this tender                  |
+| **Blockers**             | Issues that delayed progress                                 |
 
 The tracking tab also shows the current **status badge** so you know where the tender is at a glance.
 
@@ -108,13 +108,13 @@ Use the **List** page to change a tender's status:
 2. Use the status buttons or dropdown to transition to the next stage
 3. Available transitions depend on the current status:
 
-| Current Status | Can Transition To |
-|----------------|-------------------|
-| **Planned** | In Progress, Cancelled |
-| **In Progress** | Completed, Cancelled |
-| **Completed** | Submitted, Cancelled |
-| **Submitted** | Planned (reopen if needed) |
-| **Cancelled** | — (dead end) |
+| Current Status  | Can Transition To          |
+| --------------- | -------------------------- |
+| **Planned**     | In Progress, Cancelled     |
+| **In Progress** | Completed, Cancelled       |
+| **Completed**   | Submitted, Cancelled       |
+| **Submitted**   | Planned (reopen if needed) |
+| **Cancelled**   | — (dead end)               |
 
 ---
 
@@ -129,9 +129,9 @@ Use the **List** page to change a tender's status:
 
 ## Deleting vs Cancelling
 
-| Action | What Happens | When To Use |
-|--------|-------------|-------------|
-| **Cancel** | Status changes to cancelled; data is preserved | Tender is abandoned or won't be pursued |
-| **Delete** (bulk) | Permanently removes cancelled tenders | Cleaning up old data |
+| Action            | What Happens                                   | When To Use                             |
+| ----------------- | ---------------------------------------------- | --------------------------------------- |
+| **Cancel**        | Status changes to cancelled; data is preserved | Tender is abandoned or won't be pursued |
+| **Delete** (bulk) | Permanently removes cancelled tenders          | Cleaning up old data                    |
 
 Only already-cancelled tenders can be permanently deleted. Use the bulk action bar after selecting multiple tenders.

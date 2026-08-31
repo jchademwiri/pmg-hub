@@ -1,4 +1,5 @@
 # PMG Hub — Admin App UI/UX Audit
+
 **Repo:** `jchademwiri/pmg-hub` · **Branch:** `dev`  
 **App:** `apps/admin` (Next.js 16, Tailwind CSS, shadcn/ui, Drizzle ORM)  
 **Date:** 2026-06-29  
@@ -10,22 +11,23 @@
 
 > **Last updated:** 2026-06-29 — All 5 phases + backlog items completed and committed to `dev`.
 
-| Phase | Scope | Commits | Status |
-|-------|-------|---------|--------|
-| Phase 1 | Rename Scheduling → Projects (routes, components, actions, nav) | `fc0e743` | ✅ Complete |
-| Phase 2 | Bug fixes: dead code, ARIA structure, billing status maps, PMG share rate, invoice accessibility | `53a86bd` | ✅ Complete |
-| Phase 3 | Critical UX: BackButton component, Lucide module icons | `2f526b0` | ✅ Complete |
-| Phase 4 | Medium priority: sidebar logo, login branding, empty states, status filters, breadcrumbs, avatar dropdown, dashboard headings | `af8264d`, `237b1d3` | ✅ Complete |
-| Phase 5 | Polish: dark mode toggle, responsive padding, settings icon sizes, login form cleanup | `237b1d3`, `f213b3f` | ✅ Complete |
-| Backlog Batch 1 | Warnings panel chevron, inline action buttons with confirm dialog | `a593a0f` | ✅ Complete |
-| Backlog Batch 2 | Pagination component, chart layout shift, quotes accessibility, project rename | `9f23903` | ✅ Complete |
-| Backlog Batch 3 | StickyPageHeader, RouteError, accounting error boundaries, reports refactor | `2a29044` | ✅ Complete |
+| Phase           | Scope                                                                                                                         | Commits              | Status      |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------- | ----------- |
+| Phase 1         | Rename Scheduling → Projects (routes, components, actions, nav)                                                               | `fc0e743`            | ✅ Complete |
+| Phase 2         | Bug fixes: dead code, ARIA structure, billing status maps, PMG share rate, invoice accessibility                              | `53a86bd`            | ✅ Complete |
+| Phase 3         | Critical UX: BackButton component, Lucide module icons                                                                        | `2f526b0`            | ✅ Complete |
+| Phase 4         | Medium priority: sidebar logo, login branding, empty states, status filters, breadcrumbs, avatar dropdown, dashboard headings | `af8264d`, `237b1d3` | ✅ Complete |
+| Phase 5         | Polish: dark mode toggle, responsive padding, settings icon sizes, login form cleanup                                         | `237b1d3`, `f213b3f` | ✅ Complete |
+| Backlog Batch 1 | Warnings panel chevron, inline action buttons with confirm dialog                                                             | `a593a0f`            | ✅ Complete |
+| Backlog Batch 2 | Pagination component, chart layout shift, quotes accessibility, project rename                                                | `9f23903`            | ✅ Complete |
+| Backlog Batch 3 | StickyPageHeader, RouteError, accounting error boundaries, reports refactor                                                   | `2a29044`            | ✅ Complete |
 
 ---
 
 ## Completed Changes Summary
 
 ### Phase 1 — Rename Scheduling → Projects (`fc0e743`)
+
 - Renamed DB schema/queries files and exports (kept table names unchanged)
 - Moved routes `(admin)/scheduling/` → `(admin)/projects/`
 - Moved `components/scheduling/` → `components/projects/` with individual file renames
@@ -35,6 +37,7 @@
 - Updated portal app references
 
 ### Phase 2 — Bug Fixes (`53a86bd`)
+
 - Deleted dead `kpi-card.tsx` (superseded by `kpi-grid.tsx` internal `KpiCard`)
 - Moved `CloseMonthButton` outside `<Tabs>` wrapper for valid ARIA structure
 - Created `lib/billing-status.ts` — centralised `STATUS_STYLES`, `STATUS_TEXT_COLORS`, and `formatStatusLabel`
@@ -45,12 +48,14 @@
 - Fixed `reports.ts` action — moved `getActiveRates()` outside `.map()` loop
 
 ### Phase 3 — Critical UX (`2f526b0`)
+
 - Created reusable `BackButton` component (`components/ui/back-button.tsx`)
 - Added `BackButton` to accounting journals/new, leads/[id], divisions/[id]
 - Replaced letter-initial module icons with Lucide icons in Billing and Finance overviews
 - Cleaned up unused imports
 
 ### Phase 4 — Medium Priority (`af8264d`, `237b1d3`)
+
 - Swapped PMG logo into sidebar header (replaced text-only branding)
 - Swapped PMG logo into login form + added branded left panel to login page
 - Replaced inline empty states with shared `EmptyState` component in billing and finance overviews
@@ -62,6 +67,7 @@
 - Fixed quotes table keyboard accessibility (same pattern as invoices)
 
 ### Phase 5 — Polish (`237b1d3`, `f213b3f`)
+
 - Added dark/light/system theme toggle using `next-themes`
 - Created `Providers` wrapper with `ThemeProvider`
 - Added responsive padding to admin main content area (`px-4 py-6 sm:px-6`)
@@ -71,11 +77,13 @@
 - Fixed `partially_paid` label formatting in `billing-status-badge.tsx`
 
 ### Backlog Batch 1 (`a593a0f`)
+
 - Added ChevronUp/ChevronDown icons to warnings panel expand/collapse button
 - Elevated project "Other Actions" dropdown to inline buttons (Mark Complete, Re-plan, Cancel)
 - Added `confirm()` dialog to Cancel Project button to prevent accidental cancellations
 
 ### Backlog Batch 2 (`9f23903`)
+
 - Created reusable `Pagination` component with page numbers and ellipsis
 - Replaced inline pagination in invoices and quotes with `Pagination` component
 - Added keyboard-accessible Link overlay to quotes table rows
@@ -86,6 +94,7 @@
 - Added loading skeleton states for accounting sub-routes (chart-of-accounts, general-ledger, trial-balance)
 
 ### Backlog Batch 3 (`2a29044`)
+
 - Extracted reusable `StickyPageHeader` component (server component) with title, description, total, and actions slot
 - Applied `StickyPageHeader` to insights/reports page, replacing inline sticky header div
 - Created shared `RouteError` component for error boundaries
@@ -96,12 +105,12 @@
 
 ## Severity Key
 
-| Symbol | Level | Description |
-|--------|-------|-------------|
-| 🔴 | Critical | Significant usability failure or broken user flow |
-| 🟡 | Medium | Notable improvement with clear user impact |
-| 🟢 | Low | Polish, consistency, or minor friction |
-| 🐛 | Bug | Structural code error or incorrect behaviour |
+| Symbol | Level    | Description                                       |
+| ------ | -------- | ------------------------------------------------- |
+| 🔴     | Critical | Significant usability failure or broken user flow |
+| 🟡     | Medium   | Notable improvement with clear user impact        |
+| 🟢     | Low      | Polish, consistency, or minor friction            |
+| 🐛     | Bug      | Structural code error or incorrect behaviour      |
 
 ---
 
@@ -383,6 +392,7 @@ Files: `app/(admin)/billing/**`, `components/billing/**`
 **Status:** ✅ Already implemented (full page with summary cards, aging summary, and client accounts table)
 
 **Finding:** The accounts page has a complete implementation with:
+
 - 4 summary metric cards (Total Invoiced, Total Paid, Outstanding, Collection Rate)
 - Aging Summary section with 5 buckets
 - Client Accounts table with links to individual statements
@@ -465,6 +475,7 @@ Files: `app/(admin)/accounting/**`
 **Status:** ✅ Already implemented (exports-client.tsx has full descriptions for each export type)
 
 **Finding:** The exports client already includes:
+
 - 5 export types with icons, labels, and descriptions
 - Period and account filters as needed
 - Export summary showing current filters and format info
@@ -598,6 +609,7 @@ Already documented in [1.1](#11-bug-projects-appears-twice-in-the-sidebar-and-mu
 **Finding:** The card had a primary "Mark Complete" button and a secondary `<DropdownMenu>` labelled "Other Actions" containing "Cancel Project" and "Re-plan (Pause)". These secondary actions are important enough to be inline buttons, especially since this is the primary working state for the user.
 
 **Recommendation:** Show all three actions as buttons with appropriate variants:
+
 - `Mark Complete` → `variant="default"` (primary)
 - `Re-plan (Pause)` → `variant="outline"` (secondary)
 - `Cancel Project` → `variant="ghost"` with `text-destructive` (tertiary, destructive)
@@ -646,6 +658,7 @@ Files: `app/(admin)/insights/reports/page.tsx`, `app/(admin)/insights/snapshots/
 **Status:** ✅ Already implemented (has keyboard accessibility, empty states, and confirmation patterns)
 
 **Finding:** The SnapshotsCockpit component already includes:
+
 - Keyboard accessibility (tabIndex, onKeyDown for table rows)
 - Empty state with CTA to Dashboard
 - Summary metrics with proper ARIA labels
@@ -686,6 +699,7 @@ Files: `app/(admin)/settings/**`, `components/settings/**`
 
 **Location:** `components/settings/settings-nav.tsx` — Security badge; `app/(admin)/settings/security/page.tsx`  
 **Finding:** The security page already includes:
+
 - Alert component explaining upcoming features (2FA, API keys, session management)
 - Disabled buttons for each planned feature
 - "Coming Soon" badge in navigation
@@ -756,6 +770,7 @@ These findings apply across multiple route groups.
 **Finding:** Billing form actions (`handleIssue`, `handleVoid`) use `toast.error(result.error)`. The login form uses an inline `<Alert variant="destructive">`. Settings forms likely use their own patterns. This means users encounter errors in different places depending on which page they're on.
 
 **Recommendation:** Adopt a single convention:
+
 - **Mutations on list pages** (void invoice, delete client, etc.) → `toast.error()` (non-blocking, suits background actions)
 - **Form submissions that require correction** (new invoice, add client) → Inline form error below the field or below the submit button
 - **Destructive confirms** → `confirm()` dialog (already implemented via `ConfirmProvider`)
@@ -784,97 +799,98 @@ Items sorted by impact. Tackle 🔴 first, then 🐛, then 🟡 in order.
 
 ### Immediate (this sprint) — ✅ All complete
 
-| # | Item | File(s) | Effort | Status |
-|---|------|---------|--------|--------|
-| 1 | 🐛 Rename Scheduling → Projects (routes, components, actions, nav) + remove from `OVERVIEW` | `nav-data.ts`, `app/(admin)/scheduling/` → `projects/`, `components/scheduling/` → `projects/`, action files | M | ✅ `fc0e743` |
-| 2 | 🐛 Delete dead `kpi-card.tsx` file | `components/dashboard/kpi-card.tsx` | XS | ✅ `53a86bd` |
-| 3 | 🐛 Move `CloseMonthButton` outside `<Tabs>` wrapper | `dashboard-shell.tsx` | XS | ✅ `53a86bd` |
-| 4 | 🐛 Centralise billing status maps into `lib/billing-status.ts` | `billing-overview-client.tsx`, `invoices-client.tsx` | S | ✅ `53a86bd` |
-| 5 | 🐛 Fix hardcoded `0.25` PMG share rate in reports page | `insights/reports/page.tsx` | S | ✅ `53a86bd` |
-| 6 | 🔴 Fix invoice table row keyboard accessibility | `invoices-client.tsx` | S | ✅ `53a86bd` |
-| 7 | 🔴 Add "Back" button pattern to all `new` and `[id]` sub-routes | New `BackButton` component | M | ✅ `2f526b0` |
+| #   | Item                                                                                        | File(s)                                                                                                      | Effort | Status       |
+| --- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------ | ------------ |
+| 1   | 🐛 Rename Scheduling → Projects (routes, components, actions, nav) + remove from `OVERVIEW` | `nav-data.ts`, `app/(admin)/scheduling/` → `projects/`, `components/scheduling/` → `projects/`, action files | M      | ✅ `fc0e743` |
+| 2   | 🐛 Delete dead `kpi-card.tsx` file                                                          | `components/dashboard/kpi-card.tsx`                                                                          | XS     | ✅ `53a86bd` |
+| 3   | 🐛 Move `CloseMonthButton` outside `<Tabs>` wrapper                                         | `dashboard-shell.tsx`                                                                                        | XS     | ✅ `53a86bd` |
+| 4   | 🐛 Centralise billing status maps into `lib/billing-status.ts`                              | `billing-overview-client.tsx`, `invoices-client.tsx`                                                         | S      | ✅ `53a86bd` |
+| 5   | 🐛 Fix hardcoded `0.25` PMG share rate in reports page                                      | `insights/reports/page.tsx`                                                                                  | S      | ✅ `53a86bd` |
+| 6   | 🔴 Fix invoice table row keyboard accessibility                                             | `invoices-client.tsx`                                                                                        | S      | ✅ `53a86bd` |
+| 7   | 🔴 Add "Back" button pattern to all `new` and `[id]` sub-routes                             | New `BackButton` component                                                                                   | M      | ✅ `2f526b0` |
 
 ### Short-term (next sprint) — ✅ All complete
 
-| # | Item | File(s) | Effort | Status |
-|---|------|---------|--------|--------|
-| 8 | 🟡 Replace letter-initial module icons with Lucide icons (Billing + Finance) | `billing-overview-client.tsx`, `finance-overview-client.tsx` | S | ✅ `2f526b0` |
-| 9 | 🟡 Swap PMG logo into sidebar header | `app-sidebar.tsx` | S | ✅ `af8264d` |
-| 10 | 🟡 Swap PMG logo into login form + improve login page layout | `login-form.tsx`, `login/page.tsx` | M | ✅ `af8264d` |
-| 11 | 🟡 Replace inline empty states with `EmptyState` component | Finance + Billing panels | S | ✅ `237b1d3` |
-| 12 | 🟡 Add status filter dropdown to Invoice and Quote list pages | `invoices-client.tsx`, `quotes-client.tsx` | S | ✅ `237b1d3` |
-| 13 | 🟡 Improve breadcrumb to show parent > child hierarchy | `top-nav.tsx` | M | ✅ `237b1d3` |
-| 14 | 🟡 Replace user text footer with avatar + dropdown in sidebar | `app-sidebar.tsx` | M | ✅ `af8264d` |
+| #   | Item                                                                         | File(s)                                                      | Effort | Status       |
+| --- | ---------------------------------------------------------------------------- | ------------------------------------------------------------ | ------ | ------------ |
+| 8   | 🟡 Replace letter-initial module icons with Lucide icons (Billing + Finance) | `billing-overview-client.tsx`, `finance-overview-client.tsx` | S      | ✅ `2f526b0` |
+| 9   | 🟡 Swap PMG logo into sidebar header                                         | `app-sidebar.tsx`                                            | S      | ✅ `af8264d` |
+| 10  | 🟡 Swap PMG logo into login form + improve login page layout                 | `login-form.tsx`, `login/page.tsx`                           | M      | ✅ `af8264d` |
+| 11  | 🟡 Replace inline empty states with `EmptyState` component                   | Finance + Billing panels                                     | S      | ✅ `237b1d3` |
+| 12  | 🟡 Add status filter dropdown to Invoice and Quote list pages                | `invoices-client.tsx`, `quotes-client.tsx`                   | S      | ✅ `237b1d3` |
+| 13  | 🟡 Improve breadcrumb to show parent > child hierarchy                       | `top-nav.tsx`                                                | M      | ✅ `237b1d3` |
+| 14  | 🟡 Replace user text footer with avatar + dropdown in sidebar                | `app-sidebar.tsx`                                            | M      | ✅ `af8264d` |
 
 ### Medium-term (backlog) — ✅ All complete
 
-| # | Item | File(s) | Effort | Status |
-|---|------|---------|--------|--------|
-| 15 | 🟡 Add section headings to dashboard rows | `dashboard-shell.tsx` | S | ✅ `237b1d3` |
-| 16 | 🟡 Standardise add-form pattern to Sheet across Relationships | `clients-client.tsx`, `leads-client.tsx` | M | 🔲 Backlog |
-| 17 | 🟡 Extract shared `OverviewKpiCard` / `OverviewPanel` / `OverviewModuleGrid` components | New `section-overview.tsx` | M | 🔲 Backlog |
-| 18 | 🟡 Add pagination improvements (page numbers, page size select) | `invoices-client.tsx` + shared `Pagination` | M | ✅ `9f23903` |
-| 19 | 🟡 Implement proper "Coming Soon" page for `/settings/security` | `settings/security/page.tsx` | XS | ✅ Already implemented |
-| 20 | 🟡 Fix settings nav icon sizes | `settings-nav.tsx` | XS | ✅ `237b1d3` |
-| 21 | 🟡 Add `isPending` loading states to all async form buttons | Multiple files | M | ✅ Already implemented |
-| 22 | 🟡 Standardise `not-found.tsx` files to use shared `NotFoundView` | Multiple section `not-found.tsx` | S | ✅ Already implemented |
-| 23 | 🟡 Add dark mode toggle to TopNav | `top-nav.tsx` + new `ThemeToggle` | S | ✅ `237b1d3` |
-| 24 | 🟢 Remove Terms/Privacy placeholder links from login form | `login-form.tsx` | XS | ✅ `af8264d` |
-| 25 | 🟢 Change login button label to "Send sign-in link" | `login-form.tsx` | XS | ✅ `237b1d3` |
-| 26 | 🟢 Fix `partially_paid` label capitalisation in status badge | `billing-status-badge.tsx` | XS | ✅ `53a86bd` |
-| 27 | 🟢 Add chevron icon to Projects warnings panel expand button | `components/projects/project-overview-shell.tsx` | XS | ✅ `a593a0f` |
-| 28 | 🟢 Elevate project "Other Actions" dropdown to inline buttons | `components/projects/project-overview-shell.tsx` | S | ✅ `a593a0f` |
+| #   | Item                                                                                    | File(s)                                          | Effort | Status                 |
+| --- | --------------------------------------------------------------------------------------- | ------------------------------------------------ | ------ | ---------------------- |
+| 15  | 🟡 Add section headings to dashboard rows                                               | `dashboard-shell.tsx`                            | S      | ✅ `237b1d3`           |
+| 16  | 🟡 Standardise add-form pattern to Sheet across Relationships                           | `clients-client.tsx`, `leads-client.tsx`         | M      | 🔲 Backlog             |
+| 17  | 🟡 Extract shared `OverviewKpiCard` / `OverviewPanel` / `OverviewModuleGrid` components | New `section-overview.tsx`                       | M      | 🔲 Backlog             |
+| 18  | 🟡 Add pagination improvements (page numbers, page size select)                         | `invoices-client.tsx` + shared `Pagination`      | M      | ✅ `9f23903`           |
+| 19  | 🟡 Implement proper "Coming Soon" page for `/settings/security`                         | `settings/security/page.tsx`                     | XS     | ✅ Already implemented |
+| 20  | 🟡 Fix settings nav icon sizes                                                          | `settings-nav.tsx`                               | XS     | ✅ `237b1d3`           |
+| 21  | 🟡 Add `isPending` loading states to all async form buttons                             | Multiple files                                   | M      | ✅ Already implemented |
+| 22  | 🟡 Standardise `not-found.tsx` files to use shared `NotFoundView`                       | Multiple section `not-found.tsx`                 | S      | ✅ Already implemented |
+| 23  | 🟡 Add dark mode toggle to TopNav                                                       | `top-nav.tsx` + new `ThemeToggle`                | S      | ✅ `237b1d3`           |
+| 24  | 🟢 Remove Terms/Privacy placeholder links from login form                               | `login-form.tsx`                                 | XS     | ✅ `af8264d`           |
+| 25  | 🟢 Change login button label to "Send sign-in link"                                     | `login-form.tsx`                                 | XS     | ✅ `237b1d3`           |
+| 26  | 🟢 Fix `partially_paid` label capitalisation in status badge                            | `billing-status-badge.tsx`                       | XS     | ✅ `53a86bd`           |
+| 27  | 🟢 Add chevron icon to Projects warnings panel expand button                            | `components/projects/project-overview-shell.tsx` | XS     | ✅ `a593a0f`           |
+| 28  | 🟢 Elevate project "Other Actions" dropdown to inline buttons                           | `components/projects/project-overview-shell.tsx` | S      | ✅ `a593a0f`           |
 
 ### Remaining Backlog (9 items)
 
-| # | Item | File(s) | Effort | Priority |
-|---|------|---------|--------|----------|
-| 1 | 🟡 Extract shared overview components (billing + finance duplication) | `billing-overview-client.tsx`, `finance-overview-client.tsx` | L | Medium |
-| 2 | 🟡 Standardise add-form pattern to Sheet across Relationships | `clients-client.tsx`, `leads-client.tsx` | M | Medium |
-| 3 | 🟡 Unify client detail page with Tabs (Overview/Billing/Financials) | `relationships/clients/[id]/` | L | Medium |
-| 4 | 🟡 Add timeline preview card to Projects overview | `project-overview-shell.tsx` | M | Medium |
-| 5 | 🟡 Standardise income/expenses table patterns | `income-client.tsx`, `expenses-client.tsx` | M | Low |
-| 6 | 🟡 Standardise form error handling (toast vs inline) | Multiple form files | M | Low |
-| 7 | 🟡 Settings layout sidebar width adjustment | `settings/layout.tsx` | XS | Low |
-| 8 | 🟡 Divisions quick-edit capability | `relationships/divisions/` | M | Low |
-| 9 | 🟢 Dashboard loading skeletons (Suspense boundaries) | `dashboard-shell.tsx` | L | Low |
+| #   | Item                                                                  | File(s)                                                      | Effort | Priority |
+| --- | --------------------------------------------------------------------- | ------------------------------------------------------------ | ------ | -------- |
+| 1   | 🟡 Extract shared overview components (billing + finance duplication) | `billing-overview-client.tsx`, `finance-overview-client.tsx` | L      | Medium   |
+| 2   | 🟡 Standardise add-form pattern to Sheet across Relationships         | `clients-client.tsx`, `leads-client.tsx`                     | M      | Medium   |
+| 3   | 🟡 Unify client detail page with Tabs (Overview/Billing/Financials)   | `relationships/clients/[id]/`                                | L      | Medium   |
+| 4   | 🟡 Add timeline preview card to Projects overview                     | `project-overview-shell.tsx`                                 | M      | Medium   |
+| 5   | 🟡 Standardise income/expenses table patterns                         | `income-client.tsx`, `expenses-client.tsx`                   | M      | Low      |
+| 6   | 🟡 Standardise form error handling (toast vs inline)                  | Multiple form files                                          | M      | Low      |
+| 7   | 🟡 Settings layout sidebar width adjustment                           | `settings/layout.tsx`                                        | XS     | Low      |
+| 8   | 🟡 Divisions quick-edit capability                                    | `relationships/divisions/`                                   | M      | Low      |
+| 9   | 🟢 Dashboard loading skeletons (Suspense boundaries)                  | `dashboard-shell.tsx`                                        | L      | Low      |
 
 ---
 
 ## Appendix: Component Health Summary
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| `AppSidebar` | ✅ Fixed | Logo added, avatar dropdown, nav cleanup |
-| `TopNav` | ✅ Fixed | Two-level breadcrumb, theme toggle |
-| `DashboardShell` | ✅ Fixed | Valid Tabs structure, section headings |
-| `KpiGrid` | ✅ Solid | Good sparklines, delta badges, hover states |
-| `KpiCard` (kpi-card.tsx) | ✅ Deleted | Dead code removed in Phase 2 |
-| `EmptyState` | ✅ Used | Now used in billing and finance overviews |
-| `BillingStatusBadge` | ✅ Fixed | Capitalisation bug fixed, uses shared module |
-| `BillingOverviewClient` | ✅ Fixed | Lucide icons, shared empty states, shared status maps |
-| `FinanceOverviewClient` | ✅ Fixed | Lucide icons, shared empty states |
-| `ProjectOverviewShell` | ✅ Fixed | Renamed, hover effects, inline action buttons |
-| `ProjectSummaryCard` | ✅ Renamed | `components/dashboard/tender-summary-card.tsx` → `project-summary-card.tsx` |
-| `SettingsNav` | ✅ Fixed | Icon sizes standardised |
-| `LoginForm` | ✅ Fixed | PMG branding, "Send sign-in link" label |
-| `FilterBar` | ✅ Solid | Clean URL-param pattern |
-| `InvoicesClient` | ✅ Fixed | Keyboard accessible, status filter, pagination |
-| `QuotesClient` | ✅ Fixed | Keyboard accessible, pagination |
-| `ClientsClient` | ✅ Good | Clean inline-add pattern |
-| `StatusFilter` | ✅ New | Reusable URL-param based status filter |
-| `ThemeToggle` | ✅ New | Dark/light/system toggle with next-themes |
-| `BackButton` | ✅ New | Reusable back navigation component |
-| `Pagination` | ✅ New | Reusable with page numbers and ellipsis |
-| `StickyPageHeader` | ✅ New | Reusable sticky header with title, description, actions |
-| `RouteError` | ✅ New | Shared error boundary component |
-| `SnapshotsCockpit` | ✅ Solid | Keyboard accessible, empty states, responsive |
+| Component                | Status     | Notes                                                                       |
+| ------------------------ | ---------- | --------------------------------------------------------------------------- |
+| `AppSidebar`             | ✅ Fixed   | Logo added, avatar dropdown, nav cleanup                                    |
+| `TopNav`                 | ✅ Fixed   | Two-level breadcrumb, theme toggle                                          |
+| `DashboardShell`         | ✅ Fixed   | Valid Tabs structure, section headings                                      |
+| `KpiGrid`                | ✅ Solid   | Good sparklines, delta badges, hover states                                 |
+| `KpiCard` (kpi-card.tsx) | ✅ Deleted | Dead code removed in Phase 2                                                |
+| `EmptyState`             | ✅ Used    | Now used in billing and finance overviews                                   |
+| `BillingStatusBadge`     | ✅ Fixed   | Capitalisation bug fixed, uses shared module                                |
+| `BillingOverviewClient`  | ✅ Fixed   | Lucide icons, shared empty states, shared status maps                       |
+| `FinanceOverviewClient`  | ✅ Fixed   | Lucide icons, shared empty states                                           |
+| `ProjectOverviewShell`   | ✅ Fixed   | Renamed, hover effects, inline action buttons                               |
+| `ProjectSummaryCard`     | ✅ Renamed | `components/dashboard/tender-summary-card.tsx` → `project-summary-card.tsx` |
+| `SettingsNav`            | ✅ Fixed   | Icon sizes standardised                                                     |
+| `LoginForm`              | ✅ Fixed   | PMG branding, "Send sign-in link" label                                     |
+| `FilterBar`              | ✅ Solid   | Clean URL-param pattern                                                     |
+| `InvoicesClient`         | ✅ Fixed   | Keyboard accessible, status filter, pagination                              |
+| `QuotesClient`           | ✅ Fixed   | Keyboard accessible, pagination                                             |
+| `ClientsClient`          | ✅ Good    | Clean inline-add pattern                                                    |
+| `StatusFilter`           | ✅ New     | Reusable URL-param based status filter                                      |
+| `ThemeToggle`            | ✅ New     | Dark/light/system toggle with next-themes                                   |
+| `BackButton`             | ✅ New     | Reusable back navigation component                                          |
+| `Pagination`             | ✅ New     | Reusable with page numbers and ellipsis                                     |
+| `StickyPageHeader`       | ✅ New     | Reusable sticky header with title, description, actions                     |
+| `RouteError`             | ✅ New     | Shared error boundary component                                             |
+| `SnapshotsCockpit`       | ✅ Solid   | Keyboard accessible, empty states, responsive                               |
 
 ---
 
 ## Files Changed Summary
 
 ### New Files
+
 - `apps/admin/src/components/ui/back-button.tsx` — Reusable BackButton component
 - `apps/admin/src/components/ui/status-filter.tsx` — Reusable StatusFilter component
 - `apps/admin/src/components/ui/theme-toggle.tsx` — Dark/light/system theme toggle
@@ -891,6 +907,7 @@ Items sorted by impact. Tackle 🔴 first, then 🐛, then 🟡 in order.
 - `apps/admin/src/app/(admin)/accounting/trial-balance/error.tsx` — Error boundary
 
 ### Renamed Files (Phase 1)
+
 - `packages/db/src/schema/tender-schedule.ts` → `project-schedule.ts`
 - `packages/db/src/queries/tender-schedule.ts` → `project-schedule.ts`
 - `apps/admin/src/app/(admin)/scheduling/` → `projects/` (all routes)
@@ -903,6 +920,7 @@ Items sorted by impact. Tackle 🔴 first, then 🐛, then 🟡 in order.
 - All 6 test files renamed from tender-schedule to project-schedule
 
 ### Modified Files
+
 - `apps/admin/src/app/(admin)/layout.tsx` — Responsive padding, ThemeProvider
 - `apps/admin/src/app/layout.tsx` — ThemeProvider wrapper
 - `apps/admin/src/components/navigation/app-sidebar.tsx` — Logo, avatar dropdown
@@ -931,4 +949,4 @@ Items sorted by impact. Tackle 🔴 first, then 🐛, then 🟡 in order.
 
 ---
 
-*Report updated from static code analysis of `jchademwiri/pmg-hub` (branch: `dev`). No live environment access. Findings are based on file structure, component composition, and UI/UX best practices for Next.js admin applications.*
+_Report updated from static code analysis of `jchademwiri/pmg-hub` (branch: `dev`). No live environment access. Findings are based on file structure, component composition, and UI/UX best practices for Next.js admin applications._

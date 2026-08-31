@@ -126,8 +126,8 @@ export async function getClientCreditBalanceV2(clientId: string): Promise<number
       .where(
         and(
           eq(creditNotes.clientId, clientId),
-          sql`${creditNotes.status} IN ('active', 'partially_applied')`
-        )
+          sql`${creditNotes.status} IN ('active', 'partially_applied')`,
+        ),
       );
 
     const creditNoteBalance = parseFloat(creditAgg?.total ?? '0');
@@ -249,7 +249,7 @@ export async function getClientCreditHistory(clientId: string): Promise<CreditHi
 
 export async function applyCreditToInvoice(
   invoiceId: string,
-  amountToApply: number
+  amountToApply: number,
 ): Promise<{ error?: string; success?: boolean; applied?: number }> {
   try {
     const session = await getSessionOrRedirect();
@@ -261,10 +261,7 @@ export async function applyCreditToInvoice(
     }
 
     // 2. Fetch the invoice
-    const [invoice] = await db
-      .select()
-      .from(invoices)
-      .where(eq(invoices.id, invoiceId));
+    const [invoice] = await db.select().from(invoices).where(eq(invoices.id, invoiceId));
 
     if (!invoice) return { error: 'Invoice not found.' };
     if (invoice.status === 'void') return { error: 'Cannot apply credit to a voided invoice.' };
@@ -289,7 +286,8 @@ export async function applyCreditToInvoice(
       .from(creditApplications)
       .where(eq(creditApplications.invoiceId, invoiceId));
 
-    const totalAllocated = parseFloat(allocAgg?.total ?? '0') + parseFloat(creditAllocAgg?.total ?? '0');
+    const totalAllocated =
+      parseFloat(allocAgg?.total ?? '0') + parseFloat(creditAllocAgg?.total ?? '0');
     const invoiceTotal = parseFloat(invoice.total);
     const outstanding = Math.max(0, invoiceTotal - totalAllocated);
 
@@ -313,8 +311,8 @@ export async function applyCreditToInvoice(
         and(
           eq(creditNotes.clientId, invoice.clientId),
           sql`${creditNotes.status} IN ('active', 'partially_applied')`,
-          sql`${creditNotes.amountRemaining} > 0`
-        )
+          sql`${creditNotes.amountRemaining} > 0`,
+        ),
       )
       .orderBy(asc(creditNotes.createdAt));
 
@@ -330,8 +328,10 @@ export async function applyCreditToInvoice(
         .for('update');
 
       if (!invoiceLocked) throw new Error('Invoice not found.');
-      if (invoiceLocked.status === 'void') throw new Error('Cannot apply credit to a voided invoice.');
-      if (invoiceLocked.status === 'draft') throw new Error('Issue the invoice before applying credit.');
+      if (invoiceLocked.status === 'void')
+        throw new Error('Cannot apply credit to a voided invoice.');
+      if (invoiceLocked.status === 'draft')
+        throw new Error('Issue the invoice before applying credit.');
       if (!invoiceLocked.clientId) throw new Error('Invoice has no associated client.');
 
       // 2. Lock active credit notes for this client (FIFO: oldest first)
@@ -342,8 +342,8 @@ export async function applyCreditToInvoice(
           and(
             eq(creditNotes.clientId, invoiceLocked.clientId),
             sql`${creditNotes.status} IN ('active', 'partially_applied')`,
-            sql`${creditNotes.amountRemaining} > 0`
-          )
+            sql`${creditNotes.amountRemaining} > 0`,
+          ),
         )
         .orderBy(asc(creditNotes.createdAt))
         .for('update');
@@ -359,7 +359,8 @@ export async function applyCreditToInvoice(
         .from(creditApplications)
         .where(eq(creditApplications.invoiceId, invoiceId));
 
-      const totalAllocated = parseFloat(allocAgg?.total ?? '0') + parseFloat(creditAllocAgg?.total ?? '0');
+      const totalAllocated =
+        parseFloat(allocAgg?.total ?? '0') + parseFloat(creditAllocAgg?.total ?? '0');
       const invoiceTotal = parseFloat(invoiceLocked.total);
       const outstanding = Math.max(0, invoiceTotal - totalAllocated);
 
@@ -370,7 +371,10 @@ export async function applyCreditToInvoice(
       const finalAmount = Math.min(amountToApply, outstanding);
 
       // Sum active credit notes to check balance
-      const creditNoteBalance = activeNotes.reduce((sum, n) => sum + parseFloat(n.amountRemaining), 0);
+      const creditNoteBalance = activeNotes.reduce(
+        (sum, n) => sum + parseFloat(n.amountRemaining),
+        0,
+      );
       if (creditNoteBalance < finalAmount) {
         throw new Error(`Insufficient credit. Available: R${creditNoteBalance.toFixed(2)}`);
       }
@@ -421,7 +425,8 @@ export async function applyCreditToInvoice(
         .from(creditApplications)
         .where(eq(creditApplications.invoiceId, invoiceId));
 
-      const newTotalAllocated = parseFloat(newAllocAgg?.total ?? '0') + parseFloat(newCreditAllocAgg?.total ?? '0');
+      const newTotalAllocated =
+        parseFloat(newAllocAgg?.total ?? '0') + parseFloat(newCreditAllocAgg?.total ?? '0');
 
       if (newTotalAllocated >= invoiceTotal) {
         await tx
@@ -456,7 +461,6 @@ export async function applyCreditToInvoice(
       // of the generic income/payments views.
     });
 
-
     // 9. Revalidate
     revalidatePath('/billing/invoices');
     revalidatePath('/billing/payments');
@@ -476,7 +480,7 @@ export async function applyCreditToInvoice(
 
 export async function applyCreditToInvoices(
   clientId: string,
-  allocations: { invoiceId: string; amount: number }[]
+  allocations: { invoiceId: string; amount: number }[],
 ): Promise<{ error?: string; success?: boolean; totalApplied?: number }> {
   try {
     await getSessionOrRedirect();
@@ -535,7 +539,9 @@ export async function applyCreditToInvoices(
         if (invoice.status === 'void' || invoice.status === 'draft') return 0;
         if (!invoice.clientId) return 0;
         if (invoice.clientId !== clientId) {
-          console.warn(`applyCreditToInvoices: skipping invoice ${alloc.invoiceId} — belongs to a different client than the credit being spent.`);
+          console.warn(
+            `applyCreditToInvoices: skipping invoice ${alloc.invoiceId} — belongs to a different client than the credit being spent.`,
+          );
           return 0;
         }
 
@@ -550,7 +556,8 @@ export async function applyCreditToInvoices(
           .from(creditApplications)
           .where(eq(creditApplications.invoiceId, alloc.invoiceId));
 
-        const totalAllocated = parseFloat(allocAgg?.total ?? '0') + parseFloat(creditAllocAgg?.total ?? '0');
+        const totalAllocated =
+          parseFloat(allocAgg?.total ?? '0') + parseFloat(creditAllocAgg?.total ?? '0');
         const invoiceTotal = parseFloat(invoice.total);
         const outstanding = Math.max(0, invoiceTotal - totalAllocated);
 
@@ -566,8 +573,8 @@ export async function applyCreditToInvoices(
             and(
               eq(creditNotes.clientId, clientId),
               sql`${creditNotes.status} IN ('active', 'partially_applied')`,
-              sql`${creditNotes.amountRemaining} > 0`
-            )
+              sql`${creditNotes.amountRemaining} > 0`,
+            ),
           )
           .orderBy(asc(creditNotes.createdAt))
           .for('update');
@@ -663,7 +670,8 @@ export async function applyCreditToInvoices(
           .from(creditApplications)
           .where(eq(creditApplications.invoiceId, alloc.invoiceId));
 
-        const newTotalAllocated = parseFloat(newAllocAgg?.total ?? '0') + parseFloat(newCreditAllocAgg?.total ?? '0');
+        const newTotalAllocated =
+          parseFloat(newAllocAgg?.total ?? '0') + parseFloat(newCreditAllocAgg?.total ?? '0');
 
         if (newTotalAllocated >= invoiceTotal) {
           await tx
@@ -828,8 +836,8 @@ export async function reverseCreditApplication(invoiceId: string): Promise<{ err
         .where(
           and(
             eq(paymentAllocations.invoiceId, invoiceId),
-            sql`${income.description} LIKE 'Credit applied to%'`
-          )
+            sql`${income.description} LIKE 'Credit applied to%'`,
+          ),
         );
 
       // Delete payment allocations and income records for this credit application
@@ -865,9 +873,7 @@ export async function reverseCreditApplication(invoiceId: string): Promise<{ err
         }
 
         // Delete the application record
-        await tx
-          .delete(creditApplications)
-          .where(eq(creditApplications.id, app.id));
+        await tx.delete(creditApplications).where(eq(creditApplications.id, app.id));
       }
     });
 
@@ -895,10 +901,7 @@ export async function updateCreditNote(data: {
     await getSessionOrRedirect();
     const db = getDb();
 
-    const [note] = await db
-      .select()
-      .from(creditNotes)
-      .where(eq(creditNotes.id, data.creditNoteId));
+    const [note] = await db.select().from(creditNotes).where(eq(creditNotes.id, data.creditNoteId));
 
     if (!note) return { error: 'Credit note not found.' };
     if (note.status === 'void') return { error: 'Cannot edit a voided credit note.' };
@@ -908,7 +911,7 @@ export async function updateCreditNote(data: {
       .set({
         ...(data.reason !== undefined && { reason: data.reason }),
         ...(data.expiresAt !== undefined && {
-          expiresAt: data.expiresAt ? new Date(data.expiresAt) : null
+          expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
         }),
         updatedAt: new Date(),
       })
@@ -933,10 +936,7 @@ export async function voidCreditNote(creditNoteId: string): Promise<{ error?: st
     const session = await getSessionOrRedirect();
     const db = getDb();
 
-    const [note] = await db
-      .select()
-      .from(creditNotes)
-      .where(eq(creditNotes.id, creditNoteId));
+    const [note] = await db.select().from(creditNotes).where(eq(creditNotes.id, creditNoteId));
 
     if (!note) return { error: 'Credit note not found.' };
     if (note.status === 'void') return { error: 'Credit note is already voided.' };
@@ -1003,10 +1003,7 @@ export async function refundCredit(data: {
     }
 
     // Fetch the credit note
-    const [note] = await db
-      .select()
-      .from(creditNotes)
-      .where(eq(creditNotes.id, data.creditNoteId));
+    const [note] = await db.select().from(creditNotes).where(eq(creditNotes.id, data.creditNoteId));
 
     if (!note) {
       return { error: 'Credit note not found.' };
@@ -1075,7 +1072,9 @@ export async function refundCredit(data: {
 // Checks and expires credit notes past their expiry date.
 // Intended to run as a cron job or manual batch.
 
-export async function expireCreditNotes(options?: { isInternal?: boolean }): Promise<{ expired?: number; error?: string }> {
+export async function expireCreditNotes(options?: {
+  isInternal?: boolean;
+}): Promise<{ expired?: number; error?: string }> {
   try {
     if (!options?.isInternal) {
       await getSessionOrRedirect();
@@ -1090,8 +1089,8 @@ export async function expireCreditNotes(options?: { isInternal?: boolean }): Pro
         and(
           sql`${creditNotes.status} IN ('active', 'partially_applied')`,
           sql`${creditNotes.amountRemaining} > 0`,
-          sql`${creditNotes.expiresAt} < ${now}`
-        )
+          sql`${creditNotes.expiresAt} < ${now}`,
+        ),
       );
 
     let count = 0;

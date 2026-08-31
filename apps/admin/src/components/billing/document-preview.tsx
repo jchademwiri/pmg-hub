@@ -1,73 +1,73 @@
-import Link from 'next/link'
+import Link from 'next/link';
 // Trigger Next.js cache reload
-import { cn } from '@/lib/utils'
-import { fmtDateLong, formatZAR } from '@/lib/format'
-import { getDocumentLogoUrl } from '@/lib/document-logo'
-import { totalAgeingDue } from '@/lib/billing-ageing'
+import { cn } from '@/lib/utils';
+import { fmtDateLong, formatZAR } from '@/lib/format';
+import { getDocumentLogoUrl } from '@/lib/document-logo';
+import { totalAgeingDue } from '@/lib/billing-ageing';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface LineItem {
-  itemName?: string | null
-  description: string
-  qty: number
-  unitPrice: number
-  discountAmount?: number
-  vatApplicable: boolean
+  itemName?: string | null;
+  description: string;
+  qty: number;
+  unitPrice: number;
+  discountAmount?: number;
+  vatApplicable: boolean;
 }
 
 export interface DocumentOrg {
-  name: string
-  divisionOf?: string
-  registrationNumber?: string
-  vatNumber?: string
-  email?: string
-  phone?: string
-  website?: string
-  address?: string
-  salesRep?: string
-  logoUrl?: string
+  name: string;
+  divisionOf?: string;
+  registrationNumber?: string;
+  vatNumber?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  address?: string;
+  salesRep?: string;
+  logoUrl?: string;
 }
 
 export interface DocumentBanking {
-  bankName: string
-  accountName: string
-  accountNumber: string
-  branchCode: string
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+  branchCode: string;
 }
 
 export interface DocumentClient {
-  name: string
-  email?: string
-  phone?: string
-  address?: string
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
 }
 
 export interface DocumentPreviewProps {
-  id?: string
-  type: 'invoice' | 'quote' | 'statement'
-  number: string
-  status: string
-  issueDate: string
+  id?: string;
+  type: 'invoice' | 'quote' | 'statement';
+  number: string;
+  status: string;
+  issueDate: string;
   /** Due date (invoice) or expiry date (quote) */
-  dueDate?: string
+  dueDate?: string;
   /** Statement period */
-  periodFrom?: string
-  periodTo?: string
-  reference?: string
-  org: DocumentOrg
-  client: DocumentClient
-  lineItems?: LineItem[]
+  periodFrom?: string;
+  periodTo?: string;
+  reference?: string;
+  org: DocumentOrg;
+  client: DocumentClient;
+  lineItems?: LineItem[];
   /** Statement transactions */
-  transactions?: StatementTransaction[]
-  notes?: string
-  terms?: string
-  banking?: DocumentBanking
-  vatRate?: number
+  transactions?: StatementTransaction[];
+  notes?: string;
+  terms?: string;
+  banking?: DocumentBanking;
+  vatRate?: number;
   /** Pre-computed discount amount (positive number). If provided, shown as a deduction in the totals block. */
-  discountAmount?: number
+  discountAmount?: number;
   /** Optional link shown on the sticky header - useful during development */
-  href?: string
+  href?: string;
   /** Statement ageing buckets */
   ageing?: {
     current: number;
@@ -75,53 +75,58 @@ export interface DocumentPreviewProps {
     days15_30: number;
     days31_60: number;
     days61plus: number;
-  }
+  };
   /** Total amount paid towards this invoice */
-  amountPaid?: number
+  amountPaid?: number;
   /** Amount written off for this invoice */
-  writtenOffAmount?: number
+  writtenOffAmount?: number;
   /** Global balance due for statement or remaining invoice balance */
-  balanceDue?: number
+  balanceDue?: number;
   /** Balance brought forward for statement period */
-  openingBalance?: number
+  openingBalance?: number;
 }
 
 export interface StatementTransaction {
-  date: string
-  reference: string
-  description: string
-  debit?: number
-  credit?: number
-  balance?: number
-  invoiceId?: string
-  paymentId?: string
-  creditNoteId?: string
-  refundId?: string
+  date: string;
+  reference: string;
+  description: string;
+  debit?: number;
+  credit?: number;
+  balance?: number;
+  invoiceId?: string;
+  paymentId?: string;
+  creditNoteId?: string;
+  refundId?: string;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function fmt(amount: number) {
-  return formatZAR(amount)
+  return formatZAR(amount);
 }
 
 function StatusPill({ status }: { status: string }) {
   const map: Record<string, string> = {
-    Draft:    'bg-zinc-100 text-zinc-500',
-    Sent:     'bg-blue-50 text-blue-700',
-    Paid:     'bg-emerald-50 text-emerald-700',
-    Overdue:  'bg-red-50 text-red-700',
+    Draft: 'bg-zinc-100 text-zinc-500',
+    Sent: 'bg-blue-50 text-blue-700',
+    Paid: 'bg-emerald-50 text-emerald-700',
+    Overdue: 'bg-red-50 text-red-700',
     Accepted: 'bg-emerald-50 text-emerald-700',
     Declined: 'bg-red-50 text-red-700',
-    Expired:  'bg-orange-50 text-orange-700',
-    Issued:   'bg-blue-50 text-blue-700',
-    Void:     'bg-zinc-100 text-zinc-500',
-  }
+    Expired: 'bg-orange-50 text-orange-700',
+    Issued: 'bg-blue-50 text-blue-700',
+    Void: 'bg-zinc-100 text-zinc-500',
+  };
   return (
-    <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', map[status] ?? map['Draft'])}>
+    <span
+      className={cn(
+        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
+        map[status] ?? map['Draft'],
+      )}
+    >
       {status}
     </span>
-  )
+  );
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -153,33 +158,45 @@ export function DocumentPreview({
   openingBalance,
 }: DocumentPreviewProps) {
   // Totals - discount is applied after subtotal, before VAT
-  const subtotal = lineItems.reduce((sum, i) => sum + (i.qty * i.unitPrice) - (i.discountAmount || 0), 0)
-  const vatBase = subtotal - discountAmount
-  const hasVat = lineItems.some(i => i.vatApplicable)
-  const vat = hasVat ? vatBase * (vatRate / 100) : 0
-  const total = vatBase + vat
+  const subtotal = lineItems.reduce(
+    (sum, i) => sum + i.qty * i.unitPrice - (i.discountAmount || 0),
+    0,
+  );
+  const vatBase = subtotal - discountAmount;
+  const hasVat = lineItems.some((i) => i.vatApplicable);
+  const vat = hasVat ? vatBase * (vatRate / 100) : 0;
+  const total = vatBase + vat;
 
-  const paidAmount = amountPaid ?? (status.toLowerCase() === 'paid' ? total : 0)
-  const writtenOff = writtenOffAmount ?? (status.toLowerCase() === 'written_off' ? Math.max(0, total - paidAmount) : 0)
-  const remBalance = balanceDue ?? Math.max(0, total - paidAmount - writtenOff)
-  const showInvoicePaymentSummary = type === 'invoice' && (paidAmount > 0 || writtenOff > 0 || status.toLowerCase() === 'paid' || status.toLowerCase() === 'partially_paid' || status.toLowerCase() === 'written_off' || remBalance < total)
+  const paidAmount = amountPaid ?? (status.toLowerCase() === 'paid' ? total : 0);
+  const writtenOff =
+    writtenOffAmount ??
+    (status.toLowerCase() === 'written_off' ? Math.max(0, total - paidAmount) : 0);
+  const remBalance = balanceDue ?? Math.max(0, total - paidAmount - writtenOff);
+  const showInvoicePaymentSummary =
+    type === 'invoice' &&
+    (paidAmount > 0 ||
+      writtenOff > 0 ||
+      status.toLowerCase() === 'paid' ||
+      status.toLowerCase() === 'partially_paid' ||
+      status.toLowerCase() === 'written_off' ||
+      remBalance < total);
 
-  const hasLineItemDiscounts = lineItems.some(i => (i.discountAmount || 0) > 0)
+  const hasLineItemDiscounts = lineItems.some((i) => (i.discountAmount || 0) > 0);
 
-  const typeLabel =
-    type === 'invoice' ? 'Invoice' : type === 'quote' ? 'Quotation' : 'Statement'
+  const typeLabel = type === 'invoice' ? 'Invoice' : type === 'quote' ? 'Quotation' : 'Statement';
 
   const dueDateLabel =
-    type === 'invoice' ? 'Due Date' : type === 'quote' ? 'Expiry Date' : undefined
+    type === 'invoice' ? 'Due Date' : type === 'quote' ? 'Expiry Date' : undefined;
 
-  const logoUrl = org.logoUrl ?? getDocumentLogoUrl(org.name)
+  const logoUrl = org.logoUrl ?? getDocumentLogoUrl(org.name);
 
   return (
-    <div id={id} className="print-document w-full max-w-[794px] min-h-[1123px] mx-auto flex flex-col bg-white text-zinc-900 shadow-md print:shadow-none ring-1 ring-zinc-200 print:ring-0 border-t-[4px] border-t-blue-700">
-
+    <div
+      id={id}
+      className="print-document w-full max-w-[794px] min-h-[1123px] mx-auto flex flex-col bg-white text-zinc-900 shadow-md print:shadow-none ring-1 ring-zinc-200 print:ring-0 border-t-[4px] border-t-blue-700"
+    >
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-6 px-4 sm:px-10 pt-10 pb-6">
-
         {/* Left: Company info */}
         <div className="flex max-w-[16rem] items-start gap-4">
           <div className="flex flex-col gap-0.5">
@@ -190,18 +207,16 @@ export function DocumentPreview({
             {org.registrationNumber && (
               <span className="text-xs text-zinc-500">Reg: {org.registrationNumber}</span>
             )}
-            {org.vatNumber && (
-              <span className="text-xs text-zinc-500">VAT: {org.vatNumber}</span>
-            )}
+            {org.vatNumber && <span className="text-xs text-zinc-500">VAT: {org.vatNumber}</span>}
             {org.address && (
-              <span className="mt-0.5 text-xs text-zinc-500 whitespace-pre-line">{org.address}</span>
+              <span className="mt-0.5 text-xs text-zinc-500 whitespace-pre-line">
+                {org.address}
+              </span>
             )}
             {org.email && <span className="text-xs text-zinc-500">{org.email}</span>}
             {org.phone && <span className="text-xs text-zinc-500">{org.phone}</span>}
             {org.website && <span className="text-xs text-zinc-500">{org.website}</span>}
-            {org.salesRep && (
-              <span className="text-xs text-zinc-500">Rep: {org.salesRep}</span>
-            )}
+            {org.salesRep && <span className="text-xs text-zinc-500">Rep: {org.salesRep}</span>}
           </div>
         </div>
 
@@ -210,7 +225,9 @@ export function DocumentPreview({
           {logoUrl ? (
             <img src={logoUrl} alt={org.name} className="max-h-full max-w-full object-contain" />
           ) : (
-            <span className="text-xs font-bold text-zinc-800">{org.name.slice(0, 3).toUpperCase()}</span>
+            <span className="text-xs font-bold text-zinc-800">
+              {org.name.slice(0, 3).toUpperCase()}
+            </span>
           )}
         </div>
 
@@ -223,9 +240,17 @@ export function DocumentPreview({
           <StatusPill status={status} />
           {balanceDue !== undefined && type === 'statement' && (
             <div className="mt-2 text-right">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600 block mb-0.5">Amount Due</span>
-              <span className={cn('text-lg font-bold tabular-nums', balanceDue <= 0 ? 'text-emerald-600' : 'text-red-600')}>
-                {fmt(Math.abs(balanceDue))}{balanceDue < 0 ? ' CR' : ''}
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600 block mb-0.5">
+                Amount Due
+              </span>
+              <span
+                className={cn(
+                  'text-lg font-bold tabular-nums',
+                  balanceDue <= 0 ? 'text-emerald-600' : 'text-red-600',
+                )}
+              >
+                {fmt(Math.abs(balanceDue))}
+                {balanceDue < 0 ? ' CR' : ''}
               </span>
             </div>
           )}
@@ -244,7 +269,6 @@ export function DocumentPreview({
 
       {/* ── Meta: Bill To + Dates (inline, far right) ──────────────────────── */}
       <div className="flex items-start justify-between gap-6 px-4 sm:px-10 py-6">
-
         {/* Bill To */}
         <div className="flex flex-col gap-1">
           <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
@@ -262,23 +286,31 @@ export function DocumentPreview({
         {type === 'statement' ? (
           <div className="flex gap-8 shrink-0">
             <div className="flex flex-col items-end gap-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Period From</span>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
+                Period From
+              </span>
               <span className="text-sm font-medium">{fmtDateLong(periodFrom)}</span>
             </div>
             <div className="flex flex-col items-end gap-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Period To</span>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
+                Period To
+              </span>
               <span className="text-sm font-medium">{fmtDateLong(periodTo)}</span>
             </div>
           </div>
         ) : (
           <div className="flex flex-col gap-1 items-end shrink-0">
             <div className="flex items-center gap-3">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Issue Date</span>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
+                Issue Date
+              </span>
               <span className="text-sm font-medium">{fmtDateLong(issueDate)}</span>
             </div>
             {dueDateLabel && (
               <div className="flex items-center gap-3">
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">{dueDateLabel}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
+                  {dueDateLabel}
+                </span>
                 <span className="text-sm font-medium">{fmtDateLong(dueDate)}</span>
               </div>
             )}
@@ -288,7 +320,9 @@ export function DocumentPreview({
 
       {reference && (
         <div className="px-4 sm:px-10 pb-4">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Reference</span>
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
+            Reference
+          </span>
           <p className="mt-0.5 text-xs text-zinc-600">{reference}</p>
         </div>
       )}
@@ -321,9 +355,13 @@ export function DocumentPreview({
             <tbody>
               {lineItems.map((item, i) => {
                 const primaryText = item.itemName || item.description;
-                const hasSecondary = !!item.itemName && !!item.description && item.itemName !== item.description;
+                const hasSecondary =
+                  !!item.itemName && !!item.description && item.itemName !== item.description;
                 return (
-                  <tr key={i} className="border-b border-zinc-100 print:break-inside-avoid [break-inside:avoid]">
+                  <tr
+                    key={i}
+                    className="border-b border-zinc-100 print:break-inside-avoid [break-inside:avoid]"
+                  >
                     <td className="py-3 pr-4 text-zinc-800">
                       <div className="text-zinc-900">{primaryText}</div>
                       {hasSecondary && (
@@ -333,13 +371,17 @@ export function DocumentPreview({
                       )}
                     </td>
                     <td className="py-3 px-4 text-right tabular-nums text-zinc-600">{item.qty}</td>
-                    <td className="py-3 px-4 text-right tabular-nums text-zinc-600">{fmt(item.unitPrice)}</td>
+                    <td className="py-3 px-4 text-right tabular-nums text-zinc-600">
+                      {fmt(item.unitPrice)}
+                    </td>
                     {hasLineItemDiscounts && (
                       <td className="py-3 px-4 text-right tabular-nums text-zinc-600">
                         {item.discountAmount ? fmt(item.discountAmount) : '-'}
                       </td>
                     )}
-                    <td className="py-3 pl-4 text-right tabular-nums font-medium text-zinc-900">{fmt((item.qty * item.unitPrice) - (item.discountAmount || 0))}</td>
+                    <td className="py-3 pl-4 text-right tabular-nums font-medium text-zinc-900">
+                      {fmt(item.qty * item.unitPrice - (item.discountAmount || 0))}
+                    </td>
                   </tr>
                 );
               })}
@@ -385,7 +427,12 @@ export function DocumentPreview({
                   )}
                   <div className="border-t border-zinc-200 pt-2 flex justify-between text-sm font-bold">
                     <span>Balance Due</span>
-                    <span className={cn("tabular-nums", remBalance === 0 ? "text-emerald-600" : "text-amber-600")}>
+                    <span
+                      className={cn(
+                        'tabular-nums',
+                        remBalance === 0 ? 'text-emerald-600' : 'text-amber-600',
+                      )}
+                    >
                       {fmt(remBalance)}
                     </span>
                   </div>
@@ -425,8 +472,13 @@ export function DocumentPreview({
                 {/* Balance Brought Forward row (at the top with colSpan spanning Invoice No. and Description) */}
                 {openingBalance !== undefined && openingBalance !== 0 && (
                   <tr className="border-b border-zinc-100 bg-zinc-50/50 print:break-inside-avoid [break-inside:avoid]">
-                    <td className="py-2.5 pr-4 text-xs text-zinc-500 whitespace-nowrap">{fmtDateLong(periodFrom)}</td>
-                    <td colSpan={2} className="py-2.5 px-4 text-xs text-zinc-500 italic font-normal">
+                    <td className="py-2.5 pr-4 text-xs text-zinc-500 whitespace-nowrap">
+                      {fmtDateLong(periodFrom)}
+                    </td>
+                    <td
+                      colSpan={2}
+                      className="py-2.5 px-4 text-xs text-zinc-500 italic font-normal"
+                    >
                       Balance Brought Forward
                     </td>
                     <td className="py-2.5 px-4 text-right text-xs text-zinc-500">—</td>
@@ -437,8 +489,13 @@ export function DocumentPreview({
                   </tr>
                 )}
                 {transactions.map((tx, i) => (
-                  <tr key={i} className="border-b border-zinc-50 print:break-inside-avoid [break-inside:avoid]">
-                    <td className="py-2.5 pr-4 text-xs text-zinc-600 whitespace-nowrap">{fmtDateLong(tx.date)}</td>
+                  <tr
+                    key={i}
+                    className="border-b border-zinc-50 print:break-inside-avoid [break-inside:avoid]"
+                  >
+                    <td className="py-2.5 pr-4 text-xs text-zinc-600 whitespace-nowrap">
+                      {fmtDateLong(tx.date)}
+                    </td>
                     <td className="py-2.5 px-4 text-xs text-zinc-600 whitespace-nowrap">
                       {tx.invoiceId ? (
                         <Link
@@ -458,7 +515,12 @@ export function DocumentPreview({
                         tx.reference
                       )}
                     </td>
-                    <td className={cn('py-2.5 px-4 text-xs', tx.credit != null ? 'text-emerald-600 font-medium' : 'text-zinc-800')}>
+                    <td
+                      className={cn(
+                        'py-2.5 px-4 text-xs',
+                        tx.credit != null ? 'text-emerald-600 font-medium' : 'text-zinc-800',
+                      )}
+                    >
                       {tx.description}
                     </td>
                     <td className="py-2.5 px-4 text-right tabular-nums text-xs text-zinc-600">
@@ -480,9 +542,12 @@ export function DocumentPreview({
           <div className="mt-4 flex justify-end print:break-inside-avoid [break-inside:avoid]">
             <div className="flex w-64 flex-col gap-2">
               {(() => {
-                const totalInvoiced = transactions.reduce((s, t) => s + (t.debit ?? 0), 0)
-                const totalPaid = transactions.reduce((s, t) => s + (t.credit ?? 0), 0)
-                const balanceDueCalc = balanceDue !== undefined ? balanceDue : ((openingBalance ?? 0) + totalInvoiced - totalPaid)
+                const totalInvoiced = transactions.reduce((s, t) => s + (t.debit ?? 0), 0);
+                const totalPaid = transactions.reduce((s, t) => s + (t.credit ?? 0), 0);
+                const balanceDueCalc =
+                  balanceDue !== undefined
+                    ? balanceDue
+                    : (openingBalance ?? 0) + totalInvoiced - totalPaid;
                 return (
                   <>
                     {openingBalance !== undefined && openingBalance !== 0 && (
@@ -501,18 +566,23 @@ export function DocumentPreview({
                     </div>
                     <div className="border-t border-zinc-200 pt-2 flex justify-between text-sm font-bold">
                       <span className="text-zinc-900">Amount Due</span>
-                      <span className={cn('tabular-nums', balanceDueCalc <= 0 ? 'text-emerald-600' : 'text-red-600')}>
-                        {fmt(Math.abs(balanceDueCalc))}{balanceDueCalc < 0 ? ' CR' : ''}
+                      <span
+                        className={cn(
+                          'tabular-nums',
+                          balanceDueCalc <= 0 ? 'text-emerald-600' : 'text-red-600',
+                        )}
+                      >
+                        {fmt(Math.abs(balanceDueCalc))}
+                        {balanceDueCalc < 0 ? ' CR' : ''}
                       </span>
                     </div>
                   </>
-                )
+                );
               })()}
             </div>
           </div>
         </div>
       )}
-
 
       {/* ── Banking details - after line items ──────────────────────────────── */}
       {banking && (
@@ -541,13 +611,17 @@ export function DocumentPreview({
         <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-4 pb-4 flex flex-col gap-3 print:break-inside-avoid [break-inside:avoid]">
           {notes && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Notes</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
+                Notes
+              </p>
               <p className="mt-1 text-xs text-zinc-600 whitespace-pre-line">{notes}</p>
             </div>
           )}
           {terms && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Terms & Conditions</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
+                Terms & Conditions
+              </p>
               <p className="mt-1 text-xs text-zinc-600 whitespace-pre-line">{terms}</p>
             </div>
           )}
@@ -567,22 +641,66 @@ export function DocumentPreview({
             <table className="w-full text-xs text-center border border-zinc-200">
               <thead>
                 <tr className="bg-zinc-50 border-b border-zinc-200">
-                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide">61+ Days</th>
-                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">31–60 Days</th>
-                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">15–30 Days</th>
-                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">1–14 Days</th>
-                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">Current</th>
-                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">Total Due</th>
+                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide">
+                    61+ Days
+                  </th>
+                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">
+                    31–60 Days
+                  </th>
+                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">
+                    15–30 Days
+                  </th>
+                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">
+                    1–14 Days
+                  </th>
+                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">
+                    Current
+                  </th>
+                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">
+                    Total Due
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days61plus > 0 ? 'text-red-600' : 'text-zinc-500')}>{fmt(ageing.days61plus)}</td>
-                  <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days31_60 > 0 ? 'text-red-500' : 'text-zinc-500')}>{fmt(ageing.days31_60)}</td>
-                  <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days15_30 > 0 ? 'text-amber-600' : 'text-zinc-500')}>{fmt(ageing.days15_30)}</td>
-                  <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days1_14 > 0 ? 'text-amber-600' : 'text-zinc-500')}>{fmt(ageing.days1_14)}</td>
-                  <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.current)}</td>
-                  <td className="py-3 tabular-nums font-bold border-l border-zinc-200 text-zinc-900">{fmt(totalAgeingDue(ageing))}</td>
+                  <td
+                    className={cn(
+                      'py-3 tabular-nums font-semibold border-l border-zinc-200',
+                      ageing.days61plus > 0 ? 'text-red-600' : 'text-zinc-500',
+                    )}
+                  >
+                    {fmt(ageing.days61plus)}
+                  </td>
+                  <td
+                    className={cn(
+                      'py-3 tabular-nums font-semibold border-l border-zinc-200',
+                      ageing.days31_60 > 0 ? 'text-red-500' : 'text-zinc-500',
+                    )}
+                  >
+                    {fmt(ageing.days31_60)}
+                  </td>
+                  <td
+                    className={cn(
+                      'py-3 tabular-nums font-semibold border-l border-zinc-200',
+                      ageing.days15_30 > 0 ? 'text-amber-600' : 'text-zinc-500',
+                    )}
+                  >
+                    {fmt(ageing.days15_30)}
+                  </td>
+                  <td
+                    className={cn(
+                      'py-3 tabular-nums font-semibold border-l border-zinc-200',
+                      ageing.days1_14 > 0 ? 'text-amber-600' : 'text-zinc-500',
+                    )}
+                  >
+                    {fmt(ageing.days1_14)}
+                  </td>
+                  <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">
+                    {fmt(ageing.current)}
+                  </td>
+                  <td className="py-3 tabular-nums font-bold border-l border-zinc-200 text-zinc-900">
+                    {fmt(totalAgeingDue(ageing))}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -591,11 +709,13 @@ export function DocumentPreview({
 
         <div className="mx-4 sm:mx-10 border-t border-zinc-100 py-4 flex items-center justify-between">
           <span className="text-[10px] text-zinc-400">
-            {reference ? `Reference: ${reference.length > 30 ? reference.slice(0, 30) + '...' : reference}` : ''}
+            {reference
+              ? `Reference: ${reference.length > 30 ? reference.slice(0, 30) + '...' : reference}`
+              : ''}
           </span>
           <span className="text-[10px] text-zinc-400">Thank you for your business.</span>
         </div>
       </div>
     </div>
-  )
+  );
 }

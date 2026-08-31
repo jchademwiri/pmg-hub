@@ -1,19 +1,19 @@
-import type { Metadata } from 'next'
-import { Database, Download, CloudUpload, Clock, AlertTriangle, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Field, FieldLabel } from '@/components/ui/field'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { SettingsPageHeader } from '@/components/settings/settings-page-header'
-import { SettingsSection } from '@/components/settings/settings-section'
-import { getBackupStorageStatus, listDatabaseBackups } from '@/lib/data-export'
-import { DataExportList, DatabaseBackupPanel } from './data-settings-client'
+import type { Metadata } from 'next';
+import { Database, Download, CloudUpload, Clock, AlertTriangle, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SettingsPageHeader } from '@/components/settings/settings-page-header';
+import { SettingsSection } from '@/components/settings/settings-section';
+import { getBackupStorageStatus, listDatabaseBackups } from '@/lib/data-export';
+import { DataExportList, DatabaseBackupPanel } from './data-settings-client';
 
-export const metadata: Metadata = { title: 'Data & Exports Settings' }
+export const metadata: Metadata = { title: 'Data & Exports Settings' };
 
 export default async function DataSettingsPage() {
-  const backupStorage = getBackupStorageStatus()
-  const backups = backupStorage.configured ? await listDatabaseBackups().catch(() => []) : []
+  const backupStorage = getBackupStorageStatus();
+  const backups = backupStorage.configured ? await listDatabaseBackups().catch(() => []) : [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -26,7 +26,8 @@ export default async function DataSettingsPage() {
         <Database />
         <AlertTitle>Exports are live</AlertTitle>
         <AlertDescription>
-          CSV exports download immediately. Full JSON exports and Cloudflare backups include all public database tables.
+          CSV exports download immediately. Full JSON exports and Cloudflare backups include all
+          public database tables.
         </AlertDescription>
       </Alert>
 
@@ -44,7 +45,10 @@ export default async function DataSettingsPage() {
             <Clock className="h-4 w-4" />
             Data Retention
           </TabsTrigger>
-          <TabsTrigger value="danger-zone" className="flex items-center gap-2 text-destructive data-[state=active]:text-destructive">
+          <TabsTrigger
+            value="danger-zone"
+            className="flex items-center gap-2 text-destructive data-[state=active]:text-destructive"
+          >
             <AlertTriangle className="h-4 w-4" />
             Danger Zone
           </TabsTrigger>
@@ -117,7 +121,13 @@ export default async function DataSettingsPage() {
                     Permanently delete all financial snapshots. This cannot be undone.
                   </span>
                 </div>
-                <Button variant="outline" size="sm" className="border-destructive/50 text-destructive hover:bg-destructive/10" disabled title="Coming soon">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-destructive/50 text-destructive hover:bg-destructive/10"
+                  disabled
+                  title="Coming soon"
+                >
                   <Trash2 data-icon="inline-start" />
                   Clear
                 </Button>
@@ -129,7 +139,13 @@ export default async function DataSettingsPage() {
                     Restore all settings to their factory defaults.
                   </span>
                 </div>
-                <Button variant="outline" size="sm" className="border-destructive/50 text-destructive hover:bg-destructive/10" disabled title="Coming soon">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-destructive/50 text-destructive hover:bg-destructive/10"
+                  disabled
+                  title="Coming soon"
+                >
                   <Trash2 data-icon="inline-start" />
                   Reset
                 </Button>
@@ -139,7 +155,5 @@ export default async function DataSettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
-
-

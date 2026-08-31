@@ -72,7 +72,7 @@ Add a query in `packages/db/src/queries/general.ts`, for example:
 ```ts
 export async function getMonthlyRevenueVsInvoicedForYear(
   year: number,
-): Promise<{ month: string; received: number; invoiced: number }[]>
+): Promise<{ month: string; received: number; invoiced: number }[]>;
 ```
 
 The query should:

@@ -1,4 +1,5 @@
 # PMG Control Center - Phased Development Plan
+
 ## With AI Copilot Prompts
 
 **Date:** May 2026  
@@ -13,23 +14,23 @@
 
 The following shell pages already exist and must be kept - do not regenerate them from scratch:
 
-| File | State |
-|---|---|
-| `billing/quotes/page.tsx` | Shell with stats cards, empty table, mock preview link |
-| `billing/quotes/new/page.tsx` | Shell with layout, placeholder form fields |
-| `billing/quotes/[id]/page.tsx` | Shell with `DocumentPreview`, sidebar, mock data |
-| `billing/invoices/page.tsx` | Shell with stats cards, empty table |
-| `billing/invoices/new/page.tsx` | Shell with layout, placeholder form fields |
-| `billing/invoices/[id]/page.tsx` | Shell with `DocumentPreview`, sidebar, mock data |
-| `billing/statements/page.tsx` | Shell with stats cards, empty table |
-| `billing/statements/[clientId]/page.tsx` | Shell with `DocumentPreview`, summary cards |
-| `billing/items/page.tsx` | Shell with stats cards, empty table |
-| `billing/items/new/page.tsx` | Shell - single card form with mocked fields |
-| `billing/items/[id]/page.tsx` | Shell with two-column layout, mock data |
-| `settings/billing/page.tsx` | ✅ Live - fetches `getAllDivisions()` |
-| `settings/billing/billing-settings-client.tsx` | ✅ Live - tab switching, `divisionPrefix()` logic |
-| `settings/organisation/page.tsx` | Shell - all save buttons disabled |
-| `settings/notifications/page.tsx` | Shell - toggle rows are visual mocks |
+| File                                           | State                                                  |
+| ---------------------------------------------- | ------------------------------------------------------ |
+| `billing/quotes/page.tsx`                      | Shell with stats cards, empty table, mock preview link |
+| `billing/quotes/new/page.tsx`                  | Shell with layout, placeholder form fields             |
+| `billing/quotes/[id]/page.tsx`                 | Shell with `DocumentPreview`, sidebar, mock data       |
+| `billing/invoices/page.tsx`                    | Shell with stats cards, empty table                    |
+| `billing/invoices/new/page.tsx`                | Shell with layout, placeholder form fields             |
+| `billing/invoices/[id]/page.tsx`               | Shell with `DocumentPreview`, sidebar, mock data       |
+| `billing/statements/page.tsx`                  | Shell with stats cards, empty table                    |
+| `billing/statements/[clientId]/page.tsx`       | Shell with `DocumentPreview`, summary cards            |
+| `billing/items/page.tsx`                       | Shell with stats cards, empty table                    |
+| `billing/items/new/page.tsx`                   | Shell - single card form with mocked fields            |
+| `billing/items/[id]/page.tsx`                  | Shell with two-column layout, mock data                |
+| `settings/billing/page.tsx`                    | ✅ Live - fetches `getAllDivisions()`                  |
+| `settings/billing/billing-settings-client.tsx` | ✅ Live - tab switching, `divisionPrefix()` logic      |
+| `settings/organisation/page.tsx`               | Shell - all save buttons disabled                      |
+| `settings/notifications/page.tsx`              | Shell - toggle rows are visual mocks                   |
 
 **Strategy:** Every prompt in this plan asks Claude to patch/extend existing files, not replace them. Always paste the current file content alongside the prompt.
 
@@ -38,6 +39,7 @@ The following shell pages already exist and must be kept - do not regenerate the
 ## How to Use This Plan
 
 Each step has:
+
 - **What you do** - your action
 - **What AI does** - what to hand to Claude
 - **Copilot Prompt** - paste this at the start of a new conversation, with the file contents attached
@@ -48,6 +50,7 @@ Always open a fresh conversation per step. Paste the prompt, attach the referenc
 ---
 
 ## Phase 0 - Schema, Utilities & Queries
+
 **Duration:** 2–3 days  
 **Goal:** Database ready, document sequencing works, all queries typed.
 
@@ -58,6 +61,7 @@ Always open a fresh conversation per step. Paste the prompt, attach the referenc
 **What you do:** Create `packages/db/src/schema/billing.ts`
 
 #### Copilot Prompt
+
 ```
 I need you to generate a new Drizzle ORM schema file for PMG Control Center's billing module.
 
@@ -134,7 +138,7 @@ Export all TypeScript types ($inferSelect and $inferInsert for all 5 tables).
 **What you do:** Add one line to `packages/db/src/schema/index.ts`
 
 ```typescript
-export * from "./billing";
+export * from './billing';
 ```
 
 No AI needed.
@@ -146,6 +150,7 @@ No AI needed.
 **What you do:** Create `packages/db/src/lib/document-numbers.ts`
 
 #### Copilot Prompt
+
 ```
 Generate a document number utility for PMG Control Center.
 
@@ -184,6 +189,7 @@ Export getNextDocumentNumber.
 **What you do:** Create `packages/db/src/queries/billing.ts`
 
 #### Copilot Prompt
+
 ```
 Generate the billing query file for PMG Control Center.
 
@@ -241,8 +247,15 @@ ClientStatement, ClientBillingRow, LineItemDetail, BillingItemDetail.
 ```typescript
 export * from './queries/billing';
 export { getNextDocumentNumber } from './lib/document-numbers';
-export type { QuotationRow, InvoiceRow, QuotationDetail, InvoiceDetail,
-              ClientStatement, ClientBillingRow, BillingItemDetail } from './queries/billing';
+export type {
+  QuotationRow,
+  InvoiceRow,
+  QuotationDetail,
+  InvoiceDetail,
+  ClientStatement,
+  ClientBillingRow,
+  BillingItemDetail,
+} from './queries/billing';
 ```
 
 ---
@@ -256,6 +269,7 @@ npx drizzle-kit migrate
 ```
 
 **Done When Phase 0 Is Complete:**
+
 - [ ] `billing.ts` schema with 5 tables - no TypeScript errors
 - [ ] Migration runs clean - 5 new tables in Neon console
 - [ ] `getNextDocumentNumber('division-uuid', 'quote', 2026)` → `APX-Q-2026-001`, second call → `APX-Q-2026-002`
@@ -265,6 +279,7 @@ npx drizzle-kit migrate
 ---
 
 ## Phase 1 - Quotations (Wire Up Existing Shell)
+
 **Duration:** 3–4 days  
 **Goal:** Quote create form works end-to-end. List shows real data. Detail shows real data with working status actions.
 
@@ -273,6 +288,7 @@ npx drizzle-kit migrate
 ### Step 1.1 - Billing Zod Schemas + Quote Actions
 
 #### Copilot Prompt
+
 ```
 Generate two files for PMG Control Center billing.
 
@@ -324,6 +340,7 @@ FILE 2: apps/admin/src/app/actions/billing-quotes.ts
 ### Step 1.2 - Shared Billing Components
 
 #### Copilot Prompt
+
 ```
 Generate 5 shared billing components for PMG Control Center.
 All use shadcn/ui, Tailwind CSS, TypeScript. Follow existing component patterns.
@@ -382,6 +399,7 @@ Button label "Convert to Invoice", variant="default", CheckCircle icon.
 ### Step 1.3 - Wire Up Quote List Page
 
 #### Copilot Prompt
+
 ```
 I need to wire up the existing quotations list shell page in PMG Control Center.
 DO NOT rewrite the file from scratch - patch it to add real data fetching.
@@ -417,6 +435,7 @@ divisions, clients, divisionId?, status?, deleteAction, updateStatusAction
 ### Step 1.4 - Quote Create Form (Client Component)
 
 #### Copilot Prompt
+
 ```
 Generate the quote create form client component for PMG Control Center.
 
@@ -458,6 +477,7 @@ Import BillingLineItemsForm, BillingTotalsBlock from '@/components/billing/'.
 ### Step 1.5 - Wire Up Quote Detail Page
 
 #### Copilot Prompt
+
 ```
 Wire up the quote detail page in PMG Control Center. Patch the existing shell.
 
@@ -488,6 +508,7 @@ Import actions from '@/app/actions/billing-quotes' and '@/app/actions/billing-in
 ```
 
 **Done When Phase 1 Is Complete:**
+
 - [ ] Create a quote with 3 line items (mix of 0% and 15% VAT) - see correct totals
 - [ ] Document number auto-assigned on save (`APX-Q-2026-001`)
 - [ ] Quote appears in list with correct status badge
@@ -500,6 +521,7 @@ Import actions from '@/app/actions/billing-quotes' and '@/app/actions/billing-in
 ---
 
 ## Phase 2 - Invoices + Mark Paid
+
 **Duration:** 3–4 days  
 **Goal:** Full invoice lifecycle. Mark paid posts to income table. Dashboard updates.
 
@@ -508,6 +530,7 @@ Import actions from '@/app/actions/billing-quotes' and '@/app/actions/billing-in
 ### Step 2.1 - Invoice Actions
 
 #### Copilot Prompt
+
 ```
 Generate apps/admin/src/app/actions/billing-invoices.ts for PMG Control Center.
 
@@ -567,6 +590,7 @@ Export:
 ### Step 2.2 - Mark Paid + Void Buttons
 
 #### Copilot Prompt
+
 ```
 Generate two action button components for PMG Control Center invoices.
 
@@ -586,7 +610,7 @@ If hasClient is true:
   Show loading state while in flight.
 
 COMPONENT 2: apps/admin/src/components/billing/void-invoice-button.tsx
-'use client'  
+'use client'
 Props: { invoiceId: string; voidAction: (id: string) => Promise<{ error?: string }> }
 window.confirm: "Void this invoice? This cannot be undone."
 Button: variant="outline", className includes "text-destructive border-destructive/50"
@@ -597,6 +621,7 @@ Button: variant="outline", className includes "text-destructive border-destructi
 ### Step 2.3 - Wire Up Invoice List + Form
 
 #### Copilot Prompt
+
 ```
 Wire up the invoice list page and create form in PMG Control Center.
 Patch the existing shell files - do not rewrite from scratch.
@@ -627,6 +652,7 @@ For invoices/new/page.tsx → invoice-form-client.tsx:
 ### Step 2.4 - Wire Up Invoice Detail Page
 
 #### Copilot Prompt
+
 ```
 Wire up the invoice detail page in PMG Control Center. Patch the existing shell.
 
@@ -657,6 +683,7 @@ Import markInvoicePaid, issueInvoice, voidInvoice from '@/app/actions/billing-in
 ```
 
 **Done When Phase 2 Is Complete:**
+
 - [ ] Create standalone invoice
 - [ ] Quote → Accept → Convert → Invoice (quote shows "Converted", invoice shows "From Quote")
 - [ ] Issue invoice (Draft → Issued)
@@ -669,6 +696,7 @@ Import markInvoicePaid, issueInvoice, voidInvoice from '@/app/actions/billing-in
 ---
 
 ## Phase 3 - Statements
+
 **Duration:** 2–3 days  
 **Goal:** Statement list and client detail pages show real data.
 
@@ -677,6 +705,7 @@ Import markInvoicePaid, issueInvoice, voidInvoice from '@/app/actions/billing-in
 ### Step 3.1 - Wire Up Statements
 
 #### Copilot Prompt
+
 ```
 Wire up the billing statements pages in PMG Control Center. Patch existing shells.
 
@@ -724,6 +753,7 @@ For statements/[clientId]/page.tsx:
 ```
 
 **Done When Phase 3 Is Complete:**
+
 - [ ] Statement list shows all clients with billing activity and correct outstanding
 - [ ] Client statement summary strip totals match manual calculation
 - [ ] Transaction history table shows invoices as debits, payments as credits with running balance
@@ -733,6 +763,7 @@ For statements/[clientId]/page.tsx:
 ---
 
 ## Phase 4 - Items Catalogue
+
 **Duration:** 2 days  
 **Goal:** Items CRUD working. Combobox wired into line item form.
 
@@ -741,6 +772,7 @@ For statements/[clientId]/page.tsx:
 ### Step 4.1 - Items Actions + Wire Up Pages
 
 #### Copilot Prompt
+
 ```
 Generate the items server actions and wire up the billing items pages in PMG Control Center.
 
@@ -754,7 +786,7 @@ Export:
 - deleteItem(id): check if used in billing_line_items - if yes, return error 'Archive instead of deleting used items.'
   Otherwise delete.
 
-ItemSchema (Zod): { name: string min 1 max 200, description: string optional, 
+ItemSchema (Zod): { name: string min 1 max 200, description: string optional,
   unitPrice: coerce.number min 0, unitLabel: string optional, vatApplicable: coerce.boolean }
 
 FILE 2: Wire up billing/items/page.tsx
@@ -780,6 +812,7 @@ Shell files for reference:
 ### Step 4.2 - Combobox in Line Items Form
 
 #### Copilot Prompt
+
 ```
 Upgrade the BillingLineItemsForm component to support item selection via combobox.
 
@@ -803,6 +836,7 @@ shadcn Command + Popover:
 ---
 
 ## Phase 5 - Settings Wiring
+
 **Duration:** 2 days  
 **Goal:** Organisation settings save. Billing settings save. Notifications toggles functional.
 
@@ -811,6 +845,7 @@ shadcn Command + Popover:
 ### Step 5.1 - Organisation Settings Save
 
 #### Copilot Prompt
+
 ```
 Wire up the organisation settings save flow in PMG Control Center.
 
@@ -845,6 +880,7 @@ field layout. Use FormData approach (not controlled state - this is a simple fla
 ### Step 5.2 - Billing Settings Save
 
 #### Copilot Prompt
+
 ```
 Wire up the billing settings save for PMG Control Center.
 
@@ -877,6 +913,7 @@ I need:
 ```
 
 **Done When Phase 5 Is Complete:**
+
 - [ ] Organisation settings save and reload correctly
 - [ ] Billing settings save per division - banking details persist across page refreshes
 - [ ] Division settings tabs still work with real data
@@ -884,6 +921,7 @@ I need:
 ---
 
 ## Phase 6 - Polish & Cleanup
+
 **Duration:** 1–2 days  
 **Goal:** Production-ready. No broken states. No dev artefacts.
 
@@ -892,6 +930,7 @@ I need:
 ### Step 6.1 - Remove Dev Artefacts
 
 **What you do manually:**
+
 - [ ] Remove all `Preview mock quote →`, `Preview mock invoice →`, `Preview mock statement →`, `Preview mock item →` links from list pages
 - [ ] Remove mock data `const MOCK = {...}` from all detail pages - all data now comes from DB
 - [ ] Remove `/billing/quotes/mock-preview`, `/billing/invoices/mock-preview`, `/billing/statements/mock-preview`, `/billing/items/mock-preview` routes if they exist
@@ -901,6 +940,7 @@ I need:
 ### Step 6.2 - Loading + Error States
 
 #### Copilot Prompt
+
 ```
 Generate loading and error states for the billing module.
 Copy the exact pattern from:
@@ -919,6 +959,7 @@ These inherit to all /billing/* routes automatically.
 ### Step 6.3 - Final Verification
 
 #### Copilot Prompt (audit prompt)
+
 ```
 Review this PMG Control Center billing implementation for production readiness.
 Check each item and flag any gaps:
@@ -946,15 +987,15 @@ Report any issues found with the file and line reference.
 
 ## Summary Timeline
 
-| Phase | Focus | Days | Cumulative |
-|---|---|---|---|
-| 0 | Schema, utilities, queries | 2–3 | Day 3 |
-| 1 | Quotations - wire up shells | 3–4 | Day 7 |
-| 2 | Invoices + Mark Paid | 3–4 | Day 11 |
-| 3 | Statements | 2–3 | Day 14 |
-| 4 | Items catalogue | 2 | Day 16 |
-| 5 | Settings wiring | 2 | Day 18 |
-| 6 | Polish + verification | 1–2 | Day 19 |
+| Phase | Focus                       | Days | Cumulative |
+| ----- | --------------------------- | ---- | ---------- |
+| 0     | Schema, utilities, queries  | 2–3  | Day 3      |
+| 1     | Quotations - wire up shells | 3–4  | Day 7      |
+| 2     | Invoices + Mark Paid        | 3–4  | Day 11     |
+| 3     | Statements                  | 2–3  | Day 14     |
+| 4     | Items catalogue             | 2    | Day 16     |
+| 5     | Settings wiring             | 2    | Day 18     |
+| 6     | Polish + verification       | 1–2  | Day 19     |
 
 **Total: 15–19 working days** (accounting for real shells reducing rework vs. building from scratch)
 
@@ -964,19 +1005,19 @@ Report any issues found with the file and line reference.
 
 When v1 is stable in production, these are next:
 
-| Feature | What's Needed |
-|---|---|
-| PDF generation | `@react-pdf/renderer` in `packages/documents` - `QuotePDF`, `InvoicePDF`, `StatementPDF` |
-| Email delivery | Resend + React Email templates - send on issueInvoice, sendQuote |
-| Audit log | `billing_audit_log` table - all status transitions |
-| Discount fields | Line-item % discount + document-level fixed/% |
-| Partial payments | `billing_payments` table, `PARTIALLY_PAID` status |
-| Statement export | CSV server action (mirrors `exportFinancialsCsv`) |
-| Overdue auto-flag | On-read check: past due + issued → flag overdue |
-| Localisation settings | Wire up timezone, date format, financial year start |
-| Email settings | Wire up Resend API key, sender identity |
-| Notification toggles | `notification_settings` table, toggle save |
+| Feature               | What's Needed                                                                            |
+| --------------------- | ---------------------------------------------------------------------------------------- |
+| PDF generation        | `@react-pdf/renderer` in `packages/documents` - `QuotePDF`, `InvoicePDF`, `StatementPDF` |
+| Email delivery        | Resend + React Email templates - send on issueInvoice, sendQuote                         |
+| Audit log             | `billing_audit_log` table - all status transitions                                       |
+| Discount fields       | Line-item % discount + document-level fixed/%                                            |
+| Partial payments      | `billing_payments` table, `PARTIALLY_PAID` status                                        |
+| Statement export      | CSV server action (mirrors `exportFinancialsCsv`)                                        |
+| Overdue auto-flag     | On-read check: past due + issued → flag overdue                                          |
+| Localisation settings | Wire up timezone, date format, financial year start                                      |
+| Email settings        | Wire up Resend API key, sender identity                                                  |
+| Notification toggles  | `notification_settings` table, toggle save                                               |
 
 ---
 
-*PMG Control Center - Phased Development Plan - May 2026*
+_PMG Control Center - Phased Development Plan - May 2026_

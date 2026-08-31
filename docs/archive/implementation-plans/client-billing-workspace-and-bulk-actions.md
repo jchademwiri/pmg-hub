@@ -110,11 +110,11 @@ Suggested cards:
 
 Suggested recent activity section:
 
-| Date | Activity | Reference | Amount | Status |
-|---|---|---:|---:|---|
-| 09 Jun 2026 | Invoice created | INV-0028 | R8,500 | Sent |
-| 07 Jun 2026 | Payment recorded | PAY-0014 | R4,000 | Completed |
-| 02 Jun 2026 | Quotation accepted | QUO-0032 | R12,500 | Accepted |
+| Date        | Activity           | Reference |  Amount | Status    |
+| ----------- | ------------------ | --------: | ------: | --------- |
+| 09 Jun 2026 | Invoice created    |  INV-0028 |  R8,500 | Sent      |
+| 07 Jun 2026 | Payment recorded   |  PAY-0014 |  R4,000 | Completed |
+| 02 Jun 2026 | Quotation accepted |  QUO-0032 | R12,500 | Accepted  |
 
 ### 4.2 Quotations Tab
 
@@ -122,10 +122,10 @@ This tab should show every quotation associated with the client, including draft
 
 Suggested columns:
 
-| Select | Quotation No. | Issue Date | Expiry Date | Amount | Status | Actions |
-|---|---|---|---|---:|---|---|
-| ☐ | QUO-0032 | 02 Jun 2026 | 16 Jun 2026 | R12,500 | Accepted | ⋮ |
-| ☐ | QUO-0031 | 28 May 2026 | 11 Jun 2026 | R4,800 | Draft | ⋮ |
+| Select | Quotation No. | Issue Date  | Expiry Date |  Amount | Status   | Actions |
+| ------ | ------------- | ----------- | ----------- | ------: | -------- | ------- |
+| ☐      | QUO-0032      | 02 Jun 2026 | 16 Jun 2026 | R12,500 | Accepted | ⋮       |
+| ☐      | QUO-0031      | 28 May 2026 | 11 Jun 2026 |  R4,800 | Draft    | ⋮       |
 
 Statuses may include:
 
@@ -154,11 +154,11 @@ This tab should show every invoice associated with the client, including drafts 
 
 Suggested columns:
 
-| Select | Invoice No. | Issue Date | Due Date | Total | Balance | Status | Actions |
-|---|---|---|---|---:|---:|---|---|
-| ☐ | INV-0028 | 09 Jun 2026 | 09 Jul 2026 | R8,500 | R8,500 | Sent | ⋮ |
-| ☐ | INV-0024 | 03 May 2026 | 02 Jun 2026 | R6,000 | R2,000 | Partially paid | ⋮ |
-| ☐ | INV-0019 | 04 Apr 2026 | 04 May 2026 | R4,000 | R0 | Paid | ⋮ |
+| Select | Invoice No. | Issue Date  | Due Date    |  Total | Balance | Status         | Actions |
+| ------ | ----------- | ----------- | ----------- | -----: | ------: | -------------- | ------- |
+| ☐      | INV-0028    | 09 Jun 2026 | 09 Jul 2026 | R8,500 |  R8,500 | Sent           | ⋮       |
+| ☐      | INV-0024    | 03 May 2026 | 02 Jun 2026 | R6,000 |  R2,000 | Partially paid | ⋮       |
+| ☐      | INV-0019    | 04 Apr 2026 | 04 May 2026 | R4,000 |      R0 | Paid           | ⋮       |
 
 Statuses may include:
 
@@ -192,9 +192,9 @@ The existing payment information can remain, but it should be connected to the i
 
 Suggested columns:
 
-| Payment Date | Payment Reference | Invoice | Method | Amount | Status |
-|---|---|---|---|---:|---|
-| 07 Jun 2026 | EFT-7762 | INV-0024 | EFT | R4,000 | Completed |
+| Payment Date | Payment Reference | Invoice  | Method | Amount | Status    |
+| ------------ | ----------------- | -------- | ------ | -----: | --------- |
+| 07 Jun 2026  | EFT-7762          | INV-0024 | EFT    | R4,000 | Completed |
 
 The invoice number should be clickable and should load the related invoice preview.
 
@@ -204,11 +204,11 @@ The statement tab should show a complete client account ledger.
 
 Suggested columns:
 
-| Date | Type | Reference | Description | Debit | Credit | Running Balance |
-|---|---|---|---|---:|---:|---:|
-| 03 May 2026 | Invoice | INV-0024 | Cleaning services | R6,000 | — | R6,000 |
-| 07 Jun 2026 | Payment | EFT-7762 | Payment received | — | R4,000 | R2,000 |
-| 09 Jun 2026 | Invoice | INV-0028 | Tender preparation | R8,500 | — | R10,500 |
+| Date        | Type    | Reference | Description        |  Debit | Credit | Running Balance |
+| ----------- | ------- | --------- | ------------------ | -----: | -----: | --------------: |
+| 03 May 2026 | Invoice | INV-0024  | Cleaning services  | R6,000 |      — |          R6,000 |
+| 07 Jun 2026 | Payment | EFT-7762  | Payment received   |      — | R4,000 |          R2,000 |
+| 09 Jun 2026 | Invoice | INV-0028  | Tender preparation | R8,500 |      — |         R10,500 |
 
 Statement controls:
 
@@ -514,12 +514,12 @@ Create a dedicated client billing service or query layer.
 ### Suggested Queries
 
 ```ts
-getClientBillingSummary(clientId)
-getClientInvoices(clientId, filters, pagination)
-getClientQuotations(clientId, filters, pagination)
-getClientPayments(clientId, filters, pagination)
-getClientStatement(clientId, dateRange)
-getClientDocumentCounts(clientId)
+getClientBillingSummary(clientId);
+getClientInvoices(clientId, filters, pagination);
+getClientQuotations(clientId, filters, pagination);
+getClientPayments(clientId, filters, pagination);
+getClientStatement(clientId, dateRange);
+getClientDocumentCounts(clientId);
 ```
 
 ### Billing Summary Response
@@ -628,10 +628,10 @@ Single PDF download or bulk archive service
 Suggested functions:
 
 ```ts
-generateInvoicePdf(invoiceId)
-generateQuotationPdf(quotationId)
-generateStatementPdf(clientId, options)
-generateBillingDocumentZip(documentIds)
+generateInvoicePdf(invoiceId);
+generateQuotationPdf(quotationId);
+generateStatementPdf(clientId, options);
+generateBillingDocumentZip(documentIds);
 ```
 
 This ensures the PDF downloaded individually is identical to the PDF included in the ZIP.
@@ -643,7 +643,7 @@ This ensures the PDF downloaded individually is identical to the PDF included in
 ### Request
 
 ```ts
-POST /api/billing/documents/bulk-download
+POST / api / billing / documents / bulk - download;
 ```
 
 Example body:
@@ -776,8 +776,8 @@ The PDF should show:
 Add an optional ageing summary:
 
 | Current | 1–30 Days | 31–60 Days | 61–90 Days | 90+ Days |
-|---:|---:|---:|---:|---:|
-| R8,500 | R2,000 | R0 | R0 | R0 |
+| ------: | --------: | ---------: | ---------: | -------: |
+|  R8,500 |    R2,000 |         R0 |         R0 |       R0 |
 
 ---
 
@@ -872,7 +872,7 @@ Selection should be based on stable record IDs, not row indexes.
 ```ts
 type SelectedDocument = {
   id: string;
-  type: "invoice" | "quotation" | "statement" | "receipt";
+  type: 'invoice' | 'quotation' | 'statement' | 'receipt';
   clientId: string;
 };
 ```

@@ -31,7 +31,8 @@ export async function updateDivision(id: string, formData: FormData): Promise<{ 
     if (!result.success) {
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
-    await db.update(divisions)
+    await db
+      .update(divisions)
       .set({ name: result.data.name, updatedAt: new Date() })
       .where(eq(divisions.id, id));
     revalidatePath('/relationships/divisions');
@@ -42,7 +43,10 @@ export async function updateDivision(id: string, formData: FormData): Promise<{ 
   }
 }
 
-export async function toggleDivisionActive(id: string, isActive: boolean): Promise<{ error?: string }> {
+export async function toggleDivisionActive(
+  id: string,
+  isActive: boolean,
+): Promise<{ error?: string }> {
   try {
     await getSessionOrRedirect();
     await setDivisionActive(id, isActive);

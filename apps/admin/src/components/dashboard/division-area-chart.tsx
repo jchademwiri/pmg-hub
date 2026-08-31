@@ -1,80 +1,86 @@
-'use client'
+'use client';
 
-import { useMemo, useState } from 'react'
-import {
-  Bar,
-  ComposedChart,
-  Line,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-} from 'recharts'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useMemo, useState } from 'react';
+import { Bar, ComposedChart, Line, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart'
-import { formatZAR, fmtMonthYear, getSASTParts } from '@/lib/format'
-import type { MonthlyBudgetChartRow } from '@/lib/financial'
+} from '@/components/ui/chart';
+import { formatZAR, fmtMonthYear, getSASTParts } from '@/lib/format';
+import type { MonthlyBudgetChartRow } from '@/lib/financial';
 
 type Props = {
-  data: MonthlyBudgetChartRow[]
-}
+  data: MonthlyBudgetChartRow[];
+};
 
 const SERIES = [
   { key: 'invoiced', label: 'Revenue', color: 'var(--chart-1)' },
   { key: 'revenue', label: 'Cash Receipts', color: 'oklch(0.72 0.16 150)' },
   { key: 'ar', label: 'Accounts Receivable', color: 'oklch(0.62 0.19 293)' },
   { key: 'expenses', label: 'Expenses', color: 'var(--chart-expense)' },
-] as const
+] as const;
 
 const chartConfig: ChartConfig = Object.fromEntries(
   SERIES.map((item) => [item.key, { label: item.label, color: item.color }]),
-)
+);
 
 function formatYAxis(value: number) {
-  if (Math.abs(value) >= 1000) return `R${Math.round(value / 1000)}k`
-  return `R${value}`
+  if (Math.abs(value) >= 1000) return `R${Math.round(value / 1000)}k`;
+  return `R${value}`;
 }
 
-const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const MONTH_ABBR = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
 
 // Month-only (no year) keeps X-axis ticks short enough to stay legible on narrow screens;
 // the year is shown in the card subtitle and in the tooltip on hover.
 function formatXAxisTick(month: string) {
-  const [, m] = month.split('-')
-  return MONTH_ABBR[Number(m) - 1] ?? month
+  const [, m] = month.split('-');
+  return MONTH_ABBR[Number(m) - 1] ?? month;
 }
 
 export function DivisionAreaChart({ data }: Props) {
-  const [chartType, setChartType] = useState<'line' | 'bar' | 'both'>('bar')
+  const [chartType, setChartType] = useState<'line' | 'bar' | 'both'>('bar');
 
   const currentMonthStr = useMemo(() => {
-    const { year, month } = getSASTParts()
-    return `${year}-${String(month + 1).padStart(2, '0')}`
-  }, [])
+    const { year, month } = getSASTParts();
+    return `${year}-${String(month + 1).padStart(2, '0')}`;
+  }, []);
 
   const elapsedData = useMemo(
     () => data.filter((row) => row.month <= currentMonthStr),
     [currentMonthStr, data],
-  )
+  );
 
   // Prepare chartData to keep all 12 months for X-Axis, but set future values to undefined
   // so Recharts does not draw lines or bars for them.
   const chartData = useMemo(() => {
     return data.map((row) => {
-      const isFuture = row.month > currentMonthStr
+      const isFuture = row.month > currentMonthStr;
       return {
         ...row,
         revenue: isFuture ? undefined : row.revenue,
         invoiced: isFuture ? undefined : row.invoiced,
         expenses: isFuture ? undefined : row.expenses,
         ar: isFuture ? undefined : row.ar,
-      }
-    })
-  }, [currentMonthStr, data])
+      };
+    });
+  }, [currentMonthStr, data]);
 
   const totals = useMemo(
     () =>
@@ -87,24 +93,28 @@ export function DivisionAreaChart({ data }: Props) {
         { revenue: 0, invoiced: 0, expenses: 0 },
       ),
     [elapsedData],
-  )
+  );
 
   const averages = useMemo(() => {
-    const n = elapsedData.length || 1
+    const n = elapsedData.length || 1;
     return {
       revenue: elapsedData.reduce((sum, row) => sum + row.revenue, 0) / n,
       invoiced: elapsedData.reduce((sum, row) => sum + row.invoiced, 0) / n,
       expenses: elapsedData.reduce((sum, row) => sum + row.expenses, 0) / n,
-    }
-  }, [elapsedData])
+    };
+  }, [elapsedData]);
 
   // AR is a running balance, not a flow — the meaningful summary figure is the
   // latest elapsed month's balance, not a sum or average across months.
-  const currentAR = elapsedData.length > 0 ? elapsedData[elapsedData.length - 1].ar : 0
+  const currentAR = elapsedData.length > 0 ? elapsedData[elapsedData.length - 1].ar : 0;
 
   const hasData = chartData.some(
-    (row) => (row.revenue ?? 0) > 0 || (row.invoiced ?? 0) > 0 || (row.expenses ?? 0) > 0 || (row.ar ?? 0) > 0,
-  )
+    (row) =>
+      (row.revenue ?? 0) > 0 ||
+      (row.invoiced ?? 0) > 0 ||
+      (row.expenses ?? 0) > 0 ||
+      (row.ar ?? 0) > 0,
+  );
 
   return (
     <Card className="rounded-xl border border-border bg-card shadow-none">
@@ -124,7 +134,9 @@ export function DivisionAreaChart({ data }: Props) {
               aria-pressed={chartType === 'line'}
               onClick={() => setChartType('line')}
               className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
-                chartType === 'line' ? 'bg-background text-foreground shadow-xs font-semibold' : 'hover:text-foreground'
+                chartType === 'line'
+                  ? 'bg-background text-foreground shadow-xs font-semibold'
+                  : 'hover:text-foreground'
               }`}
             >
               Line
@@ -134,7 +146,9 @@ export function DivisionAreaChart({ data }: Props) {
               aria-pressed={chartType === 'bar'}
               onClick={() => setChartType('bar')}
               className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
-                chartType === 'bar' ? 'bg-background text-foreground shadow-xs font-semibold' : 'hover:text-foreground'
+                chartType === 'bar'
+                  ? 'bg-background text-foreground shadow-xs font-semibold'
+                  : 'hover:text-foreground'
               }`}
             >
               Bar
@@ -144,7 +158,9 @@ export function DivisionAreaChart({ data }: Props) {
               aria-pressed={chartType === 'both'}
               onClick={() => setChartType('both')}
               className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
-                chartType === 'both' ? 'bg-background text-foreground shadow-xs font-semibold' : 'hover:text-foreground'
+                chartType === 'both'
+                  ? 'bg-background text-foreground shadow-xs font-semibold'
+                  : 'hover:text-foreground'
               }`}
             >
               Both
@@ -163,86 +179,101 @@ export function DivisionAreaChart({ data }: Props) {
             <div className="min-w-0 overflow-x-auto hide-scrollbar rounded-md border border-border bg-muted/20 p-4">
               <div className="min-w-[560px]">
                 <ChartContainer config={chartConfig} className="aspect-auto h-[230px] w-full">
-                  <ComposedChart data={chartData} barGap={0} barCategoryGap="25%" margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
-                  <CartesianGrid
-                    strokeDasharray="2 4"
-                    stroke="var(--border)"
-                    opacity={0.6}
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="month"
-                    tickFormatter={formatXAxisTick}
-                    tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    tickMargin={8}
-                  />
-                  <YAxis
-                    tickFormatter={(value) => formatYAxis(Number(value))}
-                    tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={46}
-                  />
-                  <ChartTooltip
-                    payloadUniqBy={(item) => item.dataKey}
-                    cursor={
-                      chartType === 'bar'
-                        ? { fill: 'var(--muted)', opacity: 0.35 }
-                        : { stroke: 'var(--border)', strokeWidth: 1, strokeDasharray: '2 2', opacity: 0.8 }
-                    }
-                    content={
-                      <ChartTooltipContent
-                        className="min-w-40 border-border bg-card px-3 py-2.5"
-                        labelClassName="mb-2 border-b border-border pb-1.5 text-muted-foreground"
-                        labelFormatter={(value) => fmtMonthYear(value as string)}
-                        formatter={(value, name, item) => (
-                          <>
-                            <span
-                              className="inline-block size-2.5 shrink-0 rounded-sm"
-                              style={{ background: item.color }}
-                            />
-                            <div className="flex flex-1 items-center justify-between gap-4 leading-none">
-                              <span className="text-muted-foreground">{name}</span>
-                              <span className="font-semibold tabular-nums text-foreground">
-                                {formatZAR(Number(value))}
-                              </span>
-                            </div>
-                          </>
-                        )}
-                      />
-                    }
-                  />
-                  
-                  {/* Column Bars */}
-                  {(chartType === 'bar' || chartType === 'both') &&
-                    SERIES.map((item) => (
-                      <Bar
-                        key={item.key}
-                        dataKey={item.key}
-                        name={item.label}
-                        fill={item.color}
-                        radius={[3, 3, 0, 0]}
-                        maxBarSize={18}
-                      />
-                    ))}
+                  <ComposedChart
+                    data={chartData}
+                    barGap={0}
+                    barCategoryGap="25%"
+                    margin={{ top: 12, right: 12, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="2 4"
+                      stroke="var(--border)"
+                      opacity={0.6}
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="month"
+                      tickFormatter={formatXAxisTick}
+                      tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+                      axisLine={false}
+                      tickLine={false}
+                      tickMargin={8}
+                    />
+                    <YAxis
+                      tickFormatter={(value) => formatYAxis(Number(value))}
+                      tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={46}
+                    />
+                    <ChartTooltip
+                      payloadUniqBy={(item) => item.dataKey}
+                      cursor={
+                        chartType === 'bar'
+                          ? { fill: 'var(--muted)', opacity: 0.35 }
+                          : {
+                              stroke: 'var(--border)',
+                              strokeWidth: 1,
+                              strokeDasharray: '2 2',
+                              opacity: 0.8,
+                            }
+                      }
+                      content={
+                        <ChartTooltipContent
+                          className="min-w-40 border-border bg-card px-3 py-2.5"
+                          labelClassName="mb-2 border-b border-border pb-1.5 text-muted-foreground"
+                          labelFormatter={(value) => fmtMonthYear(value as string)}
+                          formatter={(value, name, item) => (
+                            <>
+                              <span
+                                className="inline-block size-2.5 shrink-0 rounded-sm"
+                                style={{ background: item.color }}
+                              />
+                              <div className="flex flex-1 items-center justify-between gap-4 leading-none">
+                                <span className="text-muted-foreground">{name}</span>
+                                <span className="font-semibold tabular-nums text-foreground">
+                                  {formatZAR(Number(value))}
+                                </span>
+                              </div>
+                            </>
+                          )}
+                        />
+                      }
+                    />
 
-                  {/* Lines with dot markers */}
-                  {(chartType === 'line' || chartType === 'both') &&
-                    SERIES.map((item) => (
-                      <Line
-                        key={item.key}
-                        type="monotone"
-                        dataKey={item.key}
-                        name={item.label}
-                        stroke={item.color}
-                        strokeWidth={2}
-                        dot={{ r: 4, strokeWidth: 2, fill: 'hsl(var(--background))', stroke: item.color }}
-                        activeDot={{ r: 6 }}
-                        opacity={chartType === 'both' ? 0.15 : 1}
-                      />
-                    ))}
+                    {/* Column Bars */}
+                    {(chartType === 'bar' || chartType === 'both') &&
+                      SERIES.map((item) => (
+                        <Bar
+                          key={item.key}
+                          dataKey={item.key}
+                          name={item.label}
+                          fill={item.color}
+                          radius={[3, 3, 0, 0]}
+                          maxBarSize={18}
+                        />
+                      ))}
+
+                    {/* Lines with dot markers */}
+                    {(chartType === 'line' || chartType === 'both') &&
+                      SERIES.map((item) => (
+                        <Line
+                          key={item.key}
+                          type="monotone"
+                          dataKey={item.key}
+                          name={item.label}
+                          stroke={item.color}
+                          strokeWidth={2}
+                          dot={{
+                            r: 4,
+                            strokeWidth: 2,
+                            fill: 'hsl(var(--background))',
+                            stroke: item.color,
+                          }}
+                          activeDot={{ r: 6 }}
+                          opacity={chartType === 'both' ? 0.15 : 1}
+                        />
+                      ))}
                   </ComposedChart>
                 </ChartContainer>
               </div>
@@ -259,7 +290,9 @@ export function DivisionAreaChart({ data }: Props) {
                 </p>
               </div>
               <div>
-                <p className="text-xs font-medium text-[color:oklch(0.72_0.16_150)]">Total Cash Receipts</p>
+                <p className="text-xs font-medium text-[color:oklch(0.72_0.16_150)]">
+                  Total Cash Receipts
+                </p>
                 <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">
                   {formatZAR(totals.revenue)}
                 </p>
@@ -268,7 +301,9 @@ export function DivisionAreaChart({ data }: Props) {
                 </p>
               </div>
               <div>
-                <p className="text-xs font-medium text-[color:oklch(0.62_0.19_293)]">Accounts Receivable</p>
+                <p className="text-xs font-medium text-[color:oklch(0.62_0.19_293)]">
+                  Accounts Receivable
+                </p>
                 <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">
                   {formatZAR(currentAR)}
                 </p>
@@ -277,7 +312,9 @@ export function DivisionAreaChart({ data }: Props) {
                 </p>
               </div>
               <div>
-                <p className="text-xs font-medium text-[color:var(--chart-expense)]">Total Expenses</p>
+                <p className="text-xs font-medium text-[color:var(--chart-expense)]">
+                  Total Expenses
+                </p>
                 <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">
                   {formatZAR(totals.expenses)}
                 </p>
@@ -290,10 +327,11 @@ export function DivisionAreaChart({ data }: Props) {
         )}
 
         <p className="mt-5 text-xs text-muted-foreground">
-          Revenue is client-facing invoice totals. Cash Receipts is payments received. Accounts Receivable is the
-          outstanding balance owed on this fiscal year&apos;s invoices. Expenses are recorded expenses.
+          Revenue is client-facing invoice totals. Cash Receipts is payments received. Accounts
+          Receivable is the outstanding balance owed on this fiscal year&apos;s invoices. Expenses
+          are recorded expenses.
         </p>
       </CardContent>
     </Card>
-  )
+  );
 }

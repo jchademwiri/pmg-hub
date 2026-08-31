@@ -48,7 +48,11 @@ export async function createClient(formData: FormData): Promise<{ error?: string
     if (raw.divisionId === '__none__') delete raw.divisionId;
     const isExcluded = raw.excludeFromAutoStatements === 'on';
     const isRetainer = raw.isRetainer === 'on';
-    const result = ClientSchema.safeParse({ ...raw, excludeFromAutoStatements: isExcluded, isRetainer });
+    const result = ClientSchema.safeParse({
+      ...raw,
+      excludeFromAutoStatements: isExcluded,
+      isRetainer,
+    });
     if (!result.success) {
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
@@ -79,12 +83,16 @@ export async function updateClient(id: string, formData: FormData): Promise<{ er
     if (raw.email === '') delete raw.email;
     if (raw.phone === '') delete raw.phone;
     if (raw.divisionId === '__none__') delete raw.divisionId;
-    
+
     // Convert checkbox 'on' value to boolean
     const isExcluded = raw.excludeFromAutoStatements === 'on';
     const isRetainer = raw.isRetainer === 'on';
 
-    const result = ClientSchema.safeParse({ ...raw, excludeFromAutoStatements: isExcluded, isRetainer });
+    const result = ClientSchema.safeParse({
+      ...raw,
+      excludeFromAutoStatements: isExcluded,
+      isRetainer,
+    });
     if (!result.success) {
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }

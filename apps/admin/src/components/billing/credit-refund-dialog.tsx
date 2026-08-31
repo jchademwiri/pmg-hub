@@ -37,16 +37,14 @@ interface CreditRefundDialogProps {
   } | null;
 }
 
-export function CreditRefundDialog({
-  open,
-  onOpenChange,
-  creditNote,
-}: CreditRefundDialogProps) {
+export function CreditRefundDialog({ open, onOpenChange, creditNote }: CreditRefundDialogProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [amount, setAmount] = useState('');
   const [refundDate, setRefundDate] = useState('');
-  const [refundMethod, setRefundMethod] = useState<'bank_transfer' | 'cash' | 'other'>('bank_transfer');
+  const [refundMethod, setRefundMethod] = useState<'bank_transfer' | 'cash' | 'other'>(
+    'bank_transfer',
+  );
   const [reference, setReference] = useState('');
   const [description, setDescription] = useState('');
 
@@ -65,10 +63,7 @@ export function CreditRefundDialog({
 
   const amountNum = parseFloat(amount) || 0;
   const isValid =
-    amountNum > 0 &&
-    amountNum <= creditNote.amountRemaining &&
-    refundDate &&
-    refundMethod;
+    amountNum > 0 && amountNum <= creditNote.amountRemaining && refundDate && refundMethod;
 
   function handleSubmit() {
     if (!isValid || !creditNote) return;
@@ -109,12 +104,18 @@ export function CreditRefundDialog({
           {/* Client & Credit Note Info */}
           <div className="grid grid-cols-2 gap-2 text-sm p-3 rounded bg-muted">
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider">Client</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider">
+                Client
+              </span>
               <span className="font-medium">{creditNote.clientName}</span>
             </div>
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider">Remaining Balance</span>
-              <span className="font-semibold text-emerald-600">{formatZAR(creditNote.amountRemaining)}</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider">
+                Remaining Balance
+              </span>
+              <span className="font-semibold text-emerald-600">
+                {formatZAR(creditNote.amountRemaining)}
+              </span>
             </div>
           </div>
 
@@ -124,7 +125,9 @@ export function CreditRefundDialog({
               Refund Amount (ZAR) <span className="text-destructive">*</span>
             </FieldLabel>
             <div className="relative">
-              <span className="absolute left-3 top-2.5 text-sm font-semibold text-muted-foreground">R</span>
+              <span className="absolute left-3 top-2.5 text-sm font-semibold text-muted-foreground">
+                R
+              </span>
               <Input
                 type="number"
                 step="0.01"

@@ -33,9 +33,7 @@ export async function deleteIncome(id: string): Promise<{ error?: string }> {
         .where(eq(invoices.incomeId, id));
 
       // 3. Manually delete allocations first to bypass potential cascade constraint bugs
-      await tx
-        .delete(paymentAllocations)
-        .where(eq(paymentAllocations.incomeId, id));
+      await tx.delete(paymentAllocations).where(eq(paymentAllocations.incomeId, id));
 
       // 4. Void linked journal entries (Dr Bank / Cr Revenue + PMG Share)
       const journalResult = await voidPaymentJournalEntries(id, tx);
@@ -74,7 +72,7 @@ export async function deleteIncome(id: string): Promise<{ error?: string }> {
                 updatedAt: new Date(),
               })
               .where(eq(invoices.id, alloc.invoiceId));
-          } else if (writeOffAmount > 0 && (invoiceTotal - totalAllocated) >= writeOffAmount) {
+          } else if (writeOffAmount > 0 && invoiceTotal - totalAllocated >= writeOffAmount) {
             await tx
               .update(invoices)
               .set({
@@ -123,13 +121,17 @@ async function enrichIncomeWithAllocations(incomeData: any[]) {
   const db = dbModule.db;
   const paymentAllocations = dbModule.paymentAllocations;
   const sql = dbModule.sql;
-  
+
   const incomeIds = incomeData.map((i: any) => i.id);
-  
+
   let allocationSums: { incomeId: string; sum: string }[] = [];
   if (incomeIds.length > 0) {
     const { inArray } = await import('drizzle-orm');
-    allocationSums = await db.select({ incomeId: paymentAllocations.incomeId, sum: sql<string>`sum(${paymentAllocations.amount})` })
+    allocationSums = await db
+      .select({
+        incomeId: paymentAllocations.incomeId,
+        sum: sql<string>`sum(${paymentAllocations.amount})`,
+      })
       .from(paymentAllocations)
       .where(inArray(paymentAllocations.incomeId, incomeIds))
       .groupBy(paymentAllocations.incomeId);
@@ -152,9 +154,12 @@ async function enrichIncomeWithAllocations(incomeData: any[]) {
     const period = row.date.slice(0, 7);
     const isClosed = period < minPeriod;
 
-    const source: 'invoice_payment' | 'deposit' | 'manual' =
-      row.description?.startsWith('Payment for') ? 'invoice_payment'
-        : row.description?.startsWith('Unallocated') ? 'deposit'
+    const source: 'invoice_payment' | 'deposit' | 'manual' = row.description?.startsWith(
+      'Payment for',
+    )
+      ? 'invoice_payment'
+      : row.description?.startsWith('Unallocated')
+        ? 'deposit'
         : 'manual';
 
     return {
@@ -170,12 +175,17 @@ async function enrichIncomeWithAllocations(incomeData: any[]) {
   });
 }
 
-export async function fetchIncomeByMonth(year: number, month: number, divisionId?: string, clientId?: string) {
+export async function fetchIncomeByMonth(
+  year: number,
+  month: number,
+  divisionId?: string,
+  clientId?: string,
+) {
   await getSessionOrRedirect();
   const { getAllIncome } = await import('@pmg/db');
   const incomeResult = await getAllIncome(
     { month: `${year}-${month.toString().padStart(2, '0')}`, divisionId, clientId },
-    { page: 1, pageSize: 5000 }
+    { page: 1, pageSize: 5000 },
   );
 
   const enriched = await enrichIncomeWithAllocations(incomeResult.data);
@@ -187,7 +197,7 @@ export async function fetchIncomeByYear(year: number, divisionId?: string, clien
   const { getAllIncome } = await import('@pmg/db');
   const incomeResult = await getAllIncome(
     { year, divisionId, clientId },
-    { page: 1, pageSize: 5000 }
+    { page: 1, pageSize: 5000 },
   );
 
   const enriched = await enrichIncomeWithAllocations(incomeResult.data);

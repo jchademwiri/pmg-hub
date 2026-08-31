@@ -20,14 +20,14 @@ Recommended direction:
 
 Relevant files reviewed:
 
-| Area | Files | Current state |
-| --- | --- | --- |
-| Quotes list/detail/form | `apps/admin/src/app/(admin)/billing/quotes/*` | Quote list has clickable rows, action dropdowns, pagination, status changes, detail preview, email/print/PDF, edit, and conversion actions. Quote form has division/client/date/reference/line items/VAT/discount/sticky summary. |
-| Invoices list/detail/form | `apps/admin/src/app/(admin)/billing/invoices/*` | Invoice list mirrors quotes. Invoice detail has document preview, outstanding balance card, record-payment CTA, payment history, summary, activity, issue/mark paid/void actions. |
-| Payments list/form/detail | `apps/admin/src/app/(admin)/billing/payments/*` | Payment list has clickable rows, credit balance, closed-period lock display, delete action. Add-payment flow supports client selection, outstanding invoices, FIFO auto-allocation, manual allocation, credit carry-forward, and receipt email option. |
-| Statements | `apps/admin/src/app/(admin)/billing/statements/*` | Statements list supports search, all/outstanding filter, sorting, clickable rows. Detail has summary cards, document preview, aging breakdown, rolling period/fiscal year filters, and income records. |
-| Shared billing components | `apps/admin/src/components/billing/*` | Reusable status badge, filter bar, line items, totals block, document preview, email dialogs, PDF/print buttons, mark-paid/void/convert/reminder actions. |
-| Existing docs | `docs/billing/ui-updates.md`, `docs/billing/billing-fix-plan.md` | Prior notes cover clickable rows, payment table cleanup, payment edit flow, default due/expiry dates, and aging bucket fixes. |
+| Area                      | Files                                                            | Current state                                                                                                                                                                                                                                          |
+| ------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Quotes list/detail/form   | `apps/admin/src/app/(admin)/billing/quotes/*`                    | Quote list has clickable rows, action dropdowns, pagination, status changes, detail preview, email/print/PDF, edit, and conversion actions. Quote form has division/client/date/reference/line items/VAT/discount/sticky summary.                      |
+| Invoices list/detail/form | `apps/admin/src/app/(admin)/billing/invoices/*`                  | Invoice list mirrors quotes. Invoice detail has document preview, outstanding balance card, record-payment CTA, payment history, summary, activity, issue/mark paid/void actions.                                                                      |
+| Payments list/form/detail | `apps/admin/src/app/(admin)/billing/payments/*`                  | Payment list has clickable rows, credit balance, closed-period lock display, delete action. Add-payment flow supports client selection, outstanding invoices, FIFO auto-allocation, manual allocation, credit carry-forward, and receipt email option. |
+| Statements                | `apps/admin/src/app/(admin)/billing/statements/*`                | Statements list supports search, all/outstanding filter, sorting, clickable rows. Detail has summary cards, document preview, aging breakdown, rolling period/fiscal year filters, and income records.                                                 |
+| Shared billing components | `apps/admin/src/components/billing/*`                            | Reusable status badge, filter bar, line items, totals block, document preview, email dialogs, PDF/print buttons, mark-paid/void/convert/reminder actions.                                                                                              |
+| Existing docs             | `docs/billing/ui-updates.md`, `docs/billing/billing-fix-plan.md` | Prior notes cover clickable rows, payment table cleanup, payment edit flow, default due/expiry dates, and aging bucket fixes.                                                                                                                          |
 
 Current strengths:
 
@@ -145,28 +145,28 @@ Standardize all document list pages:
 
 Recommended invoice columns:
 
-| Column | Purpose |
-| --- | --- |
-| Invoice # | Stable document identity. |
-| Client | Main scan target. |
-| Status | Lifecycle state. |
-| Issue date | Accounting date. |
-| Due date | Collection urgency. |
-| Outstanding | Better than only total on AR views. |
+| Column        | Purpose                                    |
+| ------------- | ------------------------------------------ |
+| Invoice #     | Stable document identity.                  |
+| Client        | Main scan target.                          |
+| Status        | Lifecycle state.                           |
+| Issue date    | Accounting date.                           |
+| Due date      | Collection urgency.                        |
+| Outstanding   | Better than only total on AR views.        |
 | Last activity | Sent/viewed/reminded/paid timestamp later. |
-| Actions | Overflow only. |
+| Actions       | Overflow only.                             |
 
 Recommended quote columns:
 
-| Column | Purpose |
-| --- | --- |
-| Quote # | Stable identity. |
-| Client | Main scan target. |
-| Status | Draft/sent/accepted/declined/converted/expired. |
-| Issue date | Timeline context. |
-| Expiry date | Urgency. |
-| Total | Value. |
-| Next action | Send, convert, follow up, expired. |
+| Column      | Purpose                                         |
+| ----------- | ----------------------------------------------- |
+| Quote #     | Stable identity.                                |
+| Client      | Main scan target.                               |
+| Status      | Draft/sent/accepted/declined/converted/expired. |
+| Issue date  | Timeline context.                               |
+| Expiry date | Urgency.                                        |
+| Total       | Value.                                          |
+| Next action | Send, convert, follow up, expired.              |
 
 ### 3. Detail Pages
 

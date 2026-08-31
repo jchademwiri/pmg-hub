@@ -329,4 +329,3 @@ Campaign mode writes:
 - `IDEA_SEEDS.json` should expose per-seed bindings such as `context_anchor`, `task_family_binding`, `dataset_binding`, `evaluation_binding`, and `constraint_notes`.
 - `IMPLEMENTATION_FIDELITY.json` should separate `planned_implementation_sites`, `heuristic_implementation_sites`, and `observed_implementation_sites`, and should record `verification_level` as one of `not_checked`, `planned_only`, `heuristic_only`, `executor_observed`, or `diff_verified`.
 - Let `ai-research-explore` focus on understanding, gating, implementation planning, controlled execution, and comparison.
-

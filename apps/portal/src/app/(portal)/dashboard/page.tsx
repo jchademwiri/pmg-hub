@@ -1,9 +1,24 @@
 import * as React from 'react';
 import { getPortalSessionOrRedirect } from '@/lib/portal-session';
-import { getDb, invoices, quotations, paymentAllocations, projectScheduleEntries, complianceDocuments } from '@pmg/db';
+import {
+  getDb,
+  invoices,
+  quotations,
+  paymentAllocations,
+  projectScheduleEntries,
+  complianceDocuments,
+} from '@pmg/db';
 import { eq, and, ne, desc, inArray } from 'drizzle-orm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, FileSpreadsheet, Landmark, PiggyBank, ArrowUpRight, ShieldAlert, CalendarDays } from 'lucide-react';
+import {
+  FileText,
+  FileSpreadsheet,
+  Landmark,
+  PiggyBank,
+  ArrowUpRight,
+  ShieldAlert,
+  CalendarDays,
+} from 'lucide-react';
 import Link from 'next/link';
 
 function formatCurrency(val: string | number) {
@@ -12,7 +27,11 @@ function formatCurrency(val: string | number) {
 }
 
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(d).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 export default async function DashboardPage() {
@@ -27,8 +46,8 @@ export default async function DashboardPage() {
       and(
         eq(invoices.clientId, client.id),
         ne(invoices.status, 'draft'),
-        ne(invoices.status, 'void')
-      )
+        ne(invoices.status, 'void'),
+      ),
     )
     .orderBy(desc(invoices.invoiceDate));
 
@@ -46,8 +65,8 @@ export default async function DashboardPage() {
     .where(
       and(
         eq(projectScheduleEntries.clientId, client.id),
-        inArray(projectScheduleEntries.status, ['planned', 'in_progress'])
-      )
+        inArray(projectScheduleEntries.status, ['planned', 'in_progress']),
+      ),
     )
     .orderBy(desc(projectScheduleEntries.updatedAt));
 
@@ -59,12 +78,13 @@ export default async function DashboardPage() {
 
   // Fetch payment allocations for these invoices to calculate exact paid/due balances
   const invoiceIds = allInvoices.map((inv) => inv.id);
-  const allocations = invoiceIds.length > 0
-    ? await db
-        .select()
-        .from(paymentAllocations)
-        .where(inArray(paymentAllocations.invoiceId, invoiceIds))
-    : [];
+  const allocations =
+    invoiceIds.length > 0
+      ? await db
+          .select()
+          .from(paymentAllocations)
+          .where(inArray(paymentAllocations.invoiceId, invoiceIds))
+      : [];
 
   const allocationMap = new Map<string, number>();
   allocations.forEach((alloc) => {
@@ -74,7 +94,7 @@ export default async function DashboardPage() {
 
   // Calculations
   const totalInvoiced = allInvoices.reduce((sum, inv) => sum + parseFloat(inv.total), 0);
-  
+
   const paidToDate = allocations.reduce((sum, alloc) => sum + parseFloat(alloc.amount), 0);
 
   const outstandingBalance = allInvoices
@@ -94,12 +114,12 @@ export default async function DashboardPage() {
   const now = new Date();
   const thirtyDaysFromNow = new Date();
   thirtyDaysFromNow.setDate(now.getDate() + 30);
-  
-  const complianceIssues = complianceDocs.filter(doc => {
+
+  const complianceIssues = complianceDocs.filter((doc) => {
     const expiry = new Date(doc.expiryDate);
     return expiry < thirtyDaysFromNow;
   });
-  
+
   // Get active project
   const primaryProject = activeProjects[0];
   let projectProgress = 0;
@@ -113,10 +133,30 @@ export default async function DashboardPage() {
   }
 
   const stats = [
-    { label: 'Outstanding Balance', value: formatCurrency(outstandingBalance), icon: Landmark, color: 'text-red-400' },
-    { label: 'Paid to Date', value: formatCurrency(paidToDate), icon: PiggyBank, color: 'text-emerald-400' },
-    { label: 'Total Invoiced', value: formatCurrency(totalInvoiced), icon: FileText, color: 'text-blue-400' },
-    { label: 'Pending Quotes', value: pendingQuotesCount, icon: FileSpreadsheet, color: 'text-purple-400' },
+    {
+      label: 'Outstanding Balance',
+      value: formatCurrency(outstandingBalance),
+      icon: Landmark,
+      color: 'text-red-400',
+    },
+    {
+      label: 'Paid to Date',
+      value: formatCurrency(paidToDate),
+      icon: PiggyBank,
+      color: 'text-emerald-400',
+    },
+    {
+      label: 'Total Invoiced',
+      value: formatCurrency(totalInvoiced),
+      icon: FileText,
+      color: 'text-blue-400',
+    },
+    {
+      label: 'Pending Quotes',
+      value: pendingQuotesCount,
+      icon: FileSpreadsheet,
+      color: 'text-purple-400',
+    },
   ];
 
   return (
@@ -139,7 +179,8 @@ export default async function DashboardPage() {
               <div>
                 <h3 className="text-sm font-semibold text-white">Compliance Action Required</h3>
                 <p className="text-xs text-muted-foreground mt-1">
-                  You have {complianceIssues.length} document(s) expiring soon or already expired. Please update them to avoid delays.
+                  You have {complianceIssues.length} document(s) expiring soon or already expired.
+                  Please update them to avoid delays.
                 </p>
               </div>
             </div>
@@ -166,7 +207,11 @@ export default async function DashboardPage() {
               <div>
                 <h3 className="text-sm font-semibold text-white">Payment Reminder</h3>
                 <p className="text-xs text-muted-foreground mt-1">
-                  You have an outstanding balance of <span className="font-bold text-red-400">{formatCurrency(outstandingBalance)}</span>. Please settle this balance or view your statement.
+                  You have an outstanding balance of{' '}
+                  <span className="font-bold text-red-400">
+                    {formatCurrency(outstandingBalance)}
+                  </span>
+                  . Please settle this balance or view your statement.
                 </p>
               </div>
             </div>
@@ -193,7 +238,9 @@ export default async function DashboardPage() {
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     {stat.label}
                   </p>
-                  <p className={`mt-1 text-lg font-bold tracking-tight ${stat.color}`}>{stat.value}</p>
+                  <p className={`mt-1 text-lg font-bold tracking-tight ${stat.color}`}>
+                    {stat.value}
+                  </p>
                 </div>
                 <div className="flex size-10 items-center justify-center rounded-lg bg-white/[0.02] border border-white/5">
                   <Icon className={`size-5 ${stat.color}`} />
@@ -212,14 +259,14 @@ export default async function DashboardPage() {
               <div className="flex items-center justify-between text-xs mb-1.5 gap-2">
                 <div className="flex items-center gap-2 truncate">
                   <CalendarDays className="size-4 text-blue-400 shrink-0" />
-                  <span className="text-white font-medium truncate">{primaryProject.projectReference}</span>
+                  <span className="text-white font-medium truncate">
+                    {primaryProject.projectReference}
+                  </span>
                   <span className="inline-block text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 shrink-0">
                     {primaryProject.status.replace('_', ' ')}
                   </span>
                 </div>
-                <span className="font-bold text-blue-400 shrink-0">
-                  {projectProgress}%
-                </span>
+                <span className="font-bold text-blue-400 shrink-0">{projectProgress}%</span>
               </div>
               <div className="h-1.5 w-full bg-white/[0.03] rounded-full overflow-hidden border border-white/5">
                 <div
@@ -247,7 +294,9 @@ export default async function DashboardPage() {
             <div className="h-1.5 w-full bg-white/[0.03] rounded-full overflow-hidden border border-white/5">
               <div
                 className="h-full bg-gradient-to-r from-emerald-600 to-teal-400 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)] transition-all duration-500"
-                style={{ width: `${totalInvoiced > 0 ? (paidToDate / totalInvoiced) * 100 : 100}%` }}
+                style={{
+                  width: `${totalInvoiced > 0 ? (paidToDate / totalInvoiced) * 100 : 100}%`,
+                }}
               />
             </div>
             <div className="flex justify-between text-[10px] text-muted-foreground mt-1.5">
@@ -285,15 +334,24 @@ export default async function DashboardPage() {
                     className="flex items-center justify-between py-3 first:pt-0 last:pb-0 hover:bg-white/[0.02] -mx-4 px-4 rounded-lg transition-colors group"
                   >
                     <div>
-                      <p className="text-xs font-semibold text-white group-hover:text-blue-400 transition-colors">{inv.documentNumber}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">Issued {formatDate(inv.invoiceDate)}</p>
+                      <p className="text-xs font-semibold text-white group-hover:text-blue-400 transition-colors">
+                        {inv.documentNumber}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Issued {formatDate(inv.invoiceDate)}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs font-bold text-white">{formatCurrency(inv.total)}</p>
-                      <span className={`inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full mt-1 ${
-                        inv.status === 'paid' ? 'bg-emerald-500/10 text-emerald-400' :
-                        inv.status === 'overdue' ? 'bg-red-500/10 text-red-400' : 'bg-blue-500/10 text-blue-400'
-                      }`}>
+                      <span
+                        className={`inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full mt-1 ${
+                          inv.status === 'paid'
+                            ? 'bg-emerald-500/10 text-emerald-400'
+                            : inv.status === 'overdue'
+                              ? 'bg-red-500/10 text-red-400'
+                              : 'bg-blue-500/10 text-blue-400'
+                        }`}
+                      >
                         {inv.status}
                       </span>
                     </div>
@@ -330,15 +388,24 @@ export default async function DashboardPage() {
                     className="flex items-center justify-between py-3 first:pt-0 last:pb-0 hover:bg-white/[0.02] -mx-4 px-4 rounded-lg transition-colors group"
                   >
                     <div>
-                      <p className="text-xs font-semibold text-white group-hover:text-purple-400 transition-colors">{q.documentNumber}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">Created {formatDate(q.quoteDate)}</p>
+                      <p className="text-xs font-semibold text-white group-hover:text-purple-400 transition-colors">
+                        {q.documentNumber}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Created {formatDate(q.quoteDate)}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs font-bold text-white">{formatCurrency(q.total)}</p>
-                      <span className={`inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full mt-1 ${
-                        q.status === 'accepted' ? 'bg-emerald-500/10 text-emerald-400' :
-                        q.status === 'declined' ? 'bg-red-500/10 text-red-400' : 'bg-purple-500/10 text-purple-400'
-                      }`}>
+                      <span
+                        className={`inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full mt-1 ${
+                          q.status === 'accepted'
+                            ? 'bg-emerald-500/10 text-emerald-400'
+                            : q.status === 'declined'
+                              ? 'bg-red-500/10 text-red-400'
+                              : 'bg-purple-500/10 text-purple-400'
+                        }`}
+                      >
                         {q.status === 'sent' ? 'Awaiting Response' : q.status}
                       </span>
                     </div>

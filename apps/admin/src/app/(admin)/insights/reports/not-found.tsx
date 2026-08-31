@@ -5,7 +5,7 @@ export default function ReportsNotFound() {
     <NotFoundView
       noun="report"
       links={[
-        { label: 'Reports',   href: '/insights/reports'   },
+        { label: 'Reports', href: '/insights/reports' },
         { label: 'Snapshots', href: '/insights/snapshots' },
       ]}
     />

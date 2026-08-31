@@ -1,18 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Use vi.hoisted so mockSelect is available when vi.mock factory runs (hoisted to top)
 const { mockSelect } = vi.hoisted(() => ({ mockSelect: vi.fn() }));
 
-vi.mock("../src/client", () => ({
+vi.mock('../src/client', () => ({
   db: {
     select: mockSelect,
   },
 }));
 
-import {
-  getTrialBalance,
-  getProfitAndLoss,
-} from "../src/queries/accounting";
+import { getTrialBalance, getProfitAndLoss } from '../src/queries/accounting';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -44,10 +41,8 @@ function mockSubqueryChain(subqueryColumns: Record<string, unknown>) {
  */
 function mockMainQueryChain(returnValue: unknown[]) {
   const thenable = {
-    then: <T>(resolve: (v: unknown) => T) =>
-      Promise.resolve(returnValue).then(resolve),
-    catch: <T>(reject: (e: unknown) => T) =>
-      Promise.resolve(returnValue).catch(reject),
+    then: <T>(resolve: (v: unknown) => T) => Promise.resolve(returnValue).then(resolve),
+    catch: <T>(reject: (e: unknown) => T) => Promise.resolve(returnValue).catch(reject),
   };
 
   return {
@@ -66,37 +61,37 @@ function mockMainQueryChain(returnValue: unknown[]) {
 
 const MOCK_ACCOUNTS = [
   // Assets
-  { id: "a1", code: "1010", name: "Business Cheque Account", type: "asset" },
+  { id: 'a1', code: '1010', name: 'Business Cheque Account', type: 'asset' },
   // Revenue
-  { id: "r1", code: "4010", name: "Sales Revenue", type: "revenue" },
+  { id: 'r1', code: '4010', name: 'Sales Revenue', type: 'revenue' },
   // Expense
-  { id: "e1", code: "5010", name: "Hosting & Infrastructure", type: "expense" },
+  { id: 'e1', code: '5010', name: 'Hosting & Infrastructure', type: 'expense' },
 ];
 
 const MOCK_TRIAL_BALANCE_ROWS = [
   {
-    accountId: "a1",
-    accountCode: "1010",
-    accountName: "Business Cheque Account",
-    accountType: "asset",
-    totalDebits: "20500",
-    totalCredits: "0",
+    accountId: 'a1',
+    accountCode: '1010',
+    accountName: 'Business Cheque Account',
+    accountType: 'asset',
+    totalDebits: '20500',
+    totalCredits: '0',
   },
   {
-    accountId: "r1",
-    accountCode: "4010",
-    accountName: "Sales Revenue",
-    accountType: "revenue",
-    totalDebits: "0",
-    totalCredits: "35080",
+    accountId: 'r1',
+    accountCode: '4010',
+    accountName: 'Sales Revenue',
+    accountType: 'revenue',
+    totalDebits: '0',
+    totalCredits: '35080',
   },
   {
-    accountId: "e1",
-    accountCode: "5010",
-    accountName: "Hosting & Infrastructure",
-    accountType: "expense",
-    totalDebits: "2360",
-    totalCredits: "0",
+    accountId: 'e1',
+    accountCode: '5010',
+    accountName: 'Hosting & Infrastructure',
+    accountType: 'expense',
+    totalDebits: '2360',
+    totalCredits: '0',
   },
 ];
 
@@ -104,93 +99,101 @@ const MOCK_TRIAL_BALANCE_ROWS = [
 // getTrialBalance
 // ---------------------------------------------------------------------------
 
-describe("getTrialBalance", () => {
-  it("includes posted journal entries", async () => {
+describe('getTrialBalance', () => {
+  it('includes posted journal entries', async () => {
     // First call: subquery (not awaited)
-    mockSelect.mockReturnValueOnce(mockSubqueryChain({
-      accountId: "mock_account_id",
-      totalDebits: "mock_total_debits",
-      totalCredits: "mock_total_credits",
-    }));
+    mockSelect.mockReturnValueOnce(
+      mockSubqueryChain({
+        accountId: 'mock_account_id',
+        totalDebits: 'mock_total_debits',
+        totalCredits: 'mock_total_credits',
+      }),
+    );
     // Second call: main query (awaited)
     mockSelect.mockReturnValue(mockMainQueryChain(MOCK_TRIAL_BALANCE_ROWS));
 
     const result = await getTrialBalance();
 
     expect(result).toHaveLength(3);
-    expect(result[0].accountCode).toBe("1010");
+    expect(result[0].accountCode).toBe('1010');
     expect(result[0].totalDebits).toBe(20500);
     expect(result[0].totalCredits).toBe(0);
     expect(result[0].balance).toBe(20500);
 
-    expect(result[1].accountCode).toBe("4010");
+    expect(result[1].accountCode).toBe('4010');
     expect(result[1].totalDebits).toBe(0);
     expect(result[1].totalCredits).toBe(35080);
     expect(result[1].balance).toBe(-35080);
 
-    expect(result[2].accountCode).toBe("5010");
+    expect(result[2].accountCode).toBe('5010');
     expect(result[2].totalDebits).toBe(2360);
     expect(result[2].totalCredits).toBe(0);
     expect(result[2].balance).toBe(2360);
   });
 
-  it("excludes void journal entries from totals", async () => {
+  it('excludes void journal entries from totals', async () => {
     const rowsWithVoid = [
       // Only posted revenue (no void revenue)
       {
-        accountId: "r1",
-        accountCode: "4010",
-        accountName: "Sales Revenue",
-        accountType: "revenue",
-        totalDebits: "0",
-        totalCredits: "35080",
+        accountId: 'r1',
+        accountCode: '4010',
+        accountName: 'Sales Revenue',
+        accountType: 'revenue',
+        totalDebits: '0',
+        totalCredits: '35080',
       },
       {
-        accountId: "a1",
-        accountCode: "1010",
-        accountName: "Business Cheque Account",
-        accountType: "asset",
-        totalDebits: "0", // void lines excluded — zero
-        totalCredits: "0",
+        accountId: 'a1',
+        accountCode: '1010',
+        accountName: 'Business Cheque Account',
+        accountType: 'asset',
+        totalDebits: '0', // void lines excluded — zero
+        totalCredits: '0',
       },
     ];
 
-    mockSelect.mockReturnValueOnce(mockSubqueryChain({
-      accountId: "mock_account_id",
-      totalDebits: "mock_total_debits",
-      totalCredits: "mock_total_credits",
-    }));
+    mockSelect.mockReturnValueOnce(
+      mockSubqueryChain({
+        accountId: 'mock_account_id',
+        totalDebits: 'mock_total_debits',
+        totalCredits: 'mock_total_credits',
+      }),
+    );
     mockSelect.mockReturnValue(mockMainQueryChain(rowsWithVoid));
 
     const result = await getTrialBalance();
 
-    const revenue = result.find((r) => r.accountCode === "4010");
+    const revenue = result.find((r) => r.accountCode === '4010');
     expect(revenue).toBeDefined();
     expect(revenue!.totalCredits).toBe(35080);
 
     // Void lines are excluded, so account 1010 has zero debits — and
     // zero-movement accounts are dropped from the trial balance entirely.
-    const bank = result.find((r) => r.accountCode === "1010");
+    const bank = result.find((r) => r.accountCode === '1010');
     expect(bank).toBeUndefined();
   });
 
-  it("excludes draft journal entries from totals", async () => {
+  it('excludes draft journal entries from totals', async () => {
     // Only zero rows because only draft entries exist
-    mockSelect.mockReturnValueOnce(mockSubqueryChain({
-      accountId: "mock_account_id",
-      totalDebits: "mock_total_debits",
-      totalCredits: "mock_total_credits",
-    }));
-    mockSelect.mockReturnValue(mockMainQueryChain(
-      MOCK_ACCOUNTS.map((a) => ({
-        accountId: a.id,
-        accountCode: a.code,
-        accountName: a.name,
-        accountType: a.type,
-        totalDebits: "0",
-        totalCredits: "0",
-      }))
-    ));
+    mockSelect.mockReturnValueOnce(
+      mockSubqueryChain({
+        accountId: 'mock_account_id',
+        totalDebits: 'mock_total_debits',
+        totalCredits: 'mock_total_credits',
+      }),
+    );
+    mockSelect.mockReturnValue(
+      mockMainQueryChain(
+        MOCK_ACCOUNTS.map((a) => ({
+          accountId: a.id,
+          accountCode: a.code,
+          accountName: a.name,
+          accountType: a.type,
+          totalDebits: '0',
+          totalCredits: '0',
+        })),
+      ),
+    );
 
     const result = await getTrialBalance();
 
@@ -198,100 +201,110 @@ describe("getTrialBalance", () => {
     expect(result).toHaveLength(0);
   });
 
-  it("applies period filter correctly", async () => {
-    mockSelect.mockReturnValueOnce(mockSubqueryChain({
-      accountId: "mock_account_id",
-      totalDebits: "mock_total_debits",
-      totalCredits: "mock_total_credits",
-    }));
-    mockSelect.mockReturnValue(mockMainQueryChain(
-      MOCK_TRIAL_BALANCE_ROWS.filter((r) => r.accountCode === "4010")
-    ));
+  it('applies period filter correctly', async () => {
+    mockSelect.mockReturnValueOnce(
+      mockSubqueryChain({
+        accountId: 'mock_account_id',
+        totalDebits: 'mock_total_debits',
+        totalCredits: 'mock_total_credits',
+      }),
+    );
+    mockSelect.mockReturnValue(
+      mockMainQueryChain(MOCK_TRIAL_BALANCE_ROWS.filter((r) => r.accountCode === '4010')),
+    );
 
-    const result = await getTrialBalance("2026-05");
+    const result = await getTrialBalance('2026-05');
 
     expect(result).toHaveLength(1);
-    expect(result[0].accountCode).toBe("4010");
+    expect(result[0].accountCode).toBe('4010');
     expect(result[0].totalCredits).toBe(35080);
   });
 
-  it("accepts a divisionId filter and returns the scoped rows", async () => {
-    mockSelect.mockReturnValueOnce(mockSubqueryChain({
-      accountId: "mock_account_id",
-      totalDebits: "mock_total_debits",
-      totalCredits: "mock_total_credits",
-    }));
-    mockSelect.mockReturnValue(mockMainQueryChain(
-      MOCK_TRIAL_BALANCE_ROWS.filter((r) => r.accountCode === "1010")
-    ));
+  it('accepts a divisionId filter and returns the scoped rows', async () => {
+    mockSelect.mockReturnValueOnce(
+      mockSubqueryChain({
+        accountId: 'mock_account_id',
+        totalDebits: 'mock_total_debits',
+        totalCredits: 'mock_total_credits',
+      }),
+    );
+    mockSelect.mockReturnValue(
+      mockMainQueryChain(MOCK_TRIAL_BALANCE_ROWS.filter((r) => r.accountCode === '1010')),
+    );
 
-    const result = await getTrialBalance(undefined, "division-1");
+    const result = await getTrialBalance(undefined, 'division-1');
 
     expect(result).toHaveLength(1);
-    expect(result[0].accountCode).toBe("1010");
+    expect(result[0].accountCode).toBe('1010');
     expect(result[0].totalDebits).toBe(20500);
   });
 
-  it("accepts an explicit startDate/endDate range and returns mapped rows", async () => {
-    mockSelect.mockReturnValueOnce(mockSubqueryChain({
-      accountId: "mock_account_id",
-      totalDebits: "mock_total_debits",
-      totalCredits: "mock_total_credits",
-    }));
+  it('accepts an explicit startDate/endDate range and returns mapped rows', async () => {
+    mockSelect.mockReturnValueOnce(
+      mockSubqueryChain({
+        accountId: 'mock_account_id',
+        totalDebits: 'mock_total_debits',
+        totalCredits: 'mock_total_credits',
+      }),
+    );
     mockSelect.mockReturnValue(mockMainQueryChain(MOCK_TRIAL_BALANCE_ROWS));
 
-    const result = await getTrialBalance(undefined, undefined, "2026-04-01", "2026-06-30");
+    const result = await getTrialBalance(undefined, undefined, '2026-04-01', '2026-06-30');
 
     expect(result).toHaveLength(3);
     result.forEach((r) => {
-      expect(typeof r.totalDebits).toBe("number");
-      expect(typeof r.totalCredits).toBe("number");
-      expect(typeof r.balance).toBe("number");
+      expect(typeof r.totalDebits).toBe('number');
+      expect(typeof r.totalCredits).toBe('number');
+      expect(typeof r.balance).toBe('number');
     });
   });
 
-  it("excludes zero-movement accounts but keeps accounts with real activity", async () => {
+  it('excludes zero-movement accounts but keeps accounts with real activity', async () => {
     // 1010 has real movement; 4010 and 5010 have none and should be dropped.
     const mixedRows = MOCK_ACCOUNTS.map((a) => ({
       accountId: a.id,
       accountCode: a.code,
       accountName: a.name,
       accountType: a.type,
-      totalDebits: a.code === "1010" ? "500" : "0",
-      totalCredits: "0",
+      totalDebits: a.code === '1010' ? '500' : '0',
+      totalCredits: '0',
     }));
 
-    mockSelect.mockReturnValueOnce(mockSubqueryChain({
-      accountId: "mock_account_id",
-      totalDebits: "mock_total_debits",
-      totalCredits: "mock_total_credits",
-    }));
+    mockSelect.mockReturnValueOnce(
+      mockSubqueryChain({
+        accountId: 'mock_account_id',
+        totalDebits: 'mock_total_debits',
+        totalCredits: 'mock_total_credits',
+      }),
+    );
     mockSelect.mockReturnValue(mockMainQueryChain(mixedRows));
 
     const result = await getTrialBalance();
 
     expect(result).toHaveLength(1);
-    expect(result[0]!.accountCode).toBe("1010");
-    expect(typeof result[0]!.totalDebits).toBe("number");
-    expect(typeof result[0]!.totalCredits).toBe("number");
-    expect(typeof result[0]!.balance).toBe("number");
+    expect(result[0]!.accountCode).toBe('1010');
+    expect(typeof result[0]!.totalDebits).toBe('number');
+    expect(typeof result[0]!.totalCredits).toBe('number');
+    expect(typeof result[0]!.balance).toBe('number');
     expect(result[0]!.totalDebits).toBe(500);
   });
 
-  it("returns correct number types (not strings)", async () => {
-    mockSelect.mockReturnValueOnce(mockSubqueryChain({
-      accountId: "mock_account_id",
-      totalDebits: "mock_total_debits",
-      totalCredits: "mock_total_credits",
-    }));
+  it('returns correct number types (not strings)', async () => {
+    mockSelect.mockReturnValueOnce(
+      mockSubqueryChain({
+        accountId: 'mock_account_id',
+        totalDebits: 'mock_total_debits',
+        totalCredits: 'mock_total_credits',
+      }),
+    );
     mockSelect.mockReturnValue(mockMainQueryChain(MOCK_TRIAL_BALANCE_ROWS));
 
     const result = await getTrialBalance();
 
     result.forEach((r) => {
-      expect(typeof r.totalDebits).toBe("number");
-      expect(typeof r.totalCredits).toBe("number");
-      expect(typeof r.balance).toBe("number");
+      expect(typeof r.totalDebits).toBe('number');
+      expect(typeof r.totalCredits).toBe('number');
+      expect(typeof r.balance).toBe('number');
     });
   });
 });
@@ -300,67 +313,71 @@ describe("getTrialBalance", () => {
 // getProfitAndLoss
 // ---------------------------------------------------------------------------
 
-describe("getProfitAndLoss", () => {
-  it("returns correct revenue from posted entries only", async () => {
+describe('getProfitAndLoss', () => {
+  it('returns correct revenue from posted entries only', async () => {
     const rows = [
       {
-        accountId: "r1",
-        accountCode: "4010",
-        accountName: "Sales Revenue",
-        accountType: "revenue",
-        totalDebits: "0",
-        totalCredits: "35080",
+        accountId: 'r1',
+        accountCode: '4010',
+        accountName: 'Sales Revenue',
+        accountType: 'revenue',
+        totalDebits: '0',
+        totalCredits: '35080',
       },
       {
-        accountId: "e1",
-        accountCode: "5010",
-        accountName: "Hosting & Infrastructure",
-        accountType: "expense",
-        totalDebits: "2360",
-        totalCredits: "0",
+        accountId: 'e1',
+        accountCode: '5010',
+        accountName: 'Hosting & Infrastructure',
+        accountType: 'expense',
+        totalDebits: '2360',
+        totalCredits: '0',
       },
     ];
 
-    mockSelect.mockReturnValueOnce(mockSubqueryChain({
-      accountId: "mock_account_id",
-      totalDebits: "mock_total_debits",
-      totalCredits: "mock_total_credits",
-    }));
+    mockSelect.mockReturnValueOnce(
+      mockSubqueryChain({
+        accountId: 'mock_account_id',
+        totalDebits: 'mock_total_debits',
+        totalCredits: 'mock_total_credits',
+      }),
+    );
     mockSelect.mockReturnValue(mockMainQueryChain(rows));
 
     const result = await getProfitAndLoss();
 
     expect(result.revenue).toHaveLength(1);
-    expect(result.revenue[0].accountCode).toBe("4010");
+    expect(result.revenue[0].accountCode).toBe('4010');
     expect(result.revenue[0].amount).toBe(35080);
     expect(result.totalRevenue).toBe(35080);
 
     expect(result.expenses).toHaveLength(1);
-    expect(result.expenses[0].accountCode).toBe("5010");
+    expect(result.expenses[0].accountCode).toBe('5010');
     expect(result.expenses[0].amount).toBe(2360);
     expect(result.totalExpenses).toBe(2360);
 
     expect(result.netProfit).toBe(35080 - 2360);
   });
 
-  it("excludes void journal entries from P&L amounts", async () => {
+  it('excludes void journal entries from P&L amounts', async () => {
     // Simulate: void entry had Cr 4010 R20,500 but it's filtered out
     const rows = [
       {
-        accountId: "r1",
-        accountCode: "4010",
-        accountName: "Sales Revenue",
-        accountType: "revenue",
-        totalDebits: "0",
-        totalCredits: "35080", // only posted revenue, not the void 20,500
+        accountId: 'r1',
+        accountCode: '4010',
+        accountName: 'Sales Revenue',
+        accountType: 'revenue',
+        totalDebits: '0',
+        totalCredits: '35080', // only posted revenue, not the void 20,500
       },
     ];
 
-    mockSelect.mockReturnValueOnce(mockSubqueryChain({
-      accountId: "mock_account_id",
-      totalDebits: "mock_total_debits",
-      totalCredits: "mock_total_credits",
-    }));
+    mockSelect.mockReturnValueOnce(
+      mockSubqueryChain({
+        accountId: 'mock_account_id',
+        totalDebits: 'mock_total_debits',
+        totalCredits: 'mock_total_credits',
+      }),
+    );
     mockSelect.mockReturnValue(mockMainQueryChain(rows));
 
     const result = await getProfitAndLoss();
@@ -372,13 +389,15 @@ describe("getProfitAndLoss", () => {
     expect(result.totalRevenue).not.toBe(55580);
   });
 
-  it("excludes draft entries from P&L", async () => {
+  it('excludes draft entries from P&L', async () => {
     // If only draft entries exist, revenue should be empty
-    mockSelect.mockReturnValueOnce(mockSubqueryChain({
-      accountId: "mock_account_id",
-      totalDebits: "mock_total_debits",
-      totalCredits: "mock_total_credits",
-    }));
+    mockSelect.mockReturnValueOnce(
+      mockSubqueryChain({
+        accountId: 'mock_account_id',
+        totalDebits: 'mock_total_debits',
+        totalCredits: 'mock_total_credits',
+      }),
+    );
     mockSelect.mockReturnValue(mockMainQueryChain([]));
 
     const result = await getProfitAndLoss();
@@ -390,56 +409,60 @@ describe("getProfitAndLoss", () => {
     expect(result.netProfit).toBe(0);
   });
 
-  it("applies period filter correctly", async () => {
-    mockSelect.mockReturnValueOnce(mockSubqueryChain({
-      accountId: "mock_account_id",
-      totalDebits: "mock_total_debits",
-      totalCredits: "mock_total_credits",
-    }));
+  it('applies period filter correctly', async () => {
+    mockSelect.mockReturnValueOnce(
+      mockSubqueryChain({
+        accountId: 'mock_account_id',
+        totalDebits: 'mock_total_debits',
+        totalCredits: 'mock_total_credits',
+      }),
+    );
     mockSelect.mockReturnValue(mockMainQueryChain([]));
 
-    const result = await getProfitAndLoss("2026-04");
+    const result = await getProfitAndLoss('2026-04');
 
     expect(result.totalRevenue).toBe(0);
     expect(result.totalExpenses).toBe(0);
   });
 
-  it("only includes revenue and expense account types", async () => {
+  it('only includes revenue and expense account types', async () => {
     const mixedRows = [
       // Asset should be ignored by P&L
       {
-        accountId: "a1",
-        accountCode: "1010",
-        accountName: "Business Cheque Account",
-        accountType: "asset",
-        totalDebits: "20500",
-        totalCredits: "0",
+        accountId: 'a1',
+        accountCode: '1010',
+        accountName: 'Business Cheque Account',
+        accountType: 'asset',
+        totalDebits: '20500',
+        totalCredits: '0',
       },
       // Revenue should be included
       {
-        accountId: "r1",
-        accountCode: "4010",
-        accountName: "Sales Revenue",
-        accountType: "revenue",
-        totalDebits: "0",
-        totalCredits: "35080",
+        accountId: 'r1',
+        accountCode: '4010',
+        accountName: 'Sales Revenue',
+        accountType: 'revenue',
+        totalDebits: '0',
+        totalCredits: '35080',
       },
       // Expense should be included
       {
-        accountId: "e1",
-        accountCode: "5010",
-        accountName: "Hosting & Infrastructure",
-        accountType: "expense",
-        totalDebits: "2360",
-        totalCredits: "0",
+        accountId: 'e1',
+        accountCode: '5010',
+        accountName: 'Hosting & Infrastructure',
+        accountType: 'expense',
+        totalDebits: '2360',
+        totalCredits: '0',
       },
     ];
 
-    mockSelect.mockReturnValueOnce(mockSubqueryChain({
-      accountId: "mock_account_id",
-      totalDebits: "mock_total_debits",
-      totalCredits: "mock_total_credits",
-    }));
+    mockSelect.mockReturnValueOnce(
+      mockSubqueryChain({
+        accountId: 'mock_account_id',
+        totalDebits: 'mock_total_debits',
+        totalCredits: 'mock_total_credits',
+      }),
+    );
     mockSelect.mockReturnValue(mockMainQueryChain(mixedRows));
 
     const result = await getProfitAndLoss();
@@ -452,7 +475,7 @@ describe("getProfitAndLoss", () => {
   });
 
   // Regression test: void + posted revenue
-  it("regression: void revenue does not inflate P&L", async () => {
+  it('regression: void revenue does not inflate P&L', async () => {
     // Scenario:
     //   Posted invoice: Cr 4010 Sales Revenue R35,080
     //   Void income:    Dr 1010 Business Cheque Account R20,500
@@ -462,29 +485,31 @@ describe("getProfitAndLoss", () => {
     const rows = [
       // Asset 1010 - void line excluded, so zero
       {
-        accountId: "a1",
-        accountCode: "1010",
-        accountName: "Business Cheque Account",
-        accountType: "asset",
-        totalDebits: "0",
-        totalCredits: "0",
+        accountId: 'a1',
+        accountCode: '1010',
+        accountName: 'Business Cheque Account',
+        accountType: 'asset',
+        totalDebits: '0',
+        totalCredits: '0',
       },
       // Revenue 4010 - only posted R35,080, void R20,500 excluded
       {
-        accountId: "r1",
-        accountCode: "4010",
-        accountName: "Sales Revenue",
-        accountType: "revenue",
-        totalDebits: "0",
-        totalCredits: "35080",
+        accountId: 'r1',
+        accountCode: '4010',
+        accountName: 'Sales Revenue',
+        accountType: 'revenue',
+        totalDebits: '0',
+        totalCredits: '35080',
       },
     ];
 
-    mockSelect.mockReturnValueOnce(mockSubqueryChain({
-      accountId: "mock_account_id",
-      totalDebits: "mock_total_debits",
-      totalCredits: "mock_total_credits",
-    }));
+    mockSelect.mockReturnValueOnce(
+      mockSubqueryChain({
+        accountId: 'mock_account_id',
+        totalDebits: 'mock_total_debits',
+        totalCredits: 'mock_total_credits',
+      }),
+    );
     mockSelect.mockReturnValue(mockMainQueryChain(rows));
 
     const result = await getProfitAndLoss();

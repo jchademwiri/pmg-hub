@@ -5,8 +5,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 function getR2Client() {
   const accountId =
-    import.meta.env.CLOUDFLARE_R2_ACCOUNT_ID ||
-    process.env.CLOUDFLARE_R2_ACCOUNT_ID;
+    import.meta.env.CLOUDFLARE_R2_ACCOUNT_ID || process.env.CLOUDFLARE_R2_ACCOUNT_ID;
   const accessKeyId =
     import.meta.env.CLOUDFLARE_R2_ACCESS_KEY_ID ||
     process.env.CLOUDFLARE_R2_ACCESS_KEY_ID ||

@@ -29,18 +29,16 @@ export async function getDevClientsAction(): Promise<
   }
 }
 
-export async function loginAsDevClientAction(clientId: string): Promise<{ success: boolean; error?: string }> {
+export async function loginAsDevClientAction(
+  clientId: string,
+): Promise<{ success: boolean; error?: string }> {
   if (process.env.NODE_ENV !== 'development') {
     return { success: false, error: 'Only available in development mode.' };
   }
 
   try {
     const db = getDb();
-    const [client] = await db
-      .select()
-      .from(clients)
-      .where(eq(clients.id, clientId))
-      .limit(1);
+    const [client] = await db.select().from(clients).where(eq(clients.id, clientId)).limit(1);
 
     if (!client || !client.isActive) {
       return { success: false, error: 'Client not found or inactive.' };

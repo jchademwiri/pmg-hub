@@ -359,23 +359,23 @@ Defer until the MVP is stable:
 
 ## Minimum reports checklist
 
-| Report | MVP/future | Data source | Acceptance criteria |
-|---|---|---|---|
-| Accounts Receivable | MVP | invoices + payment allocations | Outstanding balances match invoice totals less allocations. |
-| Aged Receivables | MVP | invoices + due dates + allocations | Buckets use due date and partial balances. |
-| General Ledger | MVP | journal entries + lines | Every line has account and source. |
-| Trial Balance | MVP | journal lines grouped by account | Debits equal credits. |
-| Profit and Loss | MVP | revenue and expense journal lines | Net income = revenue - expenses. |
-| Manual Bank/Cash Summary | MVP | bank accounts + asset journal lines | Closing balance ties to GL. |
-| Income Report | MVP | income + revenue journals | Ties to P&L revenue. |
-| Expense Report | MVP | expenses + expense journals | Ties to P&L expenses. |
-| Client Statement | MVP | invoices + payments | Client balance reconciles. |
-| Division Performance | MVP | division-tagged journals | Division totals reconcile to GL. |
-| Balance Sheet | Future | full accrual-ready ledger | Defer. |
-| Cash Flow Statement | Future | classified cash movement | Defer. |
-| Aged Payables | Future | bills + bill payments | Defer. |
-| VAT Report | Future | tax settings + VAT lines | Disabled for MVP. |
-| Bank Reconciliation | Future | imported/manual statement rows | Defer. |
+| Report                   | MVP/future | Data source                         | Acceptance criteria                                         |
+| ------------------------ | ---------- | ----------------------------------- | ----------------------------------------------------------- |
+| Accounts Receivable      | MVP        | invoices + payment allocations      | Outstanding balances match invoice totals less allocations. |
+| Aged Receivables         | MVP        | invoices + due dates + allocations  | Buckets use due date and partial balances.                  |
+| General Ledger           | MVP        | journal entries + lines             | Every line has account and source.                          |
+| Trial Balance            | MVP        | journal lines grouped by account    | Debits equal credits.                                       |
+| Profit and Loss          | MVP        | revenue and expense journal lines   | Net income = revenue - expenses.                            |
+| Manual Bank/Cash Summary | MVP        | bank accounts + asset journal lines | Closing balance ties to GL.                                 |
+| Income Report            | MVP        | income + revenue journals           | Ties to P&L revenue.                                        |
+| Expense Report           | MVP        | expenses + expense journals         | Ties to P&L expenses.                                       |
+| Client Statement         | MVP        | invoices + payments                 | Client balance reconciles.                                  |
+| Division Performance     | MVP        | division-tagged journals            | Division totals reconcile to GL.                            |
+| Balance Sheet            | Future     | full accrual-ready ledger           | Defer.                                                      |
+| Cash Flow Statement      | Future     | classified cash movement            | Defer.                                                      |
+| Aged Payables            | Future     | bills + bill payments               | Defer.                                                      |
+| VAT Report               | Future     | tax settings + VAT lines            | Disabled for MVP.                                           |
+| Bank Reconciliation      | Future     | imported/manual statement rows      | Defer.                                                      |
 
 ## Recommended first five development tasks
 

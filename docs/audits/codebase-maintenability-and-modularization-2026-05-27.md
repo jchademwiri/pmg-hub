@@ -49,13 +49,16 @@ PMG Hub has a strong monorepo base and healthy package-sharing patterns, but mai
 ## 1) Module Boundaries Are Implicit Instead of Enforced
 
 ### Finding
+
 Domain boundaries in larger apps (especially `apps/admin`) are represented by folders, but there is limited evidence of strict import constraints or explicit module APIs.
 
 ### Impact
+
 - Higher regression risk when internal details are imported across domains.
 - Harder refactors due to hidden coupling.
 
 ### Recommendation
+
 - Introduce “public API per module” pattern (`index.ts` exports only supported surface).
 - Enforce boundaries with lint rules (e.g., domain import restrictions).
 - Add Architecture Decision Records (ADRs) for critical domains.
@@ -65,13 +68,16 @@ Domain boundaries in larger apps (especially `apps/admin`) are represented by fo
 ## 2) Cross-App Duplication in Astro Sites
 
 ### Finding
+
 `apps/aws`, `apps/tes`, and `apps/pmg` likely duplicate patterns around page composition, form handling, and instrumentation.
 
 ### Impact
+
 - Fixes/features require multi-app repetitive edits.
 - Divergent behavior increases QA and release complexity.
 
 ### Recommendation
+
 - Create shared site-oriented packages:
   - `packages/site-core` (layout utilities, SEO primitives, metadata helpers)
   - `packages/site-forms` (validation + submission helpers)
@@ -83,13 +89,16 @@ Domain boundaries in larger apps (especially `apps/admin`) are represented by fo
 ## 3) Inconsistent Quality Contracts Across Apps
 
 ### Finding
+
 Not all apps expose equivalent quality scripts or minimum checks.
 
 ### Impact
+
 - Uneven confidence when changing shared dependencies.
 - Inconsistent contributor expectations.
 
 ### Recommendation
+
 - Define required script contract for each app:
   - `build`, `test`, `lint`, `check-types`
 - Add CI policy to enforce script presence and pass/fail per app.
@@ -99,13 +108,16 @@ Not all apps expose equivalent quality scripts or minimum checks.
 ## 4) Domain Logic and UI Risk Being Co-located
 
 ### Finding
+
 Large UI apps frequently accumulate business logic in UI layer over time.
 
 ### Impact
+
 - Harder testing (logic coupled to framework runtime).
 - Lower reuse and slower refactors.
 
 ### Recommendation
+
 - Move business rules into framework-agnostic modules:
   - `src/domain/*` (pure logic)
   - `src/application/*` (use-case orchestration)
@@ -117,13 +129,16 @@ Large UI apps frequently accumulate business logic in UI layer over time.
 ## 5) Ownership & Change Surface Are Not Explicit Enough
 
 ### Finding
+
 As app/domain count grows, ownership ambiguity becomes a scaling bottleneck.
 
 ### Impact
+
 - Longer review cycles.
 - Cross-team merge friction.
 
 ### Recommendation
+
 - Add `CODEOWNERS` (or per-module ownership map docs).
 - Require architectural checklist for high-impact PRs.
 
@@ -144,6 +159,7 @@ Suggested slice shape:
   - `index.ts` (public module contract)
 
 Benefits:
+
 - Higher locality of changes
 - Better test partitioning
 - Safer domain evolution
@@ -159,6 +175,7 @@ Benefits:
   - shared section/layout primitives where appropriate
 
 Benefits:
+
 - Faster rollout of fixes
 - Less duplication, less drift
 
@@ -178,6 +195,7 @@ Benefits:
    - Identify first 3 shared primitives to extract.
 
 **Exit Criteria**
+
 - Standards doc merged.
 - Script contract validated in CI.
 - At least one domain in admin converted to explicit module contract.
@@ -192,6 +210,7 @@ Benefits:
    - Restrict cross-domain deep imports.
 
 **Exit Criteria**
+
 - 30–40% of admin high-churn domains migrated.
 - AWS/TES/PMG consume shared `site-core` primitives.
 
@@ -205,6 +224,7 @@ Benefits:
    - Detect dependency drift and forbidden import patterns.
 
 **Exit Criteria**
+
 - Critical admin domains have isolated tests.
 - Shared app primitives tested once and reused many times.
 
@@ -218,6 +238,7 @@ Benefits:
    - Track module churn, coupling hotspots, and test stability.
 
 **Exit Criteria**
+
 - Predictable multi-app release quality.
 - Lower refactor cost and faster onboarding.
 
@@ -240,4 +261,3 @@ Benefits:
 - **Duplication Reduction:** shared package adoption vs duplicated local utilities.
 - **Contributor Friction:** bootstrap + time-to-first-green in CI.
 - **Change Lead Time:** PR open-to-merge duration for medium changes.
-

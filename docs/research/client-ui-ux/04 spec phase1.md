@@ -1,5 +1,6 @@
 # Implementation Spec — Phase 1: Bug Fixes & Quick Wins
-*PMG Hub | Client Detail Page Redesign*
+
+_PMG Hub | Client Detail Page Redesign_
 
 ---
 
@@ -29,26 +30,29 @@ Phase 1 contains no layout changes. It fixes two confirmed bugs and adds two sma
 **Fix:** Replace the `router.push` call with `router.refresh()` so the page re-fetches its server data and stays on the current URL.
 
 **Locate this block** (inside the `startTransition` callback in `handleSubmit`):
+
 ```typescript
-const result = await updateAction(fd)
+const result = await updateAction(fd);
 if (result.error) {
-  setErrorMessage(result.error)
+  setErrorMessage(result.error);
 } else {
-  router.push('/relationships/clients')
+  router.push('/relationships/clients');
 }
 ```
 
 **Replace with:**
+
 ```typescript
-const result = await updateAction(fd)
+const result = await updateAction(fd);
 if (result.error) {
-  setErrorMessage(result.error)
+  setErrorMessage(result.error);
 } else {
-  router.refresh()
+  router.refresh();
 }
 ```
 
 **Acceptance criteria:**
+
 - Clicking "Save Changes" on a valid form stays on `/relationships/clients/[id]`.
 - The page data visibly refreshes (client name / email updates are reflected without manual reload).
 - Clicking "Save Changes" on an invalid form still shows the error message inline.
@@ -62,6 +66,7 @@ if (result.error) {
 **Problem:** Client email and phone are not visible anywhere on the page without expanding the edit form. Every competitor shows this at the top of the client page.
 
 **Locate the header panel block** — the `div` that contains the breadcrumb, client name, and active badge:
+
 ```tsx
 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
   <div className="flex items-center gap-4">
@@ -82,6 +87,7 @@ if (result.error) {
 ```
 
 **Replace the inner `<div className="flex items-center gap-4">` with:**
+
 ```tsx
 <div className="flex flex-col gap-1">
   <div className="flex items-center gap-3">
@@ -91,9 +97,7 @@ if (result.error) {
     >
       ← Back to Clients
     </Link>
-    <h1 className="text-2xl font-bold tracking-tight">
-      {client.businessName ?? client.name}
-    </h1>
+    <h1 className="text-2xl font-bold tracking-tight">{client.businessName ?? client.name}</h1>
     <Badge variant={client.isActive ? 'default' : 'secondary'}>
       {client.isActive ? 'Active' : 'Disabled'}
     </Badge>
@@ -118,11 +122,13 @@ if (result.error) {
 ```
 
 **Notes:**
+
 - The `client` prop is typed as `any` in the current workspace — access `.email` and `.phone` directly as strings (they may be `null`).
 - The contact row only renders if at least one of email or phone is present.
 - No icons library needed — using plain unicode characters to avoid import changes in this phase.
 
 **Acceptance criteria:**
+
 - Client email and phone appear on a second line below the client name in the header.
 - If both email and phone are null/undefined, the second line does not render (no empty space).
 - The layout does not break on mobile — the contact row wraps naturally.
@@ -137,6 +143,7 @@ if (result.error) {
 **Problem:** The payments table shows Date, Invoice Number, and Amount but has no receipt reference visible. Users must click into a payment to find the receipt ID.
 
 **Locate the Payments `TabsContent` block** — specifically the `<Table>` inside it. Find the `<TableHeader>`:
+
 ```tsx
 <TableHeader>
   <TableRow>
@@ -148,6 +155,7 @@ if (result.error) {
 ```
 
 **Replace with:**
+
 ```tsx
 <TableHeader>
   <TableRow>
@@ -160,6 +168,7 @@ if (result.error) {
 ```
 
 **Find the `<TableBody>` rows** — each `<TableRow>` inside `{payments.data.map((entry: any) => (`:
+
 ```tsx
 <TableCell className="tabular-nums">{fmtDate(entry.date)}</TableCell>
 <TableCell className="font-semibold">{extractInvoiceNumber(entry.description)}</TableCell>
@@ -169,6 +178,7 @@ if (result.error) {
 ```
 
 **Replace with:**
+
 ```tsx
 <TableCell className="tabular-nums">{fmtDate(entry.date)}</TableCell>
 <TableCell className="font-mono text-xs text-muted-foreground">
@@ -181,6 +191,7 @@ if (result.error) {
 ```
 
 **Acceptance criteria:**
+
 - Payments table has 4 columns: Date, Receipt #, Invoice Number, Amount.
 - Receipt # is formatted as `REC-` followed by the first 8 characters of the ID in uppercase.
 - Receipt # uses monospace font (`font-mono`) and muted colour to visually distinguish it as a reference code.
@@ -195,12 +206,14 @@ if (result.error) {
 **Problem:** When the page loads with no URL params, the statement defaults to "current month" but no filter button appears highlighted/active.
 
 **Locate this block** near the top of the component (after the `useSearchParams` calls):
+
 ```typescript
 const statementPeriodParam = searchParams.get('monthPeriod');
 const statementYearParam = searchParams.get('year');
 ```
 
 **Immediately after those two lines, add:**
+
 ```typescript
 // Derived effective period — used for filter button active state.
 // If no URL params are set, the page defaults to 'current' month.
@@ -208,23 +221,31 @@ const effectivePeriod = statementPeriodParam ?? (!statementYearParam ? 'current'
 ```
 
 **Locate the Statement tab filter buttons** inside the Statement `TabsContent`. There are four period buttons. Each currently uses `statementPeriodParam` for its `variant` comparison:
+
 ```tsx
 variant={statementPeriodParam === 'current' || (!statementPeriodParam && !statementYearParam) ? 'default' : 'outline'}
 ```
+
 and
+
 ```tsx
 variant={statementPeriodParam === 'previous' ? 'default' : 'outline'}
 ```
+
 and
+
 ```tsx
 variant={statementPeriodParam === 'past3' ? 'default' : 'outline'}
 ```
+
 and
+
 ```tsx
 variant={statementPeriodParam === 'past6' ? 'default' : 'outline'}
 ```
 
 **Replace all four `variant` expressions** to use `effectivePeriod`:
+
 ```tsx
 variant={effectivePeriod === 'current' ? 'default' : 'outline'}
 variant={effectivePeriod === 'previous' ? 'default' : 'outline'}
@@ -235,6 +256,7 @@ variant={effectivePeriod === 'past6' ? 'default' : 'outline'}
 The FY Select dropdown does not need changes — when a year param is present, `effectivePeriod` is null so no month button is highlighted, which is correct.
 
 **Acceptance criteria:**
+
 - On first load (no URL params), the "Current Month" button appears in its `default` (filled/active) variant.
 - Clicking "Previous Month" highlights that button and de-highlights "Current Month".
 - Clicking a FY year from the dropdown de-highlights all month period buttons.

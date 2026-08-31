@@ -1,11 +1,13 @@
 # PMG Hub — Client Detail Page Redesign Recommendations
-*Based on industry research + current state audit | June 2026*
+
+_Based on industry research + current state audit | June 2026_
 
 ---
 
 ## Design Philosophy
 
 The client detail page should answer three questions in under 3 seconds, without scrolling:
+
 1. What does this client currently owe me?
 2. Is anything at risk or overdue?
 3. Where are their recent documents?
@@ -75,12 +77,12 @@ Invoices | Quotes | Payments | Statement | Analytics
 
 Replace the current 5-card strip with 4 cards. Outstanding and Overdue use colour when non-zero. **All 4 tiles are clickable and filter the active tab's document list.**
 
-| Tile | Colour when active | Click action |
-|---|---|---|
-| Total Invoiced | neutral | No filter (totals view) |
-| Total Paid | green | Filter to paid invoices |
-| Outstanding | amber | Filter to issued/unpaid |
-| Overdue | red | Filter to overdue only |
+| Tile           | Colour when active | Click action            |
+| -------------- | ------------------ | ----------------------- |
+| Total Invoiced | neutral            | No filter (totals view) |
+| Total Paid     | green              | Filter to paid invoices |
+| Outstanding    | amber              | Filter to issued/unpaid |
+| Overdue        | red                | Filter to overdue only  |
 
 Quote Conversion Rate moves to the Analytics tab — it's a sales metric, not a billing action trigger.
 
@@ -106,13 +108,13 @@ Moved above the tab browser so they are visible without scrolling. New Invoice u
 
 ### Tab Architecture
 
-| Tab | Content |
-|---|---|
-| **Invoices** | Invoice list + split-pane preview. Checkbox selection for bulk ops. |
-| **Quotes** | Quotations list + split-pane preview. Checkbox selection. |
-| **Payments** | Payments list + receipt preview. Add Receipt # and Days Since columns. |
+| Tab           | Content                                                                       |
+| ------------- | ----------------------------------------------------------------------------- |
+| **Invoices**  | Invoice list + split-pane preview. Checkbox selection for bulk ops.           |
+| **Quotes**    | Quotations list + split-pane preview. Checkbox selection.                     |
+| **Payments**  | Payments list + receipt preview. Add Receipt # and Days Since columns.        |
 | **Statement** | Period filter + transactions table + auto-rendered statement in preview pane. |
-| **Analytics** | Full `ClientFinancialDashboard` (ageing, health, behaviour, activity feed). |
+| **Analytics** | Full `ClientFinancialDashboard` (ageing, health, behaviour, activity feed).   |
 
 ### Split-Pane Layout (desktop ≥ lg)
 
@@ -148,6 +150,7 @@ Period change updates the right pane in real time — no button required.
 ## Bug Fixes
 
 ### Fix 1 — Edit Form Redirect
+
 **File:** `apps/admin/src/components/clients/client-edit-form.tsx`
 
 ```typescript
@@ -159,6 +162,7 @@ router.refresh();
 ```
 
 ### Fix 2 — Receipt # Column in Payments Table
+
 **File:** `client-billing-workspace.tsx`, Payments `TabsContent`
 
 ```tsx
@@ -172,6 +176,7 @@ router.refresh();
 ```
 
 ### Fix 3 — Statement Default Period Highlight
+
 ```typescript
 // Derive effective period — used for all button variant comparisons
 const effectivePeriod = statementPeriodParam ?? (!statementYearParam ? 'current' : null);
@@ -185,6 +190,7 @@ variant={effectivePeriod === 'current' ? 'default' : 'outline'}
 ## Additional UX Improvements
 
 ### Days Overdue Column (Invoices Tab)
+
 Add a computed column showing numeric overdue age with colour coding:
 
 ```typescript
@@ -195,18 +201,23 @@ const daysOverdue = (dueDate: string): number => {
 ```
 
 Colour thresholds:
+
 - 1–30 days → `text-amber-600`
 - 31–60 days → `text-orange-600`
 - 61+ days → `text-red-600`
 
 ### Activity Feed Default State
+
 Show the most recent 3 events by default (collapsed state), with a "Show all N events" toggle. This gives users immediate context without the accordion being closed by default.
 
 ### Bulk Operation Discovery
+
 Add a subtle hint text below the tab bar when the Invoices or Quotes tab is active:
+
 ```
 "Select rows to batch download or email documents"
 ```
+
 Disappears after the user has performed their first batch action (persist to localStorage).
 
 ---
@@ -214,6 +225,7 @@ Disappears after the user has performed their first batch action (persist to loc
 ## Component Changes Summary
 
 ### `client-billing-workspace.tsx`
+
 - Add contact info (email, phone) display below client name in header
 - Replace 5-card KPI strip with 4-tile interactive metric strip
 - Add condensed info row (Health · Avg Pay · Last Payment)
@@ -227,10 +239,12 @@ Disappears after the user has performed their first batch action (persist to loc
 - Auto-render statement in right pane on Statement tab load
 
 ### `client-financial-dashboard.tsx`
+
 - No structural changes. Moved wholesale into the Analytics tab.
 - Optional: show top 3 activity events by default instead of collapsed.
 
 ### `client-edit-form.tsx`
+
 - Fix: `router.push('/relationships/clients')` → `router.refresh()`
 
 ---
@@ -238,29 +252,34 @@ Disappears after the user has performed their first batch action (persist to loc
 ## Phased Implementation Plan
 
 ### Phase 1 — Bug Fixes & Quick Wins (1–2 days)
+
 - [ ] Fix edit form redirect (`router.refresh()`)
 - [ ] Add contact info (email/phone) to header
 - [ ] Add Receipt # column to payments table
 - [ ] Fix statement default period visual state
 
 ### Phase 2 — Layout Reorganisation (2–3 days)
+
 - [ ] Create compact `ClientMetricStrip` component (4 tiles + info row)
 - [ ] Move `ClientFinancialDashboard` into new "Analytics" tab
 - [ ] Elevate action buttons above tab browser
 - [ ] Show top 3 activity events by default
 
 ### Phase 3 — Interactive Preview (2–3 days)
+
 - [ ] Implement split-pane layout on `lg:` screens
 - [ ] Add slide-over `Sheet` drawer as an option (or prev/next in Dialog for mobile)
 - [ ] Auto-select first document in list on tab load
 - [ ] Statement auto-preview in right pane
 
 ### Phase 4 — Interactive KPI Tiles (1–2 days)
+
 - [ ] Make KPI tiles clickable to filter the active tab's list
 - [ ] Add filter state to invoices and quotes tabs
 - [ ] Visual active-filter indicator
 
 ### Phase 5 — Polish (1–2 days)
+
 - [ ] "Days Overdue" column with colour coding
 - [ ] Bulk ops discovery hint text
 - [ ] Responsive card view for tables on mobile
@@ -271,33 +290,33 @@ Disappears after the user has performed their first batch action (persist to loc
 
 ## What NOT to Change
 
-| Component | Reason |
-|---|---|
-| Bulk PDF generation system | Unique differentiator — no major competitor has this |
-| Bulk email system | Same — sequential queue and progress dialog are correct |
-| URL-driven state | `?tab=invoices&invoiceId=xxx` deep links are well-implemented |
-| `DocumentPreview` component | Renders correctly |
-| Server data fetching (page.tsx) | Parallel Promise.all pattern is good |
-| `BillingStatusBadge` | Well-implemented |
-| Statement ageing calculation | Logic is correct and sophisticated |
-| Off-screen canvas PDF system | Works — fragile but not worth rewriting yet |
+| Component                       | Reason                                                        |
+| ------------------------------- | ------------------------------------------------------------- |
+| Bulk PDF generation system      | Unique differentiator — no major competitor has this          |
+| Bulk email system               | Same — sequential queue and progress dialog are correct       |
+| URL-driven state                | `?tab=invoices&invoiceId=xxx` deep links are well-implemented |
+| `DocumentPreview` component     | Renders correctly                                             |
+| Server data fetching (page.tsx) | Parallel Promise.all pattern is good                          |
+| `BillingStatusBadge`            | Well-implemented                                              |
+| Statement ageing calculation    | Logic is correct and sophisticated                            |
+| Off-screen canvas PDF system    | Works — fragile but not worth rewriting yet                   |
 
 ---
 
 ## Competitive Positioning After Redesign
 
-| Feature | Xero | QBO | FreshBooks | Zoho | **PMG Hub (after)** |
-|---|---|---|---|---|---|
-| Financial snapshot above fold | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Contact info always visible | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Clickable KPI filters | ✓ | ✓ | ✗ | ✗ | ✓ |
-| Tabbed document browser | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Slide-over/drawer preview | ✗ | ✓ | ✓ | ✗ | ✓ |
-| Ageing breakdown | ✓ | ✓ | ✗ | ✓ | ✓ |
-| Client health score | ✗ | ✗ | ✗ | Partial | ✓ |
-| Bulk PDF generation | ✗ | ✗ | ✗ | ✗ | ✓ |
-| Bulk email dispatch | ✗ | ✗ | ✗ | ✗ | ✓ |
-| Split-pane browser | ✗ | ✗ | ✗ | ✗ | ✓ |
-| Activity timeline | ✓ | Partial | ✓ | ✓ | ✓ |
-| Statement inline | ✓ | ✓ | ✗ | ✓ | ✓ |
-| Days overdue column | ✗ | ✓ | ✗ | ✓ | ✓ |
+| Feature                       | Xero | QBO     | FreshBooks | Zoho    | **PMG Hub (after)** |
+| ----------------------------- | ---- | ------- | ---------- | ------- | ------------------- |
+| Financial snapshot above fold | ✓    | ✓       | ✓          | ✓       | ✓                   |
+| Contact info always visible   | ✓    | ✓       | ✓          | ✓       | ✓                   |
+| Clickable KPI filters         | ✓    | ✓       | ✗          | ✗       | ✓                   |
+| Tabbed document browser       | ✓    | ✓       | ✓          | ✓       | ✓                   |
+| Slide-over/drawer preview     | ✗    | ✓       | ✓          | ✗       | ✓                   |
+| Ageing breakdown              | ✓    | ✓       | ✗          | ✓       | ✓                   |
+| Client health score           | ✗    | ✗       | ✗          | Partial | ✓                   |
+| Bulk PDF generation           | ✗    | ✗       | ✗          | ✗       | ✓                   |
+| Bulk email dispatch           | ✗    | ✗       | ✗          | ✗       | ✓                   |
+| Split-pane browser            | ✗    | ✗       | ✗          | ✗       | ✓                   |
+| Activity timeline             | ✓    | Partial | ✓          | ✓       | ✓                   |
+| Statement inline              | ✓    | ✓       | ✗          | ✓       | ✓                   |
+| Days overdue column           | ✗    | ✓       | ✗          | ✓       | ✓                   |

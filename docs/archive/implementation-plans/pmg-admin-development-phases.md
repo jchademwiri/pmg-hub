@@ -12,6 +12,7 @@
 ## Current Project Status (May 2026)
 
 **What has been done (95% Complete):**
+
 - **Foundation & Database:** Fully scaffolded, seeded, and deployed.
 - **Financial Engine & Dashboard:** Core metrics, charts, MoM comparison, and withdrawal tracking are fully operational.
 - **Core CRUD Modules:** Income, Expenses, Leads, Divisions, and Client tracking are fully implemented and connected to Drizzle ORM.
@@ -19,6 +20,7 @@
 - **Authentication & Security:** Better Auth is fully integrated with magic links, role-based access control, and user invitation flows.
 
 **What still needs to be done:**
+
 - **Quality of Life & UI Polish:** Centralizing date formatting, adding unsaved changes warnings, improving empty states, and fixing layout bugs (e.g. sidebar stickiness).
 - **Billing Module Polish:** Unlocking the `Export to PDF` and `Print` buttons.
 - **Settings Module:** Unlocking Data Export, 2FA, and Logo Upload capabilities.
@@ -26,6 +28,7 @@
 ---
 
 ## Table of Contents
+
 2. [Admin App Folder Structure](#2-admin-app-folder-structure)
 3. ✅ [Phase 0 - Foundation](#3-phase-0--foundation-complete-)
 4. ✅ [Phase 1 - Financial Engine](#4-phase-1--financial-engine-complete-)
@@ -164,14 +167,14 @@ apps/admin/src/
 
 ```ts
 // src/proxy.ts
-import { NextResponse, type NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server';
 
 export function proxy(_request: NextRequest) {
   // Auth disabled - re-enable by restoring cookie check (Phase 9)
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
-export const config = { matcher: ['/:path*'] }
+export const config = { matcher: ['/:path*'] };
 ```
 
 > Auth will be wired in Phase 9. When active, the proxy checks for
@@ -215,6 +218,7 @@ Flex         =  profitPool × 0.05
 ### What was delivered
 
 **`packages/db/src/queries.ts`** - all query helpers:
+
 - `getTotalRevenue()` / `getTotalExpenses()` - all-time aggregates
 - `getRevenueByDivision()` / `getExpensesByDivision()` - division breakdowns
 - `getMonthlyRevenueByDivision(months)` - stacked chart data
@@ -233,6 +237,7 @@ Flex         =  profitPool × 0.05
 - `getDivisionRevenueYTD()` - YTD series
 
 **`apps/admin/src/lib/financial.ts`** - server-only data orchestration layer:
+
 - `getFinancialSummary()` - all-time summary (kept for tests)
 - `getCurrentMonthSummary()` / `getPreviousMonthSummary()` / `getYTDSummary()` - re-exported from `@pmg/db`
 - `getDivisionRevenue()` / `getLeadCounts()` - thin wrappers
@@ -244,6 +249,7 @@ Flex         =  profitPool × 0.05
 - `getExpensesByDivision()` - re-exported from `@pmg/db`
 
 **`apps/admin/src/lib/format.ts`**:
+
 - `formatZAR(amount)` - `Intl.NumberFormat` en-ZA ZAR formatting
 
 **`apps/admin/src/__tests__/financial.test.ts`** - full Vitest suite with unit and
@@ -333,12 +339,12 @@ instant - no refetch, all data is already in memory.
 
 Four cards in a 2×2 (mobile) / 1×4 (desktop) grid:
 
-| Card | Value | Delta |
-|---|---|---|
-| Total Revenue | `summary.revenue` | MoM vs previous month revenue |
-| Total Expenses | `summary.expenses` | MoM inverted (up = bad) |
-| PMG Share (25%) | `summary.pmgShare` | MoM |
-| Profit Pool | `summary.profitPool` | MoM - red border when negative |
+| Card            | Value                | Delta                          |
+| --------------- | -------------------- | ------------------------------ |
+| Total Revenue   | `summary.revenue`    | MoM vs previous month revenue  |
+| Total Expenses  | `summary.expenses`   | MoM inverted (up = bad)        |
+| PMG Share (25%) | `summary.pmgShare`   | MoM                            |
+| Profit Pool     | `summary.profitPool` | MoM - red border when negative |
 
 `DeltaBadge` shows TrendingUp/TrendingDown icon + percentage vs previous month.
 The percentage is always shown as positive with a direction indicator.
@@ -346,6 +352,7 @@ The percentage is always shown as positive with a direction indicator.
 ### Salary card
 
 Teal-bordered card showing:
+
 - **Recommended salary** - `salary` from the active `PeriodSummary`
 - **YTD salary** - sub-label from `ytdSummary.salary` (always shown)
 - **Withdraw button** - only visible on Current Month tab when `profitPool >= 0`
@@ -357,6 +364,7 @@ Teal-bordered card showing:
   `profitPool < 0`. The withdraw button is hidden.
 
 **Withdrawal flow:**
+
 1. User clicks "Withdraw" button
 2. `WithdrawModal` opens (shadcn `Dialog`)
 3. User enters amount → calls `recordWithdrawal(amount)` Server Action
@@ -373,13 +381,13 @@ and net for the hovered month. Trend label compares first to last data point.
 
 `DivisionAreaChart` - recharts stacked `AreaChart` with five range selectors.
 
-| Range | Data source |
-|---|---|
-| This Month | `divisionSeriesData.current` |
-| Prev Month | `divisionSeriesData.prev` |
-| Last 3 Months | `divisionSeriesData.last3` |
-| Last 6 Months | `divisionSeriesData.last6` |
-| Year to Date | `divisionSeriesData.ytd` |
+| Range         | Data source                  |
+| ------------- | ---------------------------- |
+| This Month    | `divisionSeriesData.current` |
+| Prev Month    | `divisionSeriesData.prev`    |
+| Last 3 Months | `divisionSeriesData.last3`   |
+| Last 6 Months | `divisionSeriesData.last6`   |
+| Year to Date  | `divisionSeriesData.ytd`     |
 
 Range switching is purely client-side - all five datasets were fetched
 server-side and are already in memory. Division colours cycle through
@@ -390,6 +398,7 @@ percentage for the selected range.
 ### Division revenue card
 
 `DivisionRevenue` - scrollable list of divisions. Each division shows:
+
 - Division name + net profit label (green / red)
 - Revenue bar (proportional to max division revenue)
 - Expense bar (same scale) in a different colour
@@ -460,6 +469,7 @@ deleteIncome(id: string): Promise<{ error?: string }>
 ```
 
 Key constraints:
+
 - `clientId = ''` is normalised to `undefined` before Zod parse
 - `amount` stored as `String(parsed.amount)` - never a raw JS number
 - `revalidatePath('/income')` + `revalidatePath('/dashboard')` called inside `try` on success only, never in `catch`
@@ -467,22 +477,24 @@ Key constraints:
 
 ### Client Components
 
-| File | Description |
-|---|---|
-| `components/income/filter-bar.tsx` | `'use client'` - two shadcn `<Select>` controls (division + month). Month labels formatted via `toLocaleString('en-ZA', { month: 'long', year: 'numeric' })`. On change: `router.push('/income?' + params)` |
-| `components/income/income-add-form.tsx` | `'use client'` - `useTransition` + `useRef`. Fields: date, divisionId, clientId ("No client" option), description, amount. On success: `formRef.current.reset()`. On error: inline error display. |
-| `components/income/income-table.tsx` | `'use client'` - shadcn `<Table>`. Edit: `<Link href={'/income/' + id}>`. Delete: inline confirm/cancel with `pendingDeleteId` state. Error feedback via sonner `toast.error`. |
-| `components/income/income-edit-form.tsx` | `'use client'` - same fields as add form, pre-populated. `entry.clientId === null` → pre-selects "No client". On success: `router.push('/income')`. |
+| File                                     | Description                                                                                                                                                                                                 |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `components/income/filter-bar.tsx`       | `'use client'` - two shadcn `<Select>` controls (division + month). Month labels formatted via `toLocaleString('en-ZA', { month: 'long', year: 'numeric' })`. On change: `router.push('/income?' + params)` |
+| `components/income/income-add-form.tsx`  | `'use client'` - `useTransition` + `useRef`. Fields: date, divisionId, clientId ("No client" option), description, amount. On success: `formRef.current.reset()`. On error: inline error display.           |
+| `components/income/income-table.tsx`     | `'use client'` - shadcn `<Table>`. Edit: `<Link href={'/income/' + id}>`. Delete: inline confirm/cancel with `pendingDeleteId` state. Error feedback via sonner `toast.error`.                              |
+| `components/income/income-edit-form.tsx` | `'use client'` - same fields as add form, pre-populated. `entry.clientId === null` → pre-selects "No client". On success: `router.push('/income')`.                                                         |
 
 ### Server Component Pages
 
 **`app/(admin)/income/page.tsx`**
+
 - Props: `{ searchParams: Promise<{ divisionId?: string; month?: string }> }`
 - Awaits `searchParams`, fires `Promise.all([getAllIncome, getAllDivisions, getAllClients, getDistinctIncomeMonths])`
 - Computes `runningTotal = entries.reduce((sum, e) => sum + Number(e.amount), 0)`
 - Renders: header + `formatZAR(runningTotal)`, `<FilterBar>`, `<IncomeAddForm>`, `<IncomeTable>` or empty-state message
 
 **`app/(admin)/income/[id]/page.tsx`**
+
 - Props: `{ params: Promise<{ id: string }> }`
 - Calls `getIncomeById(id)` → `notFound()` if null
 - Fires `Promise.all([getAllDivisions, getAllClients])`
@@ -493,6 +505,7 @@ Key constraints:
 Full Vitest suite (44 tests, all passing via `bun run test --cwd apps/admin`):
 
 **Property-based tests (fast-check, 100 iterations each):**
+
 - P1: `getAllIncome` shape + sort order (date DESC)
 - P2: Division filter excludes entries from other divisions
 - P3: Month filter excludes entries outside the calendar month
@@ -508,6 +521,7 @@ Full Vitest suite (44 tests, all passing via `bun run test --cwd apps/admin`):
 - P13: `getAllClients` sorted by name ASC
 
 **Unit tests:**
+
 - `FilterBar` renders "All divisions" and "All months" defaults; month labels are human-readable
 - `IncomeTable` renders edit links with correct `/income/<id>` hrefs; empty array renders no rows
 - `IncomeSchema` rejects empty date, rejects `clientId = ''`, accepts `clientId = undefined`
@@ -540,14 +554,15 @@ Categories are freeform text.
 ### Server Actions - `actions/expenses.ts`
 
 Mirror the structure of `actions/income.ts` with `ExpenseSchema`:
+
 ```ts
 const ExpenseSchema = z.object({
-  date:        z.string().min(1),
-  divisionId:  z.string().uuid(),
-  category:    z.string().min(1),
+  date: z.string().min(1),
+  divisionId: z.string().uuid(),
+  category: z.string().min(1),
   description: z.string().optional(),
-  amount:      z.coerce.number().positive(),
-})
+  amount: z.coerce.number().positive(),
+});
 ```
 
 Revalidate `/expenses` and `/dashboard` on every mutation.
@@ -585,19 +600,20 @@ new → contacted → converted
 ### Server Actions - `actions/leads.ts`
 
 ```ts
-'use server'
+'use server';
 
 export async function updateLeadStatus(id: string, formData: FormData) {
-  const { status } = z.object({
-    status: z.enum(['new', 'contacted', 'converted', 'lost'])
-  }).parse(Object.fromEntries(formData))
+  const { status } = z
+    .object({
+      status: z.enum(['new', 'contacted', 'converted', 'lost']),
+    })
+    .parse(Object.fromEntries(formData));
 
-  await db.update(leads).set({ status, updatedAt: new Date() })
-    .where(eq(leads.id, id))
+  await db.update(leads).set({ status, updatedAt: new Date() }).where(eq(leads.id, id));
 
-  revalidatePath('/leads')
-  revalidatePath(`/leads/${id}`)
-  revalidatePath('/dashboard')
+  revalidatePath('/leads');
+  revalidatePath(`/leads/${id}`);
+  revalidatePath('/dashboard');
 }
 ```
 
@@ -624,21 +640,22 @@ Create and rename divisions. Deletion blocked by FK if income or expenses exist.
 ### Server Actions - `actions/divisions.ts`
 
 ```ts
-'use server'
+'use server';
 
 export async function createDivision(formData: FormData) {
-  const { name } = z.object({ name: z.string().min(1).max(100) })
-    .parse(Object.fromEntries(formData))
-  await db.insert(divisions).values({ name })
-  revalidatePath('/divisions')
+  const { name } = z
+    .object({ name: z.string().min(1).max(100) })
+    .parse(Object.fromEntries(formData));
+  await db.insert(divisions).values({ name });
+  revalidatePath('/divisions');
 }
 
 export async function updateDivision(id: string, formData: FormData) {
-  const { name } = z.object({ name: z.string().min(1).max(100) })
-    .parse(Object.fromEntries(formData))
-  await db.update(divisions).set({ name, updatedAt: new Date() })
-    .where(eq(divisions.id, id))
-  revalidatePath('/divisions')
+  const { name } = z
+    .object({ name: z.string().min(1).max(100) })
+    .parse(Object.fromEntries(formData));
+  await db.update(divisions).set({ name, updatedAt: new Date() }).where(eq(divisions.id, id));
+  revalidatePath('/divisions');
 }
 ```
 
@@ -657,18 +674,18 @@ Add to `packages/db/src/schema/snapshots.ts`:
 
 ```ts
 export const snapshots = pgTable('snapshots', {
-  id:         uuid('id').primaryKey().defaultRandom(),
-  period:     text('period').notNull().unique(),    // 'YYYY-MM'
-  revenue:    numeric('revenue',    { precision: 12, scale: 2 }).notNull(),
-  expenses:   numeric('expenses',   { precision: 12, scale: 2 }).notNull(),
-  pmgShare:   numeric('pmg_share',  { precision: 12, scale: 2 }).notNull(),
-  profitPool: numeric('profit_pool',{ precision: 12, scale: 2 }).notNull(),
-  salary:     numeric('salary',     { precision: 12, scale: 2 }).notNull(),
-  reinvest:   numeric('reinvest',   { precision: 12, scale: 2 }).notNull(),
-  reserve:    numeric('reserve',    { precision: 12, scale: 2 }).notNull(),
-  flex:       numeric('flex',       { precision: 12, scale: 2 }).notNull(),
-  createdAt:  timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-})
+  id: uuid('id').primaryKey().defaultRandom(),
+  period: text('period').notNull().unique(), // 'YYYY-MM'
+  revenue: numeric('revenue', { precision: 12, scale: 2 }).notNull(),
+  expenses: numeric('expenses', { precision: 12, scale: 2 }).notNull(),
+  pmgShare: numeric('pmg_share', { precision: 12, scale: 2 }).notNull(),
+  profitPool: numeric('profit_pool', { precision: 12, scale: 2 }).notNull(),
+  salary: numeric('salary', { precision: 12, scale: 2 }).notNull(),
+  reinvest: numeric('reinvest', { precision: 12, scale: 2 }).notNull(),
+  reserve: numeric('reserve', { precision: 12, scale: 2 }).notNull(),
+  flex: numeric('flex', { precision: 12, scale: 2 }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
 ```
 
 ### Features
@@ -678,7 +695,8 @@ export const snapshots = pgTable('snapshots', {
 - Snapshot page: all closed months in a table
 
 ### Database Seed
-update our seed data file to include the current updated schema 
+
+update our seed data file to include the current updated schema
 
 ---
 
@@ -691,11 +709,11 @@ exist in `components/reports/` but are not wired to a route yet.
 
 ### Existing components (built, not yet wired)
 
-| Component | Chart type | Data |
-|---|---|---|
-| `MoMComparisonChart` | Grouped bar (recharts) | `getMoMChartData()` |
+| Component                | Chart type              | Data                           |
+| ------------------------ | ----------------------- | ------------------------------ |
+| `MoMComparisonChart`     | Grouped bar (recharts)  | `getMoMChartData()`            |
 | `RevenueByDivisionChart` | Stacked area (recharts) | `getRevenueByDivisionSeries()` |
-| `RevenueVsExpensesChart` | Line chart (recharts) | `getMonthlyFinancialsSeries()` |
+| `RevenueVsExpensesChart` | Line chart (recharts)   | `getMonthlyFinancialsSeries()` |
 
 ### Work remaining
 
@@ -705,7 +723,8 @@ exist in `components/reports/` but are not wired to a route yet.
 - CSV export via Server Action streaming `text/csv`
 
 ### Database Seed
-update our seed data file to include the current updated schema 
+
+update our seed data file to include the current updated schema
 
 ---
 
@@ -757,11 +776,11 @@ Proxy checks session token + user exists → access granted
 
 ### Roles
 
-| Role | Access |
-|---|---|
-| `super_admin` | Full access + user management (`/users`) |
-| `admin` | Full access to all data routes - no user management |
-| `viewer` | Read-only - no add/edit/delete, no CSV export, no withdrawals |
+| Role          | Access                                                        |
+| ------------- | ------------------------------------------------------------- |
+| `super_admin` | Full access + user management (`/users`)                      |
+| `admin`       | Full access to all data routes - no user management           |
+| `viewer`      | Read-only - no add/edit/delete, no CSV export, no withdrawals |
 
 Role is stored on the `users` table and checked server-side in each page and
 Server Action. The proxy only checks for a valid session - role enforcement
@@ -775,38 +794,39 @@ adapter. One additional table is needed:
 ```ts
 // packages/db/src/schema/invitations.ts
 export const invitations = pgTable('invitations', {
-  id:        uuid('id').primaryKey().defaultRandom(),
-  email:     text('email').notNull().unique(),
-  role:      text('role', { enum: ['super_admin', 'admin', 'viewer'] })
-               .notNull().default('admin'),
-  token:     text('token').notNull().unique(),   // secure random token
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email').notNull().unique(),
+  role: text('role', { enum: ['super_admin', 'admin', 'viewer'] })
+    .notNull()
+    .default('admin'),
+  token: text('token').notNull().unique(), // secure random token
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-  acceptedAt:timestamp('accepted_at', { withTimezone: true }),
+  acceptedAt: timestamp('accepted_at', { withTimezone: true }),
   invitedBy: uuid('invited_by').references(() => users.id),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-})
+});
 ```
 
 ### New files
 
-| File | Description |
-|---|---|
-| `lib/auth.ts` | Better Auth config - magic link only, Drizzle adapter, sign-up hook that blocks uninvited emails |
-| `lib/auth-client.ts` | Better Auth client - `signIn.magicLink()`, `useSession()` |
-| `app/api/auth/[...all]/route.ts` | Better Auth catch-all API route |
-| `app/(auth)/login/page.tsx` | Magic link request form - email input only, no password field |
-| `app/(admin)/users/page.tsx` | User list - super_admin only. Shows all users with role badges and last-login. |
-| `app/(admin)/users/invite/page.tsx` | Invite form - email + role select. Sends invite email via Resend. |
-| `actions/users.ts` | `inviteUser(formData)`, `revokeUser(id)`, `updateUserRole(id, role)` |
-| `components/users/user-table.tsx` | User list table with role badge, last login, revoke button |
-| `components/users/invite-form.tsx` | Invite form component |
+| File                                | Description                                                                                      |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `lib/auth.ts`                       | Better Auth config - magic link only, Drizzle adapter, sign-up hook that blocks uninvited emails |
+| `lib/auth-client.ts`                | Better Auth client - `signIn.magicLink()`, `useSession()`                                        |
+| `app/api/auth/[...all]/route.ts`    | Better Auth catch-all API route                                                                  |
+| `app/(auth)/login/page.tsx`         | Magic link request form - email input only, no password field                                    |
+| `app/(admin)/users/page.tsx`        | User list - super_admin only. Shows all users with role badges and last-login.                   |
+| `app/(admin)/users/invite/page.tsx` | Invite form - email + role select. Sends invite email via Resend.                                |
+| `actions/users.ts`                  | `inviteUser(formData)`, `revokeUser(id)`, `updateUserRole(id, role)`                             |
+| `components/users/user-table.tsx`   | User list table with role badge, last login, revoke button                                       |
+| `components/users/invite-form.tsx`  | Invite form component                                                                            |
 
 ### Auth config sketch
 
 ```ts
 // lib/auth.ts
-import { betterAuth } from 'better-auth'
-import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'pg' }),
@@ -819,7 +839,7 @@ export const auth = betterAuth({
         to: email,
         subject: 'Sign in to PMG Control Center',
         html: `<a href="${url}">Click to sign in</a>`,
-      })
+      });
     },
   },
   hooks: {
@@ -830,47 +850,48 @@ export const auth = betterAuth({
         handler: async (ctx) => {
           const existing = await db.query.users.findFirst({
             where: eq(users.email, ctx.body.email),
-          })
+          });
           if (!existing) {
-            throw new APIError('FORBIDDEN', { message: 'Not invited' })
+            throw new APIError('FORBIDDEN', { message: 'Not invited' });
           }
         },
       },
     ],
   },
-})
+});
 ```
 
 ### Proxy update
 
 ```ts
 // src/proxy.ts
-import { NextResponse, type NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server';
 
 export async function proxy(request: NextRequest) {
-  const sessionToken = request.cookies.get('better-auth.session_token')
-  const isAuthRoute = request.nextUrl.pathname.startsWith('/login') ||
-                      request.nextUrl.pathname.startsWith('/api/auth')
+  const sessionToken = request.cookies.get('better-auth.session_token');
+  const isAuthRoute =
+    request.nextUrl.pathname.startsWith('/login') ||
+    request.nextUrl.pathname.startsWith('/api/auth');
 
   if (!sessionToken && !isAuthRoute) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/login', request.url));
   }
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
-export const config = { matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'] }
+export const config = { matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'] };
 ```
 
 ### Role enforcement pattern
 
 ```ts
 // In any Server Component page or Server Action:
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
 
-const session = await auth.api.getSession({ headers: await headers() })
-if (!session) redirect('/login')
-if (session.user.role === 'viewer') notFound()  // or return { error: 'Forbidden' }
+const session = await auth.api.getSession({ headers: await headers() });
+if (!session) redirect('/login');
+if (session.user.role === 'viewer') notFound(); // or return { error: 'Forbidden' }
 ```
 
 ### User management flow
@@ -912,29 +933,29 @@ if (session.user.role === 'viewer') notFound()  // or return { error: 'Forbidden
 
 ## 14. Tech Stack Reference
 
-| Layer | Choice | Notes |
-|---|---|---|
-| Framework | Next.js 16 (Turbopack) | `apps/admin` only |
-| Language | TypeScript 5.9 | strict mode, React Compiler enabled |
-| Database | PostgreSQL via Neon | serverless, pooled |
-| ORM | Drizzle ORM | `@pmg/db` workspace package |
-| UI | shadcn/ui (radix-vega) | `components/ui/` |
-| Charts | recharts 3.8.0 | used in dashboard + reports |
-| Auth | Better Auth + magic link | not yet wired - Phase 9 |
-| Styling | Tailwind CSS v4 | OKLCH colour tokens |
-| Toasts | sonner | dark theme, bottom-right |
-| Validation | Zod | on every Server Action |
-| Monorepo | Bun + Turborepo | `bun --filter admin` |
-| Deployment | Vercel | `admin.playhousemedia.co.za` |
-| Proxy | `src/proxy.ts` | Next.js 16 rename of `middleware.ts` |
+| Layer      | Choice                   | Notes                                |
+| ---------- | ------------------------ | ------------------------------------ |
+| Framework  | Next.js 16 (Turbopack)   | `apps/admin` only                    |
+| Language   | TypeScript 5.9           | strict mode, React Compiler enabled  |
+| Database   | PostgreSQL via Neon      | serverless, pooled                   |
+| ORM        | Drizzle ORM              | `@pmg/db` workspace package          |
+| UI         | shadcn/ui (radix-vega)   | `components/ui/`                     |
+| Charts     | recharts 3.8.0           | used in dashboard + reports          |
+| Auth       | Better Auth + magic link | not yet wired - Phase 9              |
+| Styling    | Tailwind CSS v4          | OKLCH colour tokens                  |
+| Toasts     | sonner                   | dark theme, bottom-right             |
+| Validation | Zod                      | on every Server Action               |
+| Monorepo   | Bun + Turborepo          | `bun --filter admin`                 |
+| Deployment | Vercel                   | `admin.playhousemedia.co.za`         |
+| Proxy      | `src/proxy.ts`           | Next.js 16 rename of `middleware.ts` |
 
 ### Next.js 16 - breaking changes relevant to this project
 
-| Old (Next.js 15) | New (Next.js 16) |
-|---|---|
-| `middleware.ts` | `proxy.ts` |
+| Old (Next.js 15)             | New (Next.js 16)        |
+| ---------------------------- | ----------------------- |
+| `middleware.ts`              | `proxy.ts`              |
 | `export function middleware` | `export function proxy` |
-| Same API otherwise | - |
+| Same API otherwise           | -                       |
 
 ---
 
@@ -974,5 +995,5 @@ if (session.user.role === 'viewer') notFound()  // or return { error: 'Forbidden
 
 ---
 
-*Last updated: April 2026 · Playhouse Media Group (PTY) Ltd*
-*Jacob Chademwiri · Raslouw AH, Centurion, 0157*
+_Last updated: April 2026 · Playhouse Media Group (PTY) Ltd_
+_Jacob Chademwiri · Raslouw AH, Centurion, 0157_

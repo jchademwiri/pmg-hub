@@ -1,4 +1,5 @@
 # PMG Hub — Admin UX Audit: Code Comparison & Impact Report
+
 **Date:** June 29, 2026  
 **Source Audit:** `docs/pmg-hub-admin-ux-audit.md`  
 **Branch:** `dev`  
@@ -11,6 +12,7 @@
 This report compares every finding in the UX audit against the current `dev` branch codebase, verifies which issues are confirmed, identifies any discrepancies, and assesses the impact of implementing each recommendation on the **database schema** (`packages/db`) and the **portal app** (`apps/portal`).
 
 **Key findings:**
+
 - **28 audit items** reviewed — all confirmed in the codebase
 - **1 critical database impact** — the Scheduling → Projects rename requires coordinated DB migration considerations
 - **0 breaking changes** for the portal app from most UI fixes (pure front-end)
@@ -25,19 +27,22 @@ This report compares every finding in the UX audit against the current `dev` bra
 **Audit Finding:** `OVERVIEW` array includes `{ title: 'Scheduling', url: '/scheduling' }` AND `GROUPS` includes a `key: 'scheduling'` collapsible group.
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `nav-data.ts` line 31: `OVERVIEW` includes `{ title: 'Scheduling', url: '/scheduling', icon: CalendarClock }`
 - `nav-data.ts` line 34: `GroupKey` type includes `'scheduling'`
 - `nav-data.ts` lines 42–50: `GROUPS` includes a `key: 'scheduling'` group with 3 sub-items
 - The `app-sidebar.tsx` renders `OVERVIEW` items at the top AND `GROUPS` as collapsible groups — so Scheduling appears **twice**
 
 **Database Impact:**
+
 - The `tender_schedule_entries` table and related tables (`tender_progress_sections`, `tender_progress_items`) use their current names
 - The DB schema uses `pgEnum("tender_schedule_status", [...])` and `pgEnum("tender_schedule_priority", [...])`
-- **No DB rename needed for the UI rename** — the audit correctly notes: *"The DB schema retains its existing names until a coordinated migration"*
+- **No DB rename needed for the UI rename** — the audit correctly notes: _"The DB schema retains its existing names until a coordinated migration"_
 - However, the DB queries in `@pmg/db` reference `tenderScheduleEntries` — any future DB-level rename (e.g., `tender_schedule_entries` → `project_entries`) would require a migration + update all query references
 - **Current recommendation is safe:** rename only UI routes/components, keep DB tables as-is
 
 **Portal Impact:**
+
 - Portal uses `apps/portal/src/app/(portal)/projects/` with `tenderScheduleEntries` from `@pmg/db`
 - Portal project pages (`page.tsx`, `[id]/page.tsx`) reference `tenderScheduleEntries` directly
 - Portal already uses "projects" in its route names (`/projects/`, `/projects/[id]`)
@@ -53,6 +58,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 **Audit Finding:** Sidebar renders plain text "PMG" with no logo despite logo files existing at `/public/logo/pmg-logo.svg`.
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `app-sidebar.tsx` lines 77–83: Renders `<span className="text-sidebar-foreground/50 text-xs uppercase tracking-widest">PMG</span>` and `<span className="text-sidebar-foreground text-sm font-semibold">Control Center</span>`
 - No `<Image>` component import, no logo reference
 - Logo files exist at `apps/admin/public/logo/`
@@ -70,6 +76,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 **Audit Finding:** Breadcrumb shows only current page label, no parent context.
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `top-nav.tsx` renders a single `<BreadcrumbPage>` with just `{label}`
 - No `BreadcrumbLink` or `BreadcrumbSeparator` usage
 - The `ROUTE_LABELS` map in `nav-data.ts` already has parent context available (group labels), but it's not used in breadcrumb rendering
@@ -87,6 +94,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 **Audit Finding:** User name/email shown as plain text, no avatar, no dropdown menu.
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `app-sidebar.tsx` lines 101–109: Plain `<span>` for name and email, followed by `<SignOutButton />`
 - No `<Avatar>`, no `<DropdownMenu>` usage
 - The `Avatar` component exists at `components/ui/avatar.tsx` — ready to use
@@ -119,6 +127,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 **Audit Finding:** `<main className="flex-1 p-6 bg-background">` uses uniform padding.
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `layout.tsx` line 22: `<main className="flex-1 p-6 bg-background">`
 - No responsive padding classes (`px-4 py-6 sm:px-6`)
 
@@ -137,6 +146,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 **Audit Finding:** Uses `<GalleryVerticalEndIcon>` instead of PMG branding.
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `login-form.tsx` exists at `app/(auth)/login/page.tsx` and `components/login-form.tsx`
 - The form component uses a generic icon (not verified directly but the file picker confirmed the file exists)
 
@@ -197,6 +207,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 **Audit Finding:** `kpi-card.tsx` exports a `KpiCard` component that is never imported — `kpi-grid.tsx` defines its own internal `KpiCard`.
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `kpi-card.tsx` exports `KpiCard` with `DeltaBadge` — uses `previousValue` prop with hardcoded "last month" text
 - `kpi-grid.tsx` defines an internal `KpiCard` with `Sparkline` sub-component, different props interface (`delta: Delta` instead of `delta + previousValue`)
 - `dashboard-shell.tsx` imports `KpiGrid` from `kpi-grid.tsx`, NOT from `kpi-card.tsx`
@@ -215,6 +226,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 **Audit Finding:** The button and badge are rendered inside `<Tabs>` but are not `<TabsContent>` elements.
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `dashboard-shell.tsx` lines 58–72: `<Tabs>` wraps both `<TabsList>` AND the `<Badge>` / `<CloseMonthButton>` inside its children
 - The closing `</Tabs>` is on line 72, after the button/badge
 - This creates invalid ARIA structure
@@ -232,6 +244,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 **Audit Finding:** 6 rows of content separated only by gap spacing, no visual labels.
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `dashboard-shell.tsx` has comments like `{/* ── Row 1: KPI cards ── */}` but no rendered headings
 - Only `AgingReportGrid` and `DivisionAreaChart` are self-labeled components
 - Row 5 still uses `TenderSummaryCard` (not yet renamed to `ProjectSummaryCard`)
@@ -279,6 +292,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 **Audit Finding:** `{link.label.charAt(0)}` renders single letters instead of icons.
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `billing-overview-client.tsx` lines 239–257: Quick links array has no `icon` property
 - Line 247: `<span className="text-sm font-bold">{link.label.charAt(0)}</span>` — renders first letter only
 - The same pattern exists in `finance-overview-client.tsx` lines 260–270
@@ -296,6 +310,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 **Audit Finding:** Both `billing-overview-client.tsx` and `invoices-client.tsx` define identical status maps.
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `billing-overview-client.tsx` lines 48–63: Defines `STATUS_STYLES` and `STATUS_TEXT_COLORS`
 - `billing-status-badge.tsx` exists and centralizes status styling
 - The overview client bypasses `BillingStatusBadge` with its own inline copies
@@ -356,6 +371,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 **Audit Finding:** `status.charAt(0).toUpperCase() + status.slice(1)` produces `Partially_paid`.
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `billing-status-badge.tsx` line 23: `const label = status === 'converted' ? 'Invoiced' : status.charAt(0).toUpperCase() + status.slice(1)`
 - This produces `"Partially_paid"` (capital P, underscore preserved)
 - `billing-overview-client.tsx` line 253 uses `inv.status.replace('_', ' ')` — inconsistent fix
@@ -387,6 +403,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 **Audit Finding:** Both files follow identical composition patterns.
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `billing-overview-client.tsx` and `finance-overview-client.tsx` both use:
   - 4 KPI cards with identical `rounded-xl border bg-card p-5` pattern
   - Two `lg:grid-cols-2` panels
@@ -404,6 +421,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 ### 5.2 🟡 Finance module quick links also use letter initials
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `finance-overview-client.tsx` lines 260–270: Same `{link.label.charAt(0)}` pattern as billing
 
 **Database Impact:** None.
@@ -419,6 +437,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 **Audit Finding:** Raw `<div>` elements used instead of the existing `EmptyState` component.
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `finance-overview-client.tsx` uses `<div className="px-5 py-8 text-center text-sm text-muted-foreground">No income recorded yet.</div>` in multiple places
 - `billing-overview-client.tsx` uses the same raw div pattern: `"No invoices yet."`, `"No outstanding invoices. All caught up!"`
 - `components/ui/empty-state.tsx` exists and provides icon, title, message, and optional CTA
@@ -562,6 +581,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 ### 8.2 🟡 "New Tender" button positioned below header
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `scheduling-overview-shell.tsx` lines 253–258: `<div className="flex items-center justify-end"><Button size="sm" onClick={() => setFormOpen(true)}><Plus className="size-4" /> New Tender</Button></div>`
 - Button is rendered as first child of content area, creating a full-width row just to right-align one button
 - Label still says "New Tender" — needs rename to "New Project"
@@ -577,6 +597,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 ### 8.3 🟡 Project summary cards don't use shared `KpiCard` tokens
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `scheduling-overview-shell.tsx` `SchedulingSummaryCards` function (lines 50–100) uses plain `<Card>` with `<CardContent>` and a custom inner layout
 - Dashboard's `KpiGrid` has polished `KpiCard` with sparklines, delta badges, and hover lift animations
 - Project cards are visually flat — grey muted icon, no hover state
@@ -604,6 +625,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 ### 8.5 🟢 Warnings panel expand/collapse has no chevron icon
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `scheduling-overview-shell.tsx` lines 213–218: Plain text button `"Show less"` / `"+{hidden} more"` with no chevron icon
 - Uses `<button onClick={() => setExpanded((p) => !p)} className="text-xs text-muted-foreground hover:text-foreground transition-colors">`
 
@@ -618,6 +640,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 ### 8.6 🟢 "Other Actions" dropdown should be inline buttons
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `scheduling-overview-shell.tsx` lines 165–178: `<DropdownMenu>` with "Other Actions" trigger containing "Cancel Project" and "Re-plan (Pause)"
 - Only "Mark Complete" is shown as an inline button
 
@@ -639,23 +662,24 @@ This report compares every finding in the UX audit against the current `dev` bra
 
 **Hardcoded `0.25` PMG share rate found in these files:**
 
-| File | Line | Usage |
-|------|------|-------|
-| `app/(admin)/insights/reports/page.tsx` | 86 | `monthlyFinancials.reduce((s, m) => s + m.revenue, 0) * 0.25` |
-| `components/reports/reports-tabs.tsx` | 76 | `const PMG_SHARE_RATE = 0.25` |
-| `components/reports/report-kpi-strip.tsx` | 86 | `data.monthlyRevenue.map((r) => r * 0.25)` |
-| `components/dashboard/kpi-grid.tsx` | 162–163 | `sparklineData.map((d) => d.revenue * 0.25)` and `d.revenue * 0.75 - d.expenses` |
-| `app/actions/reports.ts` | 31 | `const pmgShare = revenue * 0.25` |
+| File                                      | Line    | Usage                                                                            |
+| ----------------------------------------- | ------- | -------------------------------------------------------------------------------- |
+| `app/(admin)/insights/reports/page.tsx`   | 86      | `monthlyFinancials.reduce((s, m) => s + m.revenue, 0) * 0.25`                    |
+| `components/reports/reports-tabs.tsx`     | 76      | `const PMG_SHARE_RATE = 0.25`                                                    |
+| `components/reports/report-kpi-strip.tsx` | 86      | `data.monthlyRevenue.map((r) => r * 0.25)`                                       |
+| `components/dashboard/kpi-grid.tsx`       | 162–163 | `sparklineData.map((d) => d.revenue * 0.25)` and `d.revenue * 0.75 - d.expenses` |
+| `app/actions/reports.ts`                  | 31      | `const pmgShare = revenue * 0.25`                                                |
 
 **Files that correctly read from `distribution_settings`:**
 
-| File | Line | Usage |
-|------|------|-------|
-| `app/(admin)/finance/page.tsx` | 24 | `const pmgShare = revenue * rates.pmg_share` ✅ |
-| `app/(admin)/finance/distributions/page.tsx` | 60 | `pmgShare: rateMap.pmg_share ?? 0.25` ✅ (with fallback) |
-| `lib/financial.ts` | 82 | `const pmgShare = revenue * rates.pmg_share` ✅ |
+| File                                         | Line | Usage                                                    |
+| -------------------------------------------- | ---- | -------------------------------------------------------- |
+| `app/(admin)/finance/page.tsx`               | 24   | `const pmgShare = revenue * rates.pmg_share` ✅          |
+| `app/(admin)/finance/distributions/page.tsx` | 60   | `pmgShare: rateMap.pmg_share ?? 0.25` ✅ (with fallback) |
+| `lib/financial.ts`                           | 82   | `const pmgShare = revenue * rates.pmg_share` ✅          |
 
 **Database Impact:**
+
 - The `distribution_settings` table stores `rate_key = 'pmg_share'` with `rate_value = 0.2500` (decimal(6,4))
 - The table supports historical rate tracking via `effective_from` / `effective_to` dates
 - **If the PMG share rate is ever changed in settings, 5+ files will show incorrect data** — this is a data-correctness bug
@@ -670,6 +694,7 @@ This report compares every finding in the UX audit against the current `dev` bra
 ### 9.2 🟡 Reports sticky header pattern is unique
 
 **Code Verified:** ✅ **CONFIRMED**
+
 - `app/(admin)/insights/reports/page.tsx` line 53: `<div className="sticky top-[3.25rem] z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 -mx-6 px-6 py-4 -mt-6">`
 - Uses negative margin tricks to break out of container — fragile, depends on exact TopNav height
 
@@ -851,16 +876,17 @@ This report compares every finding in the UX audit against the current `dev` bra
 
 ### No Schema Changes Required for UI Fixes
 
-| Finding | DB Table Affected | Migration Needed? | Notes |
-|---------|-------------------|-------------------|-------|
+| Finding                          | DB Table Affected                                                              | Migration Needed?           | Notes                                                         |
+| -------------------------------- | ------------------------------------------------------------------------------ | --------------------------- | ------------------------------------------------------------- |
 | 1.1 Scheduling → Projects rename | `tender_schedule_entries`, `tender_progress_sections`, `tender_progress_items` | **No** (for UI-only rename) | Keep DB names as-is. Only rename routes, components, nav data |
-| 9.1 Hardcoded 0.25 rate | `distribution_settings` (table already supports variable rates) | **No** | Fix is to read from DB instead of hardcoding |
-| 7.5 Convert to Client | `clients` table (insert) | **No** | Existing functionality, just needs confirmation dialog |
-| 10.4 User invite | `invitations` table (insert) | **No** | Existing functionality, just needs success feedback |
+| 9.1 Hardcoded 0.25 rate          | `distribution_settings` (table already supports variable rates)                | **No**                      | Fix is to read from DB instead of hardcoding                  |
+| 7.5 Convert to Client            | `clients` table (insert)                                                       | **No**                      | Existing functionality, just needs confirmation dialog        |
+| 10.4 User invite                 | `invitations` table (insert)                                                   | **No**                      | Existing functionality, just needs success feedback           |
 
 ### Future DB Consideration: Full Projects Rename
 
 If a full DB-level rename is desired in the future (e.g., `tender_schedule_entries` → `project_entries`), it would require:
+
 1. A Drizzle migration to rename tables and columns
 2. Update all `@pmg/db` query references
 3. Update all admin app server actions
@@ -873,12 +899,12 @@ If a full DB-level rename is desired in the future (e.g., `tender_schedule_entri
 
 ## Portal Impact Summary
 
-| Finding | Portal Impact | Details |
-|---------|--------------|---------|
-| 1.1 Scheduling → Projects rename | ✅ **None** | Portal already uses `/projects/` routes and imports from `@pmg/db` using `tenderScheduleEntries` — no changes needed |
-| 4.3 Invoice table accessibility | ✅ **None** | Portal has its own quote/invoice views in `apps/portal/src/app/(portal)/quotes/` |
-| 9.1 Hardcoded 0.25 rate | ✅ **None** | Portal doesn't display PMG share calculations |
-| All other UI fixes | ✅ **None** | Portal is a separate app with its own component tree |
+| Finding                          | Portal Impact | Details                                                                                                              |
+| -------------------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 1.1 Scheduling → Projects rename | ✅ **None**   | Portal already uses `/projects/` routes and imports from `@pmg/db` using `tenderScheduleEntries` — no changes needed |
+| 4.3 Invoice table accessibility  | ✅ **None**   | Portal has its own quote/invoice views in `apps/portal/src/app/(portal)/quotes/`                                     |
+| 9.1 Hardcoded 0.25 rate          | ✅ **None**   | Portal doesn't display PMG share calculations                                                                        |
+| All other UI fixes               | ✅ **None**   | Portal is a separate app with its own component tree                                                                 |
 
 ---
 
@@ -886,66 +912,66 @@ If a full DB-level rename is desired in the future (e.g., `tender_schedule_entri
 
 ### Immediate (This Sprint)
 
-| # | Audit Item | Effort | DB Impact | Portal Impact |
-|---|-----------|--------|-----------|---------------|
-| 1 | 🐛 Delete dead `kpi-card.tsx` | XS | None | None |
-| 2 | 🐛 Move `CloseMonthButton` outside `<Tabs>` | XS | None | None |
-| 3 | 🐛 Fix hardcoded `0.25` PMG share rate (5 files) | S | None | None |
-| 4 | 🐛 Centralise billing status maps | S | None | None |
-| 5 | 🔴 Fix invoice table keyboard accessibility | S | None | None |
-| 6 | 🔴 Add "Back" button pattern to sub-routes | M | None | None |
-| 7 | 🐛 Rename Scheduling → Projects (routes, components, nav) | M | None | None |
+| #   | Audit Item                                                | Effort | DB Impact | Portal Impact |
+| --- | --------------------------------------------------------- | ------ | --------- | ------------- |
+| 1   | 🐛 Delete dead `kpi-card.tsx`                             | XS     | None      | None          |
+| 2   | 🐛 Move `CloseMonthButton` outside `<Tabs>`               | XS     | None      | None          |
+| 3   | 🐛 Fix hardcoded `0.25` PMG share rate (5 files)          | S      | None      | None          |
+| 4   | 🐛 Centralise billing status maps                         | S      | None      | None          |
+| 5   | 🔴 Fix invoice table keyboard accessibility               | S      | None      | None          |
+| 6   | 🔴 Add "Back" button pattern to sub-routes                | M      | None      | None          |
+| 7   | 🐛 Rename Scheduling → Projects (routes, components, nav) | M      | None      | None          |
 
 ### Short-term (Next Sprint)
 
-| # | Audit Item | Effort | DB Impact | Portal Impact |
-|---|-----------|--------|-----------|---------------|
-| 8 | 🟡 Replace letter-initial icons with Lucide icons | S | None | None |
-| 9 | 🟡 Swap PMG logo into sidebar header | S | None | None |
-| 10 | 🟡 Improve login page branding + layout | M | None | None |
-| 11 | 🟡 Replace inline empty states with `EmptyState` component | S | None | None |
-| 12 | 🟡 Add status filter to Invoice/Quote lists | S | None | None |
-| 13 | 🟡 Improve breadcrumb to show parent > child | M | None | None |
-| 14 | 🟡 Replace user text footer with avatar + dropdown | M | None | None |
+| #   | Audit Item                                                 | Effort | DB Impact | Portal Impact |
+| --- | ---------------------------------------------------------- | ------ | --------- | ------------- |
+| 8   | 🟡 Replace letter-initial icons with Lucide icons          | S      | None      | None          |
+| 9   | 🟡 Swap PMG logo into sidebar header                       | S      | None      | None          |
+| 10  | 🟡 Improve login page branding + layout                    | M      | None      | None          |
+| 11  | 🟡 Replace inline empty states with `EmptyState` component | S      | None      | None          |
+| 12  | 🟡 Add status filter to Invoice/Quote lists                | S      | None      | None          |
+| 13  | 🟡 Improve breadcrumb to show parent > child               | M      | None      | None          |
+| 14  | 🟡 Replace user text footer with avatar + dropdown         | M      | None      | None          |
 
 ### Medium-term (Backlog)
 
-| # | Audit Item | Effort | DB Impact | Portal Impact |
-|---|-----------|--------|-----------|---------------|
-| 15 | 🟡 Add section headings to dashboard rows | S | None | None |
-| 16 | 🟡 Standardise add-form pattern to Sheet | M | None | None |
-| 17 | 🟡 Extract shared overview components | M | None | None |
-| 18 | 🟡 Improve pagination | M | None | None |
-| 19 | 🟡 Security "Coming Soon" page | XS | None | None |
-| 20 | 🟡 Fix settings nav icon sizes | XS | None | None |
-| 21 | 🟡 Add `isPending` loading states to async buttons | M | None | None |
-| 22 | 🟡 Standardise `not-found.tsx` files | S | None | None |
-| 23 | 🟢 Add dark mode toggle | S | None | None |
-| 24–28 | 🟢 Polish items (login labels, status badge, chevrons, inline buttons) | XS–S | None | None |
+| #     | Audit Item                                                             | Effort | DB Impact | Portal Impact |
+| ----- | ---------------------------------------------------------------------- | ------ | --------- | ------------- |
+| 15    | 🟡 Add section headings to dashboard rows                              | S      | None      | None          |
+| 16    | 🟡 Standardise add-form pattern to Sheet                               | M      | None      | None          |
+| 17    | 🟡 Extract shared overview components                                  | M      | None      | None          |
+| 18    | 🟡 Improve pagination                                                  | M      | None      | None          |
+| 19    | 🟡 Security "Coming Soon" page                                         | XS     | None      | None          |
+| 20    | 🟡 Fix settings nav icon sizes                                         | XS     | None      | None          |
+| 21    | 🟡 Add `isPending` loading states to async buttons                     | M      | None      | None          |
+| 22    | 🟡 Standardise `not-found.tsx` files                                   | S      | None      | None          |
+| 23    | 🟢 Add dark mode toggle                                                | S      | None      | None          |
+| 24–28 | 🟢 Polish items (login labels, status badge, chevrons, inline buttons) | XS–S   | None      | None          |
 
 ---
 
 ## Component Health Summary (Verified)
 
-| Component | Status | Verification |
-|-----------|--------|-------------|
-| `AppSidebar` | ⚠️ Needs work | ✅ Duplicate nav entry, no logo, buried sign-out |
-| `TopNav` | ⚠️ Needs work | ✅ Single-level breadcrumb confirmed |
-| `DashboardShell` | ⚠️ Needs work | ✅ Bad Tabs structure confirmed |
-| `KpiGrid` | ✅ Solid | ✅ Good sparklines, delta badges, hover states |
-| `KpiCard` (kpi-card.tsx) | 🗑️ Delete | ✅ Dead code confirmed — imported nowhere |
-| `EmptyState` | ✅ Solid | ✅ Exists in `components/ui/empty-state.tsx` |
-| `BillingStatusBadge` | ⚠️ Needs fix | ✅ Capitalisation bug confirmed |
-| `BillingOverviewClient` | ⚠️ Needs work | ✅ Letter initials, raw empty states, duplicate status maps |
-| `FinanceOverviewClient` | ⚠️ Needs work | ✅ Copy-paste structure confirmed |
-| `SchedulingOverviewShell` | ✅ Good | ✅ Good warning panel + workload card |
-| `TenderSummaryCard` | 🟡 Rename | ✅ Still uses "Tender" naming throughout |
-| `SettingsNav` | ⚠️ Minor fixes | ⚠️ Unable to fully verify icon sizes |
-| `LoginForm` | ⚠️ Needs work | ⚠️ Partially verified |
-| `FilterBar` | ✅ Solid | ✅ Exists in `components/billing/filter-bar.tsx` |
-| `InvoicesClient` | ⚠️ Needs work | ⚠️ Partially verified |
-| `ClientsClient` | ✅ Good | ⚠️ Partially verified |
+| Component                 | Status         | Verification                                                |
+| ------------------------- | -------------- | ----------------------------------------------------------- |
+| `AppSidebar`              | ⚠️ Needs work  | ✅ Duplicate nav entry, no logo, buried sign-out            |
+| `TopNav`                  | ⚠️ Needs work  | ✅ Single-level breadcrumb confirmed                        |
+| `DashboardShell`          | ⚠️ Needs work  | ✅ Bad Tabs structure confirmed                             |
+| `KpiGrid`                 | ✅ Solid       | ✅ Good sparklines, delta badges, hover states              |
+| `KpiCard` (kpi-card.tsx)  | 🗑️ Delete      | ✅ Dead code confirmed — imported nowhere                   |
+| `EmptyState`              | ✅ Solid       | ✅ Exists in `components/ui/empty-state.tsx`                |
+| `BillingStatusBadge`      | ⚠️ Needs fix   | ✅ Capitalisation bug confirmed                             |
+| `BillingOverviewClient`   | ⚠️ Needs work  | ✅ Letter initials, raw empty states, duplicate status maps |
+| `FinanceOverviewClient`   | ⚠️ Needs work  | ✅ Copy-paste structure confirmed                           |
+| `SchedulingOverviewShell` | ✅ Good        | ✅ Good warning panel + workload card                       |
+| `TenderSummaryCard`       | 🟡 Rename      | ✅ Still uses "Tender" naming throughout                    |
+| `SettingsNav`             | ⚠️ Minor fixes | ⚠️ Unable to fully verify icon sizes                        |
+| `LoginForm`               | ⚠️ Needs work  | ⚠️ Partially verified                                       |
+| `FilterBar`               | ✅ Solid       | ✅ Exists in `components/billing/filter-bar.tsx`            |
+| `InvoicesClient`          | ⚠️ Needs work  | ⚠️ Partially verified                                       |
+| `ClientsClient`           | ✅ Good        | ⚠️ Partially verified                                       |
 
 ---
 
-*Report generated from code analysis of `jchademwiri/pmg-hub` (branch: `dev`). Findings verified against actual codebase files where readable. Some sub-page components were not directly accessible for full verification but findings are consistent with observed patterns.*
+_Report generated from code analysis of `jchademwiri/pmg-hub` (branch: `dev`). Findings verified against actual codebase files where readable. Some sub-page components were not directly accessible for full verification but findings are consistent with observed patterns._

@@ -14,6 +14,7 @@
 Before diving into the roadmap, the key findings that drive build order:
 
 **Already solid (no action needed):**
+
 - Invoice/quote full lifecycle (6-state status management)
 - Partial payment with FIFO/LIFO allocation — production quality
 - Period locking via snapshots (`isPeriodClosed`)
@@ -23,11 +24,13 @@ Before diving into the roadmap, the key findings that drive build order:
 - Division reporting charts
 
 **Bugs to fix first:**
+
 1. `reports.ts` hardcodes PMG share rate as `0.20` — should be `ACCOUNT_RATES.pmg_share` (0.25)
 2. `vatEnabled` can be set to `true` on invoices — no system-level `isVatRegistered` gate
 3. `recordClientPayment` lacks a DB transaction wrapper — orphaned allocation risk
 
 **Missing accounting infrastructure:**
+
 - `chart_of_accounts` table
 - `journal_entries` + `journal_entry_lines` tables
 - `bank_accounts` (manual balance tracking)
@@ -38,19 +41,19 @@ Before diving into the roadmap, the key findings that drive build order:
 
 ## Effort Estimates
 
-| Phase | Focus | Estimated Effort |
-|---|---|---|
-| 1 | Stabilisation & bug fixes | 1–2 days |
-| 2 | VAT lockdown | 0.5 day |
-| 3 | AR report + Aged Receivables page | 1 day |
-| 4 | Chart of Accounts | 1–1.5 days |
-| 5 | Journal entries + posting helpers | 2–3 days |
-| 6 | General Ledger + Trial Balance reports | 1.5–2 days |
-| 7 | Profit & Loss report page | 1 day |
-| 8 | Bank/Cash account summary | 1 day |
-| 9 | Audit trail | 1.5 days |
-| 10 | Future accounting reports | Post-MVP |
-| **Total MVP** | | **~12–14 working days** |
+| Phase         | Focus                                  | Estimated Effort        |
+| ------------- | -------------------------------------- | ----------------------- |
+| 1             | Stabilisation & bug fixes              | 1–2 days                |
+| 2             | VAT lockdown                           | 0.5 day                 |
+| 3             | AR report + Aged Receivables page      | 1 day                   |
+| 4             | Chart of Accounts                      | 1–1.5 days              |
+| 5             | Journal entries + posting helpers      | 2–3 days                |
+| 6             | General Ledger + Trial Balance reports | 1.5–2 days              |
+| 7             | Profit & Loss report page              | 1 day                   |
+| 8             | Bank/Cash account summary              | 1 day                   |
+| 9             | Audit trail                            | 1.5 days                |
+| 10            | Future accounting reports              | Post-MVP                |
+| **Total MVP** |                                        | **~12–14 working days** |
 
 ---
 
@@ -65,25 +68,27 @@ Before diving into the roadmap, the key findings that drive build order:
 **Bug:** Line ~34 hardcodes `0.20` for PMG share. The actual rate is `ACCOUNT_RATES.pmg_share = 0.25`. Every CSV export sent to an accountant has been wrong.
 
 **Fix:**
+
 ```typescript
 // Before
-const pmgShare = revenue * 0.20;
-const reinvest = profitPool * 0.30;
-const reserve  = profitPool * 0.30;
+const pmgShare = revenue * 0.2;
+const reinvest = profitPool * 0.3;
+const reserve = profitPool * 0.3;
 // etc.
 
 // After
 import { ACCOUNT_RATES, PROFIT_POOL_RATES } from '@pmg/db';
 
-const pmgShare   = revenue  * ACCOUNT_RATES.pmg_share;
-const profitPool = revenue  - expenses - pmgShare;
-const salary     = profitPool * PROFIT_POOL_RATES.salary;
-const reinvest   = profitPool * PROFIT_POOL_RATES.reinvest;
-const reserve    = profitPool * PROFIT_POOL_RATES.reserve;
-const flex       = profitPool * PROFIT_POOL_RATES.flex;
+const pmgShare = revenue * ACCOUNT_RATES.pmg_share;
+const profitPool = revenue - expenses - pmgShare;
+const salary = profitPool * PROFIT_POOL_RATES.salary;
+const reinvest = profitPool * PROFIT_POOL_RATES.reinvest;
+const reserve = profitPool * PROFIT_POOL_RATES.reserve;
+const flex = profitPool * PROFIT_POOL_RATES.flex;
 ```
 
 **Testing checklist:**
+
 - [ ] Export CSV for a known month. Verify PMG share = revenue × 0.25
 - [ ] Verify profit pool = revenue − expenses − pmgShare
 - [ ] Verify salary + reinvest + reserve + flex sums to profit pool
@@ -97,6 +102,7 @@ const flex       = profitPool * PROFIT_POOL_RATES.flex;
 **Bug:** Multiple sequential DB writes (create income row, insert allocations, update invoice statuses) run without a transaction. A failure midway leaves the database in an inconsistent state.
 
 **Fix pattern:**
+
 ```typescript
 export async function recordClientPayment(data: PaymentInput): Promise<{ error?: string }> {
   try {
@@ -131,6 +137,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
 ```
 
 **Testing checklist:**
+
 - [ ] Record a payment that fully pays one invoice. Verify invoice status → `paid`.
 - [ ] Record a partial payment. Verify invoice status → `partially_paid`.
 - [ ] Simulate a failure after income insert (mock). Verify income row does not persist.
@@ -144,6 +151,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
 **Bug:** The period close check runs for payments and expenses but not for `issueInvoice`. A user could issue an invoice dated in a closed month, backdating revenue.
 
 **Fix:**
+
 ```typescript
 export async function issueInvoice(id: string): Promise<{ error?: string }> {
   const invoice = await getInvoiceById(id);
@@ -157,6 +165,7 @@ export async function issueInvoice(id: string): Promise<{ error?: string }> {
 ```
 
 **Testing checklist:**
+
 - [ ] Try to issue an invoice dated in a closed month. Expect error.
 - [ ] Issue a current-month invoice. Expect success.
 
@@ -167,6 +176,7 @@ export async function issueInvoice(id: string): Promise<{ error?: string }> {
 **Current state:** `expenses.category` is a free-text column. `expense_categories` table exists but is not FK-linked.
 
 **Migration plan:**
+
 1. Add `category_id uuid REFERENCES expense_categories(id)` (nullable) to `expenses`
 2. Run backfill: `UPDATE expenses e SET category_id = ec.id FROM expense_categories ec WHERE ec.name = e.category`
 3. After verification, deprecate `category` column (keep for 1 release, then drop)
@@ -174,6 +184,7 @@ export async function issueInvoice(id: string): Promise<{ error?: string }> {
 **Note:** Do this after Chart of Accounts is set up, so you can also map `expense_categories` → `chart_of_accounts.code` in the same pass.
 
 **Testing checklist:**
+
 - [ ] After migration, all expenses have a `category_id` that resolves to a valid `expense_categories` row
 - [ ] Expense create/edit form uses category_id, not free text
 - [ ] Existing reports still filter correctly
@@ -224,7 +235,10 @@ const effectiveVatEnabled = vatAllowed ? (parsed.data.vatEnabled ?? false) : fal
 
 // Use effectiveVatEnabled in calcTotals()
 const { subtotal, discountAmount, vatAmount, total } = calcTotals(
-  lineItems, effectiveVatEnabled, discountType, discountValue
+  lineItems,
+  effectiveVatEnabled,
+  discountType,
+  discountValue,
 );
 ```
 
@@ -276,6 +290,7 @@ Pass `isVatRegistered` from server to client component. When `false`, hide the V
 **Data source:** `getClientOutstandingInvoices` (already exists in `billing-payments.ts`) — promote to a shared query helper.
 
 **Page content:**
+
 - Filter bar: division, date range, status, client
 - Summary stats: total outstanding, count of unpaid invoices
 - Table: client, invoice number, date, due date, total, paid, outstanding, status, days overdue
@@ -290,11 +305,13 @@ Pass `isVatRegistered` from server to client component. When `false`, hide the V
 **Data source:** `getAgingReport()` already exists in `packages/db/src/queries/billing.ts`. The `aging-report-grid` component already exists in `components/dashboard`.
 
 **Page content:**
+
 - Summary grid (reuse `aging-report-grid` component)
 - Drill-down: click a bucket to see the invoices in that bucket
 - Per-client totals across buckets
 
 **Testing checklist:**
+
 - [ ] An overdue invoice appears in the correct bucket
 - [ ] Partially-paid invoice shows outstanding amount (not full invoice total) in bucket
 - [ ] Current invoices (not yet due) show in "Current" bucket
@@ -336,36 +353,36 @@ npx drizzle-kit push   # or use migration files depending on workflow
 ```typescript
 export const PMG_CHART_OF_ACCOUNTS = [
   // Assets
-  { code: '1001', name: 'Business Bank Account',       accountType: 'asset',   isSystem: true },
-  { code: '1002', name: 'Cash on Hand',                accountType: 'asset',   isSystem: true },
-  { code: '1100', name: 'Accounts Receivable',         accountType: 'asset',   isSystem: true },
-  { code: '1900', name: 'Other Assets',                accountType: 'asset',   isSystem: false },
+  { code: '1001', name: 'Business Bank Account', accountType: 'asset', isSystem: true },
+  { code: '1002', name: 'Cash on Hand', accountType: 'asset', isSystem: true },
+  { code: '1100', name: 'Accounts Receivable', accountType: 'asset', isSystem: true },
+  { code: '1900', name: 'Other Assets', accountType: 'asset', isSystem: false },
   // Liabilities
-  { code: '2000', name: 'General Liabilities',         accountType: 'liability', isSystem: false },
-  { code: '2100', name: 'Accounts Payable',            accountType: 'liability', isSystem: false },
-  { code: '2900', name: 'Other Liabilities',           accountType: 'liability', isSystem: false },
+  { code: '2000', name: 'General Liabilities', accountType: 'liability', isSystem: false },
+  { code: '2100', name: 'Accounts Payable', accountType: 'liability', isSystem: false },
+  { code: '2900', name: 'Other Liabilities', accountType: 'liability', isSystem: false },
   // Equity
-  { code: '3000', name: 'Owner Equity',                accountType: 'equity',  isSystem: true },
-  { code: '3100', name: 'Retained Earnings',           accountType: 'equity',  isSystem: true },
-  { code: '3200', name: 'Owner Drawings',              accountType: 'equity',  isSystem: true },
-  { code: '3900', name: 'Opening Balance Equity',      accountType: 'equity',  isSystem: true },
+  { code: '3000', name: 'Owner Equity', accountType: 'equity', isSystem: true },
+  { code: '3100', name: 'Retained Earnings', accountType: 'equity', isSystem: true },
+  { code: '3200', name: 'Owner Drawings', accountType: 'equity', isSystem: true },
+  { code: '3900', name: 'Opening Balance Equity', accountType: 'equity', isSystem: true },
   // Revenue
-  { code: '4000', name: 'Service Revenue',             accountType: 'revenue', isSystem: true },
-  { code: '4100', name: 'TenderEdge Solutions Revenue',accountType: 'revenue', isSystem: false },
-  { code: '4200', name: 'Apex Web Solutions Revenue',  accountType: 'revenue', isSystem: false },
-  { code: '4300', name: 'PMG Services Revenue',        accountType: 'revenue', isSystem: false },
-  { code: '4900', name: 'Other Income',                accountType: 'revenue', isSystem: false },
+  { code: '4000', name: 'Service Revenue', accountType: 'revenue', isSystem: true },
+  { code: '4100', name: 'TenderEdge Solutions Revenue', accountType: 'revenue', isSystem: false },
+  { code: '4200', name: 'Apex Web Solutions Revenue', accountType: 'revenue', isSystem: false },
+  { code: '4300', name: 'PMG Services Revenue', accountType: 'revenue', isSystem: false },
+  { code: '4900', name: 'Other Income', accountType: 'revenue', isSystem: false },
   // Expenses
-  { code: '5000', name: 'General Expenses',            accountType: 'expense', isSystem: true },
-  { code: '5100', name: 'Software & Subscriptions',    accountType: 'expense', isSystem: false },
-  { code: '5200', name: 'Printing & Stationery',       accountType: 'expense', isSystem: false },
-  { code: '5300', name: 'Transport & Courier',         accountType: 'expense', isSystem: false },
-  { code: '5400', name: 'Marketing & Advertising',     accountType: 'expense', isSystem: false },
-  { code: '5500', name: 'Communication',               accountType: 'expense', isSystem: false },
-  { code: '5600', name: 'Professional Fees',           accountType: 'expense', isSystem: false },
-  { code: '5700', name: 'Bank Charges',                accountType: 'expense', isSystem: false },
-  { code: '5800', name: 'Office & Admin',              accountType: 'expense', isSystem: false },
-  { code: '5900', name: 'Miscellaneous Expenses',      accountType: 'expense', isSystem: false },
+  { code: '5000', name: 'General Expenses', accountType: 'expense', isSystem: true },
+  { code: '5100', name: 'Software & Subscriptions', accountType: 'expense', isSystem: false },
+  { code: '5200', name: 'Printing & Stationery', accountType: 'expense', isSystem: false },
+  { code: '5300', name: 'Transport & Courier', accountType: 'expense', isSystem: false },
+  { code: '5400', name: 'Marketing & Advertising', accountType: 'expense', isSystem: false },
+  { code: '5500', name: 'Communication', accountType: 'expense', isSystem: false },
+  { code: '5600', name: 'Professional Fees', accountType: 'expense', isSystem: false },
+  { code: '5700', name: 'Bank Charges', accountType: 'expense', isSystem: false },
+  { code: '5800', name: 'Office & Admin', accountType: 'expense', isSystem: false },
+  { code: '5900', name: 'Miscellaneous Expenses', accountType: 'expense', isSystem: false },
 ];
 ```
 
@@ -417,15 +434,15 @@ Wrap income insert + journal post in `db.transaction()`:
 ```typescript
 // Posting for invoice payment income
 lines: [
-  { accountCode: '1001', lineType: 'debit',  amount: parsedAmount },
+  { accountCode: '1001', lineType: 'debit', amount: parsedAmount },
   { accountCode: '4000', lineType: 'credit', amount: parsedAmount },
-]
+];
 
 // Posting for manual income (no invoice)
 lines: [
-  { accountCode: '1001', lineType: 'debit',  amount: parsedAmount },
+  { accountCode: '1001', lineType: 'debit', amount: parsedAmount },
   { accountCode: '4900', lineType: 'credit', amount: parsedAmount },
-]
+];
 ```
 
 ### 5.4 Wire posting into `createExpense` Server Action
@@ -437,9 +454,9 @@ Resolve expense account code from `expense_categories.accountCode` (fall back to
 ```typescript
 const debitAccountCode = await resolveExpenseAccountCode(expenseData.categoryId);
 lines: [
-  { accountCode: debitAccountCode, lineType: 'debit',  amount: parsedAmount },
-  { accountCode: '1001',          lineType: 'credit', amount: parsedAmount },
-]
+  { accountCode: debitAccountCode, lineType: 'debit', amount: parsedAmount },
+  { accountCode: '1001', lineType: 'credit', amount: parsedAmount },
+];
 ```
 
 ### 5.5 Wire posting into owner withdrawal (optional — pending Jacob's confirmation)
@@ -450,9 +467,9 @@ Only post if withdrawal represents actual cash leaving business:
 
 ```typescript
 lines: [
-  { accountCode: '3200', lineType: 'debit',  amount: parsedAmount }, // Owner Drawings
+  { accountCode: '3200', lineType: 'debit', amount: parsedAmount }, // Owner Drawings
   { accountCode: '1001', lineType: 'credit', amount: parsedAmount }, // Bank
-]
+];
 ```
 
 ### 5.6 Handle historical records (opening balances)
@@ -502,6 +519,7 @@ export async function getGeneralLedger(filters: {
 ```
 
 **Page content:**
+
 - Account selector (dropdown of all active accounts)
 - Date range filter
 - Table: date, description, reference, debit, credit, running balance
@@ -522,6 +540,7 @@ export async function getTrialBalance(asAtDate: string): Promise<TrialBalanceRow
 ```
 
 **Page content:**
+
 - As-at date picker
 - Table: account code, account name, type, total debits, total credits, net balance
 - Totals row: verify debit total = credit total
@@ -557,6 +576,7 @@ export async function getTrialBalance(asAtDate: string): Promise<TrialBalanceRow
 **Route:** `/finance/profit-loss`
 
 **Page content:**
+
 - Date range filter + financial year selector + division filter
 - Revenue section: line per account (4xxx), subtotal
 - Expenses section: line per account (5xxx), subtotal
@@ -604,6 +624,7 @@ Create one default `bank_accounts` row for PMG's business bank account:
 **Route:** `/finance/bank-summary`
 
 **Page content:**
+
 - Card per bank/cash account
 - Opening balance (from `bank_accounts.openingBalance`)
 - Total receipts in period (sum of debit postings to account `1001`)
@@ -663,6 +684,7 @@ export async function logAuditEvent(
 ### 9.3 Wire into financial actions
 
 Priority order:
+
 1. `issueInvoice` → log `issue / invoice`
 2. `voidInvoice` → log `void / invoice` with previous status snapshot
 3. `recordClientPayment` → log `pay / income`
@@ -676,6 +698,7 @@ Priority order:
 **Route:** `/settings/audit` (admin only)
 
 **Page content:**
+
 - Filter by entity, action, user, date range
 - Table: timestamp, user, action, entity, entity ID, summary
 - Drill-down to view previous/new data diff (optional, nice-to-have)
@@ -726,6 +749,7 @@ Priority order:
 ### 10.6 VAT Registration Support
 
 **When PMG becomes VAT registered:**
+
 1. Set `isVatRegistered = true` in `organisation_settings`
 2. Unlock VAT toggle on invoice form
 3. Add `2200 - VAT Output Account` to chart of accounts
@@ -736,6 +760,7 @@ Priority order:
 ### 10.7 Bank CSV Import
 
 **When manual reconciliation becomes cumbersome:**
+
 1. Add `bank_transactions` table
 2. Build CSV parser for FNB/ABSA/Nedbank statement formats
 3. Build matching UI to link bank transactions to income/expense records
@@ -745,18 +770,18 @@ Priority order:
 
 ## Critical Risks & Blockers
 
-| Severity | Risk | File | Blocks MVP? | Mitigation |
-|---|---|---|---|---|
-| 🔴 High | PMG share rate hardcoded as 0.20 — CSV exports wrong | `reports.ts` | Accountant trust risk | Fix in Phase 1.1 |
-| 🔴 High | No `isVatRegistered` gate — VAT can be enabled on invoices | `billing-invoices.ts`, `billing-schema.ts` | Tax compliance risk | Fix in Phase 2 |
-| 🟡 Medium | `recordClientPayment` not transaction-wrapped | `billing-payments.ts` | Data integrity risk | Fix in Phase 1.2 |
-| 🟡 Medium | No audit trail for financial events | All financial actions | Accountability gap | Phase 9 |
-| 🟡 Medium | `expenses.category` not FK-linked to `expense_categories` | `expenses.ts` | CoA mapping impossible until fixed | Phase 1.4 / Phase 4 |
-| 🟡 Medium | `isPeriodClosed` not called in `issueInvoice` | `billing-invoices.ts` | Backdating risk | Phase 1.3 |
-| 🟡 Medium | No chart_of_accounts, journal entries, GL | All accounting schema | Core bookkeeping gap | Phases 4–6 |
-| 🟢 Low | Historical records have no journal entries | All financial schemas | GL will be incomplete until decision made | Phase 5 — opening balance entry |
-| 🟢 Low | `quotationId` is a soft reference (no FK) | `billing.ts` | Data integrity edge case | Non-blocking for MVP |
-| 🟢 Low | Dashboard missing AR balance KPI | Dashboard | UX gap | Add in Phase 3 cleanup |
+| Severity  | Risk                                                       | File                                       | Blocks MVP?                               | Mitigation                      |
+| --------- | ---------------------------------------------------------- | ------------------------------------------ | ----------------------------------------- | ------------------------------- |
+| 🔴 High   | PMG share rate hardcoded as 0.20 — CSV exports wrong       | `reports.ts`                               | Accountant trust risk                     | Fix in Phase 1.1                |
+| 🔴 High   | No `isVatRegistered` gate — VAT can be enabled on invoices | `billing-invoices.ts`, `billing-schema.ts` | Tax compliance risk                       | Fix in Phase 2                  |
+| 🟡 Medium | `recordClientPayment` not transaction-wrapped              | `billing-payments.ts`                      | Data integrity risk                       | Fix in Phase 1.2                |
+| 🟡 Medium | No audit trail for financial events                        | All financial actions                      | Accountability gap                        | Phase 9                         |
+| 🟡 Medium | `expenses.category` not FK-linked to `expense_categories`  | `expenses.ts`                              | CoA mapping impossible until fixed        | Phase 1.4 / Phase 4             |
+| 🟡 Medium | `isPeriodClosed` not called in `issueInvoice`              | `billing-invoices.ts`                      | Backdating risk                           | Phase 1.3                       |
+| 🟡 Medium | No chart_of_accounts, journal entries, GL                  | All accounting schema                      | Core bookkeeping gap                      | Phases 4–6                      |
+| 🟢 Low    | Historical records have no journal entries                 | All financial schemas                      | GL will be incomplete until decision made | Phase 5 — opening balance entry |
+| 🟢 Low    | `quotationId` is a soft reference (no FK)                  | `billing.ts`                               | Data integrity edge case                  | Non-blocking for MVP            |
+| 🟢 Low    | Dashboard missing AR balance KPI                           | Dashboard                                  | UX gap                                    | Add in Phase 3 cleanup          |
 
 ---
 
@@ -794,18 +819,18 @@ Start here. These unblock everything downstream and fix the most urgent risks.
 
 Each phase maps to one PR. Keep PRs focused and independently deployable.
 
-| PR | Title | Phases |
-|---|---|---|
-| `fix/financial-calculations` | Fix CSV rate bug, add period close to issue invoice | 1.1, 1.3 |
-| `fix/payment-transaction-safety` | Wrap payment recording in DB transaction | 1.2 |
-| `feat/vat-lockdown` | Add isVatRegistered, gate VAT across app | 2 |
-| `feat/ar-reports` | AR report page, aged receivables page | 3 |
-| `feat/chart-of-accounts` | CoA schema, migration, seed, settings UI | 4 |
-| `feat/journal-entries` | Journal schema, posting helper, wire into income/expense | 5 |
-| `feat/gl-trial-balance` | General ledger report, trial balance report | 6 |
-| `feat/profit-loss-report` | Formal P&L page with filters | 7 |
-| `feat/bank-accounts` | Bank account table, opening balance, bank summary page | 8 |
-| `feat/audit-trail` | Audit log schema, helper, wiring, viewer page | 9 |
+| PR                               | Title                                                    | Phases   |
+| -------------------------------- | -------------------------------------------------------- | -------- |
+| `fix/financial-calculations`     | Fix CSV rate bug, add period close to issue invoice      | 1.1, 1.3 |
+| `fix/payment-transaction-safety` | Wrap payment recording in DB transaction                 | 1.2      |
+| `feat/vat-lockdown`              | Add isVatRegistered, gate VAT across app                 | 2        |
+| `feat/ar-reports`                | AR report page, aged receivables page                    | 3        |
+| `feat/chart-of-accounts`         | CoA schema, migration, seed, settings UI                 | 4        |
+| `feat/journal-entries`           | Journal schema, posting helper, wire into income/expense | 5        |
+| `feat/gl-trial-balance`          | General ledger report, trial balance report              | 6        |
+| `feat/profit-loss-report`        | Formal P&L page with filters                             | 7        |
+| `feat/bank-accounts`             | Bank account table, opening balance, bank summary page   | 8        |
+| `feat/audit-trail`               | Audit log schema, helper, wiring, viewer page            | 9        |
 
 ---
 
@@ -827,5 +852,5 @@ Each phase maps to one PR. Keep PRs focused and independently deployable.
 
 ---
 
-*Schema details, Drizzle code, and Chart of Accounts are in `03-pmg-manual-bookkeeping-schema-plan.md`.*  
-*Phase 1 audit findings are in `01-pmg-manual-bookkeeping-mvp-audit.md`.*
+_Schema details, Drizzle code, and Chart of Accounts are in `03-pmg-manual-bookkeeping-schema-plan.md`._  
+_Phase 1 audit findings are in `01-pmg-manual-bookkeeping-mvp-audit.md`._

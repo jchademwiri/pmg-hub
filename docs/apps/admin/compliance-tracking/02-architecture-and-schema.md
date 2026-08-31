@@ -7,32 +7,35 @@ This document outlines the technical architecture, database schema, and server a
 We will introduce a new table in the `@pmg/db` package to track these records.
 
 ```typescript
-import { pgTable, text, timestamp, uuid, date } from "drizzle-orm/pg-core";
-import { clients } from "./clients"; // Assuming existing clients table
+import { pgTable, text, timestamp, uuid, date } from 'drizzle-orm/pg-core';
+import { clients } from './clients'; // Assuming existing clients table
 
-export const complianceDocuments = pgTable("compliance_documents", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
-  
+export const complianceDocuments = pgTable('compliance_documents', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  clientId: uuid('client_id')
+    .notNull()
+    .references(() => clients.id, { onDelete: 'cascade' }),
+
   // What is this document?
-  documentType: text("document_type").notNull(), // e.g., 'TAX_PIN', 'BBBEE', 'CUSTOM'
-  customName: text("custom_name"), // Populated only if documentType === 'CUSTOM'
-  
+  documentType: text('document_type').notNull(), // e.g., 'TAX_PIN', 'BBBEE', 'CUSTOM'
+  customName: text('custom_name'), // Populated only if documentType === 'CUSTOM'
+
   // Tracking
-  expiryDate: date("expiry_date").notNull(),
-  
+  expiryDate: date('expiry_date').notNull(),
+
   // Audit trail
-  uploadedBy: text("uploaded_by").notNull(), // 'ADMIN' or 'CLIENT'
-  uploadedById: uuid("uploaded_by_id"), // Reference to admin user_id or client contact_id
-  
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  uploadedBy: text('uploaded_by').notNull(), // 'ADMIN' or 'CLIENT'
+  uploadedById: uuid('uploaded_by_id'), // Reference to admin user_id or client contact_id
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 ```
 
 ## 2. Server Actions \u0026 API Layer
 
 ### 2.1 Admin App Server Actions (`apps/admin/src/app/actions/compliance.ts`)
+
 - `addComplianceRecord(data)`
 - `updateComplianceRecord(id, data)`
 - `deleteComplianceRecord(id)`
@@ -40,6 +43,7 @@ export const complianceDocuments = pgTable("compliance_documents", {
 - `getUpcomingExpirationsGlobal()` (For admin dashboard cross-client view)
 
 ### 2.2 Client Portal Actions (`apps/portal/src/app/actions/compliance.ts`)
+
 - `addClientComplianceRecord(data)` (Restricted to their own `clientId`)
 - `getClientComplianceRecords()`
 - `deleteClientComplianceRecord(id)`
@@ -52,6 +56,7 @@ We will use an API Route invoked by Vercel Cron to process the reminders.
 **Schedule:** Runs daily at 08:00 AM (`0 8 * * *`)
 
 ### Logic Flow:
+
 1. **Query:** Fetch all `complianceDocuments` where `expiryDate` is between `today` and `today + 60 days`.
 2. **Group:** Group the results by `clientId`.
 3. **Filter by Notification Rules:**
@@ -60,7 +65,7 @@ We will use an API Route invoked by Vercel Cron to process the reminders.
    - Check if `expiryDate` is exactly 14 days from today (Trigger "14-Day Warning").
    - Check if `expiryDate` is exactly 7 days from today (Trigger "7-Day Warning").
    - Check if `expiryDate` was exactly yesterday (Trigger "Expired" email).
-   *(If today does not match these rules for a specific document, skip sending to avoid spamming the client daily).*
+     _(If today does not match these rules for a specific document, skip sending to avoid spamming the client daily)._
 4. **Dispatch:**
    - Loop through the grouped clients.
    - Fetch the primary contact email for the client.
@@ -71,12 +76,15 @@ We will use an API Route invoked by Vercel Cron to process the reminders.
 ## 4. UI Components
 
 ### 4.1 Shared Components
+
 - `ComplianceTable`: A reusable table component (Document Name, Expiry Date, Status Badge [Valid, Expiring Soon, Expired], Actions).
 - `ComplianceFormDialog`: A modal containing a dropdown for Document Type, and a Date Picker for the Expiry Date.
 
 ### 4.2 Admin Views
+
 - **Client Profile Tab:** `/clients/[id]/compliance` - Shows the `ComplianceTable` for the specific client.
 - **Global Overview:** `/insights/compliance-radar` - A master list showing all upcoming client expirations, acting as a sales/upsell pipeline for the TenderCore division.
 
 ### 4.3 Portal Views
+
 - **Client Dashboard Tab:** `/portal/compliance` - Shows their own `ComplianceTable` and an "Add Expiry Tracker" button.

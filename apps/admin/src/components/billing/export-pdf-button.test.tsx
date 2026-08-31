@@ -58,7 +58,10 @@ describe('ExportPdfButton', () => {
     await userEvent.click(screen.getByRole('button', { name: /export pdf/i }));
 
     await waitFor(() => {
-      expect(downloadServerPdfMock).toHaveBeenCalledWith('/api/billing/pdf/invoice/123', 'Invoice PMG');
+      expect(downloadServerPdfMock).toHaveBeenCalledWith(
+        '/api/billing/pdf/invoice/123',
+        'Invoice PMG',
+      );
     });
     expect(downloadElementPdfMock).not.toHaveBeenCalled();
   });

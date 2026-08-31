@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { toast } from 'sonner'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import * as React from 'react';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -11,59 +11,70 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { resendInvitation, deleteInvitation } from '@/app/actions/users'
+} from '@/components/ui/table';
+import { resendInvitation, deleteInvitation } from '@/app/actions/users';
 
 export interface PendingInvitationRow {
-  id: string
-  name: string
-  email: string
-  role: string
-  expiresAt: Date
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  expiresAt: Date;
 }
 
 function roleBadgeVariant(role: string): 'destructive' | 'default' | 'secondary' | 'outline' {
-  if (role === 'super_admin') return 'destructive'
-  if (role === 'admin') return 'default'
-  return 'secondary'
+  if (role === 'super_admin') return 'destructive';
+  if (role === 'admin') return 'default';
+  return 'secondary';
 }
 
 function roleLabel(role: string): string {
-  if (role === 'super_admin') return 'Super Admin'
-  if (role === 'admin') return 'Admin'
-  return 'Viewer'
+  if (role === 'super_admin') return 'Super Admin';
+  if (role === 'admin') return 'Admin';
+  return 'Viewer';
 }
 
 function formatRelativeTime(date: Date): string {
-  const deltaSeconds = Math.round((date.getTime() - Date.now()) / 1000)
-  const cutoffs = [60, 3600, 86400, 86400 * 7, 86400 * 30, 86400 * 365, Infinity]
-  const units: Intl.RelativeTimeFormatUnit[] = ['second', 'minute', 'hour', 'day', 'week', 'month', 'year']
-  const unitIndex = cutoffs.findIndex(cutoff => cutoff > Math.abs(deltaSeconds))
-  const divisor = unitIndex ? cutoffs[unitIndex - 1] : 1
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
-  return rtf.format(Math.floor(deltaSeconds / divisor), units[unitIndex] as Intl.RelativeTimeFormatUnit)
+  const deltaSeconds = Math.round((date.getTime() - Date.now()) / 1000);
+  const cutoffs = [60, 3600, 86400, 86400 * 7, 86400 * 30, 86400 * 365, Infinity];
+  const units: Intl.RelativeTimeFormatUnit[] = [
+    'second',
+    'minute',
+    'hour',
+    'day',
+    'week',
+    'month',
+    'year',
+  ];
+  const unitIndex = cutoffs.findIndex((cutoff) => cutoff > Math.abs(deltaSeconds));
+  const divisor = unitIndex ? cutoffs[unitIndex - 1] : 1;
+  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+  return rtf.format(
+    Math.floor(deltaSeconds / divisor),
+    units[unitIndex] as Intl.RelativeTimeFormatUnit,
+  );
 }
 
 function PendingRow({ invite }: { invite: PendingInvitationRow }) {
-  const [isResending, startResendTransition] = React.useTransition()
-  const [isDeleting, startDeleteTransition] = React.useTransition()
+  const [isResending, startResendTransition] = React.useTransition();
+  const [isDeleting, startDeleteTransition] = React.useTransition();
 
-  const isExpired = new Date() > new Date(invite.expiresAt)
+  const isExpired = new Date() > new Date(invite.expiresAt);
 
   function handleResend() {
     startResendTransition(async () => {
-      const result = await resendInvitation(invite.id)
-      if (result.error) toast.error(result.error)
-      else toast.success('Invitation resent successfully')
-    })
+      const result = await resendInvitation(invite.id);
+      if (result.error) toast.error(result.error);
+      else toast.success('Invitation resent successfully');
+    });
   }
 
   function handleDelete() {
     startDeleteTransition(async () => {
-      const result = await deleteInvitation(invite.id)
-      if (result.error) toast.error(result.error)
-      else toast.success('Invitation revoked')
-    })
+      const result = await deleteInvitation(invite.id);
+      if (result.error) toast.error(result.error);
+      else toast.success('Invitation revoked');
+    });
   }
 
   return (
@@ -103,12 +114,12 @@ function PendingRow({ invite }: { invite: PendingInvitationRow }) {
         </div>
       </TableCell>
     </TableRow>
-  )
+  );
 }
 
 export function PendingInvitationsTable({ pending }: { pending: PendingInvitationRow[] }) {
   if (pending.length === 0) {
-    return null
+    return null;
   }
 
   return (
@@ -131,5 +142,5 @@ export function PendingInvitationsTable({ pending }: { pending: PendingInvitatio
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }

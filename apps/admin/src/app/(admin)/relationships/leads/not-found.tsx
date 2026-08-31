@@ -5,8 +5,8 @@ export default function LeadsNotFound() {
     <NotFoundView
       noun="lead"
       links={[
-        { label: 'Leads',     href: '/relationships/leads'     },
-        { label: 'Clients',   href: '/relationships/clients'   },
+        { label: 'Leads', href: '/relationships/leads' },
+        { label: 'Clients', href: '/relationships/clients' },
         { label: 'Divisions', href: '/relationships/divisions' },
       ]}
     />

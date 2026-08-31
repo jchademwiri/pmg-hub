@@ -42,8 +42,6 @@ interface InvoicesClientProps {
   voidAction: (id: string) => Promise<{ error?: string }>;
 }
 
-
-
 export function InvoicesClient({
   entries,
   total,
@@ -126,7 +124,7 @@ export function InvoicesClient({
         </TableHeader>
         <TableBody>
           {entries.map((inv) => (
-            <TableRow 
+            <TableRow
               key={inv.id}
               className="hover:bg-muted/40 transition-colors border-b border-border relative"
             >
@@ -140,7 +138,9 @@ export function InvoicesClient({
               </TableCell>
               <TableCell>
                 {inv.reference ? (
-                  <span className="text-muted-foreground">{inv.reference.length > 30 ? inv.reference.slice(0, 30) + '...' : inv.reference}</span>
+                  <span className="text-muted-foreground">
+                    {inv.reference.length > 30 ? inv.reference.slice(0, 30) + '...' : inv.reference}
+                  </span>
                 ) : (
                   <span className="italic text-muted-foreground/50">None</span>
                 )}
@@ -148,13 +148,13 @@ export function InvoicesClient({
               <TableCell className="text-muted-foreground">
                 {inv.clientName ?? <span className="italic">No client</span>}
               </TableCell>
-              <TableCell className="tabular-nums text-sm">
-                {fmtDate(inv.invoiceDate)}
-              </TableCell>
+              <TableCell className="tabular-nums text-sm">{fmtDate(inv.invoiceDate)}</TableCell>
               <TableCell className="tabular-nums text-sm text-muted-foreground">
                 {fmtDate(inv.dueDate)}
               </TableCell>
-              <TableCell className={`text-right tabular-nums text-sm font-medium ${STATUS_TEXT_COLORS[inv.status] || ''}`}>
+              <TableCell
+                className={`text-right tabular-nums text-sm font-medium ${STATUS_TEXT_COLORS[inv.status] || ''}`}
+              >
                 {formatZAR(Number(inv.total))}
               </TableCell>
               <TableCell>
@@ -177,7 +177,9 @@ export function InvoicesClient({
                         Issue Invoice
                       </DropdownMenuItem>
                     )}
-                    {(inv.status === 'draft' || inv.status === 'issued' || inv.status === 'overdue') && (
+                    {(inv.status === 'draft' ||
+                      inv.status === 'issued' ||
+                      inv.status === 'overdue') && (
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
@@ -199,8 +201,8 @@ export function InvoicesClient({
       {/* Pagination */}
       <div className="flex items-center justify-between px-2">
         <span className="text-sm text-muted-foreground">
-          Showing {(currentPage - 1) * pageSize + 1}–
-          {Math.min(currentPage * pageSize, total)} of {total}
+          Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, total)} of{' '}
+          {total}
         </span>
         <Pagination
           currentPage={currentPage}

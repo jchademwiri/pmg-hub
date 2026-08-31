@@ -20,7 +20,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { SettingsSection } from '@/components/settings/settings-section';
-import type { AuditLogEntry, UserSessionEntry, PaginatedResult, DateRangeOption } from '@/lib/audit-log';
+import type {
+  AuditLogEntry,
+  UserSessionEntry,
+  PaginatedResult,
+  DateRangeOption,
+} from '@/lib/audit-log';
 import {
   fetchSignInLogsAction,
   fetchSystemAuditLogsAction,
@@ -34,7 +39,12 @@ interface SecurityLogPanelProps {
   description: string;
 }
 
-export function PaginatedLogPanel({ initialData, type, title, description }: SecurityLogPanelProps) {
+export function PaginatedLogPanel({
+  initialData,
+  type,
+  title,
+  description,
+}: SecurityLogPanelProps) {
   const [dataState, setDataState] = useState<PaginatedResult<AuditLogEntry>>(initialData);
   const [dateRange, setDateRange] = useState<DateRangeOption>('all');
   const [isPending, startTransition] = useTransition();
@@ -72,7 +82,9 @@ export function PaginatedLogPanel({ initialData, type, title, description }: Sec
 
   const headerAction = (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground font-medium hidden sm:inline">Filter by Date:</span>
+      <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
+        Filter by Date:
+      </span>
       <Select value={dateRange} onValueChange={handleDateFilterChange} disabled={isPending}>
         <SelectTrigger className="h-8 w-[140px] text-xs">
           <SelectValue placeholder="Date Range" />
@@ -106,9 +118,15 @@ export function PaginatedLogPanel({ initialData, type, title, description }: Sec
                 {data.map((entry) => (
                   <TableRow key={entry.id}>
                     <TableCell className="py-3 pl-4 text-sm font-medium">{entry.action}</TableCell>
-                    <TableCell className="py-3 text-sm text-muted-foreground">{entry.user}</TableCell>
-                    <TableCell className="py-3 text-sm text-muted-foreground">{entry.timestamp}</TableCell>
-                    <TableCell className="py-3 pr-4 text-sm text-muted-foreground">{entry.ip}</TableCell>
+                    <TableCell className="py-3 text-sm text-muted-foreground">
+                      {entry.user}
+                    </TableCell>
+                    <TableCell className="py-3 text-sm text-muted-foreground">
+                      {entry.timestamp}
+                    </TableCell>
+                    <TableCell className="py-3 pr-4 text-sm text-muted-foreground">
+                      {entry.ip}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -171,7 +189,9 @@ export function PaginatedLogPanel({ initialData, type, title, description }: Sec
 
               {endPage < totalPages && (
                 <>
-                  {endPage < totalPages - 1 && <span className="px-1 text-muted-foreground">...</span>}
+                  {endPage < totalPages - 1 && (
+                    <span className="px-1 text-muted-foreground">...</span>
+                  )}
                   <Button
                     variant={page === totalPages ? 'default' : 'outline'}
                     size="sm"
@@ -208,7 +228,11 @@ interface PaginatedSessionsPanelProps {
   description: string;
 }
 
-export function PaginatedSessionsPanel({ initialData, title, description }: PaginatedSessionsPanelProps) {
+export function PaginatedSessionsPanel({
+  initialData,
+  title,
+  description,
+}: PaginatedSessionsPanelProps) {
   const [dataState, setDataState] = useState<PaginatedResult<UserSessionEntry>>(initialData);
   const [isPending, startTransition] = useTransition();
 
@@ -239,14 +263,18 @@ export function PaginatedSessionsPanel({ initialData, title, description }: Pagi
   return (
     <SettingsSection title={title} description={description}>
       <div className="flex flex-col gap-3">
-        <div className={`flex flex-col divide-y divide-border ${isPending ? 'opacity-60 transition-opacity' : ''}`}>
+        <div
+          className={`flex flex-col divide-y divide-border ${isPending ? 'opacity-60 transition-opacity' : ''}`}
+        >
           {data.map((session) => (
             <div key={session.id} className="flex items-center justify-between gap-4 py-3">
               <div className="flex flex-col gap-0.5">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{session.device}</span>
                   {session.current && (
-                    <Badge variant="secondary" className="text-xs">Current</Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      Current
+                    </Badge>
                   )}
                 </div>
                 <span className="text-xs text-muted-foreground">

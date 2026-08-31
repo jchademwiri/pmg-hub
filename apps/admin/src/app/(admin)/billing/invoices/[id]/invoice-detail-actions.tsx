@@ -67,7 +67,9 @@ export function InvoiceDetailActions({
       <div className="fixed md:relative bottom-0 left-0 right-0 p-4 md:p-0 bg-card/95 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border-t md:border-none z-50 flex flex-col gap-2 pb-[max(env(safe-area-inset-bottom),16px)] md:pb-0 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] md:shadow-none dark:shadow-[0_-4px_12px_rgba(0,0,0,0.2)]">
         {status === 'draft' && (
           <>
-            <Button className="w-full" onClick={handleIssue}>Issue Invoice</Button>
+            <Button className="w-full" onClick={handleIssue}>
+              Issue Invoice
+            </Button>
             <VoidInvoiceButton invoiceId={invoice.id} voidAction={voidAction} />
           </>
         )}
@@ -89,7 +91,8 @@ export function InvoiceDetailActions({
         {status === 'partially_paid' && (
           <>
             <p className="text-xs text-muted-foreground">
-              This invoice has a partial payment recorded. Record the remaining balance from the client's payment page, or write off what's left if it won't be collected.
+              This invoice has a partial payment recorded. Record the remaining balance from the
+              client's payment page, or write off what's left if it won't be collected.
             </p>
             {writeOffAction && (
               <WriteOffInvoiceButton invoiceId={invoice.id} writeOffAction={writeOffAction} />
@@ -100,8 +103,7 @@ export function InvoiceDetailActions({
         {status === 'paid' && (
           <div className="flex flex-col gap-2">
             <p className="text-xs text-green-600 dark:text-green-400">
-              Paid on{' '}
-              {fmtDate(invoice.paidAt ?? undefined)}. Revenue posted to income.
+              Paid on {fmtDate(invoice.paidAt ?? undefined)}. Revenue posted to income.
             </p>
             <Button variant="outline" size="sm" className="w-full" asChild>
               <Link href="/billing/payments">View in Payments →</Link>
@@ -119,7 +121,10 @@ export function InvoiceDetailActions({
               This invoice has been written off.
             </p>
             {restoreWriteOffAction && (
-              <RestoreWriteOffButton invoiceId={invoice.id} restoreWriteOffAction={restoreWriteOffAction} />
+              <RestoreWriteOffButton
+                invoiceId={invoice.id}
+                restoreWriteOffAction={restoreWriteOffAction}
+              />
             )}
           </div>
         )}

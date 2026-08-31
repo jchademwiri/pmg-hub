@@ -37,15 +37,16 @@ export default async function PaymentDetailPage({ params }: Props) {
   const payment = await getIncomeById(id);
   if (!payment) notFound();
 
-  const [allocations, client, divSettings, divisions, clients, minDate, isLocked] = await Promise.all([
-    getIncomeAllocations(payment.id),
-    payment.clientId ? getClientById(payment.clientId) : null,
-    getDivisionBillingSettings(payment.divisionId),
-    getAllDivisions(),
-    getAllClients(),
-    getMinAllowedDate(),
-    isPeriodClosed(payment.date),
-  ]);
+  const [allocations, client, divSettings, divisions, clients, minDate, isLocked] =
+    await Promise.all([
+      getIncomeAllocations(payment.id),
+      payment.clientId ? getClientById(payment.clientId) : null,
+      getDivisionBillingSettings(payment.divisionId),
+      getAllDivisions(),
+      getAllClients(),
+      getMinAllowedDate(),
+      isPeriodClosed(payment.date),
+    ]);
 
   const resolvedClient = client ?? {
     name: payment.clientName || 'General Client',

@@ -1,16 +1,16 @@
-import * as React from 'react'
-import { cn } from '@/lib/utils'
+import * as React from 'react';
+import { cn } from '@/lib/utils';
 
 interface StickyPageHeaderProps {
-  title: string
-  description?: string
+  title: string;
+  description?: string;
   /** Optional total value displayed next to the title */
-  total?: string
-  totalVariant?: 'green' | 'amber' | 'red' | 'default'
+  total?: string;
+  totalVariant?: 'green' | 'amber' | 'red' | 'default';
   /** Right-aligned actions (buttons, filters, etc.) */
-  actions?: React.ReactNode
+  actions?: React.ReactNode;
   /** Additional CSS classes */
-  className?: string
+  className?: string;
 }
 
 const variantClasses: Record<string, string> = {
@@ -18,7 +18,7 @@ const variantClasses: Record<string, string> = {
   amber: 'text-amber-600',
   red: 'text-destructive',
   default: '',
-}
+};
 
 export function StickyPageHeader({
   title,
@@ -40,21 +40,22 @@ export function StickyPageHeader({
           <h1 className="text-lg font-semibold">
             {title}
             {total && (
-              <span className={cn('ml-2 text-base font-normal tabular-nums', variantClasses[totalVariant])}>
+              <span
+                className={cn(
+                  'ml-2 text-base font-normal tabular-nums',
+                  variantClasses[totalVariant],
+                )}
+              >
                 {total}
               </span>
             )}
           </h1>
-          {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
-          )}
+          {description && <p className="text-sm text-muted-foreground">{description}</p>}
         </div>
         {actions && (
-          <div className="flex w-full sm:w-auto shrink-0 items-center gap-2">
-            {actions}
-          </div>
+          <div className="flex w-full sm:w-auto shrink-0 items-center gap-2">{actions}</div>
         )}
       </div>
     </div>
-  )
+  );
 }

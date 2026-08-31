@@ -12,11 +12,13 @@ export default async function ProfilePage() {
 
   // Fetch division billing settings for sales rep contact
   const divSettings = client.divisionId
-    ? (await db
-        .select()
-        .from(divisionBillingSettings)
-        .where(eq(divisionBillingSettings.divisionId, client.divisionId))
-        .limit(1))[0]
+    ? (
+        await db
+          .select()
+          .from(divisionBillingSettings)
+          .where(eq(divisionBillingSettings.divisionId, client.divisionId))
+          .limit(1)
+      )[0]
     : null;
 
   return (
@@ -59,7 +61,8 @@ export default async function ProfilePage() {
               <div className="rounded-lg bg-white/[0.01] border border-white/5 p-3 flex items-start gap-2 text-[11px] text-muted-foreground leading-relaxed mt-4">
                 <Shield className="size-4 shrink-0 text-blue-500 mt-0.5" />
                 <p>
-                  To request changes to your company name or registered billing email address, please contact your PMG account manager.
+                  To request changes to your company name or registered billing email address,
+                  please contact your PMG account manager.
                 </p>
               </div>
             </CardContent>
@@ -78,18 +81,23 @@ export default async function ProfilePage() {
               </CardHeader>
               <CardContent className="pt-5 space-y-4 text-xs">
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  For queries regarding invoices, projects, or new quotes, please reach out to your assigned account manager:
+                  For queries regarding invoices, projects, or new quotes, please reach out to your
+                  assigned account manager:
                 </p>
                 <div className="space-y-4 mt-4">
                   {divSettings.salesRepName && (
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Name</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                        Name
+                      </p>
                       <p className="text-sm font-bold text-white">{divSettings.salesRepName}</p>
                     </div>
                   )}
                   {divSettings.salesRepEmail && (
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Email</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                        Email
+                      </p>
                       <a
                         href={`mailto:${divSettings.salesRepEmail}`}
                         className="text-sm font-bold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
@@ -101,7 +109,9 @@ export default async function ProfilePage() {
                   )}
                   {divSettings.salesRepPhone && (
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Phone</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                        Phone
+                      </p>
                       <a
                         href={`tel:${divSettings.salesRepPhone}`}
                         className="text-sm font-bold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"

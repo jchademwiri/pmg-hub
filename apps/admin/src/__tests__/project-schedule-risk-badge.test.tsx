@@ -11,8 +11,8 @@
  * - on track → "On Track"
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
 
 vi.mock('@/components/ui/badge', () => ({
   Badge: ({ children, variant, className }: any) => (
@@ -20,16 +20,16 @@ vi.mock('@/components/ui/badge', () => ({
       {children}
     </span>
   ),
-}))
+}));
 
 // ─── Test data factory ───────────────────────────────────────────────────────
 
 interface TenderOverride {
-  status?: string
-  closingDate?: string
-  targetCompletionDate?: string
-  startDate?: string
-  bufferDays?: number
+  status?: string;
+  closingDate?: string;
+  targetCompletionDate?: string;
+  startDate?: string;
+  bufferDays?: number;
 }
 
 function makeTender(overrides: TenderOverride) {
@@ -56,7 +56,7 @@ function makeTender(overrides: TenderOverride) {
     sortOrder: null,
     createdAt: new Date('2026-06-01'),
     updatedAt: null,
-  }
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -64,45 +64,49 @@ function makeTender(overrides: TenderOverride) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 describe('ProjectRiskBadge — status-based risk', () => {
-  beforeEach(() => { vi.clearAllMocks() })
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('shows "Done" for submitted tenders', async () => {
-    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge')
-    render(<ProjectRiskBadge tender={makeTender({ status: 'submitted' })} />)
-    expect(screen.getByTestId('badge')).toHaveTextContent('Done')
-  })
+    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge');
+    render(<ProjectRiskBadge tender={makeTender({ status: 'submitted' })} />);
+    expect(screen.getByTestId('badge')).toHaveTextContent('Done');
+  });
 
   it('shows "Done" for completed tenders', async () => {
-    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge')
-    render(<ProjectRiskBadge tender={makeTender({ status: 'completed' })} />)
-    expect(screen.getByTestId('badge')).toHaveTextContent('Done')
-  })
+    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge');
+    render(<ProjectRiskBadge tender={makeTender({ status: 'completed' })} />);
+    expect(screen.getByTestId('badge')).toHaveTextContent('Done');
+  });
 
   it('shows "Cancelled" for cancelled tenders', async () => {
-    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge')
-    render(<ProjectRiskBadge tender={makeTender({ status: 'cancelled' })} />)
-    expect(screen.getByTestId('badge')).toHaveTextContent('Cancelled')
-  })
-})
+    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge');
+    render(<ProjectRiskBadge tender={makeTender({ status: 'cancelled' })} />);
+    expect(screen.getByTestId('badge')).toHaveTextContent('Cancelled');
+  });
+});
 
 describe('ProjectRiskBadge — time-based risk', () => {
-  beforeEach(() => { vi.clearAllMocks() })
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('shows "Overdue" when closing date is past', async () => {
-    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge')
+    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge');
     // Far future start/target dates, but closing date is yesterday
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
-    const closing = yesterday.toISOString().split('T')[0]
-    render(<ProjectRiskBadge tender={makeTender({ status: 'planned', closingDate: closing })} />)
-    expect(screen.getByTestId('badge')).toHaveTextContent('Overdue')
-  })
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const closing = yesterday.toISOString().split('T')[0];
+    render(<ProjectRiskBadge tender={makeTender({ status: 'planned', closingDate: closing })} />);
+    expect(screen.getByTestId('badge')).toHaveTextContent('Overdue');
+  });
 
   it('shows "At Risk" when past target completion and in_progress', async () => {
-    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge')
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
-    const pastTarget = yesterday.toISOString().split('T')[0]
+    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge');
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const pastTarget = yesterday.toISOString().split('T')[0];
 
     render(
       <ProjectRiskBadge
@@ -113,15 +117,15 @@ describe('ProjectRiskBadge — time-based risk', () => {
           startDate: '2026-01-01',
         })}
       />,
-    )
-    expect(screen.getByTestId('badge')).toHaveTextContent('At Risk')
-  })
+    );
+    expect(screen.getByTestId('badge')).toHaveTextContent('At Risk');
+  });
 
   it('shows "Start Due" when past start date and still planned', async () => {
-    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge')
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
-    const pastStart = yesterday.toISOString().split('T')[0]
+    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge');
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const pastStart = yesterday.toISOString().split('T')[0];
 
     render(
       <ProjectRiskBadge
@@ -132,17 +136,17 @@ describe('ProjectRiskBadge — time-based risk', () => {
           targetCompletionDate: '2026-12-15', // far future so not overdue on target
         })}
       />,
-    )
-    expect(screen.getByTestId('badge')).toHaveTextContent('Start Due')
-  })
+    );
+    expect(screen.getByTestId('badge')).toHaveTextContent('Start Due');
+  });
 
   it('shows "Impossible" when target completion is after closing', async () => {
-    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge')
+    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge');
     const daysFromNow = (n: number) => {
-      const d = new Date()
-      d.setDate(d.getDate() + n)
-      return d.toISOString().split('T')[0]
-    }
+      const d = new Date();
+      d.setDate(d.getDate() + n);
+      return d.toISOString().split('T')[0];
+    };
 
     render(
       <ProjectRiskBadge
@@ -152,17 +156,17 @@ describe('ProjectRiskBadge — time-based risk', () => {
           targetCompletionDate: daysFromNow(11),
         })}
       />,
-    )
-    expect(screen.getByTestId('badge')).toHaveTextContent('Impossible')
-  })
+    );
+    expect(screen.getByTestId('badge')).toHaveTextContent('Impossible');
+  });
 
   it('shows "Tight" when target completion leaves less than the configured buffer', async () => {
-    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge')
+    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge');
     const daysFromNow = (n: number) => {
-      const d = new Date()
-      d.setDate(d.getDate() + n)
-      return d.toISOString().split('T')[0]
-    }
+      const d = new Date();
+      d.setDate(d.getDate() + n);
+      return d.toISOString().split('T')[0];
+    };
 
     render(
       <ProjectRiskBadge
@@ -174,17 +178,17 @@ describe('ProjectRiskBadge — time-based risk', () => {
           targetCompletionDate: daysFromNow(7), // within 5-day buffer of closing
         })}
       />,
-    )
-    expect(screen.getByTestId('badge')).toHaveTextContent('Tight')
-  })
+    );
+    expect(screen.getByTestId('badge')).toHaveTextContent('Tight');
+  });
 
   it('shows "On Track" for healthy planned tender', async () => {
-    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge')
+    const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge');
     const daysFromNow = (n: number) => {
-      const d = new Date()
-      d.setDate(d.getDate() + n)
-      return d.toISOString().split('T')[0]
-    }
+      const d = new Date();
+      d.setDate(d.getDate() + n);
+      return d.toISOString().split('T')[0];
+    };
 
     render(
       <ProjectRiskBadge
@@ -195,7 +199,7 @@ describe('ProjectRiskBadge — time-based risk', () => {
           targetCompletionDate: daysFromNow(5), // 9 days before closing → not tight
         })}
       />,
-    )
-    expect(screen.getByTestId('badge')).toHaveTextContent('On Track')
-  })
-})
+    );
+    expect(screen.getByTestId('badge')).toHaveTextContent('On Track');
+  });
+});

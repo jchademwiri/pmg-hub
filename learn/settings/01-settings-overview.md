@@ -22,11 +22,10 @@ Bad settings can affect invoices, quote PDFs, emails, backups, and access.
 
 ## Quick Reference
 
-| I want to... | Go to... |
-|-------------|----------|
-| Update company details | Settings -> Organisation |
-| Configure division billing | Settings -> Billing |
-| Invite a user | Settings -> Users |
-| Review access information | Settings -> Security |
-| Export or back up data | Settings -> Data |
-
+| I want to...               | Go to...                 |
+| -------------------------- | ------------------------ |
+| Update company details     | Settings -> Organisation |
+| Configure division billing | Settings -> Billing      |
+| Invite a user              | Settings -> Users        |
+| Review access information  | Settings -> Security     |
+| Export or back up data     | Settings -> Data         |

@@ -35,13 +35,13 @@ Build a comprehensive **Credit Management Module** that handles the full credit 
 
 ### Key Design Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Credit tracking | **Hybrid** — implicit balance + explicit transaction log | Keep backward compatibility while adding audit trail |
-| Credit notes | **Yes, introduce `credit_notes` table** | Industry standard (Xero, QuickBooks, Stripe all use them) |
-| Double-entry ledger | **No — too complex for current scale** | Overkill for SMB billing; implicit + allocation is sufficient |
-| Credit expiry | **Configurable, default 12 months** | Reduces indefinite liability on balance sheet |
-| Auto-apply | **FIFO, opt-in setting** | Standard for accounting; user controls whether it's on |
+| Decision            | Choice                                                   | Rationale                                                     |
+| ------------------- | -------------------------------------------------------- | ------------------------------------------------------------- |
+| Credit tracking     | **Hybrid** — implicit balance + explicit transaction log | Keep backward compatibility while adding audit trail          |
+| Credit notes        | **Yes, introduce `credit_notes` table**                  | Industry standard (Xero, QuickBooks, Stripe all use them)     |
+| Double-entry ledger | **No — too complex for current scale**                   | Overkill for SMB billing; implicit + allocation is sufficient |
+| Credit expiry       | **Configurable, default 12 months**                      | Reduces indefinite liability on balance sheet                 |
+| Auto-apply          | **FIFO, opt-in setting**                                 | Standard for accounting; user controls whether it's on        |
 
 ---
 
@@ -77,17 +77,17 @@ credit = MAX(0, totalPaid - totalAllocated)
 
 #### What's Missing
 
-| Capability | Status | Impact |
-|------------|--------|--------|
-| Apply credit to invoice | ❌ Missing | **Critical** — users cannot use existing credits |
-| Credit notes / memos | ❌ Missing | No formal adjustment documents |
-| Credit history / audit trail | ❌ Missing | No visibility into credit movements |
-| Credit expiry | ❌ Missing | Indefinite liability |
-| Credit source tracking | ❌ Missing | Can't tell if credit came from overpayment, manual adjustment, etc. |
-| Refund of credits | ❌ Missing | No way to return credit to cash |
-| Credit reports | ❌ Missing | No dashboard for credit exposure |
-| Auto-apply setting | ❌ Missing | No configurable automation |
-| Credit limits | ❌ Missing | No client credit limit enforcement |
+| Capability                   | Status     | Impact                                                              |
+| ---------------------------- | ---------- | ------------------------------------------------------------------- |
+| Apply credit to invoice      | ❌ Missing | **Critical** — users cannot use existing credits                    |
+| Credit notes / memos         | ❌ Missing | No formal adjustment documents                                      |
+| Credit history / audit trail | ❌ Missing | No visibility into credit movements                                 |
+| Credit expiry                | ❌ Missing | Indefinite liability                                                |
+| Credit source tracking       | ❌ Missing | Can't tell if credit came from overpayment, manual adjustment, etc. |
+| Refund of credits            | ❌ Missing | No way to return credit to cash                                     |
+| Credit reports               | ❌ Missing | No dashboard for credit exposure                                    |
+| Auto-apply setting           | ❌ Missing | No configurable automation                                          |
+| Credit limits                | ❌ Missing | No client credit limit enforcement                                  |
 
 ---
 
@@ -96,23 +96,27 @@ credit = MAX(0, totalPaid - totalAllocated)
 ### How Leading Platforms Handle Credits
 
 #### Xero
+
 - **Credit Notes** reduce invoice totals. Created from overpayments, returns, or billing errors.
 - Overpayments automatically become "Credit" records (liability against AR).
 - Credits can be applied manually or automatically to oldest invoices.
 - Full audit trail with reversing entries (never delete — void and reverse).
 
 #### QuickBooks Online
+
 - **Credit Memos** and **Refund Receipts** are separate document types.
 - Credits appear as negative balances on customer accounts.
 - Applied to specific invoices via "Receive Payment" with credit checkbox.
 - Supports both line-item and total-amount application.
 
 #### Stripe
+
 - **Credit Notes** adjust invoice amounts. If invoice is already paid, credit note creates a customer balance.
 - Customer balance auto-applies to next invoice.
 - Supports partial and full credit notes with tax adjustment handling.
 
 #### FreshBooks
+
 - Overpayments and credit notes are categorized as "Credits" on customer statements.
 - Credits can be applied to any open invoice from the payment screen.
 - Simple, visual credit application with real-time balance preview.
@@ -162,13 +166,13 @@ The Credit Management Module provides a complete credit lifecycle:
 
 ### 4.1 Credit Types
 
-| Type | Source | Description |
-|------|--------|-------------|
-| `overpayment` | Automatic | Created when a payment exceeds invoice total |
-| `manual_adjustment` | Manual | Admin manually adds credit to client account |
-| `credit_note` | Manual | Formal credit memo (billing error, return, goodwill) |
-| `promotional` | Manual | Promotional or goodwill credit |
-| `refund_reversal` | Automatic | Credit created when a refund is reversed |
+| Type                | Source    | Description                                          |
+| ------------------- | --------- | ---------------------------------------------------- |
+| `overpayment`       | Automatic | Created when a payment exceeds invoice total         |
+| `manual_adjustment` | Manual    | Admin manually adds credit to client account         |
+| `credit_note`       | Manual    | Formal credit memo (billing error, return, goodwill) |
+| `promotional`       | Manual    | Promotional or goodwill credit                       |
+| `refund_reversal`   | Automatic | Credit created when a refund is reversed             |
 
 ### 4.2 Credit Lifecycle States
 
@@ -275,7 +279,7 @@ CREATE INDEX idx_credit_refunds_client_id ON credit_refunds(client_id);
    ```sql
    -- For each client where income > allocations, create a credit_note record
    INSERT INTO credit_notes (client_id, division_id, document_number, type, amount, amount_remaining, created_by)
-   SELECT 
+   SELECT
      i.client_id,
      i.division_id,
      'CN-BACKFILL-' || i.id,
@@ -285,8 +289,8 @@ CREATE INDEX idx_credit_refunds_client_id ON credit_refunds(client_id);
      'system-backfill'
    FROM income i
    LEFT JOIN (
-     SELECT income_id, SUM(amount) as allocated 
-     FROM payment_allocations 
+     SELECT income_id, SUM(amount) as allocated
+     FROM payment_allocations
      GROUP BY income_id
    ) pa ON pa.income_id = i.id
    WHERE (i.amount - COALESCE(pa.allocated, 0)) > 0;
@@ -476,6 +480,7 @@ A dedicated page showing all credit activity across clients.
 **File:** `apps/admin/src/components/billing/apply-credit-dialog.tsx`
 
 A modal dialog for applying credit to invoices. Used from:
+
 - Invoice detail page sidebar
 - Payment recording form
 - Client billing workspace
@@ -508,6 +513,7 @@ A modal dialog for applying credit to invoices. Used from:
 **File:** `apps/admin/src/components/billing/credit-balance-card.tsx`
 
 A reusable card component showing client credit balance with quick actions. Used on:
+
 - Invoice detail sidebar
 - Client billing workspace
 - Payment form sidebar
@@ -554,14 +560,14 @@ Dialog for manually issuing a credit note to a client.
 
 ### 7.6 Modified Pages
 
-| Page | Modification |
-|------|-------------|
-| `/billing/invoices/[id]` | Add `CreditBalanceCard` in sidebar + `ApplyCreditDialog` button |
-| `/billing/payments/add` | Add "Apply Existing Credit" toggle + `ApplyCreditDialog` |
-| `/billing/payments/[id]` | Show credit application details in payment receipt |
-| `/relationships/clients/[id]` | Add "Credits" tab to billing workspace with credit history |
-| `/billing/invoices/new` | Show credit balance + option to apply at invoice creation |
-| `/settings/billing` | Add credit policy settings (expiry, auto-apply, limits) |
+| Page                          | Modification                                                    |
+| ----------------------------- | --------------------------------------------------------------- |
+| `/billing/invoices/[id]`      | Add `CreditBalanceCard` in sidebar + `ApplyCreditDialog` button |
+| `/billing/payments/add`       | Add "Apply Existing Credit" toggle + `ApplyCreditDialog`        |
+| `/billing/payments/[id]`      | Show credit application details in payment receipt              |
+| `/relationships/clients/[id]` | Add "Credits" tab to billing workspace with credit history      |
+| `/billing/invoices/new`       | Show credit balance + option to apply at invoice creation       |
+| `/settings/billing`           | Add credit policy settings (expiry, auto-apply, limits)         |
 
 ### 7.7 Navigation Update
 
@@ -684,22 +690,22 @@ Admin voids an invoice that had credit applied
 
 ## 9. Edge Cases & Validation Rules
 
-| Scenario | Rule |
-|----------|------|
-| Apply credit > available | Block: "Insufficient credit" |
-| Apply credit > invoice outstanding | Auto-cap to outstanding amount |
-| Apply credit to void invoice | Block: "Cannot apply credit to voided invoice" |
-| Apply credit to paid invoice | Block: "Invoice is already fully paid" |
-| Apply credit to draft invoice | Block: "Issue the invoice first" |
-| Refund > available credit | Block: "Insufficient credit for refund" |
-| Expire credit with remaining balance | Set status to 'expired', log event |
-| Void credit note that was partially applied | Block: "Cannot void — credit is in use. Revoke applications first." |
-| Concurrent credit application | Use database transaction with SELECT FOR UPDATE |
-| Credit in closed period | Block modification if income row is in closed period |
-| Client deactivated | Credits remain but cannot be applied to new invoices |
-| Multiple divisions | Credits are division-scoped (can only apply within same division) |
-| Credit limit exceeded | Optional: Warn when issuing credit would exceed client limit |
-| Rounding errors | Use `toFixed(2)` consistently; last allocation absorbs rounding difference |
+| Scenario                                    | Rule                                                                       |
+| ------------------------------------------- | -------------------------------------------------------------------------- |
+| Apply credit > available                    | Block: "Insufficient credit"                                               |
+| Apply credit > invoice outstanding          | Auto-cap to outstanding amount                                             |
+| Apply credit to void invoice                | Block: "Cannot apply credit to voided invoice"                             |
+| Apply credit to paid invoice                | Block: "Invoice is already fully paid"                                     |
+| Apply credit to draft invoice               | Block: "Issue the invoice first"                                           |
+| Refund > available credit                   | Block: "Insufficient credit for refund"                                    |
+| Expire credit with remaining balance        | Set status to 'expired', log event                                         |
+| Void credit note that was partially applied | Block: "Cannot void — credit is in use. Revoke applications first."        |
+| Concurrent credit application               | Use database transaction with SELECT FOR UPDATE                            |
+| Credit in closed period                     | Block modification if income row is in closed period                       |
+| Client deactivated                          | Credits remain but cannot be applied to new invoices                       |
+| Multiple divisions                          | Credits are division-scoped (can only apply within same division)          |
+| Credit limit exceeded                       | Optional: Warn when issuing credit would exceed client limit               |
+| Rounding errors                             | Use `toFixed(2)` consistently; last allocation absorbs rounding difference |
 
 ---
 
@@ -707,30 +713,30 @@ Admin voids an invoice that had credit applied
 
 ### 10.1 Unit Tests
 
-| Test | Expected |
-|------|----------|
-| `createCreditNote` — valid input | Credit note created, amount_remaining = amount |
-| `applyCreditToInvoice` — full amount | Invoice paid, credit consumed |
-| `applyCreditToInvoice` — partial | Invoice partially_paid, credit partially consumed |
-| `applyCreditToInvoice` — insufficient credit | Error returned |
-| `applyCreditToInvoice` — void invoice | Error returned |
-| `voidCreditNote` — no applications | Credit note voided |
-| `voidCreditNote` — has applications | Error returned |
-| `refundCredit` — valid | Refund created, credit reduced |
-| `refundCredit` — exceeds credit | Error returned |
-| `expireCreditNotes` — past expiry | Credits expired |
-| `getClientCreditSummary` — mixed states | Correct breakdown |
-| FIFO allocation order | Oldest income rows consumed first |
+| Test                                         | Expected                                          |
+| -------------------------------------------- | ------------------------------------------------- |
+| `createCreditNote` — valid input             | Credit note created, amount_remaining = amount    |
+| `applyCreditToInvoice` — full amount         | Invoice paid, credit consumed                     |
+| `applyCreditToInvoice` — partial             | Invoice partially_paid, credit partially consumed |
+| `applyCreditToInvoice` — insufficient credit | Error returned                                    |
+| `applyCreditToInvoice` — void invoice        | Error returned                                    |
+| `voidCreditNote` — no applications           | Credit note voided                                |
+| `voidCreditNote` — has applications          | Error returned                                    |
+| `refundCredit` — valid                       | Refund created, credit reduced                    |
+| `refundCredit` — exceeds credit              | Error returned                                    |
+| `expireCreditNotes` — past expiry            | Credits expired                                   |
+| `getClientCreditSummary` — mixed states      | Correct breakdown                                 |
+| FIFO allocation order                        | Oldest income rows consumed first                 |
 
 ### 10.2 Integration Tests
 
-| Test | Scenario |
-|------|----------|
-| Full overpayment workflow | R2000 on R1500 → R500 credit → apply to new R1500 invoice |
-| Multi-invoice credit application | R1000 credit applied across 3 invoices |
-| Void invoice restores credit | Void invoice → credit restored → can reapply |
-| Credit note lifecycle | Issue → apply → refund → exhausted |
-| Credit expiry | Create with 1-month expiry → expire → verify inactive |
+| Test                             | Scenario                                                  |
+| -------------------------------- | --------------------------------------------------------- |
+| Full overpayment workflow        | R2000 on R1500 → R500 credit → apply to new R1500 invoice |
+| Multi-invoice credit application | R1000 credit applied across 3 invoices                    |
+| Void invoice restores credit     | Void invoice → credit restored → can reapply              |
+| Credit note lifecycle            | Issue → apply → refund → exhausted                        |
+| Credit expiry                    | Create with 1-month expiry → expire → verify inactive     |
 
 ### 10.3 Manual QA Scenarios
 
@@ -745,6 +751,7 @@ Admin voids an invoice that had credit applied
 ## 11. Implementation Phases
 
 ### Phase 1: Core Credit Application (Fixes the Immediate Bug)
+
 **Priority: CRITICAL — Addresses the user's reported issue**
 
 - [x] Create `credit_notes` and `credit_applications` tables (migration)
@@ -756,6 +763,7 @@ Admin voids an invoice that had credit applied
 - [x] Write unit tests
 
 **Files:**
+
 - `packages/db/src/migrations/XXXX_add_credit_tables.sql` (new)
 - `packages/db/src/schema/credits.ts` (new)
 - `apps/admin/src/app/actions/credit-management.ts` (new)
@@ -766,6 +774,7 @@ Admin voids an invoice that had credit applied
 - `apps/admin/src/app/actions/billing-invoices.ts` (modify — restore credits on void)
 
 ### Phase 2: Payment Form Integration
+
 **Priority: HIGH — Prevents duplicate payments**
 
 - [x] Add "Apply Existing Credit" toggle to payment recording form
@@ -774,10 +783,12 @@ Admin voids an invoice that had credit applied
 - [x] Write tests
 
 **Files:**
+
 - `apps/admin/src/app/(admin)/billing/payments/add/payment-form-client.tsx` (modify)
 - `apps/admin/src/app/(admin)/billing/payments/[id]/payment-detail-client.tsx` (modify)
 
 ### Phase 3: Credit Management Dashboard
+
 **Priority: MEDIUM — Visibility and control**
 
 - [x] Create `/billing/credits` page
@@ -789,6 +800,7 @@ Admin voids an invoice that had credit applied
 - [x] Write tests
 
 **Files:**
+
 - `apps/admin/src/app/(admin)/billing/credits/page.tsx` (new)
 - `apps/admin/src/app/(admin)/billing/credits/credits-client.tsx` (new)
 - `apps/admin/src/components/billing/issue-credit-note-dialog.tsx` (new)
@@ -797,6 +809,7 @@ Admin voids an invoice that had credit applied
 - `apps/admin/src/app/(admin)/relationships/clients/[id]/client-billing-workspace.tsx` (modify)
 
 ### Phase 4: Refunds & Expiry
+
 **Priority: MEDIUM — Complete credit lifecycle**
 
 - [x] Implement `refundCredit()` server action
@@ -806,12 +819,14 @@ Admin voids an invoice that had credit applied
 - [x] Write tests
 
 **Files:**
+
 - `apps/admin/src/app/actions/credit-management.ts` (modify — add refund/expire)
 - `apps/admin/src/components/billing/credit-refund-dialog.tsx` (new)
 - `apps/admin/src/app/(admin)/settings/billing/billing-settings-client.tsx` (modify)
 - `apps/admin/src/app/api/cron/credit-expiry/route.ts` (new)
 
 ### Phase 5: Reports & Polish
+
 **Priority: LOW — Advanced features**
 
 - [x] Credit aging report
@@ -827,33 +842,33 @@ Admin voids an invoice that had credit applied
 
 ### New Files
 
-| File | Purpose |
-|------|---------|
-| `packages/db/src/schema/credits.ts` | Drizzle schema for credit_notes, credit_applications, credit_refunds |
-| `packages/db/src/migrations/XXXX_add_credit_tables.sql` | Database migration |
-| `apps/admin/src/app/actions/credit-management.ts` | All credit server actions |
-| `apps/admin/src/components/billing/apply-credit-dialog.tsx` | Dialog for applying credit to invoices |
-| `apps/admin/src/components/billing/credit-balance-card.tsx` | Reusable credit balance display card |
-| `apps/admin/src/components/billing/credit-history-table.tsx` | Credit transaction history table |
-| `apps/admin/src/components/billing/issue-credit-note-dialog.tsx` | Dialog for issuing credit notes |
-| `apps/admin/src/components/billing/credit-refund-dialog.tsx` | Dialog for refunding credits |
-| `apps/admin/src/app/(admin)/billing/credits/page.tsx` | Credit management dashboard page |
-| `apps/admin/src/app/(admin)/billing/credits/credits-client.tsx` | Client component for credits page |
-| `apps/admin/src/app/api/cron/credit-expiry/route.ts` | Cron endpoint for credit expiry |
+| File                                                             | Purpose                                                              |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `packages/db/src/schema/credits.ts`                              | Drizzle schema for credit_notes, credit_applications, credit_refunds |
+| `packages/db/src/migrations/XXXX_add_credit_tables.sql`          | Database migration                                                   |
+| `apps/admin/src/app/actions/credit-management.ts`                | All credit server actions                                            |
+| `apps/admin/src/components/billing/apply-credit-dialog.tsx`      | Dialog for applying credit to invoices                               |
+| `apps/admin/src/components/billing/credit-balance-card.tsx`      | Reusable credit balance display card                                 |
+| `apps/admin/src/components/billing/credit-history-table.tsx`     | Credit transaction history table                                     |
+| `apps/admin/src/components/billing/issue-credit-note-dialog.tsx` | Dialog for issuing credit notes                                      |
+| `apps/admin/src/components/billing/credit-refund-dialog.tsx`     | Dialog for refunding credits                                         |
+| `apps/admin/src/app/(admin)/billing/credits/page.tsx`            | Credit management dashboard page                                     |
+| `apps/admin/src/app/(admin)/billing/credits/credits-client.tsx`  | Client component for credits page                                    |
+| `apps/admin/src/app/api/cron/credit-expiry/route.ts`             | Cron endpoint for credit expiry                                      |
 
 ### Modified Files
 
-| File | Change |
-|------|--------|
-| `apps/admin/src/app/actions/billing-payments.ts` | Auto-create credit_note on overpayment; integrate with credit system |
-| `apps/admin/src/app/actions/billing-invoices.ts` | Restore credits on void; check credits on mark-paid |
-| `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx` | Add CreditBalanceCard + ApplyCreditDialog |
-| `apps/admin/src/app/(admin)/billing/invoices/new/invoice-form-client.tsx` | Show credit balance + apply option |
-| `apps/admin/src/app/(admin)/billing/payments/add/payment-form-client.tsx` | Add "Apply Existing Credit" toggle |
-| `apps/admin/src/app/(admin)/billing/payments/[id]/payment-detail-client.tsx` | Show credit application details |
-| `apps/admin/src/app/(admin)/relationships/clients/[id]/client-billing-workspace.tsx` | Add Credits tab |
-| `apps/admin/src/components/navigation/nav-data.ts` | Add Credits nav item |
-| `packages/db/src/index.ts` | Export new schema tables |
+| File                                                                                 | Change                                                               |
+| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| `apps/admin/src/app/actions/billing-payments.ts`                                     | Auto-create credit_note on overpayment; integrate with credit system |
+| `apps/admin/src/app/actions/billing-invoices.ts`                                     | Restore credits on void; check credits on mark-paid                  |
+| `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx`                          | Add CreditBalanceCard + ApplyCreditDialog                            |
+| `apps/admin/src/app/(admin)/billing/invoices/new/invoice-form-client.tsx`            | Show credit balance + apply option                                   |
+| `apps/admin/src/app/(admin)/billing/payments/add/payment-form-client.tsx`            | Add "Apply Existing Credit" toggle                                   |
+| `apps/admin/src/app/(admin)/billing/payments/[id]/payment-detail-client.tsx`         | Show credit application details                                      |
+| `apps/admin/src/app/(admin)/relationships/clients/[id]/client-billing-workspace.tsx` | Add Credits tab                                                      |
+| `apps/admin/src/components/navigation/nav-data.ts`                                   | Add Credits nav item                                                 |
+| `packages/db/src/index.ts`                                                           | Export new schema tables                                             |
 
 ---
 

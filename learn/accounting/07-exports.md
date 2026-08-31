@@ -7,6 +7,7 @@
 ## What Are Exports?
 
 Sometimes you need your accounting data outside of this system:
+
 - Your accountant needs it to prepare your annual financial statements
 - SARS requires it for tax submissions
 - You want to do your own analysis in Excel or Google Sheets
@@ -22,27 +23,27 @@ For full database backups and restore points, use **Settings -> Data**. Accounti
 
 The Exports page lets you export:
 
-| Data | Format | Use Case |
-|------|--------|----------|
+| Data                  | Format    | Use Case                                          |
+| --------------------- | --------- | ------------------------------------------------- |
 | **Chart of Accounts** | CSV/Excel | Share your account structure with your accountant |
-| **Journal Entries** | CSV/Excel | Complete record of all transactions |
-| **General Ledger** | CSV/Excel | Detailed transaction lines for auditing |
-| **Trial Balance** | CSV/Excel | Period-end balance summary |
-| **Profit & Loss** | CSV/Excel | Income statement for tax or reporting |
+| **Journal Entries**   | CSV/Excel | Complete record of all transactions               |
+| **General Ledger**    | CSV/Excel | Detailed transaction lines for auditing           |
+| **Trial Balance**     | CSV/Excel | Period-end balance summary                        |
+| **Profit & Loss**     | CSV/Excel | Income statement for tax or reporting             |
 
 ---
 
 ## When to Export
 
-| Situation | What to Export |
-|-----------|---------------|
-| **Tax season** | Trial Balance + P&L + Journal Entries |
-| **Accountant review** | Everything (full export) |
-| **Monthly reporting** | P&L for the month |
+| Situation               | What to Export                          |
+| ----------------------- | --------------------------------------- |
+| **Tax season**          | Trial Balance + P&L + Journal Entries   |
+| **Accountant review**   | Everything (full export)                |
+| **Monthly reporting**   | P&L for the month                       |
 | **Bank reconciliation** | General Ledger filtered to bank account |
-| **Audit preparation** | General Ledger + Journal Entries |
-| **Personal records** | Full backup periodically |
-| **Disaster recovery** | Database backup from Settings -> Data |
+| **Audit preparation**   | General Ledger + Journal Entries        |
+| **Personal records**    | Full backup periodically                |
+| **Disaster recovery**   | Database backup from Settings -> Data   |
 
 ---
 
@@ -97,10 +98,10 @@ A: Exports are not restore files. Use a database backup from Settings -> Data if
 
 ## Recommended Export Schedule
 
-| Frequency | What | Why |
-|-----------|------|-----|
-| **Monthly** | Trial Balance + P&L | Keep readable monthly records |
-| **Quarterly** | Full accounting export | Shareable accountant backup |
-| **Annually** | Everything | Year-end records for accountant |
-| **On demand** | As needed | Ad-hoc requests from accountant/SARS |
-| **Daily, automated** | Database backup | Recovery point, configured in Settings -> Data |
+| Frequency            | What                   | Why                                            |
+| -------------------- | ---------------------- | ---------------------------------------------- |
+| **Monthly**          | Trial Balance + P&L    | Keep readable monthly records                  |
+| **Quarterly**        | Full accounting export | Shareable accountant backup                    |
+| **Annually**         | Everything             | Year-end records for accountant                |
+| **On demand**        | As needed              | Ad-hoc requests from accountant/SARS           |
+| **Daily, automated** | Database backup        | Recovery point, configured in Settings -> Data |

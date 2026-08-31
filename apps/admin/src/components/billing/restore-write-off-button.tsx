@@ -11,14 +11,18 @@ interface RestoreWriteOffButtonProps {
   restoreWriteOffAction: (id: string) => Promise<{ error?: string }>;
 }
 
-export function RestoreWriteOffButton({ invoiceId, restoreWriteOffAction }: RestoreWriteOffButtonProps) {
+export function RestoreWriteOffButton({
+  invoiceId,
+  restoreWriteOffAction,
+}: RestoreWriteOffButtonProps) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
 
   async function handleRestore() {
     const confirmed = await confirm({
       title: 'Remove Write-off?',
-      description: 'This will remove the write-off record, reverse the bad debt entry, and restore the invoice to its original billing status.',
+      description:
+        'This will remove the write-off record, reverse the bad debt entry, and restore the invoice to its original billing status.',
       confirmText: 'Remove Write-off',
       cancelText: 'Cancel',
       variant: 'default',

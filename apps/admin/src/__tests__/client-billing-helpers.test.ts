@@ -22,18 +22,19 @@ describe('determineStatementStatus', () => {
   });
 
   it('returns Outstanding when positive balance with no overdue invoices', () => {
-    expect(determineStatementStatus(1000, [
-      { status: 'issued' },
-      { status: 'paid' },
-    ])).toBe('Outstanding');
+    expect(determineStatementStatus(1000, [{ status: 'issued' }, { status: 'paid' }])).toBe(
+      'Outstanding',
+    );
   });
 
   it('returns Overdue when positive balance with at least one overdue invoice', () => {
-    expect(determineStatementStatus(1000, [
-      { status: 'issued' },
-      { status: 'overdue' },
-      { status: 'paid' },
-    ])).toBe('Overdue');
+    expect(
+      determineStatementStatus(1000, [
+        { status: 'issued' },
+        { status: 'overdue' },
+        { status: 'paid' },
+      ]),
+    ).toBe('Overdue');
   });
 
   it('returns Paid with empty invoices array when balance is zero', () => {
@@ -50,10 +51,7 @@ describe('buildTransactionHistory', () => {
   });
 
   it('returns single item with opening balance when no debit/credit', () => {
-    const tx = buildTransactionHistory(
-      [{ date: '2026-06-15', reference: 'tx-1' }],
-      500,
-    );
+    const tx = buildTransactionHistory([{ date: '2026-06-15', reference: 'tx-1' }], 500);
     expect(tx).toHaveLength(1);
     expect(tx[0]!.balance).toBe(500);
     expect(tx[0]!.reference).toBe('tx-1');
@@ -78,10 +76,7 @@ describe('buildTransactionHistory', () => {
   });
 
   it('treats undefined debit/credit as zero', () => {
-    const result = buildTransactionHistory(
-      [{ date: '2026-01-01', reference: 'no-amount' }],
-      100,
-    );
+    const result = buildTransactionHistory([{ date: '2026-01-01', reference: 'no-amount' }], 100);
     expect(result[0]!.balance).toBe(100);
   });
 
@@ -98,16 +93,16 @@ describe('buildTransactionHistory', () => {
   });
 
   it('handles negative opening balance', () => {
-    const result = buildTransactionHistory(
-      [{ date: '2026-01-01', debit: 300 }],
-      -200,
-    );
+    const result = buildTransactionHistory([{ date: '2026-01-01', debit: 300 }], -200);
     expect(result[0]!.balance).toBe(100);
   });
 
   it('handles fractional amounts', () => {
     const result = buildTransactionHistory(
-      [{ date: '2026-01-01', debit: 99.99 }, { date: '2026-01-02', credit: 0.01 }],
+      [
+        { date: '2026-01-01', debit: 99.99 },
+        { date: '2026-01-02', credit: 0.01 },
+      ],
       0,
     );
     expect(result[0]!.balance).toBeCloseTo(99.98, 2);
@@ -134,30 +129,44 @@ describe('adjustOpeningBalance', () => {
 
   it('subtracts credit notes before periodFrom', () => {
     const notes = [
-      { createdAt: { toISOString: () => '2026-05-15T00:00:00.000Z' }, type: 'standard', amount: 500 },
+      {
+        createdAt: { toISOString: () => '2026-05-15T00:00:00.000Z' },
+        type: 'standard',
+        amount: 500,
+      },
     ];
     expect(adjustOpeningBalance(5000, notes, [], periodFrom)).toBe(4500);
   });
 
   it('does not subtract credit notes on or after periodFrom', () => {
     const notes = [
-      { createdAt: { toISOString: () => '2026-06-01T00:00:00.000Z' }, type: 'standard', amount: 500 },
-      { createdAt: { toISOString: () => '2026-06-15T00:00:00.000Z' }, type: 'standard', amount: 300 },
+      {
+        createdAt: { toISOString: () => '2026-06-01T00:00:00.000Z' },
+        type: 'standard',
+        amount: 500,
+      },
+      {
+        createdAt: { toISOString: () => '2026-06-15T00:00:00.000Z' },
+        type: 'standard',
+        amount: 300,
+      },
     ];
     expect(adjustOpeningBalance(5000, notes, [], periodFrom)).toBe(5000);
   });
 
   it('does not subtract overpayment credit notes', () => {
     const notes = [
-      { createdAt: { toISOString: () => '2026-05-01T00:00:00.000Z' }, type: 'overpayment', amount: 1000 },
+      {
+        createdAt: { toISOString: () => '2026-05-01T00:00:00.000Z' },
+        type: 'overpayment',
+        amount: 1000,
+      },
     ];
     expect(adjustOpeningBalance(5000, notes, [], periodFrom)).toBe(5000);
   });
 
   it('adds refunds before periodFrom', () => {
-    const refunds = [
-      { refundDate: '2026-05-20', amount: 200 },
-    ];
+    const refunds = [{ refundDate: '2026-05-20', amount: 200 }];
     expect(adjustOpeningBalance(5000, [], refunds, periodFrom)).toBe(5200);
   });
 
@@ -171,8 +180,16 @@ describe('adjustOpeningBalance', () => {
 
   it('handles combined credit notes and refunds', () => {
     const notes = [
-      { createdAt: { toISOString: () => '2026-05-01T00:00:00.000Z' }, type: 'standard', amount: 400 },
-      { createdAt: { toISOString: () => '2026-05-15T00:00:00.000Z' }, type: 'overpayment', amount: 200 },
+      {
+        createdAt: { toISOString: () => '2026-05-01T00:00:00.000Z' },
+        type: 'standard',
+        amount: 400,
+      },
+      {
+        createdAt: { toISOString: () => '2026-05-15T00:00:00.000Z' },
+        type: 'overpayment',
+        amount: 200,
+      },
     ];
     const refunds = [
       { refundDate: '2026-05-10', amount: 150 },
@@ -184,7 +201,11 @@ describe('adjustOpeningBalance', () => {
 
   it('handles amount as string (from DB)', () => {
     const notes = [
-      { createdAt: { toISOString: () => '2026-05-01T00:00:00.000Z' }, type: 'standard', amount: '250.50' },
+      {
+        createdAt: { toISOString: () => '2026-05-01T00:00:00.000Z' },
+        type: 'standard',
+        amount: '250.50',
+      },
     ];
     expect(adjustOpeningBalance(1000, notes, [], periodFrom)).toBe(749.5);
   });
@@ -251,18 +272,14 @@ describe('resolveDivisionBranding', () => {
   });
 
   it('falls back to linked division name from divisions list when no linked invoice', () => {
-    const invoices = [
-      { divisionId: 'div-2', divisionName: 'Playhouse Media Group' },
-    ];
+    const invoices = [{ divisionId: 'div-2', divisionName: 'Playhouse Media Group' }];
     const result = resolveDivisionBranding('div-1', invoices, allDivs);
     expect(result.divisionName).toBe('Tender Edge Solutions');
     expect(result.effectiveDivisionId).toBe('div-1');
   });
 
   it('falls back to first invoice divisionName when no linked division match', () => {
-    const invoices = [
-      { divisionId: 'div-3', divisionName: 'Custom Division' },
-    ];
+    const invoices = [{ divisionId: 'div-3', divisionName: 'Custom Division' }];
     const result = resolveDivisionBranding('div-999', invoices, allDivs);
     expect(result.divisionName).toBe('Custom Division');
     // effectiveDivisionId is the linked division (even if unknown) — it takes
@@ -289,9 +306,7 @@ describe('resolveDivisionBranding', () => {
   });
 
   it('handles undefined linkedDivisionId same as null', () => {
-    const invoices = [
-      { divisionId: 'div-2', divisionName: 'PMG' },
-    ];
+    const invoices = [{ divisionId: 'div-2', divisionName: 'PMG' }];
     const result = resolveDivisionBranding(undefined, invoices, allDivs);
     expect(result.divisionName).toBe('PMG');
     expect(result.effectiveDivisionId).toBe('div-2');

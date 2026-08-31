@@ -21,9 +21,7 @@ type ItemInput = z.infer<typeof ItemSchema>;
 
 // ── createItem ────────────────────────────────────────────────────────────────
 
-export async function createItem(
-  data: ItemInput,
-): Promise<{ error?: string; id?: string }> {
+export async function createItem(data: ItemInput): Promise<{ error?: string; id?: string }> {
   try {
     await getSessionOrRedirect();
 
@@ -56,10 +54,7 @@ export async function createItem(
 
 // ── updateItem ────────────────────────────────────────────────────────────────
 
-export async function updateItem(
-  id: string,
-  data: ItemInput,
-): Promise<{ error?: string }> {
+export async function updateItem(id: string, data: ItemInput): Promise<{ error?: string }> {
   try {
     await getSessionOrRedirect();
 
@@ -142,12 +137,7 @@ export async function deleteItem(id: string): Promise<{ error?: string }> {
     const [usedInInvoice] = await db
       .select({ id: billingLineItems.id })
       .from(billingLineItems)
-      .where(
-        and(
-          eq(billingLineItems.documentType, 'invoice'),
-          eq(billingLineItems.itemId, id),
-        ),
-      )
+      .where(and(eq(billingLineItems.documentType, 'invoice'), eq(billingLineItems.itemId, id)))
       .limit(1);
 
     if (usedInInvoice) {
