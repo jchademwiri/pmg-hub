@@ -123,18 +123,16 @@ describe('proxy - Property 5: passes authenticated requests through', () => {
     // Mock fetch to return a valid session for all internal session validation calls
     vi.stubGlobal(
       'fetch',
-      vi
-        .fn()
-        .mockImplementation(() =>
-          Promise.resolve(
-            new Response(
-              JSON.stringify({
-                user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true },
-              }),
-              { status: 200 },
-            ),
+      vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true },
+            }),
+            { status: 200 },
           ),
         ),
+      ),
     );
   });
 
@@ -266,18 +264,16 @@ describe('proxy - Property 11: rate limiter isolates by IP', () => {
     // Mock fetch for valid session
     vi.stubGlobal(
       'fetch',
-      vi
-        .fn()
-        .mockImplementation(() =>
-          Promise.resolve(
-            new Response(
-              JSON.stringify({
-                user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true },
-              }),
-              { status: 200 },
-            ),
+      vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true },
+            }),
+            { status: 200 },
           ),
         ),
+      ),
     );
 
     const ip = '5.6.7.8';
@@ -338,18 +334,16 @@ describe('proxy - Property 12: server-side session validation', () => {
     // Mock fetch to return a session with inactive user
     vi.stubGlobal(
       'fetch',
-      vi
-        .fn()
-        .mockImplementation(() =>
-          Promise.resolve(
-            new Response(
-              JSON.stringify({
-                user: { id: '1', name: 'Revoked', email: 'revoked@test.com', isActive: false },
-              }),
-              { status: 200 },
-            ),
+      vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              user: { id: '1', name: 'Revoked', email: 'revoked@test.com', isActive: false },
+            }),
+            { status: 200 },
           ),
         ),
+      ),
     );
 
     const req = makeRequest('/dashboard', { sessionCookie: 'valid-token' });
@@ -368,18 +362,16 @@ describe('proxy - Property 12: server-side session validation', () => {
     // Mock fetch to return a valid active session
     vi.stubGlobal(
       'fetch',
-      vi
-        .fn()
-        .mockImplementation(() =>
-          Promise.resolve(
-            new Response(
-              JSON.stringify({
-                user: { id: '1', name: 'Active', email: 'active@test.com', isActive: true },
-              }),
-              { status: 200 },
-            ),
+      vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              user: { id: '1', name: 'Active', email: 'active@test.com', isActive: true },
+            }),
+            { status: 200 },
           ),
         ),
+      ),
     );
 
     const req = makeRequest('/dashboard', { sessionCookie: 'valid-token' });

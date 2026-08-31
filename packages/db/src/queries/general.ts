@@ -447,9 +447,7 @@ export async function getPeriodTotals(
  * Returns individual income rows for a specific YYYY-MM period,
  * joined with division and client names.
  */
-export async function getIncomeByPeriod(
-  period: string,
-): Promise<
+export async function getIncomeByPeriod(period: string): Promise<
   {
     date: string;
     divisionName: string;
@@ -484,9 +482,7 @@ export async function getIncomeByPeriod(
  * Returns individual expense rows for a specific YYYY-MM period,
  * joined with division and client names.
  */
-export async function getExpensesByPeriod(
-  period: string,
-): Promise<
+export async function getExpensesByPeriod(period: string): Promise<
   {
     date: string;
     divisionName: string;

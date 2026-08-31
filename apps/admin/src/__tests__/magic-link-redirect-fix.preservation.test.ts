@@ -100,16 +100,14 @@ describe('magic-link-redirect-fix - Property 2: Preservation - Baseline Behavior
       // Mock fetch for server-side session validation - active user
       vi.stubGlobal(
         'fetch',
-        vi
-          .fn()
-          .mockResolvedValue(
-            new Response(
-              JSON.stringify({
-                user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true },
-              }),
-              { status: 200 },
-            ),
+        vi.fn().mockResolvedValue(
+          new Response(
+            JSON.stringify({
+              user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true },
+            }),
+            { status: 200 },
           ),
+        ),
       );
     });
 

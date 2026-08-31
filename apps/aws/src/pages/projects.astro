@@ -21,7 +21,7 @@ import { projects } from "@/data/projects";
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {projects.map((project) => (
           <a href={project.url} target="_blank" rel="noopener noreferrer" class="group relative overflow-hidden rounded-2xl bg-muted/30 border border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg block">
-            <!-- Image Placeholder -->
+            {/* Image Placeholder */}
             <div class={`h-56 w-full ${project.image} relative overflow-hidden`}>
                 <img
                   src={project.bgImage}

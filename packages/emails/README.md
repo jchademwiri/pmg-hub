@@ -53,8 +53,8 @@ Each app passes its own prefixed env vars at call time. The package never reads 
 
 ```typescript
 // apps/tes - uses TES_ prefix
-import { createEmailClient, AdminNewLeadEmail } from "@pmg/emails";
-import React from "react";
+import { createEmailClient, AdminNewLeadEmail } from '@pmg/emails';
+import React from 'react';
 
 const email = createEmailClient({
   apiKey: import.meta.env.TES_RESEND_API_KEY,
@@ -65,11 +65,16 @@ const email = createEmailClient({
 const { data, error } = await email({
   to: import.meta.env.TES_ADMIN_EMAIL,
   subject: `New TES Lead: ${name}`,
-  react: React.createElement(AdminNewLeadEmail, { ... }),
+  react: React.createElement(AdminNewLeadEmail, {
+    leadName: 'John Doe',
+    leadEmail: 'john@example.com',
+    service: 'Tender Prep',
+    message: 'Hello',
+  }),
 });
 
 if (error) {
-  console.error("Email send failed:", error.message);
+  console.error('Email send failed:', error.message);
 }
 ```
 
