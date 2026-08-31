@@ -308,9 +308,8 @@ describe('Billing Invoices Module', () => {
           from: () => ({
             where: () => {
               if (selectCount === 1) return selectResult([acceptedQuote]); // outer quote fetch
-              if (selectCount === 2) return selectResult([{ paymentTermsDays: 15 }]); // divisionBillingSettings
-              if (selectCount === 3) return selectResult([acceptedQuote]); // locked quote (.for('update'))
-              if (selectCount === 4) {
+              if (selectCount === 2) return selectResult([acceptedQuote]); // locked quote (.for('update'))
+              if (selectCount === 3) {
                 return selectResult([
                   {
                     sortOrder: 0,

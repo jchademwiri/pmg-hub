@@ -470,16 +470,8 @@ export async function convertQuoteToInvoice(
 
     const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
 
-    // Fetch division payment terms to calculate due date
-    const [settings] = await db
-      .select({ paymentTermsDays: divisionBillingSettings.paymentTermsDays })
-      .from(divisionBillingSettings)
-      .where(eq(divisionBillingSettings.divisionId, quote.divisionId));
-
-    const paymentTermsDays = settings?.paymentTermsDays ?? 30;
-    const dueDateObj = new Date(today);
-    dueDateObj.setDate(dueDateObj.getDate() + paymentTermsDays);
-    const calculatedDueDate = dueDateObj.toISOString().split('T')[0];
+    // Default invoice due date to the last day of the current month
+    const calculatedDueDate = getEndOfMonth(today);
 
     const documentNumber = await getNextDocumentNumber(quote.divisionId, 'invoice', year);
 

@@ -355,7 +355,13 @@ export function InvoiceFormClient({
                         <input
                           type="checkbox"
                           checked={hasDueDate}
-                          onChange={(e) => setHasDueDate(e.target.checked)}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setHasDueDate(checked);
+                            if (checked && !dueDate) {
+                              setDueDate(getEndOfMonth(invoiceDate));
+                            }
+                          }}
                           disabled={isSubmitting}
                           className="h-3.5 w-3.5 rounded border-input text-primary focus:ring-primary"
                         />
@@ -372,6 +378,9 @@ export function InvoiceFormClient({
                       disabled={isSubmitting || !hasDueDate}
                       className={!hasDueDate ? 'opacity-50' : ''}
                     />
+                    <span className="text-[11px] text-muted-foreground mt-0.5 block">
+                      Default: Last day of the current month
+                    </span>
                   </Field>
 
                   <Field>
