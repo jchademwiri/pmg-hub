@@ -51,10 +51,10 @@ This task list tracks the execution and verification of all bug fixes, security 
 
 ---
 
-- [ ] **Task 3: Remove Hardcoded R2 Secrets in TES**
-  - [ ] **3.1** `apps/tes/src/pages/api/download.ts`
-    - Remove `DEFAULT_R2_ACCOUNT_ID`, `DEFAULT_R2_ACCESS_KEY_ID`, and `DEFAULT_R2_SECRET_ACCESS_KEY` plaintext credentials.
-    - Validate required environment variables and return structured configuration error if missing.
+- [x] **Task 3: Remove Hardcoded R2 Secrets in TES**
+  - [x] **3.1** `apps/tes/src/pages/api/download.ts`
+    - Removed `DEFAULT_R2_ACCOUNT_ID`, `DEFAULT_R2_ACCESS_KEY_ID`, and `DEFAULT_R2_SECRET_ACCESS_KEY` plaintext credentials.
+    - Validated required environment variables and return structured configuration error if missing.
 
 ---
 
