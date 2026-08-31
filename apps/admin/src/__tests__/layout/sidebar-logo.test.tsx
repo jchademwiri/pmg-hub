@@ -32,6 +32,8 @@ vi.mock('@/components/layout/sign-out-button', () => ({
   SignOutButton: () => <button>Sign Out</button>,
 }));
 
+import { APP_VERSION } from '@pmg/utils';
+
 describe('AppSidebar Logo', () => {
   const mockUser = {
     name: 'Test User',
@@ -53,7 +55,7 @@ describe('AppSidebar Logo', () => {
     const logoLabel = screen.queryByText(/Control Center/i);
     expect(logoLabel).toBeInTheDocument();
 
-    const versionLabel = screen.queryByText(/v1\.36\.0/i);
-    expect(versionLabel).toBeInTheDocument();
+    const versionLabels = screen.queryAllByText(new RegExp(APP_VERSION, 'i'));
+    expect(versionLabels.length).toBeGreaterThan(0);
   });
 });

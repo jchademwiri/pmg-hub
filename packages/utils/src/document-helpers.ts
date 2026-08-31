@@ -61,6 +61,6 @@ export function generateCreditNoteNumber(
  * Canonical Application Version for PMG Hub.
  * Updated automatically during production release pipeline (/release, /tag).
  */
-export const APP_VERSION = 'v1.36.0';
-export const APP_RELEASE_NAME = 'Release v1.36.0';
+export const APP_VERSION = 'v1.39.2';
+export const APP_RELEASE_NAME = 'Release v1.39.2';
 export const CURRENT_APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || APP_VERSION;
