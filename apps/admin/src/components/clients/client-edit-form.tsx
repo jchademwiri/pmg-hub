@@ -99,6 +99,78 @@ export function ClientEditForm({ client, divisions, updateAction, onCancel }: Cl
         </Field>
 
         <Field>
+          <FieldLabel htmlFor="client-registration-number">CIPC Registration Number</FieldLabel>
+          <Input
+            id="client-registration-number"
+            name="registrationNumber"
+            type="text"
+            placeholder="e.g. 2024/123456/07"
+            defaultValue={client.registrationNumber ?? ''}
+            disabled={isPending}
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="client-website">Website URL</FieldLabel>
+          <Input
+            id="client-website"
+            name="website"
+            type="text"
+            placeholder="e.g. https://acme.co.za"
+            defaultValue={client.website ?? ''}
+            disabled={isPending}
+          />
+        </Field>
+
+        <Field className="md:col-span-2">
+          <FieldLabel htmlFor="client-billing-address">Street / Physical Address</FieldLabel>
+          <Input
+            id="client-billing-address"
+            name="billingAddress"
+            type="text"
+            placeholder="e.g. 123 Main Road, Centurion"
+            defaultValue={client.billingAddress ?? ''}
+            disabled={isPending}
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="client-city">City / Town</FieldLabel>
+          <Input
+            id="client-city"
+            name="city"
+            type="text"
+            placeholder="e.g. Pretoria"
+            defaultValue={client.city ?? ''}
+            disabled={isPending}
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="client-postal-code">Postal Code</FieldLabel>
+          <Input
+            id="client-postal-code"
+            name="postalCode"
+            type="text"
+            placeholder="e.g. 0157"
+            defaultValue={client.postalCode ?? ''}
+            disabled={isPending}
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="client-province">Province</FieldLabel>
+          <Input
+            id="client-province"
+            name="province"
+            type="text"
+            placeholder="e.g. Gauteng"
+            defaultValue={client.province ?? ''}
+            disabled={isPending}
+          />
+        </Field>
+
+        <Field>
           <FieldLabel htmlFor="client-division">Linked Division</FieldLabel>
           <Select
             defaultValue={divisionId}

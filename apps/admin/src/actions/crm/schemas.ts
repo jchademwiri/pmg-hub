@@ -6,6 +6,12 @@ export const ClientSchema = z.object({
   email: z.string().email('Invalid email address').optional().or(z.literal('')).nullable(),
   phone: z.string().max(50).optional().nullable(),
   divisionId: z.string().uuid().optional().nullable(),
+  registrationNumber: z.string().max(100).optional().nullable(),
+  website: z.string().max(200).optional().nullable(),
+  billingAddress: z.string().max(300).optional().nullable(),
+  city: z.string().max(100).optional().nullable(),
+  postalCode: z.string().max(20).optional().nullable(),
+  province: z.string().max(100).optional().nullable(),
   isRetainer: z.boolean().default(false),
   excludeFromAutoStatements: z.boolean().default(false),
 });

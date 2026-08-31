@@ -33,10 +33,16 @@ export async function createClient(formData: FormData): Promise<{ error?: string
     await getSessionOrRedirect();
 
     const raw = Object.fromEntries(formData) as Record<string, string>;
-    if (raw.businessName === '') delete raw.businessName;
-    if (raw.email === '') delete raw.email;
-    if (raw.phone === '') delete raw.phone;
-    if (raw.divisionId === '__none__') delete raw.divisionId;
+    if (!raw.businessName?.trim()) delete raw.businessName;
+    if (!raw.email?.trim()) delete raw.email;
+    if (!raw.phone?.trim()) delete raw.phone;
+    if (raw.divisionId === '__none__' || !raw.divisionId?.trim()) delete raw.divisionId;
+    if (!raw.registrationNumber?.trim()) delete raw.registrationNumber;
+    if (!raw.website?.trim()) delete raw.website;
+    if (!raw.billingAddress?.trim()) delete raw.billingAddress;
+    if (!raw.city?.trim()) delete raw.city;
+    if (!raw.postalCode?.trim()) delete raw.postalCode;
+    if (!raw.province?.trim()) delete raw.province;
     const isExcluded = raw.excludeFromAutoStatements === 'on';
     const isRetainer = raw.isRetainer === 'on';
     const result = ClientSchema.safeParse({
@@ -54,6 +60,12 @@ export async function createClient(formData: FormData): Promise<{ error?: string
       email: parsed.email ?? null,
       phone: parsed.phone ?? null,
       divisionId: parsed.divisionId ?? null,
+      registrationNumber: parsed.registrationNumber ?? null,
+      website: parsed.website ?? null,
+      billingAddress: parsed.billingAddress ?? null,
+      city: parsed.city ?? null,
+      postalCode: parsed.postalCode ?? null,
+      province: parsed.province ?? null,
       isRetainer: parsed.isRetainer,
       excludeFromAutoStatements: parsed.excludeFromAutoStatements,
     });
@@ -70,10 +82,16 @@ export async function updateClient(id: string, formData: FormData): Promise<{ er
     await getSessionOrRedirect();
 
     const raw = Object.fromEntries(formData) as Record<string, string>;
-    if (raw.businessName === '') delete raw.businessName;
-    if (raw.email === '') delete raw.email;
-    if (raw.phone === '') delete raw.phone;
-    if (raw.divisionId === '__none__') delete raw.divisionId;
+    if (!raw.businessName?.trim()) delete raw.businessName;
+    if (!raw.email?.trim()) delete raw.email;
+    if (!raw.phone?.trim()) delete raw.phone;
+    if (raw.divisionId === '__none__' || !raw.divisionId?.trim()) delete raw.divisionId;
+    if (!raw.registrationNumber?.trim()) delete raw.registrationNumber;
+    if (!raw.website?.trim()) delete raw.website;
+    if (!raw.billingAddress?.trim()) delete raw.billingAddress;
+    if (!raw.city?.trim()) delete raw.city;
+    if (!raw.postalCode?.trim()) delete raw.postalCode;
+    if (!raw.province?.trim()) delete raw.province;
 
     // Convert checkbox 'on' value to boolean
     const isExcluded = raw.excludeFromAutoStatements === 'on';
@@ -96,6 +114,12 @@ export async function updateClient(id: string, formData: FormData): Promise<{ er
         email: parsed.email ?? null,
         phone: parsed.phone ?? null,
         divisionId: parsed.divisionId ?? null,
+        registrationNumber: parsed.registrationNumber ?? null,
+        website: parsed.website ?? null,
+        billingAddress: parsed.billingAddress ?? null,
+        city: parsed.city ?? null,
+        postalCode: parsed.postalCode ?? null,
+        province: parsed.province ?? null,
         isRetainer: parsed.isRetainer,
         excludeFromAutoStatements: parsed.excludeFromAutoStatements,
         updatedAt: new Date(),

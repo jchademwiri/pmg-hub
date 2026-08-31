@@ -15,3 +15,4 @@ export * from './savings';
 export * from './spend-trackers';
 export * from './luno';
 export * from './recurring';
+export * from './onboarding';

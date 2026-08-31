@@ -56,7 +56,18 @@ export default async function ProfilePage() {
                 </div>
               </div>
 
-              <ProfileEditForm initialClient={{ name: client.name, phone: client.phone }} />
+              <ProfileEditForm
+                initialClient={{
+                  name: client.name,
+                  phone: client.phone,
+                  registrationNumber: client.registrationNumber,
+                  website: client.website,
+                  billingAddress: client.billingAddress,
+                  city: client.city,
+                  postalCode: client.postalCode,
+                  province: client.province,
+                }}
+              />
 
               <div className="rounded-lg bg-white/[0.01] border border-white/5 p-3 flex items-start gap-2 text-[11px] text-muted-foreground leading-relaxed mt-4">
                 <Shield className="size-4 shrink-0 text-blue-500 mt-0.5" />

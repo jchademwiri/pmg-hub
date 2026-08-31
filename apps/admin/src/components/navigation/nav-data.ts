@@ -46,6 +46,7 @@ import {
   CalendarRange,
   Landmark,
   PiggyBank,
+  UserCheck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Role } from '@/lib/roles';
@@ -112,6 +113,7 @@ export const GROUPS: NavGroup[] = [
       { title: 'Overview', url: '/relationships', icon: LayoutGrid },
       { title: 'Clients', url: '/relationships/clients', icon: Users },
       { title: 'Leads', url: '/relationships/leads', icon: UserPlus },
+      { title: 'Onboarding', url: '/relationships/onboarding', icon: UserCheck },
       { title: 'Divisions', url: '/relationships/divisions', icon: Building2 },
     ],
   },
