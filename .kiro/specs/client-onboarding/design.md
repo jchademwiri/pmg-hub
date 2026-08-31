@@ -21,6 +21,7 @@ graph TD
 ## 2. Table Specifications
 
 ### A. Additions to `clients` (`packages/db/src/schema/clients.ts`)
+
 ```typescript
 registrationNumber: text('registration_number'),
 website: text('website'),
@@ -31,6 +32,7 @@ province: text('province'),
 ```
 
 ### B. Staging Table `client_onboardings` (`packages/db/src/schema/onboarding.ts`)
+
 ```typescript
 export const clientOnboardings = pgTable(
   'client_onboardings',
@@ -38,20 +40,22 @@ export const clientOnboardings = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     divisionId: uuid('division_id').references(() => divisions.id, { onDelete: 'set null' }),
     leadId: uuid('lead_id').references(() => leads.id, { onDelete: 'set null' }),
-    
+
     // Core Profile Essentials
     contactName: text('contact_name').notNull(),
     companyName: text('company_name').notNull(),
     email: text('email').notNull(),
     phone: text('phone').notNull(),
-    
+
     // Optional
     registrationNumber: text('registration_number'),
     notes: text('notes'),
-    
+
     // Status
     status: onboardingStatusEnum('status').notNull().default('pending'),
-    convertedClientId: uuid('converted_client_id').references(() => clients.id, { onDelete: 'set null' }),
+    convertedClientId: uuid('converted_client_id').references(() => clients.id, {
+      onDelete: 'set null',
+    }),
     reviewedBy: text('reviewed_by').references(() => user.id, { onDelete: 'set null' }),
     reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -60,6 +64,6 @@ export const clientOnboardings = pgTable(
   (t) => [
     index('onboarding_status_idx').on(t.status),
     index('onboarding_lead_id_idx').on(t.leadId),
-  ]
+  ],
 );
 ```
