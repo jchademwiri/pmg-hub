@@ -38,16 +38,16 @@ This task list tracks the execution and verification of all bug fixes, security 
 
 ---
 
-- [ ] **Task 2: Cloudflare R2 Receipt Storage & API**
-  - [ ] **2.1** `apps/admin/src/app/actions/expenses.ts`
-    - Replace local `fs/promises` (`process.cwd()/public/uploads/receipts/`) with Cloudflare R2 upload using `PutObjectCommand`.
-    - Save receipts under key `receipts/${Date.now()}-${cleanFileName}`.
-    - Store receipt reference URL as `/api/receipts?key=${encodeURIComponent(s3Key)}`.
-  - [ ] **2.2** `apps/admin/src/app/api/receipts/route.ts`
-    - Create new secure API route handler `GET /api/receipts?key=...`.
-    - Authenticate admin session via `auth.api.getSession()`.
-    - Validate requested key resides strictly within `receipts/` prefix.
-    - Generate short-lived presigned URL or stream object directly from R2.
+- [x] **Task 2: Cloudflare R2 Receipt Storage & API**
+  - [x] **2.1** `apps/admin/src/app/actions/expenses.ts`
+    - Replaced local `fs/promises` with Cloudflare R2 upload using `PutObjectCommand`.
+    - Saved receipts under key `receipts/${Date.now()}-${cleanFileName}`.
+    - Stored receipt reference URL as `/api/receipts?key=${encodeURIComponent(s3Key)}`.
+  - [x] **2.2** `apps/admin/src/app/api/receipts/route.ts` & `apps/admin/src/lib/r2.ts`
+    - Created secure API route handler `GET /api/receipts?key=...`.
+    - Authenticated admin session via `auth.api.getSession({ headers: request.headers })`.
+    - Validated requested key resides strictly within `receipts/` prefix (blocking traversal).
+    - Generated short-lived presigned URL (300s) and redirected with 307.
 
 ---
 

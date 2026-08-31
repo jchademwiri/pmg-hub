@@ -7,6 +7,7 @@ import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib
 import { getSASTToday } from '@/lib/format';
 import { postExpenseJournalEntry, voidExpenseJournalEntries, updateExpenseJournalEntry } from '@/lib/accounting/posting';
 import { getSessionOrRedirect } from '@/lib/auth';
+import { uploadReceiptToR2 } from '@/lib/r2';
 
 const ExpenseSchema = z.object({
   date: z.string().min(1),
@@ -19,49 +20,6 @@ const ExpenseSchema = z.object({
   description: z.string().optional(),
   amount: z.coerce.number().positive(),
 });
-
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_MIME_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
-
-async function handleReceiptUpload(file: File | null): Promise<{ url?: string; fileName?: string; fileSize?: number; error?: string }> {
-  if (!file || typeof file === 'string' || file.size === 0 || file.name === 'undefined') return {};
-
-  if (file.size > MAX_FILE_SIZE) {
-    return { error: 'File size exceeds 10MB limit.' };
-  }
-
-  const mimeMatch = ALLOWED_MIME_TYPES.includes(file.type.toLowerCase());
-  const nameMatch = /\.(pdf|png|jpe?g)$/i.test(file.name);
-  if (!mimeMatch && !nameMatch) {
-    return { error: 'Only PDF, PNG, JPG, and JPEG files are allowed.' };
-  }
-
-  try {
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const uploadDir = join(process.cwd(), 'public', 'uploads', 'receipts');
-    await mkdir(uploadDir, { recursive: true });
-
-    const ext = file.name.split('.').pop() || 'bin';
-    const fileName = `receipt_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
-    const filePath = join(uploadDir, fileName);
-
-    await writeFile(filePath, buffer);
-
-    return {
-      url: `/uploads/receipts/${fileName}`,
-      fileName: file.name,
-      fileSize: file.size,
-    };
-  } catch (err) {
-    console.error('Failed to save receipt file:', err);
-    return {};
-  }
-}
 
 export async function createExpense(formData: FormData): Promise<{ error?: string }> {
   try {
@@ -82,7 +40,7 @@ export async function createExpense(formData: FormData): Promise<{ error?: strin
     }
 
     const receiptFile = formData.get('receipt') as File | null;
-    const receiptData = await handleReceiptUpload(receiptFile);
+    const receiptData = await uploadReceiptToR2(receiptFile);
     if (receiptData.error) {
       return { error: receiptData.error };
     }
@@ -144,7 +102,7 @@ export async function updateExpense(id: string, formData: FormData): Promise<{ e
       return { error: getMinDateErrorMessage(minDate) };
     }
     const receiptFile = formData.get('receipt') as File | null;
-    const receiptData = await handleReceiptUpload(receiptFile);
+    const receiptData = await uploadReceiptToR2(receiptFile);
     if (receiptData.error) {
       return { error: receiptData.error };
     }
