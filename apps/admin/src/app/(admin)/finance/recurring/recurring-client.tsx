@@ -44,6 +44,9 @@ import {
   setRecurringInvoiceStatus,
   triggerRecurringBillingRun,
   createRecurringExpense,
+  updateRecurringExpense,
+  deleteRecurringExpense,
+  setRecurringExpenseStatus,
   markRecurringExpenseAsPaid,
   type RecurringFrequency,
 } from '@/app/actions/recurring-actions';
@@ -101,6 +104,22 @@ function defaultNextRunDate(): string {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
+function defaultNextDueDate(cycleDay = 1): string {
+  const now = new Date();
+  let year = now.getFullYear();
+  let month = now.getMonth();
+  if (now.getDate() > cycleDay) {
+    month += 1;
+    if (month > 11) {
+      month = 0;
+      year += 1;
+    }
+  }
+  const maxDay = new Date(year, month + 1, 0).getDate();
+  const day = Math.min(cycleDay, maxDay);
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 function formatFrequencyLabel(freq?: string): string {
   switch (freq) {
     case 'quarterly':
@@ -130,6 +149,7 @@ export function RecurringClient({
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<{
     type: 'success' | 'error';
     text: string;
@@ -150,14 +170,16 @@ export function RecurringClient({
   const [newInvEndDate, setNewInvEndDate] = useState('');
   const [newInvLineItems, setNewInvLineItems] = useState<LineItemFormRow[]>([blankRow()]);
 
-  // New Outbound Expense Form State
+  // New/Edit Outbound Expense Form State
   const [newExpDivisionId, setNewExpDivisionId] = useState(divisions[0]?.id || '');
   const [newExpVendor, setNewExpVendor] = useState('');
   const [newExpCategory, setNewExpCategory] = useState(categories[0] || 'Software & SaaS');
   const [newExpFrequency, setNewExpFrequency] = useState<RecurringFrequency>('monthly');
   const [newExpAmount, setNewExpAmount] = useState('');
   const [newExpCycleDay, setNewExpCycleDay] = useState(1);
+  const [newExpNextDueDate, setNewExpNextDueDate] = useState(defaultNextDueDate(1));
   const [newExpClientId, setNewExpClientId] = useState<string>('none');
+  const [newExpNotes, setNewExpNotes] = useState('');
 
   // Calculations
   const activeInbound = recurringInvoices.filter((i) => i.status === 'active');
@@ -191,6 +213,29 @@ export function RecurringClient({
 
   const netMonthlySurplus = totalMRR - totalSoftwareBurn;
 
+  // Current month scheduled cashflow calculations
+  const now = new Date();
+  const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const currentMonthName = now.toLocaleString('en-ZA', { month: 'long' });
+
+  const inboundDueThisMonth = activeInbound.filter(
+    (inv) => inv.nextRunDate && inv.nextRunDate.startsWith(currentYearMonth),
+  );
+  const scheduledInboundThisMonth = inboundDueThisMonth.reduce(
+    (sum, inv) => sum + parseFloat(inv.total),
+    0,
+  );
+
+  const outboundDueThisMonth = activeOutbound.filter(
+    (exp) => exp.nextDueDate && exp.nextDueDate.startsWith(currentYearMonth),
+  );
+  const scheduledOutboundThisMonth = outboundDueThisMonth.reduce(
+    (sum, exp) => sum + parseFloat(exp.amount),
+    0,
+  );
+
+  const netCashflowThisMonth = scheduledInboundThisMonth - scheduledOutboundThisMonth;
+
   // Handlers
   const handleTriggerRun = () => {
     setActionMessage(null);
@@ -198,15 +243,25 @@ export function RecurringClient({
       const res = await triggerRecurringBillingRun();
       if (res.error) {
         setActionMessage({ type: 'error', text: res.error });
+      } else if (res.generatedCount === 0) {
+        const nextDates = activeInbound
+          .map((i) => i.nextRunDate)
+          .filter(Boolean)
+          .sort();
+        const earliestDate = nextDates[0];
+        setActionMessage({
+          type: 'success',
+          text: earliestDate
+            ? `No retainers are due for billing today. Next scheduled billing run is on ${fmtDateLong(earliestDate)}. To generate an invoice immediately, edit the retainer's "First / Next Invoice Date" to today.`
+            : 'No active retainer schedules are due for billing today.',
+        });
       } else {
         const emailNote = res.emailFailureCount
           ? ` ${res.emailFailureCount} email(s) failed to send — check client email addresses and try again.`
-          : res.generatedCount
-            ? ' Emailed to clients with their statement attached.'
-            : '';
+          : ' Invoices have been generated and emailed to clients with statements attached.';
         setActionMessage({
           type: res.emailFailureCount ? 'error' : 'success',
-          text: `Successfully processed recurring run: ${res.generatedCount ?? 0} invoice(s) generated & issued.${emailNote}`,
+          text: `Successfully processed recurring run: ${res.generatedCount} invoice(s) generated & issued.${emailNote}`,
         });
       }
     });
@@ -343,7 +398,70 @@ export function RecurringClient({
     });
   };
 
-  const handleCreateExpense = (e: React.FormEvent) => {
+  function resetExpenseForm() {
+    setEditingExpenseId(null);
+    setNewExpDivisionId(divisions[0]?.id || '');
+    setNewExpVendor('');
+    setNewExpCategory(categories[0] || 'Software & SaaS');
+    setNewExpFrequency('monthly');
+    setNewExpAmount('');
+    setNewExpCycleDay(1);
+    setNewExpNextDueDate(defaultNextDueDate(1));
+    setNewExpClientId('none');
+    setNewExpNotes('');
+  }
+
+  function handleOpenCreateExpense() {
+    resetExpenseForm();
+    setExpenseModalOpen(true);
+  }
+
+  function handleOpenEditExpense(id: string) {
+    const exp = recurringExpenses.find((e) => e.id === id);
+    if (!exp) return;
+    setEditingExpenseId(id);
+    setNewExpDivisionId(exp.divisionId);
+    setNewExpVendor(exp.vendorName);
+    setNewExpCategory(exp.category);
+    setNewExpFrequency(exp.frequency as RecurringFrequency);
+    setNewExpAmount(exp.amount);
+    setNewExpCycleDay(exp.billingCycleDay);
+    setNewExpNextDueDate(exp.nextDueDate);
+    setNewExpClientId(exp.clientId || 'none');
+    setNewExpNotes(exp.notes || '');
+    setExpenseModalOpen(true);
+  }
+
+  function handleDeleteExpense(id: string) {
+    if (!window.confirm('Delete this vendor subscription? This cannot be undone.')) return;
+    setActionMessage(null);
+    startTransition(async () => {
+      const res = await deleteRecurringExpense(id);
+      if (res.error) {
+        setActionMessage({ type: 'error', text: res.error });
+      } else {
+        setActionMessage({ type: 'success', text: 'Vendor subscription deleted.' });
+      }
+    });
+  }
+
+  function handleToggleExpenseStatus(id: string, currentStatus: string) {
+    const nextStatus = currentStatus === 'active' ? 'paused' : 'active';
+    setActionMessage(null);
+    startTransition(async () => {
+      const res = await setRecurringExpenseStatus(id, nextStatus);
+      if (res.error) {
+        setActionMessage({ type: 'error', text: res.error });
+      } else {
+        setActionMessage({
+          type: 'success',
+          text: `Vendor subscription ${nextStatus === 'active' ? 'resumed' : 'paused'}.`,
+        });
+      }
+    });
+  }
+
+  const handleSaveExpense = (e: React.FormEvent) => {
     e.preventDefault();
     setActionMessage(null);
     const amountNum = parseFloat(newExpAmount);
@@ -353,24 +471,33 @@ export function RecurringClient({
     }
 
     startTransition(async () => {
-      const res = await createRecurringExpense({
+      const payload = {
         divisionId: newExpDivisionId,
         vendorName: newExpVendor.trim(),
         category: newExpCategory,
         frequency: newExpFrequency,
         amount: amountNum,
         billingCycleDay: Number(newExpCycleDay),
+        nextDueDate: newExpNextDueDate,
         clientId: newExpClientId === 'none' ? null : newExpClientId,
-      });
+        notes: newExpNotes || null,
+      };
+
+      const res = editingExpenseId
+        ? await updateRecurringExpense(editingExpenseId, payload)
+        : await createRecurringExpense(payload);
 
       if (res.error) {
         setActionMessage({ type: 'error', text: res.error });
       } else {
         setExpenseModalOpen(false);
-        setNewExpVendor('');
-        setNewExpAmount('');
-        setNewExpFrequency('monthly');
-        setActionMessage({ type: 'success', text: 'Recurring subscription created successfully.' });
+        resetExpenseForm();
+        setActionMessage({
+          type: 'success',
+          text: editingExpenseId
+            ? 'Recurring subscription updated successfully.'
+            : 'Recurring subscription created successfully.',
+        });
       }
     });
   };
@@ -392,50 +519,66 @@ export function RecurringClient({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Top Banner Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-l-4 border-l-emerald-500">
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-600">
-              <ArrowDownLeft className="h-4 w-4" /> Inbound Monthly Retainers (MRR)
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
-              {formatZAR(totalMRR)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            {activeInbound.length} active client retainer(s) • Generated 25th, due 1st
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-rose-500">
+      {/* Top Banner Stats - Reconciled Operational Cashflow & Monthly MRR */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-b-4 border-b-rose-500 overflow-hidden">
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-rose-600">
-              <TrendingDown className="h-4 w-4" /> Outbound Subscriptions Burn
+              <TrendingDown className="h-4 w-4" /> To Pay ({currentMonthName})
             </CardDescription>
             <CardTitle className="text-2xl font-bold text-rose-700 dark:text-rose-400">
-              {formatZAR(totalSoftwareBurn)}
+              {formatZAR(scheduledOutboundThisMonth)}
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground">
-            {activeOutbound.length} vendor software & VPS subscriptions (Claude, Antigravity,
-            Hetzner)
+            {outboundDueThisMonth.length} vendor sub(s) due • {formatZAR(totalSoftwareBurn)}/mo
+            amortized
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-blue-500">
+        <Card className="border-b-4 border-b-emerald-500 overflow-hidden">
+          <CardHeader className="pb-2">
+            <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-600">
+              <ArrowDownLeft className="h-4 w-4" /> To Collect ({currentMonthName})
+            </CardDescription>
+            <CardTitle className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
+              {formatZAR(scheduledInboundThisMonth)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-xs text-muted-foreground">
+            {inboundDueThisMonth.length} retainer(s) running • {formatZAR(totalMRR)}/mo MRR
+          </CardContent>
+        </Card>
+
+        <Card className="border-b-4 border-b-cyan-500 overflow-hidden">
+          <CardHeader className="pb-2">
+            <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-cyan-600">
+              <CalendarClock className="h-4 w-4" /> Net Cashflow ({currentMonthName})
+            </CardDescription>
+            <CardTitle
+              className={`text-2xl font-bold ${netCashflowThisMonth >= 0 ? 'text-cyan-700 dark:text-cyan-400' : 'text-rose-600'}`}
+            >
+              {formatZAR(netCashflowThisMonth)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-xs text-muted-foreground">
+            Actual cash surplus (Inflow − Outflow) this month
+          </CardContent>
+        </Card>
+
+        <Card className="border-b-4 border-b-blue-500 overflow-hidden">
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-blue-600">
-              <Layers className="h-4 w-4" /> Net Monthly Recurring Surplus
+              <Layers className="h-4 w-4" /> Monthly Retainers (MRR)
             </CardDescription>
             <CardTitle
               className={`text-2xl font-bold ${netMonthlySurplus >= 0 ? 'text-blue-700 dark:text-blue-400' : 'text-rose-600'}`}
             >
-              {formatZAR(netMonthlySurplus)}
+              {formatZAR(totalMRR)}
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground">
-            Net monthly baseline margin before variable project income
+            {formatZAR(netMonthlySurplus * 12)} / yr net baseline annual margin
           </CardContent>
         </Card>
       </div>
@@ -508,7 +651,7 @@ export function RecurringClient({
               </Button>
             </>
           ) : (
-            <Button size="sm" onClick={() => setExpenseModalOpen(true)} className="gap-1.5">
+            <Button size="sm" onClick={handleOpenCreateExpense} className="gap-1.5">
               <Plus className="h-4 w-4" /> Add Vendor Subscription
             </Button>
           )}
@@ -560,7 +703,7 @@ export function RecurringClient({
                         </Badge>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5 mb-1">
+                        <div className="flex flex-wrap items-center gap-1.5 mb-1">
                           <Badge
                             variant="outline"
                             className="text-[10px] font-semibold uppercase tracking-wider bg-muted/40"
@@ -570,6 +713,14 @@ export function RecurringClient({
                           <span className="text-xs text-muted-foreground">
                             Day {inv.billingCycleDay}
                           </span>
+                          {inv.nextRunDate && inv.nextRunDate.startsWith(currentYearMonth) && (
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200"
+                            >
+                              Runs This Month
+                            </Badge>
+                          )}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           Next: {fmtDateLong(inv.nextRunDate)}
@@ -581,7 +732,20 @@ export function RecurringClient({
                         )}
                       </td>
                       <td className="px-4 py-3 font-semibold text-foreground">
-                        {formatZAR(parseFloat(inv.total))}
+                        <div>{formatZAR(parseFloat(inv.total))}</div>
+                        {inv.frequency !== 'monthly' && (
+                          <div className="text-[11px] font-normal text-muted-foreground">
+                            {formatZAR(
+                              parseFloat(inv.total) *
+                                (inv.frequency === 'annually'
+                                  ? 1 / 12
+                                  : inv.frequency === 'semi_annually'
+                                    ? 1 / 6
+                                    : 1 / 3),
+                            )}
+                            /mo normalized
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <Badge
@@ -657,7 +821,7 @@ export function RecurringClient({
                 Track monthly software & hosting overhead (Claude, Antigravity, Hetzner VPS) to
                 ensure 1-click accounting payment logging.
               </p>
-              <Button size="sm" onClick={() => setExpenseModalOpen(true)}>
+              <Button size="sm" onClick={handleOpenCreateExpense}>
                 <Plus className="h-4 w-4 mr-1.5" /> Add First Subscription
               </Button>
             </div>
@@ -691,7 +855,7 @@ export function RecurringClient({
                         </Badge>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5 mb-1">
+                        <div className="flex flex-wrap items-center gap-1.5 mb-1">
                           <Badge
                             variant="outline"
                             className="text-[10px] font-semibold uppercase tracking-wider bg-muted/40"
@@ -701,13 +865,34 @@ export function RecurringClient({
                           <span className="text-xs text-muted-foreground">
                             Day {exp.billingCycleDay}
                           </span>
+                          {exp.nextDueDate && exp.nextDueDate.startsWith(currentYearMonth) && (
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200"
+                            >
+                              Due This Month
+                            </Badge>
+                          )}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           Due: {fmtDateLong(exp.nextDueDate)}
                         </div>
                       </td>
                       <td className="px-4 py-3 font-semibold text-foreground">
-                        {formatZAR(parseFloat(exp.amount))}
+                        <div>{formatZAR(parseFloat(exp.amount))}</div>
+                        {exp.frequency !== 'monthly' && (
+                          <div className="text-[11px] font-normal text-muted-foreground">
+                            {formatZAR(
+                              parseFloat(exp.amount) *
+                                (exp.frequency === 'annually'
+                                  ? 1 / 12
+                                  : exp.frequency === 'semi_annually'
+                                    ? 1 / 6
+                                    : 1 / 3),
+                            )}
+                            /mo normalized
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <Badge
@@ -733,6 +918,45 @@ export function RecurringClient({
                             className="text-xs h-8 gap-1 text-emerald-700 dark:text-emerald-300"
                           >
                             <CheckCircle2 className="h-3.5 w-3.5" /> Mark Paid
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenEditExpense(exp.id)}
+                            disabled={isPending}
+                            className="text-xs h-8"
+                          >
+                            <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                          </Button>
+                          {exp.status === 'active' ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleToggleExpenseStatus(exp.id, exp.status)}
+                              disabled={isPending}
+                              className="text-xs h-8"
+                            >
+                              <PauseCircle className="h-3.5 w-3.5 mr-1" /> Pause
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleToggleExpenseStatus(exp.id, exp.status)}
+                              disabled={isPending}
+                              className="text-xs h-8 text-emerald-600"
+                            >
+                              <Play className="h-3.5 w-3.5 mr-1" /> Resume
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteExpense(exp.id)}
+                            disabled={isPending}
+                            className="text-xs h-8 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
                           </Button>
                         </div>
                       </td>
@@ -844,15 +1068,12 @@ export function RecurringClient({
                 </div>
               </div>
 
-              {/* Row 3: Next Invoice Date & End Date (optional) */}
+              {/* Row 3: First / Next Invoice Date & End Date */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="inv-next-run" className="text-xs font-semibold">
-                      Next Invoice Date
-                    </Label>
-                    <span className="text-[11px] text-muted-foreground">Due: +6 days</span>
-                  </div>
+                  <Label htmlFor="inv-next-run" className="text-xs font-semibold">
+                    First / Next Invoice Date <span className="text-destructive">*</span>
+                  </Label>
                   <Input
                     id="inv-next-run"
                     type="date"
@@ -860,37 +1081,30 @@ export function RecurringClient({
                     onChange={(e) => setNewInvNextRunDate(e.target.value)}
                     required
                   />
+                  <span className="text-[11px] text-muted-foreground">
+                    First scheduled run date (defaults to the 25th)
+                  </span>
                 </div>
 
                 <div className="grid gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="inv-end-date" className="text-xs font-semibold">
-                      End Date (optional)
-                    </Label>
-                    <span className="text-[11px] text-muted-foreground">
-                      Blank = bill indefinitely
-                    </span>
-                  </div>
+                  <Label htmlFor="inv-end-date" className="text-xs font-semibold">
+                    End Date (Optional)
+                  </Label>
                   <Input
                     id="inv-end-date"
                     type="date"
                     value={newInvEndDate}
-                    min={newInvNextRunDate || undefined}
                     onChange={(e) => setNewInvEndDate(e.target.value)}
                   />
+                  <span className="text-[11px] text-muted-foreground">
+                    Leave blank to run indefinitely until paused or cancelled
+                  </span>
                 </div>
               </div>
 
-              {/* Row 4: Line items — pick from catalogue items, or enter a custom description/price */}
-              <div className="grid gap-2 pt-1">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Retainer Line Items
-                  </Label>
-                  <span className="text-[11px] text-muted-foreground">
-                    Select catalogue item or enter custom rate
-                  </span>
-                </div>
+              {/* Line Items Section */}
+              <div className="space-y-2 pt-2 border-t">
+                <Label className="text-xs font-semibold">Recurring Line Items</Label>
                 <BillingLineItemsForm
                   value={newInvLineItems}
                   onChange={setNewInvLineItems}
@@ -915,17 +1129,20 @@ export function RecurringClient({
         </DialogContent>
       </Dialog>
 
-      {/* Modal: Create Recurring Outbound Subscription */}
-      <Dialog open={expenseModalOpen} onOpenChange={setExpenseModalOpen}>
-        <DialogContent
-          className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
-          onPointerDownOutside={(e) => e.preventDefault()}
-        >
-          <form onSubmit={handleCreateExpense} className="flex flex-col h-full overflow-hidden">
+      {/* Modal: Create/Edit Recurring Outbound Expense */}
+      <Dialog
+        open={expenseModalOpen}
+        onOpenChange={(open) => {
+          setExpenseModalOpen(open);
+          if (!open) resetExpenseForm();
+        }}
+      >
+        <DialogContent className="sm:max-w-xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+          <form onSubmit={handleSaveExpense} className="flex flex-col h-full overflow-hidden">
             <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
               <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-                <TrendingDown className="h-5 w-5 text-rose-600 dark:text-rose-400" /> Add Vendor
-                Subscription
+                <TrendingDown className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+                {editingExpenseId ? 'Edit Vendor Subscription' : 'Add Vendor Subscription'}
               </DialogTitle>
               <DialogDescription>
                 Track recurring software licenses, AI subscriptions (Claude, Antigravity), and cloud
@@ -934,7 +1151,7 @@ export function RecurringClient({
             </DialogHeader>
 
             <div className="px-6 py-5 overflow-y-auto flex-1 space-y-5">
-              {/* Row 1: Division & Vendor */}
+              {/* Row 1: Division & Vendor Name */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-1.5">
                   <Label htmlFor="exp-division" className="text-xs font-semibold">
@@ -1015,7 +1232,7 @@ export function RecurringClient({
                 </div>
               </div>
 
-              {/* Row 3: Amount & Cycle Day */}
+              {/* Row 3: Amount & Next Bill Date */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-1.5">
                   <Label htmlFor="exp-amount" className="text-xs font-semibold">
@@ -1033,19 +1250,24 @@ export function RecurringClient({
                 </div>
 
                 <div className="grid gap-1.5">
-                  <Label htmlFor="exp-cycle" className="text-xs font-semibold">
-                    Billing Day of Month
+                  <Label htmlFor="exp-next-due" className="text-xs font-semibold">
+                    Next Bill Date (Debited Date)
                   </Label>
                   <Input
-                    id="exp-cycle"
-                    type="number"
-                    min={1}
-                    max={28}
-                    value={newExpCycleDay}
-                    onChange={(e) => setNewExpCycleDay(Number(e.target.value))}
+                    id="exp-next-due"
+                    type="date"
+                    value={newExpNextDueDate}
+                    onChange={(e) => {
+                      setNewExpNextDueDate(e.target.value);
+                      if (e.target.value) {
+                        const day = Number(e.target.value.split('-')[2]);
+                        if (!isNaN(day)) setNewExpCycleDay(day);
+                      }
+                    }}
+                    required
                   />
                   <span className="text-[11px] text-muted-foreground">
-                    Day when subscription is debited
+                    Date when the next subscription charge will occur (Day {newExpCycleDay})
                   </span>
                 </div>
               </div>
@@ -1085,7 +1307,7 @@ export function RecurringClient({
                 disabled={isPending}
                 className="bg-rose-600 hover:bg-rose-700 text-white"
               >
-                {isPending ? 'Saving...' : 'Add Subscription'}
+                {isPending ? 'Saving...' : editingExpenseId ? 'Save Changes' : 'Add Subscription'}
               </Button>
             </DialogFooter>
           </form>

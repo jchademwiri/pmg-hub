@@ -27,13 +27,26 @@ export default async function RecurringFinancePage() {
       getAllExpenseCategories(),
     ]);
 
-  const activeInboundTotal = invoicesData
+  const activeInboundMRR = invoicesData
     .filter((i) => i.status === 'active')
-    .reduce((sum, i) => sum + parseFloat(i.total), 0);
+    .reduce((sum, i) => {
+      const amount = parseFloat(i.total);
+      const factor =
+        i.frequency === 'annually'
+          ? 1 / 12
+          : i.frequency === 'semi_annually'
+            ? 1 / 6
+            : i.frequency === 'quarterly'
+              ? 1 / 3
+              : 1;
+      return sum + amount * factor;
+    }, 0);
 
   return (
     <div className="flex flex-col gap-6">
-      <SetPageTotal value={`R${activeInboundTotal.toLocaleString()} MRR`} />
+      <SetPageTotal
+        value={`R${activeInboundMRR.toLocaleString('en-ZA', { maximumFractionDigits: 0 })} MRR`}
+      />
 
       <div>
         <h2 className="text-lg font-semibold">Recurring Retainers & Subscriptions</h2>
