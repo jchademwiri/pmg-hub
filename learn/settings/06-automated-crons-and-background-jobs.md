@@ -45,7 +45,8 @@ If a scheduled job needs to be run on demand (e.g. following an emergency server
    - Statements: `Billing -> Statements -> Send Statements`
    - Overdue Reminders: `Billing -> Invoices -> Send Overdue Reminders`
 2. **Via Secure Terminal / cURL**:
+   Send an authenticated GET request providing your `CRON_SECRET` token:
    ```bash
    curl -X GET https://admin.playhousemedia.co.za/api/cron/recurring-billing \
-     -H "Authorization: Bearer YOUR_CRON_SECRET"
+     -H "Authorization: Bearer ${CRON_SECRET}"
    ```
