@@ -8,7 +8,7 @@ import { hasBillingLineItemItemIdColumn } from './line-item-compat';
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
-export const ItemSchema = z.object({
+const ItemSchema = z.object({
   name: z.string().min(1, 'Name is required').max(200),
   description: z.string().optional().nullable(),
   unitPrice: z.coerce.number().min(0, 'Unit price cannot be negative'),
