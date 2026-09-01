@@ -12,21 +12,15 @@ import React from 'react';
 import { getPortalBaseUrl } from '@/lib/portal-url';
 import { addDays } from '@pmg/db';
 
+import { authorizeCronRequest } from '@/lib/cron-auth';
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET(req: Request) {
   // 1. Validate Cron Secret
-  const authHeader = req.headers.get('authorization');
-  const CRON_SECRET = process.env.CRON_SECRET;
-
-  if (!CRON_SECRET) {
-    return new NextResponse('Configuration Error: CRON_SECRET is missing', { status: 500 });
-  }
-
-  if (authHeader !== `Bearer ${CRON_SECRET}`) {
-    return new NextResponse('Unauthorized', { status: 401 });
-  }
+  const unauthorized = authorizeCronRequest(req);
+  if (unauthorized) return unauthorized;
 
   try {
     // 2. Fetch upcoming expirations bounded by yesterday and 60 days in the future
