@@ -782,6 +782,19 @@ export interface CreateRecurringExpenseInput {
   amount: number;
   frequency?: RecurringFrequency;
   billingCycleDay?: number;
+  nextDueDate?: string | null;
+  clientId?: string | null;
+  notes?: string | null;
+}
+
+export interface UpdateRecurringExpenseInput {
+  divisionId: string;
+  vendorName: string;
+  category: string;
+  amount: number;
+  frequency?: RecurringFrequency;
+  billingCycleDay?: number;
+  nextDueDate?: string | null;
   clientId?: string | null;
   notes?: string | null;
 }
@@ -798,8 +811,11 @@ export async function createRecurringExpense(
     if (data.amount <= 0) return { error: 'Amount must be greater than 0.' };
 
     const frequency = data.frequency || 'monthly';
-    const cycleDay = data.billingCycleDay ?? 1;
-    const nextDueDate = calculateInitialNextRunDate(cycleDay);
+    const nextDueDate =
+      data.nextDueDate && /^\d{4}-\d{2}-\d{2}$/.test(data.nextDueDate)
+        ? data.nextDueDate
+        : calculateInitialNextRunDate(data.billingCycleDay ?? 1);
+    const cycleDay = data.billingCycleDay ?? Number(nextDueDate.split('-')[2]) ?? 1;
 
     const [inserted] = await db
       .insert(recurringExpenses)
@@ -823,6 +839,95 @@ export async function createRecurringExpense(
   } catch (err) {
     console.error('Failed to create recurring expense:', err);
     return { error: 'Failed to create subscription.' };
+  }
+}
+
+export async function updateRecurringExpense(
+  id: string,
+  data: UpdateRecurringExpenseInput,
+): Promise<{ error?: string }> {
+  try {
+    await getSessionOrRedirect();
+    const db = getDb();
+
+    if (!data.vendorName?.trim()) return { error: 'Vendor name is required.' };
+    if (!data.category) return { error: 'Category is required.' };
+    if (data.amount <= 0) return { error: 'Amount must be greater than 0.' };
+
+    const frequency = data.frequency || 'monthly';
+    const nextDueDate =
+      data.nextDueDate && /^\d{4}-\d{2}-\d{2}$/.test(data.nextDueDate)
+        ? data.nextDueDate
+        : calculateInitialNextRunDate(data.billingCycleDay ?? 1);
+    const cycleDay = data.billingCycleDay ?? Number(nextDueDate.split('-')[2]) ?? 1;
+
+    await db
+      .update(recurringExpenses)
+      .set({
+        divisionId: data.divisionId,
+        vendorName: data.vendorName.trim(),
+        category: data.category,
+        frequency,
+        amount: String(data.amount.toFixed(2)),
+        billingCycleDay: cycleDay,
+        nextDueDate,
+        clientId: data.clientId || null,
+        notes: data.notes || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(recurringExpenses.id, id));
+
+    revalidatePath('/finance/recurring');
+    return {};
+  } catch (err) {
+    console.error('Failed to update recurring expense:', err);
+    return { error: 'Failed to update subscription.' };
+  }
+}
+
+export async function deleteRecurringExpense(id: string): Promise<{ error?: string }> {
+  try {
+    await getSessionOrRedirect();
+    const db = getDb();
+
+    await db.delete(recurringExpenses).where(eq(recurringExpenses.id, id));
+
+    revalidatePath('/finance/recurring');
+    return {};
+  } catch (err) {
+    console.error('Failed to delete recurring expense:', err);
+    return { error: 'Failed to delete subscription.' };
+  }
+}
+
+export async function getRecurringExpenseDetail(
+  id: string,
+): Promise<{ error?: string; data?: any }> {
+  try {
+    await getSessionOrRedirect();
+    const db = getDb();
+    const [row] = await db
+      .select({
+        id: recurringExpenses.id,
+        divisionId: recurringExpenses.divisionId,
+        vendorName: recurringExpenses.vendorName,
+        category: recurringExpenses.category,
+        frequency: recurringExpenses.frequency,
+        amount: recurringExpenses.amount,
+        billingCycleDay: recurringExpenses.billingCycleDay,
+        nextDueDate: sql<string>`${recurringExpenses.nextDueDate}::text`,
+        clientId: recurringExpenses.clientId,
+        notes: recurringExpenses.notes,
+        status: recurringExpenses.status,
+      })
+      .from(recurringExpenses)
+      .where(eq(recurringExpenses.id, id))
+      .limit(1);
+
+    if (!row) return { error: 'Subscription not found.' };
+    return { data: row };
+  } catch (err) {
+    return { error: 'Failed to load subscription detail.' };
   }
 }
 
