@@ -1,61 +1,76 @@
 # 3. Invoices
 
-> An invoice is a bill sent to a client for payment.
+> An invoice is an official legal and commercial request for payment issued to a client.
 
-## When To Use An Invoice
+---
 
-Use an invoice when:
+## When To Issue An Invoice
 
-- Work has been approved
-- Work has been completed
-- A client needs a formal payment request
-- A quote has been accepted and must now be billed
+- A quote has been accepted by the client.
+- Agreed milestone work or services have been completed.
+- Monthly retainer period begins.
+- Ad-hoc consulting or development hours are ready to be billed.
 
-## Invoice Statuses
+---
 
-| Status         | Meaning                   | What To Do                |
-| -------------- | ------------------------- | ------------------------- |
-| Draft          | Not yet issued            | Review before sending     |
-| Issued         | Sent and awaiting payment | Follow up until paid      |
-| Partially Paid | Some payment received     | Follow up for the balance |
-| Paid           | Fully paid                | No action needed          |
-| Overdue        | Past due date             | Send a reminder           |
-| Void           | Cancelled                 | Keep for audit trail      |
+## Universal End-of-Month (EOM) Due Dates
 
-## How To Read The Invoice List
+PMG Hub standardizes payment terms around **End-of-Month (EOM)** billing:
 
-| Column     | Meaning                   |
-| ---------- | ------------------------- |
-| Invoice #  | Unique invoice number     |
-| Division   | `AWS`, `TES`, or `PMG`    |
-| Client     | Who must pay              |
-| Issue Date | Invoice date              |
-| Due Date   | Expected payment date     |
-| Amount     | Invoice total             |
-| Status     | Payment or document state |
+- When an invoice is created, the system defaults the due date to the **last calendar day of the current month** (e.g. June 30, July 31).
+- This aligns with the business's **3-Stage Automated Monthly Statement Cycle** and simplifies cash collection.
+- Specific invoices can still have custom due dates configured when contract terms require it.
 
-## What Happens In Accounting
+---
 
-When an invoice is issued, the system records that the client owes money.
+## Invoice Status Lifecycle
 
 ```text
-DR Accounts Receivable
-CR Sales Revenue
+[Draft] ──(Issue Invoice)──► [Issued] ──(Full Payment)──► [Paid]
+                                 │
+                   (Partial Payment)
+                                 ▼
+                         [Partially Paid] ──(Full Payment)──► [Paid]
+                                 │
+                       (Past Due Date)
+                                 ▼
+                             [Overdue] ──(Follow-up / Reminders)──► [Paid]
 ```
 
-When the client pays, the payment clears the amount owed.
+| Status             | Meaning                                             | Action Required                                                    |
+| :----------------- | :-------------------------------------------------- | :----------------------------------------------------------------- |
+| **Draft**          | Created and editable; not sent to client.           | Review line items, VAT, and amounts before issuing.                |
+| **Issued**         | Formally dispatched; posted to accounts receivable. | Awaiting client payment. Viewable by client in portal.             |
+| **Partially Paid** | Portion of total received.                          | Follow up for remainder; allocate receipts.                        |
+| **Paid**           | Settled in full.                                    | Closed; no further action needed.                                  |
+| **Overdue**        | Past due date with unpaid balance.                  | Automated overdue reminders triggered via cron or manual dispatch. |
+| **Void**           | Cancelled before payment.                           | Preserved in database for auditing; journal reversed.              |
+
+---
+
+## Double-Entry Accounting Impact
+
+When an invoice is issued, the system automatically posts the following journal entries:
 
 ```text
-DR Bank
-CR Accounts Receivable
+DR 1200 Accounts Receivable (Asset)       R 11,500.00
+   CR 4000 Sales / Service Revenue (Income)   R 10,000.00
+   CR 2100 Output VAT Payable (Liability)     R  1,500.00
 ```
 
-## Basic Workflow
+When the client payment is recorded:
 
-1. Go to Billing -> Invoices.
-2. Create a new invoice or use an accepted quote.
-3. Select the correct division.
-4. Add line items and check totals.
-5. Save as draft while checking.
-6. Issue the invoice when ready.
-7. Record payment when money arrives.
+```text
+DR 1000 Bank Operating Account (Asset)   R 11,500.00
+   CR 1200 Accounts Receivable (Asset)       R 11,500.00
+```
+
+---
+
+## Strategic Overdue Reminders
+
+In `Billing -> Invoices`:
+
+1. The **Send Overdue Reminders** button scans all open invoices where `dueDate < today`.
+2. It sends targeted reminder emails branded for the invoice's division (`PMG`, `TES`, or `AWS`) with attached invoice PDFs and direct client portal payment links.
+3. This is also automatically executed in the background by the Vercel cron job `/api/cron/outstanding-reminders`.
