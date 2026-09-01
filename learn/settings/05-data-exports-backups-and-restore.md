@@ -1,57 +1,58 @@
-# 5. Data Exports, Backups, And Restore
+# 5. Data Exports, Backups & Disaster Recovery
 
-> Data settings help you get data out and recover the database when needed.
+> Learn the critical difference between human-readable data exports and full system disaster recovery backups stored in Cloudflare R2.
+
+---
 
 ## Exports vs Backups
 
-| Type   | Purpose                                                       |
-| ------ | ------------------------------------------------------------- |
-| Export | Human-readable files for review, handover, or accountant work |
-| Backup | Recoverable database copy for disaster recovery               |
+| Feature                 | Data Exports (`CSV` / `JSON`)                               | Database Backups (`SQL` / `DUMP`)                       |
+| :---------------------- | :---------------------------------------------------------- | :------------------------------------------------------ |
+| **Purpose**             | Financial review, accountant audits, external spreadsheets. | Full point-in-time disaster recovery if database fails. |
+| **Who Uses It**         | Accountants, executive team, tax auditors.                  | Super Administrators & DevOps.                          |
+| **Can Restore System?** | **No**. Exports are read-only flat files.                   | **Yes**. Restores all tables, relations, and schemas.   |
 
-Exports are not restore files. Use a database backup when you need to restore the system.
+---
 
-## Cloudflare R2 Backups
+## Cloudflare R2 Automated Backup Architecture
 
-When Cloudflare R2 is configured, backups are stored in a bucket.
+PMG Hub utilizes Cloudflare R2 for off-site, immutable database backup storage:
 
-Admins should confirm:
+```text
+PostgreSQL Database (Neon / Supabase)
+        │
+        ▼ (Daily Cron / pg_dump)
+Encrypted Database Archive (.sql.gz)
+        │
+        ▼
+Cloudflare R2 Storage Bucket (pmg-hub-backups)
+        │
+        ▼
+Automated Retention Policy (Keeps latest 30 daily snapshots)
+```
 
-- R2 bucket exists
-- R2 API credentials are set
-- Backup environment variables are configured
-- Cron jobs are running
-- Recent backup files are visible
+---
 
-## Backup Retention
+## Verifying Backup Health
 
-Retention controls how many old backups are kept.
+1. In `apps/admin -> Settings -> Data`.
+2. Check the **Recent Backups Table**:
+   - Verify that the latest backup timestamp is from today or within the last 24 hours.
+   - Confirm backup file size is consistent with previous days.
+   - Ensure status displays `Healthy` with a green indicator.
 
-Example: keeping the latest 5 backups means:
+---
 
-- Daily backup creates one new file per day.
-- The newest 5 files are kept.
-- Older files are deleted automatically.
+## Disaster Recovery & Restore Protocol
 
-This keeps storage small while still keeping recent restore points.
+> [!CAUTION]
+> Restoring a backup is a destructive operation that replaces all current database records with the selected snapshot. Only execute with approval from the Lead Architect.
 
-## Restore Rules
+### Standard Recovery Steps:
 
-Restore is powerful and destructive. Only admins should do it.
-
-Before restoring:
-
-1. Confirm the backup file and date.
-2. Tell users to stop working.
-3. Confirm the current data can be replaced.
-4. Restore from a trusted backup only.
-5. Check clients, invoices, payments, expenses, and reports after restore.
-
-## Common Mistakes
-
-| Mistake                    | Risk                                       |
-| -------------------------- | ------------------------------------------ |
-| Restoring the wrong file   | Current data may be replaced with old data |
-| Restoring while users work | New work may be lost                       |
-| Keeping too many backups   | Storage grows quickly                      |
-| Keeping too few backups    | Fewer recovery options                     |
+1. Notify all team members to pause active work in the system.
+2. Download the target snapshot from Cloudflare R2.
+3. Test restoration on an isolated staging database first to verify data integrity.
+4. Apply the restore to the production database.
+5. Verify client balances, issued invoices, and recent transactions.
+6. Re-enable team access and confirm system health.

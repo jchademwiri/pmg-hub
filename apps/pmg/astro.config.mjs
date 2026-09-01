@@ -13,10 +13,18 @@ export default defineConfig({
   env: {
     schema: {
       DATABASE_URL: envField.string({ context: 'server', access: 'secret', optional: true }),
-      DATABASE_URL_UNPOOLED: envField.string({ context: 'server', access: 'secret', optional: true }),
+      DATABASE_URL_UNPOOLED: envField.string({
+        context: 'server',
+        access: 'secret',
+        optional: true,
+      }),
       PMG_RESEND_API_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
       TURNSTILE_SITE_KEY: envField.string({ context: 'client', access: 'public', optional: true }),
-      TURNSTILE_SECRET_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
+      TURNSTILE_SECRET_KEY: envField.string({
+        context: 'server',
+        access: 'secret',
+        optional: true,
+      }),
     },
   },
 

@@ -13,7 +13,11 @@ export default defineConfig({
   env: {
     schema: {
       DATABASE_URL: envField.string({ context: 'server', access: 'secret', optional: true }),
-      DATABASE_URL_UNPOOLED: envField.string({ context: 'server', access: 'secret', optional: true }),
+      DATABASE_URL_UNPOOLED: envField.string({
+        context: 'server',
+        access: 'secret',
+        optional: true,
+      }),
       TES_RESEND_API_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
       TES_FROM_EMAIL: envField.string({
         context: 'server',
@@ -29,7 +33,11 @@ export default defineConfig({
       }),
       RESEND_API_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
       TURNSTILE_SITE_KEY: envField.string({ context: 'client', access: 'public', optional: true }),
-      TURNSTILE_SECRET_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
+      TURNSTILE_SECRET_KEY: envField.string({
+        context: 'server',
+        access: 'secret',
+        optional: true,
+      }),
     },
   },
 
@@ -38,10 +46,10 @@ export default defineConfig({
   },
 
   adapter: vercel({
-   webAnalytics: {
-     enabled: true,
-   },
- }),
+    webAnalytics: {
+      enabled: true,
+    },
+  }),
 
   integrations: [
     react(),

@@ -1,5 +1,5 @@
-@import "@pmg/tailwind-config/base";
-@import "shadcn/tailwind.css";
+@import '@pmg/tailwind-config/base';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -144,7 +144,7 @@
     size: A4;
     margin: 0;
   }
-  
+
   body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -157,7 +157,8 @@
   }
 
   /* Only show elements with .print-document and their children */
-  .print-document, .print-document * {
+  .print-document,
+  .print-document * {
     visibility: visible;
   }
 

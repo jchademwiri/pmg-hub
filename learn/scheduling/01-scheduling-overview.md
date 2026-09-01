@@ -1,95 +1,69 @@
-# 1. Scheduling Overview
+# 1. Scheduling & Projects Overview
 
-> Scheduling helps you plan, track, and manage tender submissions so deadlines are never missed.
-
-## What Scheduling Is For
-
-Use Scheduling to:
-
-- Plan tender work before the closing date
-- Auto-calculate start dates based on effort and buffer days
-- Track progress through stages: Planned → In Progress → Completed → Submitted
-- Identify at-risk and overdue tenders at a glance
-- Manage workload by reordering the priority queue
-- Record outcomes (won / lost / pending) and actual effort for future estimates
-
-## How Scheduling Connects To The Business
-
-```text
-Client -> Tender -> Schedule -> Track -> Outcome -> Invoice
-```
-
-Tenders are linked to clients from the **Relationships** module. A tender that is **won** typically leads to an invoice in **Billing**. The effort estimates and actuals help you improve future planning.
-
-## Scheduling vs Billing
-
-| Concept        | Scheduling                                    | Billing                               |
-| -------------- | --------------------------------------------- | ------------------------------------- |
-| What it tracks | Tender deadlines, effort, risk                | Quotes, invoices, payments            |
-| Statuses       | Planned → In Progress → Completed → Submitted | Draft → Issued → Paid / Overdue       |
-| Outcome        | Won / Lost / Pending                          | Paid / Written off                    |
-| Division       | Affects which team owns the tender            | Affects document numbers and branding |
-
-## Page Guide
-
-| Page                     | What It Shows                                         | Use It When                |
-| ------------------------ | ----------------------------------------------------- | -------------------------- |
-| **Overview** (Dashboard) | Current workload, at-risk tenders, upcoming deadlines | Starting your day          |
-| **List**                 | All tenders with filters, bulk actions, risk badges   | Managing the full pipeline |
-| **Timeline**             | Visual calendar view of all active tenders            | Checking date overlaps     |
+> Scheduling and Project Management help your team plan, track, and deliver client projects and tender bids so deadlines are never missed.
 
 ---
 
-## Key Concepts
+## What Scheduling Is For
 
-### Tender Statuses
+Use the Scheduling and Projects subsystem to:
+
+- Plan tender bids and technical milestones well before submission deadlines.
+- Automatically calculate start dates based on estimated effort days and safety buffers.
+- Track progress through sequential stages: `Planned` → `In Progress` → `Completed` → `Submitted`.
+- Spot at-risk and overdue deliverables at a glance.
+- Connect deliverables directly to client records in **Relationships** and deliverables displayed in the **Client Portal**.
+- Record outcomes (`Won`, `Lost`, `Pending`) to refine future estimation models.
+
+---
+
+## The Delivery Lifecycle
 
 ```text
-Planned ──► In Progress ──► Completed ──► Submitted
-   │             │               │
-   └── Cancelled └── Cancelled   └── Cancelled
-                                  Submitted ──► Planned (reopen)
+Client (Relationships)
+    └─► Project / Tender (Scheduling)
+            ├─► Milestones & Deadlines (Timeline / Gantt)
+            ├─► Action Items & Deliverables (Task Board)
+            └─► Client Portal Tracking (portal.playhousemedia.co.za)
+                    └─► Outcome (Won / Completed) ──► Invoice (Billing)
 ```
 
-| Status          | Meaning                                                |
-| --------------- | ------------------------------------------------------ |
-| **Planned**     | Tender is identified and scheduled but not started yet |
-| **In Progress** | Work on the tender response has begun                  |
-| **Completed**   | Response is finished and ready for review              |
-| **Submitted**   | Tender has been submitted to the client                |
-| **Cancelled**   | Tender was abandoned or won't be pursued               |
+---
 
-### Risk Levels
+## Page Navigation Guide
 
-The system calculates risk automatically based on dates and status:
+| Section               | Route                | What It Shows                                                     | When To Use                       |
+| :-------------------- | :------------------- | :---------------------------------------------------------------- | :-------------------------------- |
+| **Projects Overview** | `/projects`          | Active projects, tender pipeline summary, and workload metrics    | Starting your morning standup     |
+| **Tender Pipeline**   | `/projects/list`     | All tenders with filters, risk badges, and bulk actions           | Managing tender bid schedules     |
+| **Timeline View**     | `/projects/timeline` | Visual Gantt calendar showing date overlaps and deadline clusters | Planning team capacity            |
+| **Task Board**        | `/projects/[id]`     | Kanban & list task management for actionable deliverables         | Daily execution & sprint planning |
 
-| Badge         | Meaning                                            |
-| ------------- | -------------------------------------------------- |
-| **On Track**  | All dates are healthy                              |
-| **Tight**     | Target completion is within 2 days of closing      |
-| **Start Due** | Start date has passed but status is still Planned  |
-| **At Risk**   | Target completion has passed but still In Progress |
-| **Overdue**   | Closing date has passed and not yet submitted      |
-| **Done**      | Submitted or Completed — no risk                   |
-| **Cancelled** | Tender is no longer active                         |
+---
 
-### Date Auto-Calculation
+## Risk Calculation Engine
 
-When you create a tender:
+Risk levels are dynamically computed by the system every time dates or statuses change:
+
+| Badge         | Condition                                                      | Action Required                                               |
+| :------------ | :------------------------------------------------------------- | :------------------------------------------------------------ |
+| **On Track**  | Timeline is healthy; target completion is well before closing. | Continue normal work.                                         |
+| **Tight**     | Target completion is within 2 days of closing deadline.        | Prioritize; assign extra review capacity.                     |
+| **Start Due** | Start date has passed, but status remains `Planned`.           | Immediately assign staff and transition to `In Progress`.     |
+| **At Risk**   | Target completion date has passed while still `In Progress`.   | High alert; expedite reviews or request submission extension. |
+| **Overdue**   | Closing date has passed without submission.                    | Critical failure; perform post-mortem or record as cancelled. |
+| **Done**      | Status is `Submitted` or `Completed`.                          | Zero risk; awaiting outcome from bid committee.               |
+
+---
+
+## Date Auto-Calculation Logic
 
 ```text
-Start Date = Closing Date - Effort Days - Buffer Days
+Start Date = Closing Date - Effort Days - Buffer Days (default 2 days)
 Target Completion = Start Date + Effort Days
 ```
 
-- **Effort Days**: How many working days the tender will take
-- **Buffer Days**: Extra padding (default 2) before the closing date
-- **Start Date**: Auto-calculated, but you can override it manually
-- **Target Completion**: Auto-calculated read-only field
+_Example_: If a tender closes on 25 October, estimated effort is 7 days, and buffer is 2 days:
 
-Example: Closing date is 14 July, effort is 5 days, buffer is 2 days:
-
-```text
-Start = 14 July - 5 - 2 = 7 July
-Target Completion = 7 July + 5 = 12 July
-```
+- **Start Date**: 16 October
+- **Target Completion**: 23 October (providing 2 clear buffer days before submission)

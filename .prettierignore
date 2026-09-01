@@ -20,6 +20,8 @@ node_modules/
 # Generated & editor files
 .astro/
 .vscode/
+.antigravitycli/
+.kiro/
 packages/db/src/migrations/meta/
 
 # Agents & Documentation (contain pseudo-code snippets in markdown)

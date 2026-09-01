@@ -191,7 +191,7 @@ const currentBrand = brands[divisionParam] || brands.pmg;
 					</div>
 				) : (
 					<form method="POST" action={actions.submitOnboarding} class="onboard-form" novalidate id="onboard-form">
-						<!-- Bot Honeypot -->
+						{/* Bot Honeypot */}
 						<div style="position: absolute; left: -9999px;" aria-hidden="true">
 							<input type="text" name="_company_url" tabindex="-1" autocomplete="off" />
 						</div>
@@ -199,7 +199,7 @@ const currentBrand = brands[divisionParam] || brands.pmg;
 						<input type="hidden" name="leadId" value={leadId} />
 						<input type="hidden" name="division" value={divisionParam} />
 
-						<!-- Cloudflare Turnstile -->
+						{/* Cloudflare Turnstile CAPTCHA */}
 						{import.meta.env.TURNSTILE_SITE_KEY && (
 							<div class="turnstile-wrap">
 								<div class="cf-turnstile" data-sitekey={import.meta.env.TURNSTILE_SITE_KEY} data-action="_turnstile" data-theme="dark"></div>

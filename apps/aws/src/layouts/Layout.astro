@@ -1,6 +1,6 @@
 ---
 // style import
-import Analytics from '@vercel/analytics/astro';
+import Analytics from "@vercel/analytics/astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import "@/styles/starwind.css";
@@ -82,21 +82,24 @@ const graphSchema: Graph = {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta name="generator" content={Astro.generator} />
     {robots && <meta name="robots" content={robots} />}
     <link rel="sitemap" href="/sitemap-index.xml" />
     <HeadSEO
-    title={title}
-    description={description}
-    canonicalUrl={canonicalURL}
+      title={title}
+      description={description}
+      canonicalUrl={canonicalURL}
     />
     <GoogleAnalytics />
     <Analytics />
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script
+      src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+      async
+      defer></script>
 
     <script is:inline>
       (function () {
@@ -118,7 +121,7 @@ const graphSchema: Graph = {
     <Schema item={graphSchema} />
   </head>
 
-  <body class="bg-muted antialiased overflow-x-hidden">
+  <body class="bg-muted overflow-x-hidden antialiased">
     <Header />
     <slot />
     <Footer />

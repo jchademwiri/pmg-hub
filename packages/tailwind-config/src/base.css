@@ -6,8 +6,8 @@
   Fonts, colors, spacing, and tokens belong in each app's own global CSS.
 */
 
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @plugin "@tailwindcss/forms";
 @plugin "@tailwindcss/typography";
@@ -23,9 +23,9 @@
   a,
   button,
   select,
-  input[type="submit"],
-  input[type="button"],
-  [role="button"] {
+  input[type='submit'],
+  input[type='button'],
+  [role='button'] {
     @apply cursor-pointer;
   }
 }

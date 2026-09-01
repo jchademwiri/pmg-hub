@@ -1,1 +1,11 @@
-{"name":"Tender Edge Solutions","short_name":"TES","icons":[{"src":"/android-chrome-192x192.png","sizes":"192x192","type":"image/png"},{"src":"/android-chrome-512x512.png","sizes":"512x512","type":"image/png"}],"theme_color":"#c9a227","background_color":"#0d1b2a","display":"standalone"}
+{
+  "name": "Tender Edge Solutions",
+  "short_name": "TES",
+  "icons": [
+    { "src": "/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "theme_color": "#c9a227",
+  "background_color": "#0d1b2a",
+  "display": "standalone"
+}

@@ -1,14 +1,19 @@
-# Scheduling Lessons
+# Scheduling, Projects & Tasks Lessons
 
-> Learn how to plan, track, and manage tender submissions so deadlines are never missed.
+> Learn how to plan and deliver client projects, manage tender submission timelines, calculate risk, and coordinate day-to-day deliverables with task boards.
+
+---
 
 ## Lessons
 
-| #   | Lesson                                                   | What You Learn                                                        |
-| --- | -------------------------------------------------------- | --------------------------------------------------------------------- |
-| 1   | [Scheduling Overview](./01-scheduling-overview.md)       | What scheduling is for, statuses, risk levels, date auto-calculations |
-| 2   | [Creating And Editing Tenders](./02-creating-tenders.md) | How to create, edit, manage status transitions, and cancel tenders    |
+| #   | Lesson                                                               | What You Learn                                                                        |
+| --- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| 1   | [Scheduling & Projects Overview](./01-scheduling-overview.md)        | How project delivery and tender bidding are scheduled, tracked, and linked to clients |
+| 2   | [Creating & Managing Tenders](./02-creating-tenders.md)              | Auto-calculating start dates, effort days, buffer periods, and submission statuses    |
+| 3   | [Task Board & Project Milestones](./03-task-board-and-milestones.md) | Kanban and list task boards, priority queues, crypto UUIDs, and client portal links   |
+
+---
 
 ## Quick Rule
 
-Always set a **closing date** and **effort days** when creating a tender — the system calculates the rest automatically. Update the **status** as work progresses so the risk badges stay accurate.
+Always specify a realistic **closing date** and **effort days** when creating a tender or project milestone. The system automatically computes start dates, target completion dates, and updates the risk rating dynamically.
