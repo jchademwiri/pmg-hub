@@ -209,18 +209,18 @@ export function ReportFilterCard({
       </div>
 
       {/* Dynamic Filter Controls Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 items-end">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 items-end">
         {/* 1. Period Selector */}
         {!hidesPeriodFilter && (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 min-w-0 w-full">
             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-              <Calendar className="size-3 text-primary" /> Period
+              <Calendar className="size-3 text-primary shrink-0" /> Period
             </label>
             <Select value={selectedPeriod} onValueChange={onPeriodChange}>
-              <SelectTrigger className="h-8 text-xs bg-background">
+              <SelectTrigger className="h-8 text-xs bg-background w-full min-w-0">
                 <SelectValue placeholder="Select Period" />
               </SelectTrigger>
-              <SelectContent className="text-xs">
+              <SelectContent className="text-xs max-h-72">
                 {isAnnualOnlyReport ? (
                   <SelectGroup>
                     <SelectLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -307,15 +307,15 @@ export function ReportFilterCard({
 
         {/* 2. Division Selector */}
         {showDivisionFilter && (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 min-w-0 w-full">
             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-              <Building2 className="size-3 text-primary" /> Division
+              <Building2 className="size-3 text-primary shrink-0" /> Division
             </label>
             <Select value={selectedDivisionId} onValueChange={onDivisionChange}>
-              <SelectTrigger className="h-8 text-xs bg-background">
+              <SelectTrigger className="h-8 text-xs bg-background w-full min-w-0">
                 <SelectValue placeholder="All Divisions" />
               </SelectTrigger>
-              <SelectContent className="text-xs">
+              <SelectContent className="text-xs max-h-72">
                 <SelectItem value="all">All Divisions</SelectItem>
                 {divisions.map((d) => (
                   <SelectItem key={d.id} value={d.id}>
@@ -329,12 +329,12 @@ export function ReportFilterCard({
 
         {/* 3. Account Selector (General Ledger) */}
         {showAccountFilter && (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 min-w-0 w-full">
             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-              <Layers className="size-3 text-primary" /> Account
+              <Layers className="size-3 text-primary shrink-0" /> Account
             </label>
             <Select value={selectedAccountId} onValueChange={onAccountChange}>
-              <SelectTrigger className="h-8 text-xs bg-background">
+              <SelectTrigger className="h-8 text-xs bg-background w-full min-w-0">
                 <SelectValue placeholder="All Accounts" />
               </SelectTrigger>
               <SelectContent className="text-xs max-h-60">
@@ -351,15 +351,15 @@ export function ReportFilterCard({
 
         {/* 4. Category Filter (Chart of Accounts) */}
         {showCategoryFilter && (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 min-w-0 w-full">
             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-              <Tag className="size-3 text-primary" /> Category
+              <Tag className="size-3 text-primary shrink-0" /> Category
             </label>
             <Select value={selectedCategory} onValueChange={onCategoryChange}>
-              <SelectTrigger className="h-8 text-xs bg-background">
+              <SelectTrigger className="h-8 text-xs bg-background w-full min-w-0">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
-              <SelectContent className="text-xs">
+              <SelectContent className="text-xs max-h-72">
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="asset">Assets</SelectItem>
                 <SelectItem value="liability">Liabilities</SelectItem>
@@ -373,30 +373,30 @@ export function ReportFilterCard({
 
         {/* 5. Custom Date Range: Start Date */}
         {supportsDateRange && (
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+          <div className="flex flex-col gap-1 min-w-0 w-full">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider truncate">
               {reportType === 'balance-sheet' ? 'From Date (Opt)' : 'Start Date'}
             </label>
             <Input
               type="date"
               value={startDate}
               onChange={(e) => onStartDateChange(e.target.value)}
-              className="h-8 text-xs bg-background"
+              className="h-8 text-xs bg-background w-full min-w-0"
             />
           </div>
         )}
 
         {/* 6. Custom Date Range: End Date / As at Date */}
         {supportsDateRange && (
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+          <div className="flex flex-col gap-1 min-w-0 w-full">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider truncate">
               {reportType === 'balance-sheet' ? 'As at Date' : 'End Date'}
             </label>
             <Input
               type="date"
               value={endDate}
               onChange={(e) => onEndDateChange(e.target.value)}
-              className="h-8 text-xs bg-background"
+              className="h-8 text-xs bg-background w-full min-w-0"
             />
           </div>
         )}
