@@ -235,11 +235,7 @@ describe('Billing Items Module', () => {
       const page = await ItemsPage({ searchParams: Promise.resolve({ status: 'active' }) });
       render(page as React.ReactElement);
 
-      expect(
-        screen.getByText(
-          'No items yet. Create your first service item using the New Item button above.',
-        ),
-      ).toBeInTheDocument();
+      expect(screen.getByText('No active service items found.')).toBeInTheDocument();
     });
 
     describe('ItemEditClient', () => {
