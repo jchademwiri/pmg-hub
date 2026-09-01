@@ -1,49 +1,73 @@
 // @ts-check
-import { defineConfig, envField } from 'astro/config';
-import react from '@astrojs/react';
-import partytown from '@astrojs/partytown';
-import sitemap from '@astrojs/sitemap';
-import tailwindcss from '@tailwindcss/vite';
+import { defineConfig, envField } from "astro/config";
+import react from "@astrojs/react";
+import partytown from "@astrojs/partytown";
+import sitemap from "@astrojs/sitemap";
+import tailwindcss from "@tailwindcss/vite";
 
-import vercel from '@astrojs/vercel';
+import vercel from "@astrojs/vercel";
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://apexwebsolutions.co.za',
-  output: 'server',
+  site: "https://apexwebsolutions.co.za",
+  output: "server",
 
   env: {
     schema: {
-      DATABASE_URL: envField.string({ context: 'server', access: 'secret', optional: true }),
-      DATABASE_URL_UNPOOLED: envField.string({ context: 'server', access: 'secret', optional: true }),
-      AWS_RESEND_API_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
-      AWS_FROM_EMAIL: envField.string({
-        context: 'server',
-        access: 'secret',
+      DATABASE_URL: envField.string({
+        context: "server",
+        access: "secret",
         optional: true,
-        default: 'noreply@info.apexwebsolutions.co.za',
+      }),
+      DATABASE_URL_UNPOOLED: envField.string({
+        context: "server",
+        access: "secret",
+        optional: true,
+      }),
+      AWS_RESEND_API_KEY: envField.string({
+        context: "server",
+        access: "secret",
+        optional: true,
+      }),
+      AWS_FROM_EMAIL: envField.string({
+        context: "server",
+        access: "secret",
+        optional: true,
+        default: "noreply@info.apexwebsolutions.co.za",
       }),
       AWS_ADMIN_EMAIL: envField.string({
-        context: 'server',
-        access: 'secret',
+        context: "server",
+        access: "secret",
         optional: true,
-        default: 'info@apexwebsolutions.co.za',
+        default: "info@apexwebsolutions.co.za",
       }),
-      RESEND_API_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
-      TURNSTILE_SITE_KEY: envField.string({ context: 'client', access: 'public', optional: true }),
-      TURNSTILE_SECRET_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
+      RESEND_API_KEY: envField.string({
+        context: "server",
+        access: "secret",
+        optional: true,
+      }),
+      TURNSTILE_SITE_KEY: envField.string({
+        context: "client",
+        access: "public",
+        optional: true,
+      }),
+      TURNSTILE_SECRET_KEY: envField.string({
+        context: "server",
+        access: "secret",
+        optional: true,
+      }),
     },
   },
 
   integrations: [
     react(),
-    partytown({ config: { forward: ['dataLayer.push'] } }),
+    partytown({ config: { forward: ["dataLayer.push"] } }),
     sitemap({
-      filter: (page) => !page.includes('/discovery'),
+      filter: (page) => !page.includes("/discovery"),
       customPages: [
-        'https://apexwebsolutions.co.za/',
-        'https://apexwebsolutions.co.za/privacy',
-        'https://apexwebsolutions.co.za/terms',
+        "https://apexwebsolutions.co.za/",
+        "https://apexwebsolutions.co.za/privacy",
+        "https://apexwebsolutions.co.za/terms",
       ],
     }),
   ],
