@@ -531,7 +531,8 @@ export function RecurringClient({
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground">
-            {outboundDueThisMonth.length} vendor sub(s) due • {formatZAR(totalSoftwareBurn)}/mo amortized
+            {outboundDueThisMonth.length} vendor sub(s) due • {formatZAR(totalSoftwareBurn)}/mo
+            amortized
           </CardContent>
         </Card>
 
@@ -1121,11 +1122,7 @@ export function RecurringClient({
                 disabled={isPending}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
               >
-                {isPending
-                  ? 'Saving...'
-                  : editingId
-                    ? 'Save Changes'
-                    : 'Create Retainer Schedule'}
+                {isPending ? 'Saving...' : editingId ? 'Save Changes' : 'Create Retainer Schedule'}
               </Button>
             </DialogFooter>
           </form>
@@ -1148,8 +1145,8 @@ export function RecurringClient({
                 {editingExpenseId ? 'Edit Vendor Subscription' : 'Add Vendor Subscription'}
               </DialogTitle>
               <DialogDescription>
-                Track recurring software licenses, AI subscriptions (Claude, Antigravity), and cloud hosting
-                (Hetzner).
+                Track recurring software licenses, AI subscriptions (Claude, Antigravity), and cloud
+                hosting (Hetzner).
               </DialogDescription>
             </DialogHeader>
 

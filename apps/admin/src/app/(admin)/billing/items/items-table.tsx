@@ -164,7 +164,8 @@ export function ItemsTable({ items }: ItemsTableProps) {
     e?.stopPropagation();
     const confirmed = await confirm({
       title: `Delete "${item.name}"?`,
-      description: 'This action cannot be undone. Items referenced on existing documents will prevent deletion.',
+      description:
+        'This action cannot be undone. Items referenced on existing documents will prevent deletion.',
       confirmText: 'Delete Item',
       variant: 'destructive',
     });
@@ -393,4 +394,3 @@ export function ItemsTable({ items }: ItemsTableProps) {
     </div>
   );
 }
-

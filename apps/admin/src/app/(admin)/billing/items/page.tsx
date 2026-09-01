@@ -107,4 +107,3 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps = {}) {
     </div>
   );
 }
-
