@@ -38,6 +38,7 @@ import { PAGE, split, ensurePage, drawShellHeader, drawShellFooter } from './pdf
 type BillingPdfType = 'invoice' | 'quote' | 'statement' | 'receipt';
 
 type PdfLineItem = {
+  itemName?: string | null;
   description: string;
   qty: number;
   unitPrice: number;
@@ -289,11 +290,27 @@ function drawLineItems(doc: jsPDF, data: PdfDocumentData, startY: number) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   for (const item of items) {
-    const lines = split(doc, item.description, 92);
-    const rowHeight = Math.max(10, lines.length * 4 + 4);
+    const hasItemName = !!item.itemName && !!item.description && item.itemName !== item.description;
+    const primaryText = item.itemName || item.description;
+    const nameLines = split(doc, primaryText, 92);
+    const descLines = hasItemName ? split(doc, item.description, 92) : [];
+    const totalLines = nameLines.length + descLines.length;
+    const rowHeight = Math.max(10, totalLines * 4 + 4);
     y = ensurePage(doc, y, rowHeight);
     doc.setTextColor(24, 24, 27);
-    doc.text(lines, PAGE.margin + 2, y + 4);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text(nameLines, PAGE.margin + 2, y + 4);
+    let descY = y + 4 + nameLines.length * 4;
+    if (hasItemName && descLines.length > 0) {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(7);
+      doc.setTextColor(156, 163, 175);
+      doc.text(descLines, PAGE.margin + 2, descY);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+    }
+    doc.setTextColor(24, 24, 27);
     doc.text(String(item.qty), 126, y + 4, { align: 'right' });
     doc.text(formatZAR(item.unitPrice), 156, y + 4, { align: 'right' });
     doc.setFont('helvetica', 'bold');
@@ -517,7 +534,8 @@ async function buildInvoicePdfData(id: string): Promise<PdfDocumentData | null> 
       phone: invoice.clientPhone,
     },
     lineItems: invoice.lineItems.map((line) => ({
-      description: line.itemName || line.description,
+      itemName: line.itemName || null,
+      description: line.description,
       qty: safeNumber(line.quantity),
       unitPrice: safeNumber(line.unitPrice),
       amount:
@@ -562,7 +580,8 @@ async function buildQuotePdfData(id: string): Promise<PdfDocumentData | null> {
       phone: quote.clientPhone,
     },
     lineItems: quote.lineItems.map((line) => ({
-      description: line.itemName || line.description,
+      itemName: line.itemName || null,
+      description: line.description,
       qty: safeNumber(line.quantity),
       unitPrice: safeNumber(line.unitPrice),
       amount:
