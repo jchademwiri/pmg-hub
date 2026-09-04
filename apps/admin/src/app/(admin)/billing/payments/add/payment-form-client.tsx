@@ -343,10 +343,12 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
         date: paymentDate,
         description,
         amount: parseFloat(amount) || 0,
-        allocations: Object.entries(currentAllocations).map(([invoiceId, val]) => ({
-          invoiceId,
-          amount: parseFloat(val) || 0,
-        })),
+        allocations: Object.entries(currentAllocations)
+          .filter(([, val]) => (parseFloat(val) || 0) > 0)
+          .map(([invoiceId, val]) => ({
+            invoiceId,
+            amount: parseFloat(val) || 0,
+          })),
         sendReceiptEmail,
         autoTransferPmgShare,
       };
