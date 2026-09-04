@@ -14,9 +14,10 @@ interface WaterfallChartProps {
 export function WaterfallChart({ revenue, expenses, pmgShare, profitPool }: WaterfallChartProps) {
   // Define steps
   // 1. Gross Cash Receipts (+)
-  // 2. PMG Share (25%) (-)
-  // 3. Operating Expenses (-)
-  // 4. Net Profit Pool (=)
+  // 2. Operating Expenses (-)
+  // 3. PMG Share (25% of Profit) (-)
+  // 4. Net Retained Pool (=)
+  const retainedPool = profitPool - pmgShare;
   const steps = [
     {
       label: 'Gross Cash Receipts',
@@ -26,13 +27,6 @@ export function WaterfallChart({ revenue, expenses, pmgShare, profitPool }: Wate
       textClass: 'text-emerald-500 dark:text-emerald-400',
     },
     {
-      label: 'PMG Share (25%)',
-      value: -pmgShare,
-      type: 'decrease' as const,
-      color: 'fill-blue-500 dark:fill-blue-400',
-      textClass: 'text-blue-500 dark:text-blue-400',
-    },
-    {
       label: 'Operating Expenses',
       value: -expenses,
       type: 'decrease' as const,
@@ -40,22 +34,29 @@ export function WaterfallChart({ revenue, expenses, pmgShare, profitPool }: Wate
       textClass: 'text-amber-500 dark:text-amber-400',
     },
     {
-      label: profitPool >= 0 ? 'Net Profit Pool' : 'Net Deficit Pool',
-      value: profitPool,
+      label: 'PMG Share (25%)',
+      value: -pmgShare,
+      type: 'decrease' as const,
+      color: 'fill-blue-500 dark:fill-blue-400',
+      textClass: 'text-blue-500 dark:text-blue-400',
+    },
+    {
+      label: retainedPool >= 0 ? 'Net Retained Pool' : 'Net Deficit Pool',
+      value: retainedPool,
       type: 'total' as const,
       color:
-        profitPool >= 0
+        retainedPool >= 0
           ? 'fill-emerald-500 dark:fill-emerald-400'
           : 'fill-red-500 dark:fill-red-400',
       textClass:
-        profitPool >= 0
+        retainedPool >= 0
           ? 'text-emerald-500 dark:text-emerald-400'
           : 'text-red-500 dark:text-red-400',
     },
   ];
 
   // Find max value for scaling
-  const maxVal = Math.max(revenue, Math.abs(profitPool), expenses + pmgShare);
+  const maxVal = Math.max(revenue, Math.abs(retainedPool), expenses + pmgShare);
   const chartHeight = 220;
   const chartWidth = 500;
   const paddingY = 30;
@@ -85,7 +86,7 @@ export function WaterfallChart({ revenue, expenses, pmgShare, profitPool }: Wate
       h = getY(0) - y;
       topConnectorY = y;
     } else if (step.type === 'decrease') {
-      const prevTotal = i === 1 ? revenue : revenue - pmgShare;
+      const prevTotal = i === 1 ? revenue : revenue - expenses;
       const newTotal = prevTotal - Math.abs(step.value);
       y = getY(prevTotal);
       h = getY(newTotal) - y;

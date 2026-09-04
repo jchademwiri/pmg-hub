@@ -213,8 +213,10 @@ export function KpiGrid({
   // Map monthly data splits for the Sparkline components
   const revenueTrends = sparklineData.map((d) => d.revenue);
   const expensesTrends = sparklineData.map((d) => d.expenses);
-  const pmgShareTrends = sparklineData.map((d) => d.revenue * pmgShareRate);
-  const profitPoolTrends = sparklineData.map((d) => d.revenue * (1 - pmgShareRate) - d.expenses);
+  const pmgShareTrends = sparklineData.map(
+    (d) => Math.max(0, d.revenue - d.expenses) * pmgShareRate,
+  );
+  const profitPoolTrends = sparklineData.map((d) => d.revenue - d.expenses);
 
   return (
     <div className="flex flex-col gap-3">
@@ -229,7 +231,7 @@ export function KpiGrid({
           textColorClass="text-emerald-600"
         />
         <KpiCard
-          label="Profit Pool"
+          label="Total Profit"
           value={summary.profitPool}
           delta={deltas?.profit ?? undefined}
           highlight={summary.profitPool < 0 ? 'danger' : 'success'}

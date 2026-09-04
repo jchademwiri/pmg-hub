@@ -58,8 +58,9 @@ function makeSnapshotRow(period: string, overrides: Partial<SnapshotRow> = {}): 
 
 /** Compute the financial model summary from revenue and expenses */
 function computeSummary(revenue: number, expenses: number) {
-  const pmgShare = revenue * 0.25;
-  const profitPool = revenue - expenses - pmgShare;
+  const actualProfit = revenue - expenses;
+  const pmgShare = Math.max(0, actualProfit) * 0.25;
+  const profitPool = actualProfit;
   return { revenue, expenses, pmgShare, profitPool };
 }
 
@@ -298,9 +299,12 @@ describe('P8: Financial model formula invariants', () => {
         (revenue, expenses) => {
           const s = computeSummary(revenue, expenses);
           const eps = 0.001;
+          const actualProfit = revenue - expenses;
+          const expectedPmgShare = Math.max(0, actualProfit) * 0.25;
+          const expectedProfitPool = actualProfit;
 
-          expect(Math.abs(s.pmgShare - revenue * 0.25)).toBeLessThan(eps);
-          expect(Math.abs(s.profitPool - (revenue - expenses - s.pmgShare))).toBeLessThan(eps);
+          expect(Math.abs(s.pmgShare - expectedPmgShare)).toBeLessThan(eps);
+          expect(Math.abs(s.profitPool - expectedProfitPool)).toBeLessThan(eps);
         },
       ),
       { numRuns: 100 },

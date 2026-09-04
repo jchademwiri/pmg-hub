@@ -187,8 +187,9 @@ export async function getFinancialSummaryForPeriod(
   `);
   const revenue = Number((revResult.rows[0] as { total: string }).total);
   const expTotal = Number((expResult.rows[0] as { total: string }).total);
-  const pmgShare = revenue * effectiveRates.pmg_share;
-  const profitPool = revenue - expTotal - pmgShare;
+  const actualProfit = revenue - expTotal;
+  const pmgShare = Math.max(0, actualProfit) * effectiveRates.pmg_share;
+  const profitPool = actualProfit;
   return {
     revenue,
     expenses: expTotal,
