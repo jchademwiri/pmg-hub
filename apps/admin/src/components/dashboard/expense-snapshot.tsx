@@ -67,9 +67,9 @@ export function ExpenseSnapshot({
     (sum, name) => sum + (receiptsByName.get(name)?.total ?? 0),
     0,
   );
-  const totalPmgShare = totalCashReceipts * pmgShareRate;
-  const totalAR = names.reduce((sum, name) => sum + (arByName.get(name)?.total ?? 0), 0);
   const totalNet = totalCashReceipts - totalExpenses;
+  const totalPmgShare = Math.max(0, totalNet) * pmgShareRate;
+  const totalAR = names.reduce((sum, name) => sum + (arByName.get(name)?.total ?? 0), 0);
 
   const rows: DivisionBreakdownRow[] = names
     .map((name) => {
@@ -81,8 +81,8 @@ export function ExpenseSnapshot({
       const cashReceiptsTotal = receipts?.total ?? 0;
       const expenseTotal = expense?.total ?? 0;
       const arTotal = ar?.total ?? 0;
-      const pmgShare = cashReceiptsTotal * pmgShareRate;
       const net = cashReceiptsTotal - expenseTotal;
+      const pmgShare = Math.max(0, net) * pmgShareRate;
       const pct = Math.round((expenseTotal / totalExpenses) * 100);
 
       return {

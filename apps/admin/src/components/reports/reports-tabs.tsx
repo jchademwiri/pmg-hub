@@ -86,8 +86,8 @@ export function ReportsTabs({
   const totalRevenue = monthlyFinancials.reduce((sum, m) => sum + m.revenue, 0);
   const totalExpenses = monthlyFinancials.reduce((sum, m) => sum + m.expenses, 0);
   const PMG_SHARE_RATE = pmgShareRate ?? 0.25;
-  const totalPmgShare = totalRevenue * PMG_SHARE_RATE;
-  const totalProfitPool = totalRevenue - totalExpenses - totalPmgShare;
+  const totalProfitPool = totalRevenue - totalExpenses;
+  const totalPmgShare = Math.max(0, totalProfitPool) * PMG_SHARE_RATE;
 
   // Map Sankey node IDs to drill-down types
   const nodeToDrillType: Record<string, DrilldownType> = {
@@ -203,7 +203,7 @@ export function ReportsTabs({
             <ProfitPoolChart
               data={monthlyFinancials.map((m) => ({
                 period: m.month,
-                profit: m.revenue * (1 - PMG_SHARE_RATE) - m.expenses,
+                profit: m.revenue - m.expenses,
               }))}
             />
           </div>

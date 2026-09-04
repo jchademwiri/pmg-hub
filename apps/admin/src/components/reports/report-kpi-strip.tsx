@@ -107,10 +107,8 @@ export function ReportKpiStrip({ data }: { data: ReportKpiData }) {
   const profitMargin = data.revenue > 0 ? (data.profitPool / data.revenue) * 100 : 0;
 
   const rate = data.pmgShareRate ?? 0.25;
-  const monthlyPmg = data.monthlyRevenue.map((r) => r * rate);
-  const monthlyProfit = data.monthlyRevenue.map(
-    (r, i) => r * (1 - rate) - (data.monthlyExpenses[i] || 0),
-  );
+  const monthlyProfit = data.monthlyRevenue.map((r, i) => r - (data.monthlyExpenses[i] || 0));
+  const monthlyPmg = monthlyProfit.map((p) => Math.max(0, p) * rate);
 
   const cards = [
     {
@@ -136,7 +134,7 @@ export function ReportKpiStrip({ data }: { data: ReportKpiData }) {
       sparklineColor: 'text-blue-500',
     },
     {
-      label: `Profit Pool · ${profitMargin.toFixed(0)}% margin`,
+      label: `Total Profit · ${profitMargin.toFixed(0)}% margin`,
       value: data.profitPool,
       highlight: data.profitPool < 0 ? 'danger' : 'success',
       textColor:

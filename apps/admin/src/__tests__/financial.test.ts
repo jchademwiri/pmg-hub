@@ -42,8 +42,8 @@ describe('getFinancialSummary', () => {
 
       expect(result.revenue).toBe(100000);
       expect(result.expenses).toBe(40000);
-      expect(result.pmgShare).toBe(25000);
-      expect(result.profitPool).toBe(35000);
+      expect(result.pmgShare).toBe(15000);
+      expect(result.profitPool).toBe(60000);
     });
 
     it('zero case - revenue=0, expenses=0 returns all fields as 0 without error', async () => {
@@ -58,14 +58,14 @@ describe('getFinancialSummary', () => {
       expect(result.profitPool).toBe(0);
     });
 
-    it('loss case - revenue=10000, expenses=15000 produces correct negative values', async () => {
+    it('loss case - revenue=10000, expenses=15000 produces correct negative values and zero pmgShare', async () => {
       vi.mocked(getTotalRevenue).mockResolvedValue(10000);
       vi.mocked(getTotalExpenses).mockResolvedValue(15000);
 
       const result = await getFinancialSummary();
 
-      expect(result.pmgShare).toBe(2500);
-      expect(result.profitPool).toBe(-7500);
+      expect(result.pmgShare).toBe(0);
+      expect(result.profitPool).toBe(-5000);
     });
 
     it('determinism - same mocked inputs called twice produce structurally identical results', async () => {
@@ -103,8 +103,9 @@ describe('getFinancialSummary', () => {
 
             const result = await getFinancialSummary();
 
-            const pmgShare = revenue * 0.25;
-            const profitPool = revenue - expenses - pmgShare;
+            const actualProfit = revenue - expenses;
+            const pmgShare = Math.max(0, actualProfit) * 0.25;
+            const profitPool = actualProfit;
 
             expect(result.pmgShare).toBeCloseTo(pmgShare, 10);
             expect(result.profitPool).toBeCloseTo(profitPool, 10);
@@ -144,7 +145,7 @@ describe('getFinancialSummary', () => {
           fc.double({ noNaN: true, noDefaultInfinity: true, min: 0, max: 1e12 }),
           fc.double({ noNaN: true, noDefaultInfinity: true, min: 1, max: 1e12 }),
           async (revenue, positiveOffset) => {
-            const expenses = revenue * 0.8 + positiveOffset;
+            const expenses = revenue + positiveOffset;
 
             vi.mocked(getTotalRevenue).mockResolvedValue(revenue);
             vi.mocked(getTotalExpenses).mockResolvedValue(expenses);
@@ -152,6 +153,7 @@ describe('getFinancialSummary', () => {
             const result = await getFinancialSummary();
 
             expect(result.profitPool).toBeLessThan(0);
+            expect(result.pmgShare).toBe(0);
           },
         ),
       );
