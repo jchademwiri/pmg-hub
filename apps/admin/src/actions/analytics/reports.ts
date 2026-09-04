@@ -38,9 +38,9 @@ export async function exportFinancialsCsv(year: number): Promise<string | { erro
     const dataRows = MONTH_NAMES.map((name, i) => {
       const monthKey = `${year}-${String(i + 1).padStart(2, '0')}`;
       const { revenue, expenses } = dataByMonth.get(monthKey) ?? { revenue: 0, expenses: 0 };
-
-      const pmgShare = revenue * rates.pmg_share;
-      const profitPool = revenue - expenses - pmgShare;
+      const actualProfit = revenue - expenses;
+      const pmgShare = Math.max(0, actualProfit) * rates.pmg_share;
+      const profitPool = actualProfit;
 
       return `${name},${revenue},${expenses},${pmgShare},${profitPool}`;
     });

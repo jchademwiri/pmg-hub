@@ -32,8 +32,8 @@ describe('getLedgerBalances', () => {
 
   it('calculates available balances correctly for pmg_share', async () => {
     // Mock revenue and expenses for getFinancialSummary
-    vi.mocked(getTotalRevenue).mockResolvedValue(100000); // pmg_share expected = 25000
-    vi.mocked(getTotalExpenses).mockResolvedValue(40000); // profit pool = 35000
+    vi.mocked(getTotalRevenue).mockResolvedValue(100000);
+    vi.mocked(getTotalExpenses).mockResolvedValue(40000); // actual profit = 60000, pmg_share expected = 15000
 
     // Mock ledger totals (spends)
     vi.mocked(getLedgerTotalByAllocation).mockImplementation(async (type) => {
@@ -43,6 +43,6 @@ describe('getLedgerBalances', () => {
 
     const result = await getLedgerBalances();
 
-    expect(result.pmg_share).toEqual({ expected: 25000, spent: 3000, available: 22000 });
+    expect(result.pmg_share).toEqual({ expected: 15000, spent: 3000, available: 12000 });
   });
 });

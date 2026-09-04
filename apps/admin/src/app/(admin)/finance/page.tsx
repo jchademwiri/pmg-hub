@@ -43,8 +43,9 @@ export default async function FinanceOverviewPage() {
     getActiveChartAccounts(),
   ]);
 
-  const pmgShare = revenue * rates.pmg_share;
-  const profitPool = revenue - expenses - pmgShare;
+  const actualProfit = revenue - expenses;
+  const pmgShare = Math.max(0, actualProfit) * rates.pmg_share;
+  const profitPool = actualProfit;
 
   const chequeBalance = trialBalance.find((r) => r.accountCode === '1010')?.balance ?? 0;
   const savingsBalance = trialBalance.find((r) => r.accountCode === '1020')?.balance ?? 0;

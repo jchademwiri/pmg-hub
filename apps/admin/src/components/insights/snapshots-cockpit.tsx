@@ -248,7 +248,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             value={`${netMarginPct.toFixed(1)}%`}
             icon={Percent}
             tone={netMarginPct >= 0 ? 'positive' : 'negative'}
-            hint="Profit Pool ÷ Revenue — what's left for salary, reinvestment, reserve & flex allocations after the PMG cross-divisional growth reserve is set aside."
+            hint="Total Actual Profit (Revenue − Expenses) ÷ Revenue — actual net operating margin before PMG profit share distribution."
           />
         </div>
 
@@ -561,7 +561,7 @@ function SnapshotDetail({
           <div className="h-px bg-border" />
           <MarginRow
             label="Distributable margin"
-            hint="Profit Pool ÷ Revenue — what's left for salary, reinvestment, reserve & flex allocations after the PMG cross-divisional growth reserve is set aside."
+            hint="Total Actual Profit (Revenue − Expenses) ÷ Revenue — actual net operating margin before PMG profit share distribution."
             value={netMargin}
             previousValue={previousNetMargin}
           />

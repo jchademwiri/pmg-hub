@@ -196,9 +196,9 @@ function ReviewFigures({
       <div className="grid gap-3 sm:grid-cols-2">
         <FigureTile label="Revenue" value={summary.revenue} tone="revenue" />
         <FigureTile label="Expenses" value={summary.expenses} tone="expense" />
-        <FigureTile label="PMG Share" value={summary.pmgShare} tone="share" />
+        <FigureTile label="PMG Share (25%)" value={summary.pmgShare} tone="share" />
         <FigureTile
-          label={isProfitable ? 'Profit Pool' : 'Net Loss'}
+          label={isProfitable ? 'Total Profit' : 'Net Loss'}
           value={summary.profitPool}
           tone={isProfitable ? 'positive' : 'negative'}
         />
