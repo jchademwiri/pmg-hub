@@ -230,10 +230,12 @@ export function PaymentDetailClient({
       date: paymentDate,
       description,
       amount: parseFloat(editAmount) || 0,
-      allocations: Object.entries(manualAllocations).map(([invoiceId, val]) => ({
-        invoiceId,
-        amount: parseFloat(val) || 0,
-      })),
+      allocations: Object.entries(manualAllocations)
+        .filter(([, val]) => (parseFloat(val) || 0) > 0)
+        .map(([invoiceId, val]) => ({
+          invoiceId,
+          amount: parseFloat(val) || 0,
+        })),
     };
 
     startTransition(async () => {

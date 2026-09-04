@@ -287,6 +287,52 @@ describe('Billing Payments and Statements Module', () => {
       expect(res.error).toMatch(/exceed the payment amount/i);
       expect(mockDbInsert).not.toHaveBeenCalled();
     });
+
+    it('recordClientPayment - gracefully handles allocations with zero amounts (skipping them)', async () => {
+      let selectCount = 0;
+      mockDbSelect.mockImplementation(() => {
+        selectCount++;
+        return {
+          from: () => ({
+            where: () => {
+              if (selectCount === 1)
+                return selectResult([{ name: 'Client Mathange', businessName: 'Mathange Inc' }]);
+              if (selectCount === 2)
+                return selectResult([{ id: 'inv-1', documentNumber: 'INV-001' }]);
+              if (selectCount === 3) {
+                return selectResult([
+                  {
+                    total: '5000.00',
+                    writeOffAmount: '0',
+                    documentNumber: 'INV-001',
+                    clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
+                    divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
+                  },
+                ]);
+              }
+              if (selectCount === 4) return selectResult([{ sum: '0.00' }]);
+              return selectResult([{ sum: '5000.00' }]);
+            },
+            limit: () => selectResult([{ id: 'div-1' }]),
+          }),
+        };
+      });
+
+      const res = await recordClientPayment({
+        clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
+        divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
+        date: '2026-05-01',
+        description: 'Payment from Mathange',
+        amount: 5000,
+        allocations: [
+          { invoiceId: 'inv-1', amount: 5000 },
+          { invoiceId: 'inv-2', amount: 0 },
+        ],
+      });
+
+      expect(res).toEqual({ success: true });
+      expect(mockDbInsert).toHaveBeenCalled();
+    });
   });
 
   describe('Pages and Client Components', () => {

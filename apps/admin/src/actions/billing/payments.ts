@@ -148,6 +148,7 @@ export async function recordClientPayment(
 ): Promise<{ error?: string; success?: boolean }> {
   try {
     await getSessionOrRedirect();
+    const rawAllocations = data.allocations || [];
     const validation = RecordPaymentSchema.safeParse({
       clientId: data.clientId,
       divisionId: data.divisionId,
@@ -157,11 +158,17 @@ export async function recordClientPayment(
       reference: (data as any).reference || null,
       description: data.description || null,
       sendReceiptEmail: Boolean(data.sendReceiptEmail),
-      allocations: data.allocations,
+      allocations: rawAllocations,
     });
     if (!validation.success) {
       return { error: validation.error.issues[0]?.message ?? 'Invalid payment data' };
     }
+
+    // Filter to positive allocations only for invoice settlement
+    const cleanAllocations = rawAllocations
+      .map((a) => ({ invoiceId: a.invoiceId, amount: Number(a.amount) || 0 }))
+      .filter((a) => a.amount > 0);
+
     const db = getDb();
 
     // 1. Check period lock and future date
@@ -196,9 +203,7 @@ export async function recordClientPayment(
     }
 
     // 3. Fetch invoice document numbers upfront for auto-reference and email
-    const allocatedInvoiceIds = data.allocations
-      .filter((a) => a.amount > 0)
-      .map((a) => a.invoiceId);
+    const allocatedInvoiceIds = cleanAllocations.map((a) => a.invoiceId);
     const invDocs =
       allocatedInvoiceIds.length > 0
         ? await db
@@ -209,8 +214,7 @@ export async function recordClientPayment(
     const invDocMap = new Map(invDocs.map((d) => [d.id, d.documentNumber]));
 
     const allocatedInvoicesInfo: { documentNumber: string; amount: string }[] = [];
-    for (const alloc of data.allocations) {
-      if (alloc.amount <= 0) continue;
+    for (const alloc of cleanAllocations) {
       const docNum = invDocMap.get(alloc.invoiceId);
       if (docNum) {
         allocatedInvoicesInfo.push({
@@ -221,7 +225,7 @@ export async function recordClientPayment(
     }
 
     // 4. Generate trusted auto-reference from invoice document numbers
-    const totalAllocated = data.allocations.reduce((sum, a) => sum + a.amount, 0);
+    const totalAllocated = cleanAllocations.reduce((sum, a) => sum + a.amount, 0);
     const excessAmount = data.amount - totalAllocated;
 
     // Server-side guard: the UI already prevents this, but this is a Server
@@ -268,7 +272,7 @@ export async function recordClientPayment(
       if (!incomeRow) throw new Error('Failed to record cash receipt.');
 
       // B. Insert allocations and transition invoice statuses
-      for (const alloc of data.allocations) {
+      for (const alloc of cleanAllocations) {
         if (alloc.amount <= 0) continue;
 
         // Lock the invoice row first to serialize concurrent updates
