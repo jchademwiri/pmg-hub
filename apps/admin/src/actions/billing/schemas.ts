@@ -113,7 +113,7 @@ export const RecordPaymentSchema = z.object({
     .array(
       z.object({
         invoiceId: z.string().min(1, 'Invoice is required'),
-        amount: z.coerce.number().positive(),
+        amount: z.coerce.number().nonnegative('Allocation amount cannot be negative'),
       }),
     )
     .optional(),
@@ -156,7 +156,7 @@ export const ApplyCreditToInvoicesSchema = z.object({
     .array(
       z.object({
         invoiceId: z.string().min(1, 'Invoice is required'),
-        amount: z.coerce.number().positive(),
+        amount: z.coerce.number().positive('Allocation amount must be positive'),
       }),
     )
     .min(1, 'At least one invoice is required'),
