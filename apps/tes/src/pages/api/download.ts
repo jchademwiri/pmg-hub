@@ -3,36 +3,40 @@ import { getDb, publicDocuments, eq, sql, bridgeDatabaseEnv } from '@pmg/db';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
+const DEFAULT_R2_ACCOUNT_ID = '0328a0109a7579bb99ee877b94d6661b';
+const DEFAULT_R2_ACCESS_KEY_ID = '335f9847d35e67d4b74584b23a8deb21';
+const DEFAULT_R2_SECRET_ACCESS_KEY =
+  '16f5cd392abd63cd81b9d65c2f32ed5ce3bfda070e460e4fbd9edfb7953d71dc';
+const DEFAULT_R2_BUCKET = 'pmg-hub';
+
 function getR2Client() {
   const accountId =
-    import.meta.env.CLOUDFLARE_R2_ACCOUNT_ID || process.env.CLOUDFLARE_R2_ACCOUNT_ID;
+    import.meta.env.CLOUDFLARE_R2_ACCOUNT_ID ||
+    process.env.CLOUDFLARE_R2_ACCOUNT_ID ||
+    DEFAULT_R2_ACCOUNT_ID;
   const accessKeyId =
     import.meta.env.CLOUDFLARE_R2_ACCESS_KEY_ID ||
     process.env.CLOUDFLARE_R2_ACCESS_KEY_ID ||
     import.meta.env.AWS_ACCESS_KEY_ID ||
-    process.env.AWS_ACCESS_KEY_ID;
+    process.env.AWS_ACCESS_KEY_ID ||
+    DEFAULT_R2_ACCESS_KEY_ID;
   const secretAccessKey =
     import.meta.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY ||
     process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY ||
     import.meta.env.AWS_SECRET_ACCESS_KEY ||
-    process.env.AWS_SECRET_ACCESS_KEY;
+    process.env.AWS_SECRET_ACCESS_KEY ||
+    DEFAULT_R2_SECRET_ACCESS_KEY;
   const bucket =
     import.meta.env.CLOUDFLARE_R2_BUCKET ||
     process.env.CLOUDFLARE_R2_BUCKET ||
     import.meta.env.AWS_S3_BUCKET_NAME ||
     process.env.AWS_S3_BUCKET_NAME ||
-    'pmg-hub';
+    DEFAULT_R2_BUCKET;
 
-  if (!accessKeyId || !secretAccessKey) {
-    throw new Error('Cloudflare R2 storage credentials are missing from environment.');
-  }
-
-  const endpoint = accountId ? `https://${accountId}.r2.cloudflarestorage.com` : undefined;
+  const endpoint = `https://${accountId}.r2.cloudflarestorage.com`;
 
   const client = new S3Client({
-    region: accountId
-      ? 'auto'
-      : import.meta.env.AWS_REGION || process.env.AWS_REGION || 'us-east-1',
+    region: 'auto',
     endpoint,
     forcePathStyle: true,
     credentials: {

@@ -2,23 +2,29 @@ import 'server-only';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
+const DEFAULT_R2_ACCOUNT_ID = '0328a0109a7579bb99ee877b94d6661b';
+const DEFAULT_R2_ACCESS_KEY_ID = '335f9847d35e67d4b74584b23a8deb21';
+const DEFAULT_R2_SECRET_ACCESS_KEY =
+  '16f5cd392abd63cd81b9d65c2f32ed5ce3bfda070e460e4fbd9edfb7953d71dc';
+const DEFAULT_R2_BUCKET = 'pmg-hub';
+
 export function getR2Client() {
-  const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID;
-  const accessKeyId = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
+  const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID || DEFAULT_R2_ACCOUNT_ID;
+  const accessKeyId =
+    process.env.CLOUDFLARE_R2_ACCESS_KEY_ID ||
+    process.env.AWS_ACCESS_KEY_ID ||
+    DEFAULT_R2_ACCESS_KEY_ID;
   const secretAccessKey =
-    process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
-  const bucket = process.env.CLOUDFLARE_R2_BUCKET || process.env.AWS_S3_BUCKET_NAME;
+    process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY ||
+    process.env.AWS_SECRET_ACCESS_KEY ||
+    DEFAULT_R2_SECRET_ACCESS_KEY;
+  const bucket =
+    process.env.CLOUDFLARE_R2_BUCKET || process.env.AWS_S3_BUCKET_NAME || DEFAULT_R2_BUCKET;
 
-  if (!accessKeyId || !secretAccessKey || !bucket) {
-    throw new Error(
-      'Cloudflare R2 storage credentials or bucket name are missing from environment.',
-    );
-  }
-
-  const endpoint = accountId ? `https://${accountId}.r2.cloudflarestorage.com` : undefined;
+  const endpoint = `https://${accountId}.r2.cloudflarestorage.com`;
 
   const client = new S3Client({
-    region: accountId ? 'auto' : process.env.AWS_REGION || 'us-east-1',
+    region: 'auto',
     endpoint,
     forcePathStyle: true,
     credentials: {
