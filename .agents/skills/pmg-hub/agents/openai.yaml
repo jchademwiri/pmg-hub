@@ -1,0 +1,6 @@
+interface:
+  display_name: "Pmg Hub"
+  short_description: "Repo-specific patterns and workflows for pmg-hub"
+  default_prompt: "Use the pmg-hub repo skill to follow existing architecture, testing, and workflow conventions."
+policy:
+  allow_implicit_invocation: true

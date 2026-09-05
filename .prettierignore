@@ -26,6 +26,8 @@ packages/db/src/migrations/meta/
 
 # Agents & Documentation (contain pseudo-code snippets in markdown)
 .agents/
+.claude/
+.codex/
 docs/
 
 
