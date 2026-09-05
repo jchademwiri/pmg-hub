@@ -90,6 +90,11 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const hasData =
     momData.length > 0 || budgetChartSeries.length > 0 || expensesByCategory.length > 0;
 
+  const annualRevenue = monthlyFinancials.reduce((s, m) => s + m.revenue, 0);
+  const annualExpenses = monthlyFinancials.reduce((s, m) => s + m.expenses, 0);
+  const annualProfit = annualRevenue - annualExpenses;
+  const annualPmgShare = Math.max(0, annualProfit) * pmgShareRate;
+
   return (
     <div className="flex flex-col gap-6">
       <StickyPageHeader
@@ -107,13 +112,10 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
         <div className="flex flex-col gap-6">
           <ReportKpiStrip
             data={{
-              revenue: monthlyFinancials.reduce((s, m) => s + m.revenue, 0),
-              expenses: monthlyFinancials.reduce((s, m) => s + m.expenses, 0),
-              pmgShare: monthlyFinancials.reduce((s, m) => s + m.revenue, 0) * pmgShareRate,
-              profitPool: monthlyFinancials.reduce(
-                (s, m) => s + (m.revenue * (1 - pmgShareRate) - m.expenses),
-                0,
-              ),
+              revenue: annualRevenue,
+              expenses: annualExpenses,
+              pmgShare: annualPmgShare,
+              profitPool: annualProfit,
               monthlyRevenue: monthlyFinancials.map((m) => m.revenue),
               monthlyExpenses: monthlyFinancials.map((m) => m.expenses),
               pmgShareRate,

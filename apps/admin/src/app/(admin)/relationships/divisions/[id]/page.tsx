@@ -104,7 +104,7 @@ export default async function DivisionDetailPage({
     marginPercent: 0,
     distributionPercent: 0,
   };
-  const pmgShare = pnl.totalRevenue * activeRates.pmg_share;
+  const pmgShare = Math.max(0, pnl.netProfit) * activeRates.pmg_share;
 
   // "Expenses" excludes Bad Debt Expense — that's an AR write-off, not an
   // operating cost, and gets its own card below. Net Profit / Margin still

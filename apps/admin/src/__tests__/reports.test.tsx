@@ -15,6 +15,9 @@ vi.mock('@pmg/db', async (importActual) => {
     getMonthlyFinancialsForYear: vi.fn(),
     getDistinctYears: vi.fn(),
     getExpensesByCategoryForYear: vi.fn(),
+    getActiveRates: vi
+      .fn()
+      .mockResolvedValue({ pmg_share: 0.25, distribution_basis: 'net_profit' }),
   };
 });
 
@@ -137,6 +140,7 @@ import {
   getMonthlyFinancialsForYear,
   getDistinctYears,
   getExpensesByCategoryForYear,
+  getActiveRates,
 } from '@pmg/db';
 import { exportFinancialsCsv } from '@/app/actions/reports';
 
@@ -287,6 +291,10 @@ describe('P3: CSV export correctness - structure and financial model', () => {
     vi.mocked(exportFinancialsCsv).mockImplementation(actual.exportFinancialsCsv);
     // Default: no DB data (all months zero)
     vi.mocked(getMonthlyFinancialsForYear).mockResolvedValue([]);
+    vi.mocked(getActiveRates).mockResolvedValue({
+      pmg_share: 0.25,
+      distribution_basis: 'net_profit',
+    });
   });
 
   /**
@@ -324,9 +332,11 @@ describe('P3: CSV export correctness - structure and financial model', () => {
             number,
             number,
           ];
+          const expectedProfit = rev - exp;
+          const expectedPmg = Math.max(0, expectedProfit) * 0.25;
 
-          if (Math.abs(pmg - rev * 0.25) > eps) return false;
-          if (Math.abs(profit - (rev - exp - pmg)) > eps) return false;
+          if (Math.abs(pmg - expectedPmg) > eps) return false;
+          if (Math.abs(profit - expectedProfit) > eps) return false;
         }
 
         return true;
@@ -385,6 +395,10 @@ describe('P4: CSV export error safety - invalid year and never throws', () => {
       await vi.importActual<typeof import('@/app/actions/reports')>('@/app/actions/reports');
     vi.mocked(exportFinancialsCsv).mockImplementation(actual.exportFinancialsCsv);
     vi.mocked(getMonthlyFinancialsForYear).mockResolvedValue([]);
+    vi.mocked(getActiveRates).mockResolvedValue({
+      pmg_share: 0.25,
+      distribution_basis: 'net_profit',
+    });
   });
 
   /**
@@ -647,6 +661,10 @@ describe('Reports page', () => {
     vi.mocked(financial.getProfitPoolSeriesForYear).mockResolvedValue([]);
     vi.mocked(financial.getLedgerBalances).mockResolvedValue({
       pmg_share: { expected: 0, spent: 0, available: 0 },
+    });
+    vi.mocked(getActiveRates).mockResolvedValue({
+      pmg_share: 0.25,
+      distribution_basis: 'net_profit',
     });
   });
 

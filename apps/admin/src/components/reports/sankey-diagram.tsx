@@ -81,13 +81,13 @@ export function SankeyDiagram({
   };
 
   const isProfitable = profitPool > 0;
-  const netRevenue = revenue - pmgShare;
+  const retainedPool = profitPool - pmgShare;
 
   // Percentage distribution calculations relative to Gross Cash Receipts
-  const pmgPct = revenue > 0 ? (pmgShare / revenue) * 100 : 0;
-  const netPct = revenue > 0 ? (netRevenue / revenue) * 100 : 0;
   const expPct = revenue > 0 ? (expenses / revenue) * 100 : 0;
   const poolPct = revenue > 0 ? (profitPool / revenue) * 100 : 0;
+  const pmgPct = revenue > 0 ? (pmgShare / revenue) * 100 : 0;
+  const retainedPct = revenue > 0 ? (retainedPool / revenue) * 100 : 0;
 
   // SVG coordinate configuration
   const width = 840;
@@ -112,11 +112,43 @@ export function SankeyDiagram({
       pctColor: '#34d399',
     },
     {
+      id: 'expenses',
+      label: 'Operating Expenses',
+      val: expenses,
+      pct: `${expPct.toFixed(1)}%`,
+      x: 340,
+      y: 110,
+      w: 160,
+      h: 48,
+      stroke: '#f59e0b',
+      fill: '#1c1917',
+      labelColor: '#a1a1aa',
+      valColor: '#ffffff',
+      pctBg: '#451a03',
+      pctColor: '#fbbf24',
+    },
+    {
+      id: 'pool',
+      label: isProfitable ? 'Total Actual Profit' : 'Net Deficit',
+      val: Math.abs(profitPool),
+      pct: `${poolPct.toFixed(1)}%`,
+      x: 340,
+      y: 260,
+      w: 160,
+      h: 48,
+      stroke: isProfitable ? '#10b981' : '#ef4444',
+      fill: isProfitable ? '#091a14' : '#1f1213',
+      labelColor: '#a1a1aa',
+      valColor: '#ffffff',
+      pctBg: isProfitable ? '#064e3b' : '#7f1d1d',
+      pctColor: isProfitable ? '#34d399' : '#f87171',
+    },
+    {
       id: 'pmg',
-      label: 'PMG Share',
+      label: 'PMG Share (25%)',
       val: pmgShare,
       pct: `${pmgPct.toFixed(1)}%`,
-      x: 340,
+      x: 620,
       y: ledgerBalances ? 90 : 110,
       w: 160,
       h: ledgerBalances ? 68 : 48,
@@ -132,10 +164,10 @@ export function SankeyDiagram({
     },
     {
       id: 'net',
-      label: 'Net Cash Receipts',
-      val: netRevenue,
-      pct: `${netPct.toFixed(1)}%`,
-      x: 340,
+      label: retainedPool >= 0 ? 'Retained Profit' : 'Net Deficit',
+      val: Math.abs(retainedPool),
+      pct: `${retainedPct.toFixed(1)}%`,
+      x: 620,
       y: 260,
       w: 160,
       h: 48,
@@ -146,73 +178,41 @@ export function SankeyDiagram({
       pctBg: '#064e3b',
       pctColor: '#34d399',
     },
-    {
-      id: 'expenses',
-      label: 'Expenses',
-      val: expenses,
-      pct: `${expPct.toFixed(1)}%`,
-      x: 620,
-      y: 110,
-      w: 160,
-      h: 48,
-      stroke: '#f59e0b',
-      fill: '#1c1917',
-      labelColor: '#a1a1aa',
-      valColor: '#ffffff',
-      pctBg: '#451a03',
-      pctColor: '#fbbf24',
-    },
-    {
-      id: 'pool',
-      label: isProfitable ? 'Profit Pool' : 'Net Deficit',
-      val: Math.abs(profitPool),
-      pct: `${poolPct.toFixed(1)}%`,
-      x: 620,
-      y: 260,
-      w: 160,
-      h: 48,
-      stroke: isProfitable ? '#10b981' : '#ef4444',
-      fill: isProfitable ? '#091a14' : '#1f1213',
-      labelColor: '#a1a1aa',
-      valColor: '#ffffff',
-      pctBg: isProfitable ? '#064e3b' : '#7f1d1d',
-      pctColor: isProfitable ? '#34d399' : '#f87171',
-    },
   ];
 
   // Links definitions with explicit full-color stroke attributes
   const links = [
     {
-      id: 'link-gross-pmg',
+      id: 'link-gross-expenses',
       source: 'gross',
-      target: 'pmg',
-      val: pmgShare,
-      pct: `${pmgPct.toFixed(1)}%`,
-      stroke: '#3b82f6',
-    },
-    {
-      id: 'link-gross-net',
-      source: 'gross',
-      target: 'net',
-      val: netRevenue,
-      pct: `${netPct.toFixed(1)}%`,
-      stroke: '#10b981',
-    },
-    {
-      id: 'link-net-expenses',
-      source: 'net',
       target: 'expenses',
       val: expenses,
       pct: `${expPct.toFixed(1)}%`,
       stroke: '#f59e0b',
     },
     {
-      id: 'link-net-pool',
-      source: 'net',
+      id: 'link-gross-pool',
+      source: 'gross',
       target: 'pool',
       val: Math.abs(profitPool),
       pct: `${poolPct.toFixed(1)}%`,
       stroke: isProfitable ? '#10b981' : '#ef4444',
+    },
+    {
+      id: 'link-pool-pmg',
+      source: 'pool',
+      target: 'pmg',
+      val: pmgShare,
+      pct: `${pmgPct.toFixed(1)}%`,
+      stroke: '#3b82f6',
+    },
+    {
+      id: 'link-pool-net',
+      source: 'pool',
+      target: 'net',
+      val: Math.abs(retainedPool),
+      pct: `${retainedPct.toFixed(1)}%`,
+      stroke: '#10b981',
     },
   ];
 

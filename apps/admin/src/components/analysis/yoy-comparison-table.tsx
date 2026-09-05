@@ -48,7 +48,7 @@ export function YoYComparisonTable({ data, className }: YoYComparisonTableProps)
       colorClass: 'text-muted-foreground',
     },
     {
-      label: 'Net Profit Pool',
+      label: 'Net Profit',
       key: 'netProfit',
       isCurrency: true,
       colorClass: 'text-emerald-600 dark:text-emerald-500 font-bold',

@@ -90,8 +90,9 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
     getTotalExpenses(),
     getActiveRates(),
   ]);
-  const pmgShare = revenue * rates.pmg_share;
-  const profitPool = revenue - expenses - pmgShare;
+  const actualProfit = revenue - expenses;
+  const pmgShare = Math.max(0, actualProfit) * rates.pmg_share;
+  const profitPool = actualProfit;
   return {
     revenue,
     expenses,
@@ -206,15 +207,14 @@ export async function getMonthlyFinancialsSeries(): Promise<MonthlyFinancials[]>
 }
 
 export async function getMoMChartData(): Promise<MoMSnapshot[]> {
-  const [snap, rates] = await Promise.all([getMoMSnapshot(), getActiveRates()]);
+  const snap = await getMoMSnapshot();
   return [
     { metric: 'Revenue', current: snap.currentRevenue, previous: snap.previousRevenue },
     { metric: 'Expenses', current: snap.currentExpenses, previous: snap.previousExpenses },
     {
       metric: 'Profit Pool',
-      current: snap.currentRevenue - snap.currentExpenses - snap.currentRevenue * rates.pmg_share,
-      previous:
-        snap.previousRevenue - snap.previousExpenses - snap.previousRevenue * rates.pmg_share,
+      current: snap.currentRevenue - snap.currentExpenses,
+      previous: snap.previousRevenue - snap.previousExpenses,
     },
   ];
 }

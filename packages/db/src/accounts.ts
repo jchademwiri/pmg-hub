@@ -5,7 +5,7 @@ export const ACCOUNT_LABELS: Record<string, string> = {
   pmg_share: 'PMG Share',
 };
 
-// Note: pmg_share is 25% of revenue.
+// Note: pmg_share is 25% of actual profit (revenue - expenses).
 export const ACCOUNT_RATES: Record<AccountKey, number> = {
   pmg_share: 0.25,
 };

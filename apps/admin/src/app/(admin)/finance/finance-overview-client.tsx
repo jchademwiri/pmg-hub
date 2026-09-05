@@ -179,7 +179,7 @@ export function FinanceOverviewClient({
         <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Profit Pool
+              Total Profit
             </p>
             <div
               className={`flex h-8 w-8 items-center justify-center rounded-lg ${isProfitable ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}
@@ -194,7 +194,7 @@ export function FinanceOverviewClient({
           >
             {formatZAR(summary.profitPool)}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">Revenue − Expenses − PMG Share</p>
+          <p className="text-xs text-muted-foreground mt-1">Revenue − Expenses</p>
         </div>
 
         <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
@@ -209,7 +209,7 @@ export function FinanceOverviewClient({
           <p className="text-2xl font-bold mt-2 tabular-nums text-blue-600">
             {formatZAR(summary.pmgShare)}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">Calculated 25% equity reserve earned</p>
+          <p className="text-xs text-muted-foreground mt-1">25% share of actual profit</p>
         </div>
       </div>
 
