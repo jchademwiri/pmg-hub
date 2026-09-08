@@ -40,17 +40,19 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
-  // Skip auth redirect in development to allow impersonation / fallback
-  if (process.env.NODE_ENV === 'development') {
-    return NextResponse.next();
-  }
-
   // Require session cookie for all authenticated portal routes
   const sessionToken =
     request.cookies.get('__Secure-better-auth.session_token') ??
     request.cookies.get('better-auth.session_token');
   if (!sessionToken) {
     return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // Dev-only escape hatch: skip DB session validation when explicitly enabled.
+  // Lets the dev user switcher (dev_impersonate_client_id cookie) work without
+  // a real better-auth session. Never set this outside local development.
+  if (process.env.DISABLE_PORTAL_AUTH === 'true' && process.env.NODE_ENV !== 'production') {
+    return NextResponse.next();
   }
 
   // Validate session against the database

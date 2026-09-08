@@ -3,10 +3,16 @@
 import { cookies } from 'next/headers';
 import { getDb, clients, eq } from '@pmg/db';
 
+// Dev-only escape hatch used by the login page user switcher. Requires an
+// explicit env flag so a misconfigured NODE_ENV can never expose it.
+function isDevAuthEnabled(): boolean {
+  return process.env.DISABLE_PORTAL_AUTH === 'true' && process.env.NODE_ENV !== 'production';
+}
+
 export async function getDevClientsAction(): Promise<
   Array<{ id: string; name: string; businessName: string | null; email: string | null }>
 > {
-  if (process.env.NODE_ENV !== 'development') {
+  if (!isDevAuthEnabled()) {
     return [];
   }
 
@@ -32,8 +38,11 @@ export async function getDevClientsAction(): Promise<
 export async function loginAsDevClientAction(
   clientId: string,
 ): Promise<{ success: boolean; error?: string }> {
-  if (process.env.NODE_ENV !== 'development') {
-    return { success: false, error: 'Only available in development mode.' };
+  if (!isDevAuthEnabled()) {
+    return {
+      success: false,
+      error: 'Only available when DISABLE_PORTAL_AUTH=true in development.',
+    };
   }
 
   try {
