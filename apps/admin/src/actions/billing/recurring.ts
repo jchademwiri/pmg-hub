@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import {
   getDb,
+  user,
   recurringInvoices,
   recurringLineItems,
   recurringExpenses,
@@ -573,6 +574,11 @@ export async function setRecurringInvoiceStatus(
   }
 }
 
+export interface TriggerRecurringBillingOptions {
+  isInternal?: boolean;
+  userId?: string;
+}
+
 /**
  * Triggers recurring invoice generation for all active schedules due on or before asOfDate (defaults to today).
  * Issues real invoices, posts Dr 1100 AR / Cr 4010 Revenue (+ Cr 2150 VAT if enabled), advances nextRunDate,
@@ -580,10 +586,24 @@ export async function setRecurringInvoiceStatus(
  */
 export async function triggerRecurringBillingRun(
   asOfDate?: string,
+  options?: TriggerRecurringBillingOptions,
 ): Promise<{ error?: string; generatedCount?: number; emailFailureCount?: number }> {
   try {
-    const session = await getSessionOrRedirect();
     const db = getDb();
+    let currentUserId: string;
+
+    if (options?.isInternal) {
+      if (options.userId) {
+        currentUserId = options.userId;
+      } else {
+        const [adminUser] = await db.select({ id: user.id }).from(user).limit(1);
+        currentUserId = adminUser?.id ?? 'system';
+      }
+    } else {
+      const session = await getSessionOrRedirect();
+      currentUserId = session.user.id;
+    }
+
     const todayStr = asOfDate || getSASTToday();
 
     // Select active recurring schedules due on or before today
@@ -672,7 +692,7 @@ export async function triggerRecurringBillingRun(
               terms: schedule.terms,
               recurringInvoiceId: schedule.id,
               billingPeriod,
-              createdBy: session.user.id,
+              createdBy: currentUserId,
             })
             .returning({ id: invoices.id });
 

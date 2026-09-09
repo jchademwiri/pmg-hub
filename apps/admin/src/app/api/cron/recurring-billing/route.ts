@@ -11,12 +11,25 @@ export async function GET(req: Request) {
   if (unauthorized) return unauthorized;
 
   try {
-    // 2. Process active recurring invoice billing schedules (cut-off runs on 25th)
-    const result = await triggerRecurringBillingRun();
+    // 2. Process active recurring invoice billing schedules
+    const result = await triggerRecurringBillingRun(undefined, { isInternal: true });
+
+    if (result.error) {
+      console.error('[CRON:RECURRING_BILLING] Billing run error:', result.error);
+      return NextResponse.json(
+        {
+          success: false,
+          error: result.error,
+          timestamp: new Date().toISOString(),
+        },
+        { status: 500 },
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      generatedCount: result.generatedCount,
+      generatedCount: result.generatedCount ?? 0,
+      emailFailureCount: result.emailFailureCount ?? 0,
       timestamp: new Date().toISOString(),
     });
   } catch (err: unknown) {
