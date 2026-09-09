@@ -15,7 +15,7 @@ export default function LoginPage() {
   const [isSent, setIsSent] = React.useState(false);
   const [useOtp, setUseOtp] = React.useState(false);
 
-  const isDev = process.env.NODE_ENV === 'development';
+  const isDev = process.env.NODE_ENV !== 'production' && process.env.DISABLE_PORTAL_AUTH === 'true';
   const [devClients, setDevClients] = React.useState<
     Array<{ id: string; name: string; businessName: string | null; email: string | null }>
   >([]);

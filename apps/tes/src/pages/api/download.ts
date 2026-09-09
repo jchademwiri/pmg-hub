@@ -3,35 +3,37 @@ import { getDb, publicDocuments, eq, sql, bridgeDatabaseEnv } from '@pmg/db';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
-const DEFAULT_R2_ACCOUNT_ID = '0328a0109a7579bb99ee877b94d6661b';
-const DEFAULT_R2_ACCESS_KEY_ID = '335f9847d35e67d4b74584b23a8deb21';
-const DEFAULT_R2_SECRET_ACCESS_KEY =
-  '16f5cd392abd63cd81b9d65c2f32ed5ce3bfda070e460e4fbd9edfb7953d71dc';
-const DEFAULT_R2_BUCKET = 'pmg-hub';
-
-function getR2Client() {
+function getR2Config() {
   const accountId =
-    import.meta.env.CLOUDFLARE_R2_ACCOUNT_ID ||
-    process.env.CLOUDFLARE_R2_ACCOUNT_ID ||
-    DEFAULT_R2_ACCOUNT_ID;
+    import.meta.env.CLOUDFLARE_R2_ACCOUNT_ID || process.env.CLOUDFLARE_R2_ACCOUNT_ID;
   const accessKeyId =
     import.meta.env.CLOUDFLARE_R2_ACCESS_KEY_ID ||
     process.env.CLOUDFLARE_R2_ACCESS_KEY_ID ||
     import.meta.env.AWS_ACCESS_KEY_ID ||
-    process.env.AWS_ACCESS_KEY_ID ||
-    DEFAULT_R2_ACCESS_KEY_ID;
+    process.env.AWS_ACCESS_KEY_ID;
   const secretAccessKey =
     import.meta.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY ||
     process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY ||
     import.meta.env.AWS_SECRET_ACCESS_KEY ||
-    process.env.AWS_SECRET_ACCESS_KEY ||
-    DEFAULT_R2_SECRET_ACCESS_KEY;
+    process.env.AWS_SECRET_ACCESS_KEY;
   const bucket =
     import.meta.env.CLOUDFLARE_R2_BUCKET ||
     process.env.CLOUDFLARE_R2_BUCKET ||
     import.meta.env.AWS_S3_BUCKET_NAME ||
     process.env.AWS_S3_BUCKET_NAME ||
-    DEFAULT_R2_BUCKET;
+    'pmg-hub';
+
+  if (!accountId) throw new Error('CLOUDFLARE_R2_ACCOUNT_ID is not configured');
+  if (!accessKeyId)
+    throw new Error('R2 access key is not configured (CLOUDFLARE_R2_ACCESS_KEY_ID)');
+  if (!secretAccessKey)
+    throw new Error('R2 secret access key is not configured (CLOUDFLARE_R2_SECRET_ACCESS_KEY)');
+
+  return { accountId, accessKeyId, secretAccessKey, bucket };
+}
+
+function getR2Client() {
+  const { accountId, accessKeyId, secretAccessKey, bucket } = getR2Config();
 
   const endpoint = `https://${accountId}.r2.cloudflarestorage.com`;
 
@@ -91,6 +93,19 @@ export const GET: APIRoute = async ({ request }) => {
   // Bridge Astro environment variables into process.env for @pmg/db
   const env = import.meta.env as Record<string, string | undefined>;
   bridgeDatabaseEnv(env);
+
+  // Fail fast with a clear configuration error before touching the database
+  try {
+    getR2Config();
+  } catch (configError) {
+    const message = configError instanceof Error ? configError.message : 'R2 not configured';
+    console.error('[/api/download] Storage configuration error:', message);
+    return errorResponse(
+      'The document storage is not configured. Please contact support.',
+      'CONFIG_ERROR',
+      503,
+    );
+  }
 
   try {
     const db = getDb();
