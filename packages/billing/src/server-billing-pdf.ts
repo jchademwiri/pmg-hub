@@ -655,19 +655,51 @@ async function buildStatementPdfData(
     monthPeriod?: 'current' | 'previous' | 'past3' | 'past6';
     statementType?: 'activity' | 'outstanding';
     includeDraftInvoiceId?: string;
+    divisionId?: string;
   },
 ): Promise<PdfDocumentData | null> {
   const statement = await getClientStatement(clientId, filters);
   if (!statement) return null;
   const db = getDb();
   const orgSettings = await getOrganisationSettings();
+
+  const creditConditions = [
+    eq(creditNotes.clientId, clientId),
+    sql`${creditNotes.status} != 'void'`,
+  ];
+  if (filters?.divisionId) {
+    creditConditions.push(eq(creditNotes.divisionId, filters.divisionId));
+  }
+
   const [incomeResult, dbCreditNotes, dbRefunds] = await Promise.all([
     getAllIncome({ clientId, ...filters }),
     db
       .select()
       .from(creditNotes)
-      .where(and(eq(creditNotes.clientId, clientId), sql`${creditNotes.status} != 'void'`)),
-    db.select().from(creditRefunds).where(eq(creditRefunds.clientId, clientId)),
+      .where(and(...creditConditions)),
+    filters?.divisionId
+      ? db
+          .select({
+            id: creditRefunds.id,
+            creditNoteId: creditRefunds.creditNoteId,
+            clientId: creditRefunds.clientId,
+            amount: creditRefunds.amount,
+            refundDate: creditRefunds.refundDate,
+            refundMethod: creditRefunds.refundMethod,
+            reference: creditRefunds.reference,
+            description: creditRefunds.description,
+            createdBy: creditRefunds.createdBy,
+            createdAt: creditRefunds.createdAt,
+          })
+          .from(creditRefunds)
+          .innerJoin(creditNotes, eq(creditNotes.id, creditRefunds.creditNoteId))
+          .where(
+            and(
+              eq(creditRefunds.clientId, clientId),
+              eq(creditNotes.divisionId, filters.divisionId),
+            ),
+          )
+      : db.select().from(creditRefunds).where(eq(creditRefunds.clientId, clientId)),
   ]);
 
   const { year: currentYear, month } = getSASTParts();
@@ -739,16 +771,25 @@ async function buildStatementPdfData(
       })),
       ...dbCreditNotes
         .filter((note) => {
-          const date = note.createdAt.toISOString().split('T')[0];
+          const date =
+            note.createdAt instanceof Date
+              ? note.createdAt.toISOString().split('T')[0]
+              : String(note.createdAt).split('T')[0];
           return note.type !== 'overpayment' && date >= periodFrom && date <= periodTo;
         })
-        .map((note) => ({
-          date: note.createdAt.toISOString().split('T')[0],
-          reference: note.documentNumber,
-          description: note.reason ?? 'Credit Note',
-          debit: undefined,
-          credit: safeNumber(note.amount),
-        })),
+        .map((note) => {
+          const dateStr =
+            note.createdAt instanceof Date
+              ? note.createdAt.toISOString().split('T')[0]
+              : String(note.createdAt).split('T')[0];
+          return {
+            date: dateStr,
+            reference: note.documentNumber,
+            description: note.reason ?? 'Credit Note',
+            debit: undefined,
+            credit: safeNumber(note.amount),
+          };
+        }),
       ...dbRefunds
         .filter((refund) => refund.refundDate >= periodFrom && refund.refundDate <= periodTo)
         .map((refund) => ({
@@ -770,8 +811,9 @@ async function buildStatementPdfData(
 
   const clientRecord = await getClientById(clientId);
   const allDivisions = await getAllDivisions();
+  const linkedDivisionId = filters?.divisionId ?? clientRecord?.divisionId;
   const { divisionName, effectiveDivisionId } = resolveDivisionBranding(
-    clientRecord?.divisionId,
+    linkedDivisionId,
     statement.invoices,
     allDivisions,
   );
@@ -815,6 +857,7 @@ export async function generateBillingPdf(
     monthPeriod?: 'current' | 'previous' | 'past3' | 'past6';
     statementType?: 'activity' | 'outstanding';
     includeDraftInvoiceId?: string;
+    divisionId?: string;
   },
 ) {
   const data =
