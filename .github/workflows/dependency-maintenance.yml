@@ -13,10 +13,11 @@ name: Dependency Maintenance
 # trigger `pull_request` workflows (GitHub's recursion guard), so a
 # maintenance PR would land with no CI. To get full CI on maintenance PRs,
 # add a repo secret MAINTENANCE_TOKEN (a PAT or fine-grained token with
-# contents:read/write + pull_requests:write on this repo). Without it, the
-# PR is still created - this workflow runs the verification suite
-# (typecheck, tests, build) before opening it, so a green run means the
-# branch was verified either way.
+# contents:read/write + pull_requests:write on this repo) - setup guide:
+# docs/operations/dependency-maintenance.md. Without it, the PR is still
+# created - this workflow runs the verification suite (typecheck, tests,
+# build) before opening it, so a green run means the branch was verified
+# either way.
 
 on:
   schedule:
