@@ -16,11 +16,11 @@ export async function GET(request: Request) {
     console.log('[CRON:DAILY] Starting daily maintenance run...');
 
     // 1. Process recurring hosting/retainer invoices
-    const recurringRes = await triggerRecurringBillingRun();
-    console.log(`[CRON:DAILY] Recurring invoices: ${recurringRes.generatedCount} generated.`);
+    const recurringRes = await triggerRecurringBillingRun(undefined, { isInternal: true });
+    console.log(`[CRON:DAILY] Recurring invoices: ${recurringRes.generatedCount ?? 0} generated.`);
 
     // 2. Process automated statement sweeps
-    const statementRes = await triggerAutomatedStatementsRun();
+    const statementRes = await triggerAutomatedStatementsRun(undefined, { isInternal: true });
     console.log(
       `[CRON:DAILY] Automated statements: ${statementRes.generatedCount} sent, ${statementRes.skippedZeroBalance} zero-balance skipped.`,
     );
