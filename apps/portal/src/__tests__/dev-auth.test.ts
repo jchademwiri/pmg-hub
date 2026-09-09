@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { getDevClientsAction, loginAsDevClientAction } from '@/app/actions/dev-auth';
 import { cookies } from 'next/headers';
 
@@ -19,23 +19,43 @@ vi.mock('@pmg/db', () => ({
 }));
 
 describe('Portal Dev Mode Auth Actions', () => {
+  const originalEnv = { ...process.env };
+  const setNodeEnv = (value: string) => {
+    (process.env as Record<string, string | undefined>).NODE_ENV = value;
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('getDevClientsAction returns empty array in non-development mode', async () => {
-    const originalEnv = process.env.NODE_ENV;
-    (process.env as any).NODE_ENV = 'production';
+  afterEach(() => {
+    (process.env as Record<string, string | undefined>).NODE_ENV = originalEnv.NODE_ENV;
+    if (originalEnv.DISABLE_PORTAL_AUTH === undefined) {
+      delete process.env.DISABLE_PORTAL_AUTH;
+    } else {
+      process.env.DISABLE_PORTAL_AUTH = originalEnv.DISABLE_PORTAL_AUTH;
+    }
+  });
+
+  it('getDevClientsAction returns empty array when flag is not set', async () => {
+    setNodeEnv('development');
+    delete process.env.DISABLE_PORTAL_AUTH;
 
     const result = await getDevClientsAction();
     expect(result).toEqual([]);
-
-    (process.env as any).NODE_ENV = originalEnv;
   });
 
-  it('getDevClientsAction fetches active clients in development mode', async () => {
-    const originalEnv = process.env.NODE_ENV;
-    (process.env as any).NODE_ENV = 'development';
+  it('getDevClientsAction returns empty array when flag is set in production', async () => {
+    setNodeEnv('production');
+    process.env.DISABLE_PORTAL_AUTH = 'true';
+
+    const result = await getDevClientsAction();
+    expect(result).toEqual([]);
+  });
+
+  it('getDevClientsAction fetches active clients when flag is set in development', async () => {
+    setNodeEnv('development');
+    process.env.DISABLE_PORTAL_AUTH = 'true';
 
     const mockClients = [
       { id: 'c1', name: 'Client One', businessName: 'Business 1', email: 'c1@test.com' },
@@ -53,13 +73,11 @@ describe('Portal Dev Mode Auth Actions', () => {
 
     const result = await getDevClientsAction();
     expect(result).toEqual(mockClients);
-
-    (process.env as any).NODE_ENV = originalEnv;
   });
 
-  it('loginAsDevClientAction sets dev_impersonate_client_id cookie in development', async () => {
-    const originalEnv = process.env.NODE_ENV;
-    (process.env as any).NODE_ENV = 'development';
+  it('loginAsDevClientAction sets dev_impersonate_client_id cookie when flag is set in development', async () => {
+    setNodeEnv('development');
+    process.env.DISABLE_PORTAL_AUTH = 'true';
 
     const mockCookieStore = {
       set: vi.fn(),
@@ -86,7 +104,13 @@ describe('Portal Dev Mode Auth Actions', () => {
       'c1',
       expect.objectContaining({ path: '/', sameSite: 'lax' }),
     );
+  });
 
-    (process.env as any).NODE_ENV = originalEnv;
+  it('loginAsDevClientAction refuses when flag is not set', async () => {
+    setNodeEnv('development');
+    delete process.env.DISABLE_PORTAL_AUTH;
+
+    const res = await loginAsDevClientAction('c1');
+    expect(res.success).toBe(false);
   });
 });

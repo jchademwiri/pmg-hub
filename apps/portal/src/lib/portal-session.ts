@@ -6,10 +6,17 @@ import { portalAuth } from './auth';
 export async function getPortalSession() {
   const db = getDb();
 
-  // Impersonation / Bypass Auth helper in development
-  if (process.env.NODE_ENV === 'development') {
+  const isDevAuthEnabled =
+    process.env.DISABLE_PORTAL_AUTH === 'true' && process.env.NODE_ENV !== 'production';
+
+  // Production authentication check
+  const session = await portalAuth.api.getSession({ headers: await headers() });
+
+  // Dev-only escape hatch: synthesize a client session for the dev user switcher
+  // (dev_impersonate_client_id cookie) when explicitly enabled. Never active in
+  // production. Real sessions take precedence over the dev cookie.
+  if (!session && isDevAuthEnabled) {
     const cookieStore = await cookies();
-    // Check both the dev cookie AND the production impersonate cookie (set by /impersonate route)
     const impersonateId =
       cookieStore.get('dev_impersonate_client_id')?.value ??
       cookieStore.get('impersonate_client_id')?.value;
@@ -42,39 +49,8 @@ export async function getPortalSession() {
         };
       }
     }
-
-    // Fallback to the first active client in the database to make dev seamless
-    const [fallbackClient] = await db
-      .select()
-      .from(clients)
-      .where(eq(clients.isActive, true))
-      .limit(1);
-
-    if (fallbackClient) {
-      return {
-        session: {
-          user: {
-            id: fallbackClient.userId || 'dev-user',
-            email: fallbackClient.email || 'dev@playhousemedia.co.za',
-            name: fallbackClient.name,
-          },
-          session: {
-            id: 'dev-session',
-            userId: fallbackClient.userId || 'dev-user',
-            token: 'dev-token',
-            expiresAt: new Date(Date.now() + 86400000),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        },
-        client: fallbackClient,
-        isAdmin: true,
-      };
-    }
   }
 
-  // Production authentication check
-  const session = await portalAuth.api.getSession({ headers: await headers() });
   if (!session) return null;
 
   let [client] = await db
