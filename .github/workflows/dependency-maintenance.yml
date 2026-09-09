@@ -1,0 +1,230 @@
+name: Dependency Maintenance
+# Weekly dependency refresh: keeps bun.lock in sync with the package.json
+# ranges and pulls in-range updates, so upstream drift and fresh advisories
+# surface as a small, reviewed PR instead of a release-day CI fire (see the
+# 2026-09-09 v1.43.1 release, where react-email lockfile drift plus same-week
+# Next.js/Astro CVEs broke every CI job at install/audit time).
+#
+# This complements the `Dependency audit` gate in security.yml - the audit
+# still fails closed on high/critical advisories; this workflow just makes
+# sure most weeks never reach that gate with surprises.
+#
+# Token choice (important): PRs created with the default GITHUB_TOKEN do NOT
+# trigger `pull_request` workflows (GitHub's recursion guard), so a
+# maintenance PR would land with no CI. To get full CI on maintenance PRs,
+# add a repo secret MAINTENANCE_TOKEN (a PAT or fine-grained token with
+# contents:read/write + pull_requests:write on this repo). Without it, the
+# PR is still created - this workflow runs the verification suite
+# (typecheck, tests, build) before opening it, so a green run means the
+# branch was verified either way.
+
+on:
+  schedule:
+    # Mondays at 06:00 UTC - after the weekend publish rush, before the workday.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: dependency-maintenance
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  BUN_VERSION: 1.3.14
+
+jobs:
+  refresh:
+    name: Weekly dependency refresh PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for an already-open maintenance PR
+        id: existing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          count=$(gh pr list --state open --base dev --json headRefName \
+            --jq '[.[] | select(.headRefName | startswith("chore/dep-maintenance-"))] | length')
+          if [ "$count" -gt 0 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::An open dependency-maintenance PR already exists ($count). Skipping this run - merge or close the existing PR first."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Pick the token used for checkout/push/PR
+        id: auth
+        env:
+          MAINTENANCE_TOKEN: ${{ secrets.MAINTENANCE_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -n "${MAINTENANCE_TOKEN:-}" ]; then
+            echo "using=pat" >> "$GITHUB_OUTPUT"
+          else
+            echo "using=github-token" >> "$GITHUB_OUTPUT"
+            echo "::warning::MAINTENANCE_TOKEN is not configured. The PR will be created with GITHUB_TOKEN, so GitHub will not run pull_request CI on it. Verification still runs in this workflow. Add a MAINTENANCE_TOKEN secret to get full CI on maintenance PRs."
+          fi
+
+      - name: Checkout dev
+        if: steps.existing.outputs.skip == 'false'
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          persist-credentials: true
+          token: ${{ steps.auth.outputs.using == 'pat' && secrets.MAINTENANCE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Setup Bun
+        if: steps.existing.outputs.skip == 'false'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      # No `bun ci` first on purpose: if the committed lockfile has drifted
+      # from the manifests (the exact failure this workflow exists to heal),
+      # a frozen install would fail before we get a chance to fix it.
+      # Regenerating from scratch re-resolves every range at the latest
+      # in-range version and rewrites only the lockfile. (`bun update` was
+      # rejected here: it rewrites package.json range floors and replaces
+      # `catalog:` references with literal ranges; `--no-save` is a no-op.)
+      - name: Regenerate lockfile with latest in-range versions
+        if: steps.existing.outputs.skip == 'false'
+        run: |
+          rm -f bun.lock
+          bun install
+
+      - name: Detect lockfile changes
+        id: diff
+        if: steps.existing.outputs.skip == 'false'
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- bun.lock; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: No-op notice
+        if: steps.existing.outputs.skip == 'false' && steps.diff.outputs.changed == 'false'
+        run: echo "No dependency drift this week - lockfile already matches resolution and in-range updates. Nothing to do."
+
+      # Frozen install as a sanity check: the rewritten lockfile must be
+      # self-consistent, or CI's `bun ci` would fail on the PR.
+      - name: Frozen-install sanity check
+        if: steps.diff.outputs.changed == 'true'
+        run: bun ci
+
+      - name: Verification suite
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          bun run check-types
+          bun run test
+          bun run build
+
+      # Advisory: recorded in the PR body rather than failing the run. If
+      # high/critical advisories remain, the fix needs manifest/override
+      # bumps (a human decision); the PR's own Dependency audit check will
+      # also fail visibly when CI runs on it.
+      - name: Dependency audit
+        if: steps.diff.outputs.changed == 'true'
+        id: audit
+        run: |
+          set -euo pipefail
+          if bun audit --audit-level=high > audit-output.txt 2>&1; then
+            echo "status=pass" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+            echo "::warning::bun audit still reports high/critical advisories after in-range updates - they need manifest/override bumps. Full output is included in the PR body."
+          fi
+
+      - name: Build updated-package list for the PR body
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          cat > /tmp/parse-lockfile-diff.js <<'EOF'
+          const { execSync } = require('child_process');
+          const diff = execSync('git diff -U0 -- bun.lock', {
+            encoding: 'utf8',
+            maxBuffer: 1024 * 1024 * 64,
+          });
+          // bun.lock registry entries look like:
+          //     "react-email": ["react-email@6.9.3", "", { ... }, "sha512-..."],
+          // The `: ["` anchor excludes plain dependency-range lines.
+          const re = /^[-+]\s{4}"([^"]+)":\s\["([^"@]+)@([^"]+)"/;
+          const oldV = new Map();
+          const newV = new Map();
+          for (const line of diff.split('\n')) {
+            const m = re.exec(line);
+            if (!m) continue;
+            const target = line.startsWith('-') ? oldV : newV;
+            target.set(m[1], m[3]);
+          }
+          const rows = [];
+          for (const [name, nv] of newV) {
+            const ov = oldV.get(name);
+            if (ov && ov !== nv) rows.push(`| ${name} | ${ov} | ${nv} |`);
+          }
+          console.log('### Updated packages');
+          console.log();
+          if (rows.length > 0) {
+            console.log('| Package | From | To |');
+            console.log('|---|---|---|');
+            for (const row of rows) console.log(row);
+          } else {
+            console.log('_Lockfile changed without package version changes (resolution/metadata churn)._');
+          }
+          EOF
+          node /tmp/parse-lockfile-diff.js > updated-packages.md
+
+      - name: Commit and push branch
+        id: push
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          BRANCH: chore/dep-maintenance-${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          git config user.name "pmg-hub-maintenance-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add bun.lock
+          git commit -m "chore(deps): weekly dependency refresh"
+          git push origin "$BRANCH"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: Open PR
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.auth.outputs.using == 'pat' && secrets.MAINTENANCE_TOKEN || secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ steps.push.outputs.branch }}
+          AUDIT_STATUS: ${{ steps.audit.outputs.status }}
+        run: |
+          set -euo pipefail
+          {
+            cat updated-packages.md
+            echo
+            if [ "$AUDIT_STATUS" = "pass" ]; then
+              echo "### 🔒 Dependency audit"
+              echo
+              echo "\`bun audit --audit-level=high\`: **pass**"
+            else
+              echo "### ⚠️ Dependency audit"
+              echo
+              echo "High/critical advisories remain after in-range updates - they need manifest/override bumps. Full \`bun audit\` output:"
+              echo
+              echo '```'
+              tail -40 audit-output.txt
+              echo '```'
+            fi
+            echo
+            echo "Verified in this run: frozen-lockfile install, \`check-types\`, \`test\`, \`build\`."
+            echo
+            echo "Review, merge into \`dev\`, then release to master as usual."
+          } > pr-body.md
+          gh pr create \
+            --base dev \
+            --head "$BRANCH" \
+            --title "chore(deps): weekly dependency refresh" \
+            --body-file pr-body.md
