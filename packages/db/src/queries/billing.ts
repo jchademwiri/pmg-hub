@@ -906,6 +906,7 @@ export async function getClientStatement(
     year?: number;
     monthPeriod?: 'current' | 'previous' | 'past3' | 'past6';
     includeDraftInvoiceId?: string;
+    divisionId?: string;
   },
 ): Promise<ClientStatement | null> {
   const includeReference = await hasQuotationReferenceColumn();
@@ -948,6 +949,12 @@ export async function getClientStatement(
     sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`,
   ];
   const incomeConditions = [eq(income.clientId, clientId), excludeSyntheticCreditIncome];
+
+  if (filters?.divisionId) {
+    quoteConditions.push(eq(quotations.divisionId, filters.divisionId));
+    invoiceConditions.push(eq(invoices.divisionId, filters.divisionId));
+    incomeConditions.push(eq(income.divisionId, filters.divisionId));
+  }
   let statementBalanceCutoff: string | null = null;
   let periodStartDate: string | null = null;
 
@@ -1043,6 +1050,12 @@ export async function getClientStatement(
     sql`${invoices.status} != 'paid'`,
   ];
 
+  if (filters?.divisionId) {
+    globalInvoiceConditions.push(eq(invoices.divisionId, filters.divisionId));
+    globalIncomeConditions.push(eq(income.divisionId, filters.divisionId));
+    globalCreditConditions.push(eq(invoices.divisionId, filters.divisionId));
+  }
+
   if (statementBalanceCutoff) {
     if (filters?.year) {
       globalInvoiceConditions.push(sql`${invoices.invoiceDate} < ${statementBalanceCutoff}`);
@@ -1101,6 +1114,12 @@ export async function getClientStatement(
       sql`${creditApplications.appliedAt} < ${periodStartDate}::timestamp`,
     ];
 
+    if (filters?.divisionId) {
+      priorInvoiceConditions.push(eq(invoices.divisionId, filters.divisionId));
+      priorIncomeConditions.push(eq(income.divisionId, filters.divisionId));
+      priorCreditConditions.push(eq(invoices.divisionId, filters.divisionId));
+    }
+
     const [priorInvoicedRes, priorPaidRes, priorCreditRes] = await Promise.all([
       db
         .select({ total: sql<number>`COALESCE(SUM(${invoices.total}), 0)::numeric` })
@@ -1129,6 +1148,9 @@ export async function getClientStatement(
 
   // For period paid, we sum income records AND credit applications in that period
   const periodCreditConditions = [eq(invoices.clientId, clientId), draftFilter];
+  if (filters?.divisionId) {
+    periodCreditConditions.push(eq(invoices.divisionId, filters.divisionId));
+  }
   if (filters?.monthPeriod) {
     const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
     periodCreditConditions.push(
@@ -1168,6 +1190,15 @@ export async function getClientStatement(
   const conversionRate = sentCount > 0 ? acceptedCount / sentCount : 0;
 
   // Fetch all outstanding/unpaid invoices (all-time) for the ageing report
+  const outstandingConditions = [
+    eq(invoices.clientId, clientId),
+    inArray(invoices.status, ['issued', 'overdue', 'partially_paid']),
+    sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`,
+  ];
+  if (filters?.divisionId) {
+    outstandingConditions.push(eq(invoices.divisionId, filters.divisionId));
+  }
+
   const outstandingInvoices = await db
     .select({
       id: invoices.id,
@@ -1202,13 +1233,7 @@ export async function getClientStatement(
     .innerJoin(divisions, eq(invoices.divisionId, divisions.id))
     .leftJoin(clients, eq(invoices.clientId, clients.id))
     .leftJoin(quotations, eq(invoices.quotationId, quotations.id))
-    .where(
-      and(
-        eq(invoices.clientId, clientId),
-        inArray(invoices.status, ['issued', 'overdue', 'partially_paid']),
-        sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`,
-      ),
-    )
+    .where(and(...outstandingConditions))
     .orderBy(desc(invoices.invoiceDate));
 
   return {

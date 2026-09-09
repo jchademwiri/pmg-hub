@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useEffect, useState, useTransition } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +36,9 @@ import {
   Pencil,
   Trash2,
   X,
+  XCircle,
+  ExternalLink,
+  History,
 } from 'lucide-react';
 import { formatZAR, fmtDateLong } from '@/lib/format';
 import {
@@ -55,12 +60,13 @@ import {
   type LineItemFormRow,
   type ActiveItem,
 } from '@/components/billing/billing-line-items-form';
-import type { RecurringInvoiceRow, RecurringExpenseRow } from '@pmg/db';
+import type { RecurringInvoiceRow, RecurringExpenseRow, RecurringInvoiceHistoryRow } from '@pmg/db';
 
 interface RecurringClientProps {
   recurringInvoices: RecurringInvoiceRow[];
   recurringExpenses: RecurringExpenseRow[];
-  clients: { id: string; name: string; businessName: string | null }[];
+  historyInvoices: RecurringInvoiceHistoryRow[];
+  clients: { id: string; name: string; businessName: string | null; divisionId?: string | null }[];
   divisions: { id: string; name: string }[];
   activeItems: ActiveItem[];
   categories: string[];
@@ -137,13 +143,25 @@ function formatFrequencyLabel(freq?: string): string {
 export function RecurringClient({
   recurringInvoices,
   recurringExpenses,
+  historyInvoices,
   clients,
   divisions,
   activeItems,
   categories,
 }: RecurringClientProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [activeTab, setActiveTab] = useState<'inbound' | 'outbound'>('inbound');
+
+  const tabParam = searchParams.get('tab');
+  const activeTab = (tabParam === 'outbound' || tabParam === 'history' ? tabParam : 'inbound') as
+    'inbound' | 'outbound' | 'history';
+
+  const handleTabChange = (tab: 'inbound' | 'outbound' | 'history') => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tab);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
 
   // Modals
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
@@ -185,33 +203,18 @@ export function RecurringClient({
   const activeInbound = recurringInvoices.filter((i) => i.status === 'active');
   const activeOutbound = recurringExpenses.filter((e) => e.status === 'active');
 
-  const totalMRR = activeInbound.reduce((sum, inv) => {
-    const amount = parseFloat(inv.total);
-    const factor =
-      inv.frequency === 'annually'
-        ? 1 / 12
-        : inv.frequency === 'semi_annually'
-          ? 1 / 6
-          : inv.frequency === 'quarterly'
-            ? 1 / 3
-            : 1;
-    return sum + amount * factor;
-  }, 0);
+  // Option B: Strictly month-to-month contracts count towards MRR
+  const activeMonthlyInbound = activeInbound.filter((i) => i.frequency === 'monthly');
+  const totalMRR = activeMonthlyInbound.reduce((sum, inv) => sum + (parseFloat(inv.total) || 0), 0);
 
-  const totalSoftwareBurn = activeOutbound.reduce((sum, exp) => {
-    const amount = parseFloat(exp.amount);
-    const factor =
-      exp.frequency === 'annually'
-        ? 1 / 12
-        : exp.frequency === 'semi_annually'
-          ? 1 / 6
-          : exp.frequency === 'quarterly'
-            ? 1 / 3
-            : 1;
-    return sum + amount * factor;
-  }, 0);
+  // Option B: Strictly monthly software burn
+  const activeMonthlyOutbound = activeOutbound.filter((e) => e.frequency === 'monthly');
+  const totalMonthlyBurn = activeMonthlyOutbound.reduce(
+    (sum, exp) => sum + (parseFloat(exp.amount) || 0),
+    0,
+  );
 
-  const netMonthlySurplus = totalMRR - totalSoftwareBurn;
+  const netMonthlySurplus = totalMRR - totalMonthlyBurn;
 
   // Current month scheduled cashflow calculations
   const now = new Date();
@@ -222,7 +225,7 @@ export function RecurringClient({
     (inv) => inv.nextRunDate && inv.nextRunDate.startsWith(currentYearMonth),
   );
   const scheduledInboundThisMonth = inboundDueThisMonth.reduce(
-    (sum, inv) => sum + parseFloat(inv.total),
+    (sum, inv) => sum + (parseFloat(inv.total) || 0),
     0,
   );
 
@@ -230,11 +233,55 @@ export function RecurringClient({
     (exp) => exp.nextDueDate && exp.nextDueDate.startsWith(currentYearMonth),
   );
   const scheduledOutboundThisMonth = outboundDueThisMonth.reduce(
-    (sum, exp) => sum + parseFloat(exp.amount),
+    (sum, exp) => sum + (parseFloat(exp.amount) || 0),
     0,
   );
 
   const netCashflowThisMonth = scheduledInboundThisMonth - scheduledOutboundThisMonth;
+
+  // Next month projected cashflow
+  const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const nextYearMonth = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, '0')}`;
+  const nextMonthName = nextMonthDate.toLocaleString('en-ZA', { month: 'long' });
+
+  const inboundDueNextMonth = activeInbound.filter((inv) => {
+    if (inv.endDate && inv.endDate < `${nextYearMonth}-01`) return false;
+    // If the next scheduled date is further out than next month, it's not due next month
+    if (inv.nextRunDate && inv.nextRunDate > `${nextYearMonth}-31`) return false;
+    if (inv.nextRunDate && inv.nextRunDate.startsWith(nextYearMonth)) return true;
+    if (inv.frequency === 'monthly') return true;
+    return false;
+  });
+  const scheduledInboundNextMonth = inboundDueNextMonth.reduce(
+    (sum, inv) => sum + (parseFloat(inv.total) || 0),
+    0,
+  );
+
+  const outboundDueNextMonth = activeOutbound.filter((exp) => {
+    if (exp.nextDueDate && exp.nextDueDate > `${nextYearMonth}-31`) return false;
+    if (exp.nextDueDate && exp.nextDueDate.startsWith(nextYearMonth)) return true;
+    if (exp.frequency === 'monthly') return true;
+    return false;
+  });
+  const scheduledOutboundNextMonth = outboundDueNextMonth.reduce(
+    (sum, exp) => sum + (parseFloat(exp.amount) || 0),
+    0,
+  );
+
+  const netCashflowNextMonth = scheduledInboundNextMonth - scheduledOutboundNextMonth;
+
+  // Sort tables: active items first, paused & cancelled sorted to the bottom
+  const sortedInvoices = [...recurringInvoices].sort((a, b) => {
+    if (a.status === 'active' && b.status !== 'active') return -1;
+    if (a.status !== 'active' && b.status === 'active') return 1;
+    return a.nextRunDate.localeCompare(b.nextRunDate);
+  });
+
+  const sortedExpenses = [...recurringExpenses].sort((a, b) => {
+    if (a.status === 'active' && b.status !== 'active') return -1;
+    if (a.status !== 'active' && b.status === 'active') return 1;
+    return a.nextDueDate.localeCompare(b.nextDueDate);
+  });
 
   // Handlers
   const handleTriggerRun = () => {
@@ -325,6 +372,24 @@ export function RecurringClient({
         setActionMessage({ type: 'error', text: res.error });
       } else {
         setActionMessage({ type: 'success', text: 'Recurring retainer schedule deleted.' });
+      }
+    });
+  }
+
+  function handleCancelInvoice(id: string) {
+    if (
+      !window.confirm(
+        'Cancel this retainer schedule? Future invoices will no longer be generated, but past invoices and history will be preserved.',
+      )
+    )
+      return;
+    setActionMessage(null);
+    startTransition(async () => {
+      const res = await setRecurringInvoiceStatus(id, 'cancelled');
+      if (res.error) {
+        setActionMessage({ type: 'error', text: res.error });
+      } else {
+        setActionMessage({ type: 'success', text: 'Retainer schedule cancelled successfully.' });
       }
     });
   }
@@ -521,21 +586,7 @@ export function RecurringClient({
     <div className="flex flex-col gap-6">
       {/* Top Banner Stats - Reconciled Operational Cashflow & Monthly MRR */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-b-4 border-b-rose-500 overflow-hidden">
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-rose-600">
-              <TrendingDown className="h-4 w-4" /> To Pay ({currentMonthName})
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold text-rose-700 dark:text-rose-400">
-              {formatZAR(scheduledOutboundThisMonth)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            {outboundDueThisMonth.length} vendor sub(s) due • {formatZAR(totalSoftwareBurn)}/mo
-            amortized
-          </CardContent>
-        </Card>
-
+        {/* Card 1: To Collect */}
         <Card className="border-b-4 border-b-emerald-500 overflow-hidden">
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-600">
@@ -546,10 +597,28 @@ export function RecurringClient({
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground">
-            {inboundDueThisMonth.length} retainer(s) running • {formatZAR(totalMRR)}/mo MRR
+            {inboundDueThisMonth.length} retainer(s) running • Next Month ({nextMonthName}):{' '}
+            {formatZAR(scheduledInboundNextMonth)} projected
           </CardContent>
         </Card>
 
+        {/* Card 2: To Pay */}
+        <Card className="border-b-4 border-b-rose-500 overflow-hidden">
+          <CardHeader className="pb-2">
+            <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-rose-600">
+              <TrendingDown className="h-4 w-4" /> To Pay ({currentMonthName})
+            </CardDescription>
+            <CardTitle className="text-2xl font-bold text-rose-700 dark:text-rose-400">
+              {formatZAR(scheduledOutboundThisMonth)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-xs text-muted-foreground">
+            {outboundDueThisMonth.length} vendor sub(s) due • Next Month ({nextMonthName}):{' '}
+            {formatZAR(scheduledOutboundNextMonth)} projected
+          </CardContent>
+        </Card>
+
+        {/* Card 3: Net Cashflow */}
         <Card className="border-b-4 border-b-cyan-500 overflow-hidden">
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-cyan-600">
@@ -562,10 +631,11 @@ export function RecurringClient({
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground">
-            Actual cash surplus (Inflow − Outflow) this month
+            Next Month ({nextMonthName}): {formatZAR(netCashflowNextMonth)} projected
           </CardContent>
         </Card>
 
+        {/* Card 4: Monthly Retainers (MRR) */}
         <Card className="border-b-4 border-b-blue-500 overflow-hidden">
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-blue-600">
@@ -578,7 +648,8 @@ export function RecurringClient({
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground">
-            {formatZAR(netMonthlySurplus * 12)} / yr net baseline annual margin
+            {activeMonthlyInbound.length} active monthly retainer(s) •{' '}
+            {formatZAR(netMonthlySurplus)}/mo baseline
           </CardContent>
         </Card>
       </div>
@@ -612,7 +683,7 @@ export function RecurringClient({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-4">
         <div className="flex items-center gap-2 bg-muted/60 p-1 rounded-lg">
           <button
-            onClick={() => setActiveTab('inbound')}
+            onClick={() => handleTabChange('inbound')}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
               activeTab === 'inbound'
                 ? 'bg-background text-foreground shadow-sm'
@@ -622,7 +693,7 @@ export function RecurringClient({
             Inbound Client Retainers ({recurringInvoices.length})
           </button>
           <button
-            onClick={() => setActiveTab('outbound')}
+            onClick={() => handleTabChange('outbound')}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
               activeTab === 'outbound'
                 ? 'bg-background text-foreground shadow-sm'
@@ -631,10 +702,20 @@ export function RecurringClient({
           >
             Outbound Subscriptions ({recurringExpenses.length})
           </button>
+          <button
+            onClick={() => handleTabChange('history')}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+              activeTab === 'history'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Invoice History ({historyInvoices.length})
+          </button>
         </div>
 
         <div className="flex items-center gap-2">
-          {activeTab === 'inbound' ? (
+          {activeTab === 'inbound' && (
             <>
               <Button
                 variant="outline"
@@ -650,16 +731,29 @@ export function RecurringClient({
                 <Plus className="h-4 w-4" /> Add Retainer Schedule
               </Button>
             </>
-          ) : (
+          )}
+          {activeTab === 'outbound' && (
             <Button size="sm" onClick={handleOpenCreateExpense} className="gap-1.5">
               <Plus className="h-4 w-4" /> Add Vendor Subscription
+            </Button>
+          )}
+          {activeTab === 'history' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleTriggerRun}
+              disabled={isPending}
+              className="gap-1.5"
+            >
+              <RefreshCw className={`h-4 w-4 ${isPending ? 'animate-spin' : ''}`} />
+              Run Billing Now
             </Button>
           )}
         </div>
       </div>
 
       {/* Content Section */}
-      {activeTab === 'inbound' ? (
+      {activeTab === 'inbound' && (
         <div className="grid grid-cols-1 gap-4">
           {recurringInvoices.length === 0 ? (
             <div className="text-center py-12 border border-dashed rounded-xl p-8 bg-muted/20">
@@ -679,139 +773,186 @@ export function RecurringClient({
                 <thead className="text-xs uppercase bg-muted/50 text-muted-foreground border-b">
                   <tr>
                     <th className="px-4 py-3">Client & Reference</th>
-                    <th className="px-4 py-3">Division</th>
-                    <th className="px-4 py-3">Cycle / Next Run</th>
+                    <th className="px-4 py-3 hidden lg:table-cell">Division</th>
+                    <th className="px-4 py-3 hidden sm:table-cell">Cycle / Next Run</th>
                     <th className="px-4 py-3">Amount</th>
-                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3 hidden md:table-cell">Status</th>
                     <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {recurringInvoices.map((inv) => (
-                    <tr key={inv.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="font-semibold text-foreground">
-                          {inv.clientBusinessName || inv.clientName}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {inv.reference || 'Monthly Retainer'}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant="outline" className="text-xs">
-                          {inv.divisionName}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] font-semibold uppercase tracking-wider bg-muted/40"
-                          >
-                            {formatFrequencyLabel(inv.frequency)}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            Day {inv.billingCycleDay}
-                          </span>
-                          {inv.nextRunDate && inv.nextRunDate.startsWith(currentYearMonth) && (
-                            <Badge
-                              variant="secondary"
-                              className="text-[10px] bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200"
-                            >
-                              Runs This Month
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Next: {fmtDateLong(inv.nextRunDate)}
-                        </div>
-                        {inv.endDate && (
-                          <div className="text-xs text-muted-foreground">
-                            Ends: {fmtDateLong(inv.endDate)}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 font-semibold text-foreground">
-                        <div>{formatZAR(parseFloat(inv.total))}</div>
-                        {inv.frequency !== 'monthly' && (
-                          <div className="text-[11px] font-normal text-muted-foreground">
-                            {formatZAR(
-                              parseFloat(inv.total) *
-                                (inv.frequency === 'annually'
-                                  ? 1 / 12
-                                  : inv.frequency === 'semi_annually'
-                                    ? 1 / 6
-                                    : 1 / 3),
+                  {sortedInvoices.map((inv) => {
+                    const isInactive = inv.status !== 'active';
+                    return (
+                      <tr
+                        key={inv.id}
+                        className={`transition-colors ${
+                          isInactive
+                            ? 'opacity-65 bg-muted/20 text-muted-foreground'
+                            : 'hover:bg-muted/30'
+                        }`}
+                      >
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-foreground flex items-center gap-1.5 flex-wrap">
+                            <span>{inv.clientBusinessName || inv.clientName}</span>
+                            {inv.status === 'paused' && (
+                              <span className="text-xs font-normal text-amber-600 dark:text-amber-400">
+                                (Paused)
+                              </span>
                             )}
-                            /mo normalized
+                            {inv.status === 'cancelled' && (
+                              <span className="text-xs font-normal text-destructive">
+                                (Cancelled)
+                              </span>
+                            )}
                           </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge
-                          variant={
-                            inv.status === 'active'
-                              ? 'default'
-                              : inv.status === 'paused'
-                                ? 'secondary'
-                                : 'destructive'
-                          }
-                          className="capitalize"
-                        >
-                          {inv.status}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleOpenEditInvoice(inv.id)}
-                            disabled={isPending}
-                            className="text-xs h-8"
+                          <div className="text-xs text-muted-foreground">
+                            {inv.reference || 'Monthly Retainer'}
+                          </div>
+                          {/* Mobile secondary row indicators */}
+                          <div className="flex flex-wrap items-center gap-1 mt-1 lg:hidden">
+                            <Badge variant="outline" className="text-[10px]">
+                              {inv.divisionName}
+                            </Badge>
+                            <Badge
+                              variant={
+                                inv.status === 'active'
+                                  ? 'default'
+                                  : inv.status === 'paused'
+                                    ? 'secondary'
+                                    : 'destructive'
+                              }
+                              className="text-[10px] md:hidden capitalize"
+                            >
+                              {inv.status}
+                            </Badge>
+                            <span className="text-[10px] text-muted-foreground sm:hidden">
+                              • Next: {fmtDateLong(inv.nextRunDate)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 hidden lg:table-cell">
+                          <Badge variant="outline" className="text-xs">
+                            {inv.divisionName}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 hidden sm:table-cell">
+                          <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] font-semibold uppercase tracking-wider bg-muted/40"
+                            >
+                              {formatFrequencyLabel(inv.frequency)}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              Day {inv.billingCycleDay}
+                            </span>
+                            {inv.nextRunDate && inv.nextRunDate.startsWith(currentYearMonth) && (
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200"
+                              >
+                                Runs This Month
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Next: {fmtDateLong(inv.nextRunDate)}
+                          </div>
+                          {inv.endDate && (
+                            <div className="text-xs text-muted-foreground">
+                              Ends: {fmtDateLong(inv.endDate)}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-foreground">
+                          <div>{formatZAR(parseFloat(inv.total) || 0)}</div>
+                          {inv.frequency !== 'monthly' && (
+                            <div className="text-[11px] font-normal text-muted-foreground">
+                              {formatFrequencyLabel(inv.frequency)}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 hidden md:table-cell">
+                          <Badge
+                            variant={
+                              inv.status === 'active'
+                                ? 'default'
+                                : inv.status === 'paused'
+                                  ? 'secondary'
+                                  : 'destructive'
+                            }
+                            className="capitalize"
                           >
-                            <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
-                          </Button>
-                          {inv.status === 'active' ? (
+                            {inv.status}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => setRecurringInvoiceStatus(inv.id, 'paused')}
+                              onClick={() => handleOpenEditInvoice(inv.id)}
+                              disabled={isPending}
                               className="text-xs h-8"
                             >
-                              <PauseCircle className="h-3.5 w-3.5 mr-1" /> Pause
+                              <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
                             </Button>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setRecurringInvoiceStatus(inv.id, 'active')}
-                              className="text-xs h-8 text-emerald-600"
-                            >
-                              <Play className="h-3.5 w-3.5 mr-1" /> Resume
-                            </Button>
-                          )}
-                          {!inv.lastRunDate && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteInvoice(inv.id)}
-                              disabled={isPending}
-                              className="text-xs h-8 text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            {inv.status === 'active' ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setRecurringInvoiceStatus(inv.id, 'paused')}
+                                className="text-xs h-8 text-muted-foreground hover:text-foreground"
+                              >
+                                <PauseCircle className="h-3.5 w-3.5 mr-1" /> Pause
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => setRecurringInvoiceStatus(inv.id, 'active')}
+                                className="text-xs h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm"
+                              >
+                                <Play className="h-3.5 w-3.5 mr-1 fill-current" /> Resume
+                              </Button>
+                            )}
+                            {inv.lastRunDate ? (
+                              inv.status !== 'cancelled' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleCancelInvoice(inv.id)}
+                                  disabled={isPending}
+                                  className="text-xs h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                >
+                                  <XCircle className="h-3.5 w-3.5 mr-1" /> Cancel
+                                </Button>
+                              )
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteInvoice(inv.id)}
+                                disabled={isPending}
+                                className="text-xs h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
         </div>
-      ) : (
+      )}
+
+      {activeTab === 'outbound' && (
         <div className="grid grid-cols-1 gap-4">
           {recurringExpenses.length === 0 ? (
             <div className="text-center py-12 border border-dashed rounded-xl p-8 bg-muted/20">
@@ -831,134 +972,297 @@ export function RecurringClient({
                 <thead className="text-xs uppercase bg-muted/50 text-muted-foreground border-b">
                   <tr>
                     <th className="px-4 py-3">Vendor / Tool</th>
-                    <th className="px-4 py-3">Category</th>
-                    <th className="px-4 py-3">Division</th>
-                    <th className="px-4 py-3">Cycle & Next Due</th>
+                    <th className="px-4 py-3 hidden lg:table-cell">Category</th>
+                    <th className="px-4 py-3 hidden lg:table-cell">Division</th>
+                    <th className="px-4 py-3 hidden sm:table-cell">Cycle & Next Due</th>
                     <th className="px-4 py-3">Amount</th>
-                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3 hidden md:table-cell">Status</th>
                     <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {recurringExpenses.map((exp) => (
-                    <tr key={exp.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="font-semibold text-foreground">{exp.vendorName}</div>
-                        {exp.clientName && (
-                          <div className="text-xs text-muted-foreground">For: {exp.clientName}</div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">{exp.category}</td>
-                      <td className="px-4 py-3">
-                        <Badge variant="outline" className="text-xs">
-                          {exp.divisionName}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] font-semibold uppercase tracking-wider bg-muted/40"
-                          >
-                            {formatFrequencyLabel(exp.frequency)}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            Day {exp.billingCycleDay}
-                          </span>
-                          {exp.nextDueDate && exp.nextDueDate.startsWith(currentYearMonth) && (
-                            <Badge
-                              variant="secondary"
-                              className="text-[10px] bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200"
-                            >
-                              Due This Month
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Due: {fmtDateLong(exp.nextDueDate)}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 font-semibold text-foreground">
-                        <div>{formatZAR(parseFloat(exp.amount))}</div>
-                        {exp.frequency !== 'monthly' && (
-                          <div className="text-[11px] font-normal text-muted-foreground">
-                            {formatZAR(
-                              parseFloat(exp.amount) *
-                                (exp.frequency === 'annually'
-                                  ? 1 / 12
-                                  : exp.frequency === 'semi_annually'
-                                    ? 1 / 6
-                                    : 1 / 3),
+                  {sortedExpenses.map((exp) => {
+                    const isInactive = exp.status !== 'active';
+                    return (
+                      <tr
+                        key={exp.id}
+                        className={`transition-colors ${
+                          isInactive
+                            ? 'opacity-65 bg-muted/20 text-muted-foreground'
+                            : 'hover:bg-muted/30'
+                        }`}
+                      >
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-foreground flex items-center gap-1.5 flex-wrap">
+                            <span>{exp.vendorName}</span>
+                            {exp.status === 'paused' && (
+                              <span className="text-xs font-normal text-amber-600 dark:text-amber-400">
+                                (Paused)
+                              </span>
                             )}
-                            /mo normalized
+                            {exp.status === 'cancelled' && (
+                              <span className="text-xs font-normal text-destructive">
+                                (Cancelled)
+                              </span>
+                            )}
                           </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge
-                          variant={
-                            exp.status === 'active'
-                              ? 'default'
-                              : exp.status === 'paused'
-                                ? 'secondary'
-                                : 'destructive'
-                          }
-                          className="capitalize"
-                        >
-                          {exp.status}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => handleMarkPaid(exp.id)}
-                            disabled={isPending}
-                            className="text-xs h-8 gap-1 text-emerald-700 dark:text-emerald-300"
+                          {exp.clientName && (
+                            <div className="text-xs text-muted-foreground">
+                              For: {exp.clientName}
+                            </div>
+                          )}
+                          {/* Mobile secondary row indicators */}
+                          <div className="flex flex-wrap items-center gap-1 mt-1 lg:hidden">
+                            <span className="text-[11px] text-muted-foreground">
+                              {exp.category}
+                            </span>
+                            <Badge variant="outline" className="text-[10px]">
+                              {exp.divisionName}
+                            </Badge>
+                            <Badge
+                              variant={
+                                exp.status === 'active'
+                                  ? 'default'
+                                  : exp.status === 'paused'
+                                    ? 'secondary'
+                                    : 'destructive'
+                              }
+                              className="text-[10px] md:hidden capitalize"
+                            >
+                              {exp.status}
+                            </Badge>
+                            <span className="text-[10px] text-muted-foreground sm:hidden">
+                              • Due: {fmtDateLong(exp.nextDueDate)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell">
+                          {exp.category}
+                        </td>
+                        <td className="px-4 py-3 hidden lg:table-cell">
+                          <Badge variant="outline" className="text-xs">
+                            {exp.divisionName}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 hidden sm:table-cell">
+                          <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] font-semibold uppercase tracking-wider bg-muted/40"
+                            >
+                              {formatFrequencyLabel(exp.frequency)}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              Day {exp.billingCycleDay}
+                            </span>
+                            {exp.nextDueDate && exp.nextDueDate.startsWith(currentYearMonth) && (
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200"
+                              >
+                                Due This Month
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Due: {fmtDateLong(exp.nextDueDate)}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-foreground">
+                          <div>{formatZAR(parseFloat(exp.amount) || 0)}</div>
+                          {exp.frequency !== 'monthly' && (
+                            <div className="text-[11px] font-normal text-muted-foreground">
+                              {formatFrequencyLabel(exp.frequency)}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 hidden md:table-cell">
+                          <Badge
+                            variant={
+                              exp.status === 'active'
+                                ? 'default'
+                                : exp.status === 'paused'
+                                  ? 'secondary'
+                                  : 'destructive'
+                            }
+                            className="capitalize"
                           >
-                            <CheckCircle2 className="h-3.5 w-3.5" /> Mark Paid
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleOpenEditExpense(exp.id)}
-                            disabled={isPending}
-                            className="text-xs h-8"
-                          >
-                            <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
-                          </Button>
-                          {exp.status === 'active' ? (
+                            {exp.status}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => handleMarkPaid(exp.id)}
+                              disabled={isPending}
+                              className="text-xs h-8 gap-1 text-emerald-700 dark:text-emerald-300"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Log Paid
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleToggleExpenseStatus(exp.id, exp.status)}
+                              onClick={() => handleOpenEditExpense(exp.id)}
                               disabled={isPending}
                               className="text-xs h-8"
                             >
-                              <PauseCircle className="h-3.5 w-3.5 mr-1" /> Pause
+                              <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
                             </Button>
-                          ) : (
+                            {exp.status === 'active' ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleToggleExpenseStatus(exp.id, exp.status)}
+                                disabled={isPending}
+                                className="text-xs h-8 text-muted-foreground hover:text-foreground"
+                              >
+                                <PauseCircle className="h-3.5 w-3.5 mr-1" /> Pause
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => handleToggleExpenseStatus(exp.id, exp.status)}
+                                disabled={isPending}
+                                className="text-xs h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm"
+                              >
+                                <Play className="h-3.5 w-3.5 mr-1 fill-current" /> Resume
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleToggleExpenseStatus(exp.id, exp.status)}
+                              onClick={() => handleDeleteExpense(exp.id)}
                               disabled={isPending}
-                              className="text-xs h-8 text-emerald-600"
+                              className="text-xs h-8 text-destructive hover:text-destructive"
                             >
-                              <Play className="h-3.5 w-3.5 mr-1" /> Resume
+                              <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
                             </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteExpense(exp.id)}
-                            disabled={isPending}
-                            className="text-xs h-8 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
-                          </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'history' && (
+        <div className="grid grid-cols-1 gap-4">
+          {historyInvoices.length === 0 ? (
+            <div className="text-center py-12 border border-dashed rounded-xl p-8 bg-muted/20">
+              <History className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-60" />
+              <h3 className="text-base font-semibold">No Recurring Invoices Generated Yet</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto mt-1 mb-4">
+                Invoices generated automatically by recurring retainers will appear here for easy
+                tracking and review.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border bg-card">
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs uppercase bg-muted/50 text-muted-foreground border-b">
+                  <tr>
+                    <th className="px-4 py-3">Invoice & Client</th>
+                    <th className="px-4 py-3 hidden lg:table-cell">Division</th>
+                    <th className="px-4 py-3 hidden sm:table-cell">Period & Dates</th>
+                    <th className="px-4 py-3">Amount</th>
+                    <th className="px-4 py-3 hidden md:table-cell">Status</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {historyInvoices.map((inv) => (
+                    <tr key={inv.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/billing/invoices/${inv.id}`}
+                          className="font-semibold text-foreground hover:underline flex items-center gap-1.5"
+                        >
+                          {inv.documentNumber}
+                        </Link>
+                        <div className="text-xs text-muted-foreground font-medium">
+                          {inv.clientBusinessName || inv.clientName}
                         </div>
+                        {inv.recurringReference && (
+                          <div className="text-[11px] text-muted-foreground italic">
+                            {inv.recurringReference}
+                          </div>
+                        )}
+                        <div className="flex flex-wrap items-center gap-1 mt-1 lg:hidden">
+                          <Badge variant="outline" className="text-[10px]">
+                            {inv.divisionName}
+                          </Badge>
+                          <Badge
+                            variant={
+                              inv.status === 'paid'
+                                ? 'default'
+                                : inv.status === 'overdue'
+                                  ? 'destructive'
+                                  : 'secondary'
+                            }
+                            className="text-[10px] md:hidden capitalize"
+                          >
+                            {inv.status}
+                          </Badge>
+                          {inv.billingPeriod && (
+                            <span className="text-[10px] text-muted-foreground sm:hidden">
+                              • {inv.billingPeriod}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 hidden lg:table-cell">
+                        <Badge variant="outline" className="text-xs">
+                          {inv.divisionName}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 hidden sm:table-cell">
+                        {inv.billingPeriod && (
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] bg-muted/40 font-semibold mb-1"
+                          >
+                            Period: {inv.billingPeriod}
+                          </Badge>
+                        )}
+                        <div className="text-xs text-muted-foreground">
+                          Date: {fmtDateLong(inv.invoiceDate)}
+                        </div>
+                        {inv.dueDate && (
+                          <div className="text-xs text-muted-foreground">
+                            Due: {fmtDateLong(inv.dueDate)}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-foreground">
+                        {formatZAR(parseFloat(inv.total) || 0)}
+                      </td>
+                      <td className="px-4 py-3 hidden md:table-cell">
+                        <Badge
+                          variant={
+                            inv.status === 'paid'
+                              ? 'default'
+                              : inv.status === 'overdue'
+                                ? 'destructive'
+                                : 'secondary'
+                          }
+                          className="capitalize"
+                        >
+                          {inv.status}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Button variant="ghost" size="sm" asChild className="text-xs h-8">
+                          <Link href={`/billing/invoices/${inv.id}`}>
+                            <ExternalLink className="h-3.5 w-3.5 mr-1" /> View
+                          </Link>
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -1018,7 +1322,16 @@ export function RecurringClient({
                   <Label htmlFor="inv-client" className="text-xs font-semibold">
                     Client
                   </Label>
-                  <Select value={newInvClientId} onValueChange={setNewInvClientId}>
+                  <Select
+                    value={newInvClientId}
+                    onValueChange={(val) => {
+                      setNewInvClientId(val);
+                      const matched = clients.find((c) => c.id === val);
+                      if (matched?.divisionId) {
+                        setNewInvDivisionId(matched.divisionId);
+                      }
+                    }}
+                  >
                     <SelectTrigger id="inv-client">
                       <SelectValue placeholder="Select Client" />
                     </SelectTrigger>

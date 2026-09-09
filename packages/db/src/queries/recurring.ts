@@ -2,8 +2,8 @@ import { db } from '../client';
 import { recurringInvoices, recurringLineItems, recurringExpenses } from '../schema/recurring';
 import { divisions } from '../schema/divisions';
 import { clients } from '../schema/clients';
-import { billingItems } from '../schema/billing';
-import { eq, and, desc, asc, sql, inArray, lte } from 'drizzle-orm';
+import { billingItems, invoices } from '../schema/billing';
+import { eq, and, desc, asc, sql, inArray, lte, isNotNull } from 'drizzle-orm';
 
 export type RecurringInvoiceRow = {
   id: string;
@@ -235,4 +235,64 @@ export async function getAllRecurringExpenses(filters?: {
     .orderBy(asc(recurringExpenses.nextDueDate), desc(recurringExpenses.createdAt));
 
   return rows as RecurringExpenseRow[];
+}
+
+export type RecurringInvoiceHistoryRow = {
+  id: string;
+  documentNumber: string;
+  divisionId: string;
+  divisionName: string;
+  clientId: string;
+  clientName: string;
+  clientBusinessName: string | null;
+  recurringInvoiceId: string | null;
+  recurringReference: string | null;
+  billingPeriod: string | null;
+  invoiceDate: string;
+  dueDate: string | null;
+  status: 'draft' | 'issued' | 'paid' | 'overdue' | 'void' | 'partially_paid' | 'written_off';
+  total: string;
+  paidAt: Date | null;
+  createdAt: Date;
+};
+
+/**
+ * Fetches all invoices generated from recurring retainers/schedules.
+ */
+export async function getRecurringInvoiceHistory(filters?: {
+  recurringInvoiceId?: string;
+  divisionId?: string;
+}): Promise<RecurringInvoiceHistoryRow[]> {
+  const conditions = [isNotNull(invoices.recurringInvoiceId)];
+  if (filters?.recurringInvoiceId)
+    conditions.push(eq(invoices.recurringInvoiceId, filters.recurringInvoiceId));
+  if (filters?.divisionId) conditions.push(eq(invoices.divisionId, filters.divisionId));
+
+  const rows = await db
+    .select({
+      id: invoices.id,
+      documentNumber: invoices.documentNumber,
+      divisionId: invoices.divisionId,
+      divisionName: divisions.name,
+      clientId: invoices.clientId,
+      clientName: clients.name,
+      clientBusinessName: clients.businessName,
+      recurringInvoiceId: invoices.recurringInvoiceId,
+      recurringReference: recurringInvoices.reference,
+      billingPeriod: invoices.billingPeriod,
+      invoiceDate: sql<string>`${invoices.invoiceDate}::text`,
+      dueDate: sql<string | null>`${invoices.dueDate}::text`,
+      status: invoices.status,
+      total: invoices.total,
+      paidAt: invoices.paidAt,
+      createdAt: invoices.createdAt,
+    })
+    .from(invoices)
+    .innerJoin(divisions, eq(divisions.id, invoices.divisionId))
+    .innerJoin(clients, eq(clients.id, invoices.clientId))
+    .leftJoin(recurringInvoices, eq(recurringInvoices.id, invoices.recurringInvoiceId))
+    .where(and(...conditions))
+    .orderBy(desc(invoices.invoiceDate), desc(invoices.createdAt));
+
+  return rows as RecurringInvoiceHistoryRow[];
 }

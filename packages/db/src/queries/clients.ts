@@ -24,6 +24,7 @@ export async function getAllClients(options: { activeOnly?: boolean } = {}): Pro
     name: string;
     businessName: string | null;
     email: string | null;
+    divisionId: string | null;
     isActive: boolean;
     isRetainer: boolean;
     excludeFromAutoStatements: boolean;
@@ -35,6 +36,7 @@ export async function getAllClients(options: { activeOnly?: boolean } = {}): Pro
       name: clients.name,
       businessName: clients.businessName,
       email: clients.email,
+      divisionId: clients.divisionId,
       isActive: clients.isActive,
       isRetainer: clients.isRetainer,
       excludeFromAutoStatements: clients.excludeFromAutoStatements,
@@ -56,6 +58,7 @@ export async function getActiveClients(): Promise<
     name: string;
     businessName: string | null;
     email: string | null;
+    divisionId: string | null;
     isActive: boolean;
     isRetainer: boolean;
     excludeFromAutoStatements: boolean;
