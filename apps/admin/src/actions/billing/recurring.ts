@@ -153,7 +153,10 @@ async function sendRecurringInvoiceEmail(params: {
 
   const [invoicePdf, statementPdf] = await Promise.all([
     generateBillingPdf('invoice', params.invoiceId),
-    generateBillingPdf('statement', params.clientId, { statementType: 'outstanding' }),
+    generateBillingPdf('statement', params.clientId, {
+      statementType: 'outstanding',
+      divisionId: params.divisionId,
+    }),
   ]);
 
   if (!invoicePdf) return { error: 'Failed to generate invoice PDF.' };

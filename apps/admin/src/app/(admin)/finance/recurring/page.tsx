@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import {
   getDb,
   divisions,
@@ -7,6 +8,7 @@ import {
   getActiveClients,
   getAllExpenseCategories,
   getActiveItems,
+  getRecurringInvoiceHistory,
 } from '@pmg/db';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
 import { RecurringClient } from './recurring-client';
@@ -17,30 +19,27 @@ export const metadata: Metadata = { title: 'Recurring Subscriptions & Retainers'
 export default async function RecurringFinancePage() {
   const db = getDb();
 
-  const [invoicesData, expensesData, clientsData, divisionsData, itemsData, categoriesData] =
-    await Promise.all([
-      getAllRecurringInvoices(),
-      getAllRecurringExpenses(),
-      getActiveClients(),
-      db.select({ id: divisions.id, name: divisions.name }).from(divisions),
-      getActiveItems(),
-      getAllExpenseCategories(),
-    ]);
+  const [
+    invoicesData,
+    expensesData,
+    clientsData,
+    divisionsData,
+    itemsData,
+    categoriesData,
+    historyInvoicesData,
+  ] = await Promise.all([
+    getAllRecurringInvoices(),
+    getAllRecurringExpenses(),
+    getActiveClients(),
+    db.select({ id: divisions.id, name: divisions.name }).from(divisions),
+    getActiveItems(),
+    getAllExpenseCategories(),
+    getRecurringInvoiceHistory(),
+  ]);
 
   const activeInboundMRR = invoicesData
-    .filter((i) => i.status === 'active')
-    .reduce((sum, i) => {
-      const amount = parseFloat(i.total);
-      const factor =
-        i.frequency === 'annually'
-          ? 1 / 12
-          : i.frequency === 'semi_annually'
-            ? 1 / 6
-            : i.frequency === 'quarterly'
-              ? 1 / 3
-              : 1;
-      return sum + amount * factor;
-    }, 0);
+    .filter((i) => i.status === 'active' && i.frequency === 'monthly')
+    .reduce((sum, i) => sum + parseFloat(i.total), 0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -56,14 +55,28 @@ export default async function RecurringFinancePage() {
         </p>
       </div>
 
-      <RecurringClient
-        recurringInvoices={invoicesData}
-        recurringExpenses={expensesData}
-        clients={clientsData.map((c) => ({ id: c.id, name: c.name, businessName: c.businessName }))}
-        divisions={divisionsData}
-        activeItems={itemsData}
-        categories={categoriesData.map((cat) => cat.name)}
-      />
+      <Suspense
+        fallback={
+          <div className="p-8 text-center text-sm text-muted-foreground">
+            Loading recurring schedules...
+          </div>
+        }
+      >
+        <RecurringClient
+          recurringInvoices={invoicesData}
+          recurringExpenses={expensesData}
+          historyInvoices={historyInvoicesData}
+          clients={clientsData.map((c) => ({
+            id: c.id,
+            name: c.name,
+            businessName: c.businessName,
+            divisionId: c.divisionId,
+          }))}
+          divisions={divisionsData}
+          activeItems={itemsData}
+          categories={categoriesData.map((cat) => cat.name)}
+        />
+      </Suspense>
     </div>
   );
 }
