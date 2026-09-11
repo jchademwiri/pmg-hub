@@ -139,109 +139,122 @@ export function QuotesClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Quote #</TableHead>
-            <TableHead>Reference</TableHead>
-            <TableHead>Client</TableHead>
-            <TableHead>Issue Date</TableHead>
-            <TableHead>Expiry Date</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="w-10" />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {entries.map((quote) => (
-            <TableRow
-              key={quote.id}
-              className="hover:bg-muted/40 transition-colors border-b border-border relative"
-            >
-              <TableCell className="font-medium">
-                <Link
-                  href={`/billing/quotes/${quote.id}`}
-                  className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
-                  aria-label={`View quote ${quote.documentNumber}`}
-                />
-                {quote.documentNumber}
-              </TableCell>
-              <TableCell>
-                {quote.reference ? (
-                  <span className="text-muted-foreground">
-                    {quote.reference.length > 30
-                      ? quote.reference.slice(0, 30) + '...'
-                      : quote.reference}
-                  </span>
-                ) : (
-                  <span className="italic text-muted-foreground/50">None</span>
-                )}
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {quote.clientName ?? <span className="italic">No client</span>}
-              </TableCell>
-              <TableCell className="tabular-nums text-sm">{fmtDate(quote.quoteDate)}</TableCell>
-              <TableCell className="tabular-nums text-sm text-muted-foreground">
-                {fmtDate(quote.expiryDate)}
-              </TableCell>
-              <TableCell
-                className={`text-right tabular-nums text-sm font-medium ${QUOTE_STATUS_COLORS[quote.status] || ''}`}
-              >
-                {formatZAR(Number(quote.total))}
-              </TableCell>
-              <TableCell>
-                <BillingStatusBadge status={quote.status} />
-              </TableCell>
-              <TableCell className="relative z-10">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="size-8" title="Actions">
-                      <MoreHorizontal className="size-4" />
-                      <span className="sr-only">Actions</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link href={`/billing/quotes/${quote.id}`}>View</Link>
-                    </DropdownMenuItem>
-                    {quote.status === 'draft' && (
-                      <DropdownMenuItem onClick={() => handleStatusChange(quote.id, 'sent')}>
-                        Mark Sent
-                      </DropdownMenuItem>
-                    )}
-                    {quote.status === 'sent' && (
-                      <>
-                        <DropdownMenuItem onClick={() => handleStatusChange(quote.id, 'accepted')}>
-                          Mark Accepted
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleStatusChange(quote.id, 'declined')}>
-                          Mark Declined
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => handleDuplicate(quote.id)}>
-                      Duplicate
-                    </DropdownMenuItem>
-                    {(quote.status === 'draft' || quote.status === 'sent') && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => handleDelete(quote.id, quote.documentNumber)}
-                          disabled={quote.status !== 'draft'}
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
+      <div className="rounded-md border border-border">
+        <Table className="table-fixed w-full">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[130px] px-2 text-xs">Quote #</TableHead>
+              <TableHead className="px-2 text-xs">Reference</TableHead>
+              <TableHead className="px-2 text-xs">Client</TableHead>
+              <TableHead className="w-[85px] px-2 text-xs">Issue Date</TableHead>
+              <TableHead className="w-[85px] px-2 text-xs">Expiry Date</TableHead>
+              <TableHead className="w-[85px] px-2 text-right text-xs">Amount</TableHead>
+              <TableHead className="w-[95px] px-2 text-center text-xs">Status</TableHead>
+              <TableHead className="w-10 px-2" />
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {entries.map((quote) => (
+              <TableRow
+                key={quote.id}
+                className="hover:bg-muted/40 transition-colors border-b border-border relative"
+              >
+                <TableCell className="font-medium px-2 truncate">
+                  <Link
+                    href={`/billing/quotes/${quote.id}`}
+                    className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
+                    aria-label={`View quote ${quote.documentNumber}`}
+                  />
+                  <span className="hover:underline text-primary font-semibold relative z-10 font-mono text-xs">
+                    {quote.documentNumber}
+                  </span>
+                </TableCell>
+                <TableCell className="px-2 truncate" title={quote.reference || undefined}>
+                  {quote.reference ? (
+                    <span className="text-muted-foreground truncate block text-xs">
+                      {quote.reference}
+                    </span>
+                  ) : (
+                    <span className="italic text-muted-foreground/50 text-xs">None</span>
+                  )}
+                </TableCell>
+                <TableCell
+                  className="text-muted-foreground px-2 truncate"
+                  title={quote.clientName || undefined}
+                >
+                  <span className="truncate block text-xs">
+                    {quote.clientName ?? <span className="italic">No client</span>}
+                  </span>
+                </TableCell>
+                <TableCell className="tabular-nums text-xs px-2 whitespace-nowrap">
+                  {fmtDate(quote.quoteDate)}
+                </TableCell>
+                <TableCell className="tabular-nums text-xs text-muted-foreground px-2 whitespace-nowrap">
+                  {fmtDate(quote.expiryDate)}
+                </TableCell>
+                <TableCell
+                  className={`text-right tabular-nums text-xs font-medium px-2 whitespace-nowrap ${QUOTE_STATUS_COLORS[quote.status] || ''}`}
+                >
+                  {formatZAR(Number(quote.total))}
+                </TableCell>
+                <TableCell className="px-2 text-center whitespace-nowrap">
+                  <BillingStatusBadge status={quote.status} />
+                </TableCell>
+                <TableCell className="relative z-10 px-2 text-center">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="size-8" title="Actions">
+                        <MoreHorizontal className="size-4" />
+                        <span className="sr-only">Actions</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link href={`/billing/quotes/${quote.id}`}>View</Link>
+                      </DropdownMenuItem>
+                      {quote.status === 'draft' && (
+                        <DropdownMenuItem onClick={() => handleStatusChange(quote.id, 'sent')}>
+                          Mark Sent
+                        </DropdownMenuItem>
+                      )}
+                      {quote.status === 'sent' && (
+                        <>
+                          <DropdownMenuItem
+                            onClick={() => handleStatusChange(quote.id, 'accepted')}
+                          >
+                            Mark Accepted
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleStatusChange(quote.id, 'declined')}
+                          >
+                            Mark Declined
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => handleDuplicate(quote.id)}>
+                        Duplicate
+                      </DropdownMenuItem>
+                      {(quote.status === 'draft' || quote.status === 'sent') && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => handleDelete(quote.id, quote.documentNumber)}
+                            disabled={quote.status !== 'draft'}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       {/* Pagination */}
       <div className="flex items-center justify-between px-2">

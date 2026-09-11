@@ -234,26 +234,26 @@ export function InvoicesTable({ entries, issueAction, voidAction }: InvoicesTabl
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-md border border-border">
-        <Table>
+      <div className="rounded-md border border-border">
+        <Table className="table-fixed w-full">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-10">
+              <TableHead className="w-9 px-2 text-center">
                 <Checkbox
                   checked={allSelected}
                   onCheckedChange={toggleSelectAll}
                   aria-label="Select all invoices"
                 />
               </TableHead>
-              <TableHead>Invoice #</TableHead>
-              <TableHead>Reference</TableHead>
-              <TableHead>Client</TableHead>
-              <TableHead>Issue Date</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead className="text-right">Total</TableHead>
-              <TableHead className="text-right">Paid</TableHead>
-              <TableHead className="text-right">Balance Due</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="w-[125px] px-2 text-xs">Invoice #</TableHead>
+              <TableHead className="px-2 text-xs">Reference</TableHead>
+              <TableHead className="px-2 text-xs">Client</TableHead>
+              <TableHead className="w-[85px] px-2 text-xs">Issue Date</TableHead>
+              <TableHead className="w-[85px] px-2 text-xs">Due Date</TableHead>
+              <TableHead className="w-[85px] px-2 text-right text-xs">Total</TableHead>
+              <TableHead className="w-[75px] px-2 text-right text-xs">Paid</TableHead>
+              <TableHead className="w-[85px] px-2 text-right text-xs">Balance Due</TableHead>
+              <TableHead className="w-[95px] px-2 text-center text-xs">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -278,47 +278,50 @@ export function InvoicesTable({ entries, issueAction, voidAction }: InvoicesTabl
                     key={inv.id}
                     className={`hover:bg-muted/40 transition-colors border-b border-border relative cursor-pointer ${isSelected ? 'bg-blue-500/5' : ''}`}
                   >
-                    <TableCell className="relative z-10">
+                    <TableCell className="relative z-10 px-2 text-center">
                       <Checkbox
                         checked={isSelected}
                         onCheckedChange={() => toggleSelectOne(inv.id)}
                         aria-label={`Select invoice ${inv.documentNumber}`}
                       />
                     </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium px-2 truncate">
                       <Link
                         href={`/billing/invoices/${inv.id}`}
                         className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
                         aria-label={`View invoice ${inv.documentNumber}`}
                       />
-                      <span className="hover:underline text-primary font-semibold relative z-10">
+                      <span className="hover:underline text-primary font-semibold relative z-10 font-mono text-xs">
                         {inv.documentNumber}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="px-2 truncate" title={inv.reference || undefined}>
                       {inv.reference ? (
-                        <span className="text-muted-foreground">
-                          {inv.reference.length > 30
-                            ? inv.reference.slice(0, 30) + '...'
-                            : inv.reference}
+                        <span className="text-muted-foreground truncate block text-xs">
+                          {inv.reference}
                         </span>
                       ) : (
-                        <span className="italic text-muted-foreground/50">None</span>
+                        <span className="italic text-muted-foreground/50 text-xs">None</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {inv.clientName ?? <span className="italic">No client</span>}
+                    <TableCell
+                      className="text-muted-foreground px-2 truncate"
+                      title={inv.clientName || undefined}
+                    >
+                      <span className="truncate block text-xs">
+                        {inv.clientName ?? <span className="italic">No client</span>}
+                      </span>
                     </TableCell>
-                    <TableCell className="tabular-nums text-sm">
+                    <TableCell className="tabular-nums text-xs px-2 whitespace-nowrap">
                       {fmtDate(inv.invoiceDate)}
                     </TableCell>
-                    <TableCell className="tabular-nums text-sm text-muted-foreground">
+                    <TableCell className="tabular-nums text-xs text-muted-foreground px-2 whitespace-nowrap">
                       {fmtDate(inv.dueDate)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-sm font-medium">
+                    <TableCell className="text-right tabular-nums text-xs font-medium px-2 whitespace-nowrap">
                       {formatZAR(invTotal)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-sm">
+                    <TableCell className="text-right tabular-nums text-xs px-2 whitespace-nowrap">
                       <span
                         className={
                           invPaid > 0 ? 'text-emerald-600 font-medium' : 'text-muted-foreground'
@@ -327,7 +330,7 @@ export function InvoicesTable({ entries, issueAction, voidAction }: InvoicesTabl
                         {formatZAR(invPaid)}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-sm font-semibold">
+                    <TableCell className="text-right tabular-nums text-xs font-semibold px-2 whitespace-nowrap">
                       <span
                         className={
                           invBalance === 0
@@ -338,7 +341,7 @@ export function InvoicesTable({ entries, issueAction, voidAction }: InvoicesTabl
                         {formatZAR(invBalance)}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="px-2 text-center whitespace-nowrap">
                       <BillingStatusBadge status={inv.status} />
                     </TableCell>
                   </TableRow>

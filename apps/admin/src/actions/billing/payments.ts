@@ -8,6 +8,7 @@ import {
   income,
   clients,
   paymentAllocations,
+  creditApplications,
   eq,
   and,
   sql,
@@ -845,21 +846,26 @@ async function getClientOutstandingInvoicesInternal(clientId: string) {
 async function recalculateInvoiceStatus(invoiceId: string, currentIncomeId?: string) {
   const db = getDb();
 
-  // Sum allocations for this invoice
-  const [sumAgg] = await db
-    .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
-    .from(paymentAllocations)
-    .where(eq(paymentAllocations.invoiceId, invoiceId));
-
-  const [invoiceRow] = await db
-    .select({ total: invoices.total, writeOffAmount: invoices.writeOffAmount })
-    .from(invoices)
-    .where(eq(invoices.id, invoiceId));
+  // Sum allocations and credit applications for this invoice
+  const [[sumAgg], [creditAgg], [invoiceRow]] = await Promise.all([
+    db
+      .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+      .from(paymentAllocations)
+      .where(eq(paymentAllocations.invoiceId, invoiceId)),
+    db
+      .select({ sum: sql<string>`coalesce(sum(${creditApplications.amount}), 0)` })
+      .from(creditApplications)
+      .where(eq(creditApplications.invoiceId, invoiceId)),
+    db
+      .select({ total: invoices.total, writeOffAmount: invoices.writeOffAmount })
+      .from(invoices)
+      .where(eq(invoices.id, invoiceId)),
+  ]);
 
   if (invoiceRow) {
     const invoiceTotal = parseFloat(invoiceRow.total);
     const writeOffAmount = parseFloat(invoiceRow.writeOffAmount || '0');
-    const totalAllocated = parseFloat(sumAgg?.sum ?? '0');
+    const totalAllocated = parseFloat(sumAgg?.sum ?? '0') + parseFloat(creditAgg?.sum ?? '0');
 
     if (totalAllocated >= invoiceTotal) {
       await db

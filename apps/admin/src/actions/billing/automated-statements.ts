@@ -9,6 +9,7 @@ import {
   invoices,
   income,
   paymentAllocations,
+  creditApplications,
   emailAuditLog,
   user,
   eq,
@@ -62,11 +63,15 @@ async function getInternalClientOutstandingInvoices(clientId: string) {
       invoiceDate: invoices.invoiceDate,
       dueDate: invoices.dueDate,
       total: invoices.total,
+      writeOffAmount: invoices.writeOffAmount,
       divisionId: invoices.divisionId,
-      allocatedAmount: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)`,
+      allocatedAmount: sql<string>`(
+        COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0)
+        +
+        COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)
+      )::text`,
     })
     .from(invoices)
-    .leftJoin(paymentAllocations, eq(paymentAllocations.invoiceId, invoices.id))
     .where(
       and(
         eq(invoices.clientId, clientId),
@@ -79,6 +84,7 @@ async function getInternalClientOutstandingInvoices(clientId: string) {
       invoices.invoiceDate,
       invoices.dueDate,
       invoices.total,
+      invoices.writeOffAmount,
       invoices.divisionId,
     )
     .orderBy(asc(invoices.invoiceDate));
@@ -86,7 +92,8 @@ async function getInternalClientOutstandingInvoices(clientId: string) {
   return rows.map((r) => {
     const total = parseFloat(r.total);
     const allocated = parseFloat(r.allocatedAmount);
-    const outstanding = Math.max(0, total - allocated);
+    const writeOff = parseFloat(r.writeOffAmount || '0');
+    const outstanding = Math.max(0, total - allocated - writeOff);
     return {
       id: r.id,
       documentNumber: r.documentNumber,

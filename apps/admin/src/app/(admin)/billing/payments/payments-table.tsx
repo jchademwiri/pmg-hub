@@ -80,25 +80,27 @@ function PaymentRow({
       className="cursor-pointer hover:bg-muted/40 transition-colors border-b border-border"
       onClick={() => router.push(`/billing/payments/${entry.id}`)}
     >
-      <TableCell className="font-medium text-xs py-3">
-        <div className="flex items-center gap-1.5 whitespace-nowrap">
-          <Calendar className="size-3.5 text-muted-foreground" />
+      <TableCell className="font-medium text-xs py-3 px-2 whitespace-nowrap">
+        <div className="flex items-center gap-1.5">
+          <Calendar className="size-3.5 text-muted-foreground shrink-0" />
           {fmtDate(entry.date)}
         </div>
       </TableCell>
-      <TableCell className="text-xs py-3">{entry.clientName}</TableCell>
-      <TableCell className="py-3">
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-secondary text-secondary-foreground">
+      <TableCell className="text-xs py-3 px-2 truncate" title={entry.clientName}>
+        <span className="truncate block">{entry.clientName}</span>
+      </TableCell>
+      <TableCell className="py-3 px-2">
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-secondary text-secondary-foreground whitespace-nowrap">
           {entry.divisionName}
         </span>
       </TableCell>
-      <TableCell className="truncate max-w-xs text-xs py-3" title={entry.description}>
-        {entry.description || '-'}
+      <TableCell className="truncate text-xs py-3 px-2" title={entry.description}>
+        <span className="truncate block text-muted-foreground">{entry.description || '-'}</span>
       </TableCell>
-      <TableCell className="text-right tabular-nums font-semibold text-xs py-3 text-emerald-600">
+      <TableCell className="text-right tabular-nums font-semibold text-xs py-3 px-2 text-emerald-600 whitespace-nowrap">
         {formatZAR(entry.amount)}
       </TableCell>
-      <TableCell className="text-right tabular-nums text-xs py-3">
+      <TableCell className="text-right tabular-nums text-xs py-3 px-2 whitespace-nowrap">
         {entry.credit > 0 ? (
           <span className="font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded text-[11px]">
             {formatZAR(entry.credit)}
@@ -107,7 +109,7 @@ function PaymentRow({
           <span className="text-[11px] text-muted-foreground">-</span>
         )}
       </TableCell>
-      <TableCell className="py-3 w-16" onClick={(e) => e.stopPropagation()}>
+      <TableCell className="py-3 px-2 w-14" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-1 justify-end">
           {isLocked ? (
             <Tooltip>
@@ -263,17 +265,17 @@ export function PaymentsTable({ entries, closedPeriods, deleteAction }: Payments
         </div>
 
         {/* Desktop View */}
-        <div className="hidden md:block overflow-x-auto border rounded-lg bg-card">
-          <Table>
+        <div className="hidden md:block border rounded-lg bg-card">
+          <Table className="table-fixed w-full">
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Division</TableHead>
-                <TableHead>Reference / Description</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="text-right">Credit Balance</TableHead>
-                <TableHead className="text-right w-16">Actions</TableHead>
+                <TableHead className="w-[100px] px-2 text-xs">Date</TableHead>
+                <TableHead className="w-[180px] px-2 text-xs">Client</TableHead>
+                <TableHead className="w-[100px] px-2 text-xs">Division</TableHead>
+                <TableHead className="px-2 text-xs">Reference / Description</TableHead>
+                <TableHead className="w-[100px] px-2 text-right text-xs">Amount</TableHead>
+                <TableHead className="w-[110px] px-2 text-right text-xs">Credit Balance</TableHead>
+                <TableHead className="text-right w-14 px-2 text-xs">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
