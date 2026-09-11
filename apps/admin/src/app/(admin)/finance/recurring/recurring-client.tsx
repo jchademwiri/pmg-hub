@@ -23,6 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   CalendarClock,
   ArrowDownLeft,
@@ -171,6 +172,13 @@ export function RecurringClient({
   const [actionMessage, setActionMessage] = useState<{
     type: 'success' | 'error';
     text: string;
+  } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'cancel_invoice' | 'delete_invoice' | 'delete_expense';
+    id: string;
+    title: string;
+    description: string;
+    confirmText: string;
   } | null>(null);
 
   useEffect(() => {
@@ -364,34 +372,63 @@ export function RecurringClient({
   }
 
   function handleDeleteInvoice(id: string) {
-    if (!window.confirm('Delete this recurring retainer schedule? This cannot be undone.')) return;
-    setActionMessage(null);
-    startTransition(async () => {
-      const res = await deleteRecurringInvoice(id);
-      if (res.error) {
-        setActionMessage({ type: 'error', text: res.error });
-      } else {
-        setActionMessage({ type: 'success', text: 'Recurring retainer schedule deleted.' });
-      }
+    setConfirmAction({
+      type: 'delete_invoice',
+      id,
+      title: 'Delete retainer schedule?',
+      description:
+        'This cannot be undone. You can only delete schedules that have never generated any invoices.',
+      confirmText: 'Delete Schedule',
     });
   }
 
   function handleCancelInvoice(id: string) {
-    if (
-      !window.confirm(
-        'Cancel this retainer schedule? Future invoices will no longer be generated, but past invoices and history will be preserved.',
-      )
-    )
-      return;
-    setActionMessage(null);
-    startTransition(async () => {
-      const res = await setRecurringInvoiceStatus(id, 'cancelled');
-      if (res.error) {
-        setActionMessage({ type: 'error', text: res.error });
-      } else {
-        setActionMessage({ type: 'success', text: 'Retainer schedule cancelled successfully.' });
-      }
+    setConfirmAction({
+      type: 'cancel_invoice',
+      id,
+      title: 'Cancel retainer schedule?',
+      description:
+        'Future invoices will no longer be generated, but past invoices and history will be preserved.',
+      confirmText: 'Cancel Retainer',
     });
+  }
+
+  function handleExecuteConfirm() {
+    if (!confirmAction) return;
+    const { type, id } = confirmAction;
+    setConfirmAction(null);
+
+    if (type === 'cancel_invoice') {
+      setActionMessage(null);
+      startTransition(async () => {
+        const res = await setRecurringInvoiceStatus(id, 'cancelled');
+        if (res.error) {
+          setActionMessage({ type: 'error', text: res.error });
+        } else {
+          setActionMessage({ type: 'success', text: 'Retainer schedule cancelled successfully.' });
+        }
+      });
+    } else if (type === 'delete_invoice') {
+      setActionMessage(null);
+      startTransition(async () => {
+        const res = await deleteRecurringInvoice(id);
+        if (res.error) {
+          setActionMessage({ type: 'error', text: res.error });
+        } else {
+          setActionMessage({ type: 'success', text: 'Recurring retainer schedule deleted.' });
+        }
+      });
+    } else if (type === 'delete_expense') {
+      setActionMessage(null);
+      startTransition(async () => {
+        const res = await deleteRecurringExpense(id);
+        if (res.error) {
+          setActionMessage({ type: 'error', text: res.error });
+        } else {
+          setActionMessage({ type: 'success', text: 'Vendor subscription deleted.' });
+        }
+      });
+    }
   }
 
   const handleCreateInvoice = (e: React.FormEvent) => {
@@ -498,15 +535,12 @@ export function RecurringClient({
   }
 
   function handleDeleteExpense(id: string) {
-    if (!window.confirm('Delete this vendor subscription? This cannot be undone.')) return;
-    setActionMessage(null);
-    startTransition(async () => {
-      const res = await deleteRecurringExpense(id);
-      if (res.error) {
-        setActionMessage({ type: 'error', text: res.error });
-      } else {
-        setActionMessage({ type: 'success', text: 'Vendor subscription deleted.' });
-      }
+    setConfirmAction({
+      type: 'delete_expense',
+      id,
+      title: 'Delete vendor subscription?',
+      description: 'This action cannot be undone.',
+      confirmText: 'Delete Subscription',
     });
   }
 
@@ -1626,6 +1660,18 @@ export function RecurringClient({
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!confirmAction}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+        title={confirmAction?.title || 'Confirm Action'}
+        description={confirmAction?.description}
+        confirmText={confirmAction?.confirmText || 'Confirm'}
+        variant="destructive"
+        onConfirm={handleExecuteConfirm}
+      />
     </div>
   );
 }

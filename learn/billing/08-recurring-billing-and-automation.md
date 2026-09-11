@@ -49,7 +49,7 @@ Instead of manually generating invoices every month, PMG Hub allows you to set u
 The recurring billing engine runs autonomously:
 
 - **Endpoint**: `/api/cron/recurring-billing`
-- **Schedule**: Daily at 01:00 UTC (03:00 SAST)
+- **Schedule**: Daily at 06:00 UTC (08:00 SAST)
 - **Action**: Queries all active profiles due for generation on today's date, creates sequential invoice numbers (e.g., `INV-PMG-0042`), and logs the execution for auditing.
 
 ---

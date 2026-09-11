@@ -372,6 +372,13 @@
       "when": 1788174476207,
       "tag": "0052_abandoned_oracle",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1789147675099,
+      "tag": "0053_allow_rebill_void_recurring_invoices",
+      "breakpoints": true
     }
   ]
 }

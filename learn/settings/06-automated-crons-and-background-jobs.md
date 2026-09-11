@@ -12,12 +12,11 @@ Background cron jobs execute scheduled tasks automatically without human interve
 
 ## Active Cron Schedule Reference
 
-| Job Name                  | Route Endpoint                    | Schedule (UTC)            | Schedule (SAST)  | What It Does                                                                                 |
-| :------------------------ | :-------------------------------- | :------------------------ | :--------------- | :------------------------------------------------------------------------------------------- |
-| **Recurring Billing**     | `/api/cron/recurring-billing`     | `0 1 * * *` (Daily 01:00) | `03:00 SAST`     | Scans recurring retainer profiles and generates new monthly invoices.                        |
-| **Automated Statements**  | `/api/cron/automated-statements`  | `0 6 * * *` (Daily 06:00) | `08:00 SAST`     | Executes 3-Stage Statement Cycle (25th Early Review / 1st Official / 7th Final Notice).      |
-| **Outstanding Reminders** | `/api/cron/outstanding-reminders` | `0 7 * * 1` (Mon 07:00)   | `09:00 SAST Mon` | Sends branded overdue invoice reminder emails for unpaid balances.                           |
-| **Compliance Reminders**  | `/api/cron/compliance-reminders`  | `0 8 * * 1` (Mon 08:00)   | `10:00 SAST Mon` | Scans client compliance returnables and alerts clients on 30-day/7-day certificate expiries. |
+| Job Name                  | Route Endpoint                    | Schedule (UTC)             | Schedule (SAST) | What It Does                                                                                 |
+| :------------------------ | :-------------------------------- | :------------------------- | :-------------- | :------------------------------------------------------------------------------------------- |
+| **Recurring Billing**     | `/api/cron/recurring-billing`     | `0 6 * * *` (Daily 06:00)  | `08:00 SAST`    | Scans recurring retainer profiles and generates new monthly invoices.                        |
+| **Compliance Reminders**  | `/api/cron/compliance-reminders`  | `5 6 * * *` (Daily 06:05)  | `08:05 SAST`    | Scans client compliance returnables and alerts clients on 30-day/7-day certificate expiries. |
+| **Outstanding Reminders** | `/api/cron/outstanding-reminders` | `10 6 * * *` (Daily 06:10) | `08:10 SAST`    | Sends branded overdue invoice reminder emails for unpaid balances.                           |
 
 ---
 
