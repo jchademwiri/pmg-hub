@@ -82,7 +82,10 @@ export function ClientAgingDetailClient({
 
   const invoiceData = React.useMemo(() => {
     return invoices.map((inv) => {
-      const outstanding = Number(inv.total) - Number(inv.allocatedAmount);
+      const outstanding = Math.max(
+        0,
+        Number(inv.total) - Number(inv.allocatedAmount) - Number(inv.writeOffAmount ?? 0),
+      );
       const daysPastDue = getDaysPastDue(inv.dueDate);
       return {
         ...inv,
@@ -354,11 +357,11 @@ export function ClientAgingDetailClient({
               All caught up! No outstanding invoices found.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
+            <div>
+              <Table className="table-fixed w-full">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>
+                    <TableHead className="w-[95px] px-2 text-xs">
                       <button
                         onClick={() => handleSort('invoiceDate')}
                         className="group flex items-center hover:text-foreground font-semibold"
@@ -367,7 +370,7 @@ export function ClientAgingDetailClient({
                         <SortIcon field="invoiceDate" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
-                    <TableHead>
+                    <TableHead className="w-[125px] px-2 text-xs">
                       <button
                         onClick={() => handleSort('documentNumber')}
                         className="group flex items-center hover:text-foreground font-semibold"
@@ -380,8 +383,8 @@ export function ClientAgingDetailClient({
                         />
                       </button>
                     </TableHead>
-                    <TableHead>Reference</TableHead>
-                    <TableHead>
+                    <TableHead className="px-2 text-xs">Reference</TableHead>
+                    <TableHead className="w-[90px] px-2 text-xs">
                       <button
                         onClick={() => handleSort('dueDate')}
                         className="group flex items-center hover:text-foreground font-semibold"
@@ -390,7 +393,7 @@ export function ClientAgingDetailClient({
                         <SortIcon field="dueDate" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
-                    <TableHead className="text-center">
+                    <TableHead className="w-[95px] px-2 text-center text-xs">
                       <button
                         onClick={() => handleSort('daysPastDue')}
                         className="group mx-auto flex items-center hover:text-foreground font-semibold"
@@ -399,7 +402,7 @@ export function ClientAgingDetailClient({
                         <SortIcon field="daysPastDue" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
-                    <TableHead className="text-right">
+                    <TableHead className="w-[90px] px-2 text-right text-xs">
                       <button
                         onClick={() => handleSort('total')}
                         className="group ml-auto flex items-center hover:text-foreground font-semibold"
@@ -408,8 +411,8 @@ export function ClientAgingDetailClient({
                         <SortIcon field="total" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
-                    <TableHead className="text-right">Paid</TableHead>
-                    <TableHead className="text-right">
+                    <TableHead className="w-[80px] px-2 text-right text-xs">Paid</TableHead>
+                    <TableHead className="w-[90px] px-2 text-right text-xs">
                       <button
                         onClick={() => handleSort('outstanding')}
                         className="group ml-auto flex items-center hover:text-foreground font-semibold"
@@ -418,7 +421,7 @@ export function ClientAgingDetailClient({
                         <SortIcon field="outstanding" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
-                    <TableHead className="w-[80px] text-center">Actions</TableHead>
+                    <TableHead className="w-[50px] px-2 text-center text-xs">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -429,15 +432,22 @@ export function ClientAgingDetailClient({
 
                     return (
                       <TableRow key={inv.id}>
-                        <TableCell className="tabular-nums">{fmtDate(inv.invoiceDate)}</TableCell>
-                        <TableCell className="font-mono text-[13px] font-medium text-primary hover:underline">
+                        <TableCell className="tabular-nums text-xs px-2 whitespace-nowrap">
+                          {fmtDate(inv.invoiceDate)}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs font-medium text-primary hover:underline px-2 truncate">
                           <Link href={`/billing/invoices/${inv.id}`}>{inv.documentNumber}</Link>
                         </TableCell>
-                        <TableCell className="max-w-[150px] truncate text-muted-foreground">
-                          {inv.reference || '—'}
+                        <TableCell
+                          className="truncate text-muted-foreground px-2 text-xs"
+                          title={inv.reference || undefined}
+                        >
+                          <span className="truncate block">{inv.reference || '—'}</span>
                         </TableCell>
-                        <TableCell className="tabular-nums">{fmtDate(inv.dueDate)}</TableCell>
-                        <TableCell className="text-center font-semibold tabular-nums">
+                        <TableCell className="tabular-nums text-xs px-2 whitespace-nowrap">
+                          {fmtDate(inv.dueDate)}
+                        </TableCell>
+                        <TableCell className="text-center font-semibold tabular-nums text-xs px-2 whitespace-nowrap">
                           {isOverdue ? (
                             <span
                               className={
@@ -454,28 +464,28 @@ export function ClientAgingDetailClient({
                             <span className="text-emerald-600 font-normal">Current</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">
+                        <TableCell className="text-right tabular-nums text-xs px-2 whitespace-nowrap">
                           {formatZAR(Number(inv.total))}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums text-emerald-600">
+                        <TableCell className="text-right tabular-nums text-emerald-600 text-xs px-2 whitespace-nowrap">
                           {Number(inv.allocatedAmount) > 0
                             ? formatZAR(Number(inv.allocatedAmount))
                             : '—'}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums font-bold text-red-600">
+                        <TableCell className="text-right tabular-nums font-bold text-red-600 text-xs px-2 whitespace-nowrap">
                           {formatZAR(inv.outstanding)}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="px-2">
                           <div className="flex items-center justify-center">
                             <Button
                               asChild
                               size="icon"
                               variant="ghost"
-                              className="size-8"
+                              className="size-7"
                               title="View Invoice Detail"
                             >
                               <Link href={`/billing/invoices/${inv.id}`}>
-                                <FileText className="size-4 text-muted-foreground" />
+                                <FileText className="size-3.5 text-muted-foreground" />
                               </Link>
                             </Button>
                           </div>

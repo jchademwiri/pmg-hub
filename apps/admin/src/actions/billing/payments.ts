@@ -8,6 +8,7 @@ import {
   income,
   clients,
   paymentAllocations,
+  creditApplications,
   eq,
   and,
   sql,
@@ -318,15 +319,21 @@ export async function recordClientPayment(
           amount: String(alloc.amount),
         });
 
-        // Sum allocations for this invoice
-        const [sumAgg] = await tx
-          .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
-          .from(paymentAllocations)
-          .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
+        // Sum allocations and credit applications for this invoice
+        const [[sumAgg], [creditAgg]] = await Promise.all([
+          tx
+            .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+            .from(paymentAllocations)
+            .where(eq(paymentAllocations.invoiceId, alloc.invoiceId)),
+          tx
+            .select({ sum: sql<string>`coalesce(sum(${creditApplications.amount}), 0)` })
+            .from(creditApplications)
+            .where(eq(creditApplications.invoiceId, alloc.invoiceId)),
+        ]);
 
         if (invoiceRow) {
           const invoiceTotal = parseFloat(invoiceRow.total);
-          const totalAllocated = parseFloat(sumAgg?.sum ?? '0');
+          const totalAllocated = parseFloat(sumAgg?.sum ?? '0') + parseFloat(creditAgg?.sum ?? '0');
           const writeOffAmount = parseFloat(invoiceRow.writeOffAmount || '0');
 
           if (writeOffAmount > 0) {
@@ -337,7 +344,7 @@ export async function recordClientPayment(
             });
           }
 
-          if (totalAllocated >= invoiceTotal) {
+          if (totalAllocated >= invoiceTotal - 0.005) {
             await tx
               .update(invoices)
               .set({
@@ -347,7 +354,10 @@ export async function recordClientPayment(
                 updatedAt: new Date(),
               })
               .where(eq(invoices.id, alloc.invoiceId));
-          } else if (writeOffAmount > 0 && invoiceTotal - totalAllocated >= writeOffAmount) {
+          } else if (
+            writeOffAmount > 0 &&
+            totalAllocated + writeOffAmount >= invoiceTotal - 0.005
+          ) {
             await tx
               .update(invoices)
               .set({
@@ -845,23 +855,28 @@ async function getClientOutstandingInvoicesInternal(clientId: string) {
 async function recalculateInvoiceStatus(invoiceId: string, currentIncomeId?: string) {
   const db = getDb();
 
-  // Sum allocations for this invoice
-  const [sumAgg] = await db
-    .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
-    .from(paymentAllocations)
-    .where(eq(paymentAllocations.invoiceId, invoiceId));
-
-  const [invoiceRow] = await db
-    .select({ total: invoices.total, writeOffAmount: invoices.writeOffAmount })
-    .from(invoices)
-    .where(eq(invoices.id, invoiceId));
+  // Sum allocations and credit applications for this invoice
+  const [[sumAgg], [creditAgg], [invoiceRow]] = await Promise.all([
+    db
+      .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+      .from(paymentAllocations)
+      .where(eq(paymentAllocations.invoiceId, invoiceId)),
+    db
+      .select({ sum: sql<string>`coalesce(sum(${creditApplications.amount}), 0)` })
+      .from(creditApplications)
+      .where(eq(creditApplications.invoiceId, invoiceId)),
+    db
+      .select({ total: invoices.total, writeOffAmount: invoices.writeOffAmount })
+      .from(invoices)
+      .where(eq(invoices.id, invoiceId)),
+  ]);
 
   if (invoiceRow) {
     const invoiceTotal = parseFloat(invoiceRow.total);
     const writeOffAmount = parseFloat(invoiceRow.writeOffAmount || '0');
-    const totalAllocated = parseFloat(sumAgg?.sum ?? '0');
+    const totalAllocated = parseFloat(sumAgg?.sum ?? '0') + parseFloat(creditAgg?.sum ?? '0');
 
-    if (totalAllocated >= invoiceTotal) {
+    if (totalAllocated >= invoiceTotal - 0.005) {
       await db
         .update(invoices)
         .set({
@@ -871,7 +886,7 @@ async function recalculateInvoiceStatus(invoiceId: string, currentIncomeId?: str
           updatedAt: new Date(),
         })
         .where(eq(invoices.id, invoiceId));
-    } else if (writeOffAmount > 0 && invoiceTotal - totalAllocated >= writeOffAmount) {
+    } else if (writeOffAmount > 0 && totalAllocated + writeOffAmount >= invoiceTotal - 0.005) {
       await db
         .update(invoices)
         .set({

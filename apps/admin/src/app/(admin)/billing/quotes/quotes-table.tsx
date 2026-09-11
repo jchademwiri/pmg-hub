@@ -120,17 +120,17 @@ export function QuotesTable({
   }
 
   const desktopView = (
-    <div className="overflow-x-auto rounded-md border border-border">
-      <Table>
+    <div className="rounded-md border border-border">
+      <Table className="table-fixed w-full">
         <TableHeader>
           <TableRow>
-            <TableHead>Quote #</TableHead>
-            <TableHead>Reference</TableHead>
-            <TableHead>Client</TableHead>
-            <TableHead>Issue Date</TableHead>
-            <TableHead>Expiry Date</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead className="w-[130px] px-2 text-xs">Quote #</TableHead>
+            <TableHead className="px-2 text-xs">Reference</TableHead>
+            <TableHead className="px-2 text-xs">Client</TableHead>
+            <TableHead className="w-[85px] px-2 text-xs">Issue Date</TableHead>
+            <TableHead className="w-[85px] px-2 text-xs">Expiry Date</TableHead>
+            <TableHead className="w-[85px] px-2 text-right text-xs">Amount</TableHead>
+            <TableHead className="w-[95px] px-2 text-center text-xs">Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -146,40 +146,45 @@ export function QuotesTable({
                 key={quote.id}
                 className="hover:bg-muted/40 transition-colors border-b border-border relative cursor-pointer"
               >
-                <TableCell className="font-medium">
+                <TableCell className="font-medium px-2 truncate">
                   <Link
                     href={`/billing/quotes/${quote.id}`}
                     className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
                     aria-label={`View quote ${quote.documentNumber}`}
                   />
-                  <span className="hover:underline text-primary font-semibold relative z-10">
+                  <span className="hover:underline text-primary font-semibold relative z-10 font-mono text-xs">
                     {quote.documentNumber}
                   </span>
                 </TableCell>
-                <TableCell>
+                <TableCell className="px-2 truncate" title={quote.reference || undefined}>
                   {quote.reference ? (
-                    <span className="text-muted-foreground">
-                      {quote.reference.length > 30
-                        ? quote.reference.slice(0, 30) + '...'
-                        : quote.reference}
+                    <span className="text-muted-foreground truncate block text-xs">
+                      {quote.reference}
                     </span>
                   ) : (
-                    <span className="italic text-muted-foreground/50">None</span>
+                    <span className="italic text-muted-foreground/50 text-xs">None</span>
                   )}
                 </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {quote.clientName ?? <span className="italic">No client</span>}
+                <TableCell
+                  className="text-muted-foreground px-2 truncate"
+                  title={quote.clientName || undefined}
+                >
+                  <span className="truncate block text-xs">
+                    {quote.clientName ?? <span className="italic">No client</span>}
+                  </span>
                 </TableCell>
-                <TableCell className="tabular-nums text-sm">{fmtDate(quote.quoteDate)}</TableCell>
-                <TableCell className="tabular-nums text-sm text-muted-foreground">
+                <TableCell className="tabular-nums text-xs px-2 whitespace-nowrap">
+                  {fmtDate(quote.quoteDate)}
+                </TableCell>
+                <TableCell className="tabular-nums text-xs text-muted-foreground px-2 whitespace-nowrap">
                   {fmtDate(quote.expiryDate)}
                 </TableCell>
                 <TableCell
-                  className={`text-right tabular-nums text-sm font-medium ${QUOTE_STATUS_COLORS[quote.status] || ''}`}
+                  className={`text-right tabular-nums text-xs font-medium px-2 whitespace-nowrap ${QUOTE_STATUS_COLORS[quote.status] || ''}`}
                 >
                   {formatZAR(Number(quote.total))}
                 </TableCell>
-                <TableCell>
+                <TableCell className="px-2 text-center whitespace-nowrap">
                   <BillingStatusBadge status={quote.status} />
                 </TableCell>
               </TableRow>

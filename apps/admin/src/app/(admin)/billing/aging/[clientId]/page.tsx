@@ -32,7 +32,10 @@ export default async function ClientAgingDetailPage({ params }: Props) {
   if (!client) notFound();
 
   const totalOutstanding = outstandingInvoices.reduce((s, inv) => {
-    const outstanding = Number(inv.total) - Number(inv.allocatedAmount);
+    const outstanding = Math.max(
+      0,
+      Number(inv.total) - Number(inv.allocatedAmount) - Number(inv.writeOffAmount ?? 0),
+    );
     return s + outstanding;
   }, 0);
 
