@@ -9,6 +9,7 @@ import {
   invoices,
   income,
   paymentAllocations,
+  creditApplications,
   emailAuditLog,
   user,
   eq,
@@ -62,11 +63,15 @@ async function getInternalClientOutstandingInvoices(clientId: string) {
       invoiceDate: invoices.invoiceDate,
       dueDate: invoices.dueDate,
       total: invoices.total,
+      writeOffAmount: invoices.writeOffAmount,
       divisionId: invoices.divisionId,
-      allocatedAmount: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)`,
+      allocatedAmount: sql<string>`(
+        COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0)
+        +
+        COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)
+      )::text`,
     })
     .from(invoices)
-    .leftJoin(paymentAllocations, eq(paymentAllocations.invoiceId, invoices.id))
     .where(
       and(
         eq(invoices.clientId, clientId),
@@ -79,6 +84,7 @@ async function getInternalClientOutstandingInvoices(clientId: string) {
       invoices.invoiceDate,
       invoices.dueDate,
       invoices.total,
+      invoices.writeOffAmount,
       invoices.divisionId,
     )
     .orderBy(asc(invoices.invoiceDate));
@@ -86,7 +92,8 @@ async function getInternalClientOutstandingInvoices(clientId: string) {
   return rows.map((r) => {
     const total = parseFloat(r.total);
     const allocated = parseFloat(r.allocatedAmount);
-    const outstanding = Math.max(0, total - allocated);
+    const writeOff = parseFloat(r.writeOffAmount || '0');
+    const outstanding = Math.max(0, total - allocated - writeOff);
     return {
       id: r.id,
       documentNumber: r.documentNumber,
@@ -101,10 +108,10 @@ async function getInternalClientOutstandingInvoices(clientId: string) {
 }
 
 /**
- * Strategic Statement & Reminder Engine:
+ * Strategic Statement & Reminder Engine (Option B):
  * 1. 26th of Month: Retainer Monthly Statement Sweep (isRetainer = true, balance > 0)
- * 2. Last Day of Month: Month-End Payment Due Statement Sweep (ALL clients with balance > 0)
- * 3. 15th of Month: Mid-Month Overdue-Only Reminder (past-due invoices only; current month ignored)
+ * 2. Last Day of Month: Month-End Payment Due Courtesy Notice (ALL clients with balance > 0)
+ * 3. 8th of Month: Post-Grace Overdue-Only Reminder (prior month debt; current month ignored)
  */
 export async function triggerAutomatedStatementsRun(
   asOfDate?: string,
@@ -128,14 +135,14 @@ export async function triggerAutomatedStatementsRun(
     tomorrow.setDate(tomorrow.getDate() + 1);
     const isLastDayOfMonth = tomorrow.getMonth() !== d.getMonth();
 
-    // Determine target runType if set to 'auto' or omitted
+    // Determine target runType if set to 'auto' or omitted (Option B Lifecycle)
     let effectiveRunType = options?.runType || 'auto';
     if (effectiveRunType === 'auto') {
       if (todayDay === 26) {
         effectiveRunType = 'retainer_cycle';
       } else if (isLastDayOfMonth) {
         effectiveRunType = 'month_end';
-      } else if (todayDay === 15) {
+      } else if (todayDay === 8) {
         effectiveRunType = 'overdue_only';
       } else {
         return {
@@ -193,7 +200,7 @@ export async function triggerAutomatedStatementsRun(
             continue;
           }
 
-          const idempotencyKey = `auto-overdue-15th/${client.id}/${todayStr}`;
+          const idempotencyKey = `auto-overdue-8th/${client.id}/${todayStr}`;
 
           // Check if already sent
           const [existingAudit] = await db
@@ -243,7 +250,7 @@ export async function triggerAutomatedStatementsRun(
             reminderType: 'overdue' as const,
             portalUrl,
             personalMessage:
-              'This is a friendly reminder that you have overdue invoices from prior periods. Please settle the outstanding balance.',
+              'This is a friendly follow-up regarding overdue invoices from the previous month. Please settle the outstanding balance, or let us know if you have already transferred payment.',
             bankDetails: divSetting
               ? {
                   bankName: divSetting.bankName || '',
@@ -383,7 +390,7 @@ export async function triggerAutomatedStatementsRun(
 
         const personalMessage = isRetainerRun
           ? 'Here is your monthly account statement summarizing current month charges and your carried-forward balance.'
-          : 'Here is your month-end statement summarizing all open invoices due for payment today.';
+          : 'This is a gentle courtesy reminder that your account balance for this month is due today. If you have already scheduled this payment or sent proof of payment, thank you and please disregard this note.';
 
         const emailProps = {
           clientName: client.businessName || client.name,

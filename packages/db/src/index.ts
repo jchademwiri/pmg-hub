@@ -2,7 +2,7 @@ export * from './client';
 export * from './schema';
 export * from './queries';
 export * from './accounts';
-export { eq, and, or, desc, asc, sql, inArray } from 'drizzle-orm';
+export { eq, ne, and, or, desc, asc, sql, inArray } from 'drizzle-orm';
 export type {
   PeriodSummary,
   LeadRow,

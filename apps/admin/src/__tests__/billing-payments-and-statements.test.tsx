@@ -49,6 +49,7 @@ vi.mock('@pmg/db', () => ({
   income: { id: 'income_id', amount: 'amount', clientId: 'clientId' },
   clients: { id: 'clients_id', name: 'name', businessName: 'businessName' },
   paymentAllocations: { id: 'payment_allocations_id', amount: 'amount', invoiceId: 'invoiceId' },
+  creditApplications: { id: 'credit_applications_id', amount: 'amount', invoiceId: 'invoiceId' },
   divisions: { id: 'divisions_id' },
   eq: vi.fn(),
   and: vi.fn(),
@@ -238,7 +239,8 @@ describe('Billing Payments and Statements Module', () => {
                 ]);
               }
               if (selectCount === 4) return selectResult([{ sum: '0.00' }]); // before this allocation
-              return selectResult([{ sum: '1000.00' }]); // after this allocation — fully paid
+              if (selectCount === 5) return selectResult([{ sum: '1000.00' }]); // after this allocation — fully paid
+              return selectResult([{ sum: '0.00' }]); // credit applications
             },
             limit: () => selectResult([{ id: 'div-1' }]), // fallback divisionId (unused — divisionId provided)
           }),
@@ -311,7 +313,8 @@ describe('Billing Payments and Statements Module', () => {
                 ]);
               }
               if (selectCount === 4) return selectResult([{ sum: '0.00' }]);
-              return selectResult([{ sum: '5000.00' }]);
+              if (selectCount === 5) return selectResult([{ sum: '5000.00' }]);
+              return selectResult([{ sum: '0.00' }]);
             },
             limit: () => selectResult([{ id: 'div-1' }]),
           }),

@@ -1,7 +1,16 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db, income, eq, getIncomeById, invoices, paymentAllocations, sql } from '@pmg/db';
+import {
+  db,
+  income,
+  eq,
+  getIncomeById,
+  invoices,
+  paymentAllocations,
+  creditApplications,
+  sql,
+} from '@pmg/db';
 import { isPeriodClosed } from '@/lib/date-rules';
 import { voidPaymentJournalEntries } from '@/lib/accounting/posting';
 import { getSessionOrRedirect } from '@/lib/auth';
@@ -52,17 +61,23 @@ export async function deleteIncome(id: string): Promise<{ error?: string }> {
           .where(eq(invoices.id, alloc.invoiceId))
           .for('update'); // Ensure serialization of concurrent updates on this invoice
 
-        const [sumAgg] = await tx
-          .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
-          .from(paymentAllocations)
-          .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
+        const [[sumAgg], [creditAgg]] = await Promise.all([
+          tx
+            .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+            .from(paymentAllocations)
+            .where(eq(paymentAllocations.invoiceId, alloc.invoiceId)),
+          tx
+            .select({ sum: sql<string>`coalesce(sum(${creditApplications.amount}), 0)` })
+            .from(creditApplications)
+            .where(eq(creditApplications.invoiceId, alloc.invoiceId)),
+        ]);
 
         if (invoiceRow) {
           const invoiceTotal = parseFloat(invoiceRow.total);
           const writeOffAmount = parseFloat(invoiceRow.writeOffAmount || '0');
-          const totalAllocated = parseFloat(sumAgg?.sum ?? '0');
+          const totalAllocated = parseFloat(sumAgg?.sum ?? '0') + parseFloat(creditAgg?.sum ?? '0');
 
-          if (totalAllocated >= invoiceTotal) {
+          if (totalAllocated >= invoiceTotal - 0.005) {
             await tx
               .update(invoices)
               .set({
@@ -72,7 +87,10 @@ export async function deleteIncome(id: string): Promise<{ error?: string }> {
                 updatedAt: new Date(),
               })
               .where(eq(invoices.id, alloc.invoiceId));
-          } else if (writeOffAmount > 0 && invoiceTotal - totalAllocated >= writeOffAmount) {
+          } else if (
+            writeOffAmount > 0 &&
+            totalAllocated + writeOffAmount >= invoiceTotal - 0.005
+          ) {
             await tx
               .update(invoices)
               .set({

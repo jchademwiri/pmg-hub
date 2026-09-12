@@ -11,6 +11,7 @@ import {
   getDb,
   invoices,
   paymentAllocations,
+  creditApplications,
   sql,
 } from '@pmg/db';
 import {
@@ -108,6 +109,7 @@ async function getPendingReminderClients(
       invoiceDate: invoices.invoiceDate,
       dueDate: invoices.dueDate,
       total: invoices.total,
+      writeOffAmount: invoices.writeOffAmount,
       clientId: invoices.clientId,
       divisionId: invoices.divisionId,
       clientName: clients.name,
@@ -115,12 +117,15 @@ async function getPendingReminderClients(
       email: clients.email,
       isRetainer: clients.isRetainer,
       divisionName: divisions.name,
-      allocatedAmount: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)`,
+      allocatedAmount: sql<string>`(
+        COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0)
+        +
+        COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)
+      )::text`,
     })
     .from(invoices)
     .innerJoin(clients, eq(clients.id, invoices.clientId))
     .innerJoin(divisions, eq(divisions.id, invoices.divisionId))
-    .leftJoin(paymentAllocations, eq(paymentAllocations.invoiceId, invoices.id))
     .where(
       and(
         clientId ? eq(invoices.clientId, clientId) : sql`true`,
@@ -142,6 +147,7 @@ async function getPendingReminderClients(
       invoices.invoiceDate,
       invoices.dueDate,
       invoices.total,
+      invoices.writeOffAmount,
       invoices.clientId,
       invoices.divisionId,
       clients.name,
@@ -158,7 +164,8 @@ async function getPendingReminderClients(
 
     const total = Number(row.total);
     const allocated = Number(row.allocatedAmount);
-    const outstanding = Math.max(0, total - allocated);
+    const writeOff = Number(row.writeOffAmount || '0');
+    const outstanding = Math.max(0, total - allocated - writeOff);
     if (outstanding <= 0) continue;
 
     const reminderKey = `${row.clientId}:${row.divisionId}`;

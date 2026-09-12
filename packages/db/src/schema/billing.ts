@@ -178,7 +178,7 @@ export const invoices = pgTable(
     index('invoices_quotation_id_idx').on(t.quotationId),
     uniqueIndex('invoices_recurring_invoice_id_billing_period_unique')
       .on(t.recurringInvoiceId, t.billingPeriod)
-      .where(sql`${t.recurringInvoiceId} IS NOT NULL`),
+      .where(sql`${t.recurringInvoiceId} IS NOT NULL AND ${t.status} != 'void'`),
   ],
 );
 

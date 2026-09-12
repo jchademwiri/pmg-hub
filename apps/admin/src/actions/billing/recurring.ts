@@ -14,6 +14,7 @@ import {
   divisions,
   divisionBillingSettings,
   eq,
+  ne,
   and,
   sql,
   getNextDocumentNumber,
@@ -661,6 +662,7 @@ export async function triggerRecurringBillingRun(
           and(
             eq(invoices.recurringInvoiceId, schedule.id),
             eq(invoices.billingPeriod, billingPeriod),
+            ne(invoices.status, 'void'),
           ),
         )
         .limit(1);
@@ -784,10 +786,14 @@ export async function triggerRecurringBillingRun(
       }
     }
 
-    revalidatePath('/billing/invoices');
-    revalidatePath('/finance/recurring');
-    revalidatePath('/accounting/journals');
-    revalidatePath('/dashboard');
+    try {
+      revalidatePath('/billing/invoices');
+      revalidatePath('/finance/recurring');
+      revalidatePath('/accounting/journals');
+      revalidatePath('/dashboard');
+    } catch {
+      // Ignore static generation / request store errors outside Next.js request context
+    }
 
     return { generatedCount, emailFailureCount };
   } catch (err) {

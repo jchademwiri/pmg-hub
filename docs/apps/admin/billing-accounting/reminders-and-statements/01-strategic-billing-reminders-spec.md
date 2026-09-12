@@ -18,11 +18,11 @@ This replaces indiscriminate multi-shot invoice reminder emails with predictable
 
 ```mermaid
 timeline
-    title Monthly Billing & Payment Notification Lifecycle (9:00 AM SAST / 7:00 UTC)
+    title Monthly Billing & Payment Notification Lifecycle (08:10 AM SAST / 06:10 UTC)
     25th : Invoicing Cut-off Date : All monthly invoices & recurring retainers issued (Due: Last Day of Month)
     26th : Retainer Monthly Statement Run : Consolidated summary of current month invoices + carried-forward balances sent to Retainers (balance > 0)
-    15th : Mid-Month Overdue-Only Reminder : Reminds ONLY on past-due / overdue balances from prior months (Current month invoices IGNORED)
-    Last Day : Month-End Payment Due Statement : Comprehensive statement sent to ALL clients with positive balance due today (Up-to-date clients IGNORED)
+    Last Day : Month-End Payment Due Courtesy Notice : Gentle reminder sent to ALL clients with positive balance due today (Up-to-date clients IGNORED)
+    8th : Post-Grace Overdue Reminder : Reminds ONLY on past-due / overdue balances from prior month after 8-day grace (Current month invoices IGNORED)
 ```
 
 ---
@@ -31,10 +31,10 @@ timeline
 
 | Calendar Date | Target Audience | Trigger & Logic | Content & Email Summary | Exclusions / Conditions |
 | :--- | :--- | :--- | :--- | :--- |
-| **25th of Month** | All Clients | Invoicing cut-off. All retainer & recurring invoices issued. | Official Invoice Delivery. Due date set to **Last Day of Month**. | Draft invoices remain internal until issued. |
-| **26th of Month (09:00 SAST)** | **Retainer Clients** (`isRetainer = true`) | Sweeps all active retainer clients with `totalOutstanding > 0`. | **Monthly Retainer Statement Package**: Opening balance + current month invoices + payments + net balance due. Attached Statement PDF. | Clients with balance `<= 0` (paid / in credit) are **completely skipped**. |
-| **15th of Month (09:00 SAST)** | **All Clients** (with overdue debt) | Sweeps invoices where `dueDate < today` (strictly prior period debt). | **Overdue Balance Notice**: Highlights aged debt that has passed its due date. | **Current month invoices are strictly ignored**. Clients with zero overdue debt receive **no email**. |
-| **Last Day of Month (09:00 SAST)** | **All Active Clients** (Retainer & Ad-Hoc) | Sweeps all clients with `totalOutstanding > 0`. | **Month-End Statement & Payment Due Notice**: Final statement reminding clients of balances due today. | Up-to-date clients (`balance <= 0`) receive **no email**. |
+| **25th of Month (08:00 SAST)** | All Clients | Invoicing cut-off. All retainer & recurring invoices issued. | Official Invoice Delivery. Due date set to **Last Day of Month**. | Draft invoices remain internal until issued. |
+| **26th of Month (08:10 SAST)** | **Retainer Clients** (`isRetainer = true`) | Sweeps all active retainer clients with `totalOutstanding > 0`. | **Monthly Retainer Statement Package**: Opening balance + current month invoices + payments + net balance due. Attached Statement PDF. | Clients with balance `<= 0` (paid / in credit) are **completely skipped**. |
+| **Last Day of Month (08:10 SAST)** | **All Active Clients** (Retainer & Ad-Hoc) | Sweeps all clients with `totalOutstanding > 0`. | **Month-End Courtesy Notice**: Gentle payment due notice acknowledging possible in-flight payments/POPs. | Up-to-date clients (`balance <= 0`) receive **no email**. |
+| **8th of Month (08:10 SAST)** | **All Clients** (with overdue debt) | Sweeps invoices where `dueDate < today` (strictly prior period debt). | **Overdue Balance Notice**: Highlights aged debt that has passed its due date after an 8-day grace window. | **Current month invoices are strictly ignored**. Clients with zero overdue debt receive **no email**. |
 
 ---
 

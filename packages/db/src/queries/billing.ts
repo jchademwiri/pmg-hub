@@ -643,9 +643,9 @@ export async function getAllInvoices(
       createdAt: invoices.createdAt,
       updatedAt: invoices.updatedAt,
       allocatedAmount: sql<string>`(
-      COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)
+      COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0)
       +
-      COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = ${invoices.id}), 0)
+      COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)
     )::text`,
     })
     .from(invoices)
@@ -841,9 +841,9 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
       createdAt: invoices.createdAt,
       updatedAt: invoices.updatedAt,
       allocatedAmount: sql<string>`(
-      COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)
+      COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0)
       +
-      COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = ${invoices.id}), 0)
+      COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)
     )::text`,
     })
     .from(invoices)
@@ -1021,9 +1021,9 @@ export async function getClientStatement(
       createdAt: invoices.createdAt,
       updatedAt: invoices.updatedAt,
       allocatedAmount: sql<string>`(
-          COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)
+          COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0)
           +
-          COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = ${invoices.id}), 0)
+          COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)
         )::text`,
     })
     .from(invoices)
@@ -1224,9 +1224,9 @@ export async function getClientStatement(
       createdAt: invoices.createdAt,
       updatedAt: invoices.updatedAt,
       allocatedAmount: sql<string>`(
-          COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)
+          COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0)
           +
-          COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = ${invoices.id}), 0)
+          COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)
         )::text`,
     })
     .from(invoices)
@@ -1759,6 +1759,7 @@ export interface OutstandingInvoiceRow {
   dueDate: string | null;
   status: string;
   total: string;
+  writeOffAmount: string;
   allocatedAmount: string;
 }
 
@@ -1774,10 +1775,11 @@ export async function getClientOutstandingInvoices(
       dueDate: sql<string | null>`${invoices.dueDate}::text`,
       status: invoices.status,
       total: invoices.total,
+      writeOffAmount: invoices.writeOffAmount,
       allocatedAmount: sql<string>`(
-          COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)
+          COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0)
           +
-          COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = ${invoices.id}), 0)
+          COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)
         )::text`,
     })
     .from(invoices)
