@@ -1,5 +1,11 @@
 import 'server-only';
 
+/**
+ * @deprecated Legacy coordinate-based jsPDF engine helpers.
+ * Retained for fallback safety; all primary rendering uses the declarative
+ * Takumi WASM PDF engine via `@pmg/billing/pdf`.
+ */
+
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 

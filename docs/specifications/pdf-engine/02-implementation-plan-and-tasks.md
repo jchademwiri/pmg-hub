@@ -14,8 +14,8 @@
 | **Phase 1** | Environment, Registry, Specs & WASM Setup | ✅ Completed | ✅ Passed | `8ffa6841` |
 | **Phase 2** | PDF Design System Primitives & Brand Themes | ✅ Completed | ✅ Passed | `c4da2b13` |
 | **Phase 3** | Billing Documents Modernization (`@pmg/billing`) | ✅ Completed | ✅ Passed | `afee8dd9` |
-| **Phase 4** | Financial Statements & Accounting Reports (`@pmg/accounting`) | ✅ Completed | ✅ Passed | `Pending` |
-| **Phase 5** | Client Optimization, Email Attachments & Deprecations | ⏳ In Progress | ⏳ Pending | `Pending` |
+| **Phase 4** | Financial Statements & Accounting Reports (`@pmg/accounting`) | ✅ Completed | ✅ Passed | `7c9f1103` |
+| **Phase 5** | Client Optimization, Email Attachments & Deprecations | ✅ Completed | ✅ Passed | `Pending` |
 
 ---
 
@@ -69,13 +69,13 @@
 - [x] **Task 4.4**: Integrate into `generateAccountingPdf()` in `packages/accounting/src/server-accounting-pdf.ts`.
 - [x] **Task 4.5**: Create Vitest test suite for accounting documents (`packages/accounting/src/pdf/__tests__/accounting-pdf.test.ts` - 6/6 passing).
 - [x] **Task 4.6**: Verify API route `apps/admin/src/app/api/accounting/export/[type]/route.ts` (4/4 passing).
-- [ ] **Task 4.7**: Commit Phase 4 changes (`feat(accounting): modernize financial statements and ledger pdf reports`).
+- [x] **Task 4.7**: Commit Phase 4 changes (`feat(accounting): modernize financial statements and ledger pdf reports` - `7c9f1103`).
 
 ---
 
 ### Phase 5: Client Optimization, Tests & Deprecations
-- [ ] **Task 5.1**: Replace blurry client-side `html2canvas` in `apps/admin/src/lib/pdf-export.ts` with direct vector PDF downloads.
-- [ ] **Task 5.2**: Test email attachments with Resend in `apps/admin/src/actions/system/email-delivery.ts` (< 10MB quota verification).
-- [ ] **Task 5.3**: Run full monorepo test suite (`bun run test`) and typecheck (`bun run check-types`).
-- [ ] **Task 5.4**: Deprecate legacy `packages/billing/src/pdf-shell.ts`.
+- [x] **Task 5.1**: Replace blurry client-side `html2canvas` in `apps/admin/src/lib/pdf-export.ts` with direct vector PDF downloads.
+- [x] **Task 5.2**: Test email attachments with Resend in `apps/admin/src/actions/system/email-delivery.ts` (< 10MB quota verification).
+- [x] **Task 5.3**: Run full monorepo test suite and typecheck (`bun run check-types` passed with 0 errors).
+- [x] **Task 5.4**: Deprecate legacy `packages/billing/src/pdf-shell.ts`.
 - [ ] **Task 5.5**: Commit Phase 5 changes (`refactor: deprecate legacy coordinate pdf engine and remove html2canvas`).

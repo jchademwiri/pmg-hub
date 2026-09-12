@@ -43,4 +43,18 @@ describe('pdf-export helpers', () => {
     expect(getBase64ByteSize('TWE=')).toBe(2);
     expect(getBase64ByteSize('TQ==')).toBe(1);
   });
+
+  it('validates email PDF attachment size quota (< 8MB)', async () => {
+    const { assertEmailPdfSize, MAX_EMAIL_PDF_BYTES } = await import('./pdf-export');
+
+    // Vector PDF simulated size ~15KB
+    const smallBase64 = 'A'.repeat(20000);
+    expect(() => assertEmailPdfSize(smallBase64, 'Invoice PDF')).not.toThrow();
+
+    // Massive rasterized PDF exceeding 8MB quota
+    const oversizedBase64 = 'A'.repeat(Math.ceil((MAX_EMAIL_PDF_BYTES + 1000) * 4 / 3));
+    expect(() => assertEmailPdfSize(oversizedBase64, 'Rasterized PDF')).toThrow(
+      'Rasterized PDF is too large to email',
+    );
+  });
 });
