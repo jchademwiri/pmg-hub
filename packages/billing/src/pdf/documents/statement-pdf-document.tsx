@@ -189,7 +189,7 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
               </span>
               <table style={{ width: "100%", borderCollapse: "collapse", border: `1px solid ${theme.colors.border}` }}>
                 <thead>
-                  <tr>
+                  <tr style={{ backgroundColor: "#f9fafb" }}>
                     <th style={{ padding: "4px 6px", fontSize: 7, fontWeight: 700, textAlign: "center", borderRight: `1px solid ${theme.colors.border}` }}>Current</th>
                     <th style={{ padding: "4px 6px", fontSize: 7, fontWeight: 700, textAlign: "center", borderRight: `1px solid ${theme.colors.border}` }}>1–14 Days</th>
                     <th style={{ padding: "4px 6px", fontSize: 7, fontWeight: 700, textAlign: "center", borderRight: `1px solid ${theme.colors.border}` }}>15–30 Days</th>

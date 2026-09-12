@@ -42,7 +42,7 @@ export function TableRow({ children, header, striped, style }: TableRowProps) {
   const theme = usePdfTheme();
 
   const rowStyle: CSSProperties = {
-    backgroundColor: "transparent",
+    backgroundColor: header ? "#f9fafb" : "transparent",
     borderBottom: header
       ? `1px solid ${theme.colors.border}`
       : "1px solid #f4f4f5",
