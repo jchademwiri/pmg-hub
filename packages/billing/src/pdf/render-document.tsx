@@ -1,9 +1,8 @@
 import "server-only";
 
 import React, { type ReactElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
 import { renderPdf, type RenderPdfOptions } from "./engine";
-import { PdfThemeProvider } from "./theme-provider";
+import { runWithPdfTheme } from "./theme-provider";
 import { resolveDivisionTheme } from "./themes";
 import type { PdfTheme } from "./types";
 
@@ -22,13 +21,9 @@ export async function renderDocumentToPdf(
 ): Promise<Uint8Array> {
   const theme = options?.theme ?? resolveDivisionTheme(options?.divisionName);
 
-  const wrapped = (
-    <PdfThemeProvider theme={theme}>
-      {element}
-    </PdfThemeProvider>
-  );
+  const { renderToStaticMarkup } = await import("react-dom/server");
 
-  const markup = renderToStaticMarkup(wrapped);
+  const markup = runWithPdfTheme(theme, () => renderToStaticMarkup(element));
 
   return renderPdf(markup, {
     size: options?.size ?? theme.page.size,

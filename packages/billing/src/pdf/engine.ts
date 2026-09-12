@@ -22,7 +22,9 @@ export function ensureWasmInitialized(): void {
   if (isInitialized) return;
 
   const require = createRequire(import.meta.url);
-  const wasmPath = require.resolve("takumi-pdf/takumi_pdf_wasm_bg.wasm");
+  const { dirname, join } = require("node:path") as typeof import("node:path");
+  const noInitPath = require.resolve("takumi-pdf/no-init");
+  const wasmPath = join(dirname(noInitPath), "../pkg/takumi_pdf_wasm_bg.wasm");
   const wasmBytes = readFileSync(wasmPath);
 
   wasm.initSync({ module: wasmBytes });

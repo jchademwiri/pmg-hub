@@ -1,8 +1,9 @@
-import React, { createContext, useContext, type ReactNode } from "react";
+import React, { type ReactNode } from "react";
+import { AsyncLocalStorage } from "node:async_hooks";
 import type { PdfTheme } from "./types";
 import { pmgTheme } from "./themes";
 
-const PdfThemeContext = createContext<PdfTheme>(pmgTheme);
+const themeStorage = new AsyncLocalStorage<PdfTheme>();
 
 export interface PdfThemeProviderProps {
   theme?: PdfTheme;
@@ -10,13 +11,13 @@ export interface PdfThemeProviderProps {
 }
 
 export function PdfThemeProvider({ theme = pmgTheme, children }: PdfThemeProviderProps) {
-  return (
-    <PdfThemeContext.Provider value={theme}>
-      {children}
-    </PdfThemeContext.Provider>
-  );
+  return <>{children}</>;
+}
+
+export function runWithPdfTheme<T>(theme: PdfTheme, fn: () => T): T {
+  return themeStorage.run(theme, fn);
 }
 
 export function usePdfTheme(): PdfTheme {
-  return useContext(PdfThemeContext);
+  return themeStorage.getStore() ?? pmgTheme;
 }
