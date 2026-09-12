@@ -145,7 +145,7 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
           </TableHeader>
           <TableBody>
             {/* Opening Balance Row */}
-            <TableRow striped={false} style={{ backgroundColor: "#fafafa" }}>
+            <TableRow striped={false}>
               <TableCell>{data.periodFrom ? fmtDate(data.periodFrom) : "-"}</TableCell>
               <TableCell bold>OPENING</TableCell>
               <TableCell>Opening Balance</TableCell>
@@ -189,7 +189,7 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
               </span>
               <table style={{ width: "100%", borderCollapse: "collapse", border: `1px solid ${theme.colors.border}` }}>
                 <thead>
-                  <tr style={{ backgroundColor: theme.colors.muted }}>
+                  <tr>
                     <th style={{ padding: "4px 6px", fontSize: 7, fontWeight: 700, textAlign: "center", borderRight: `1px solid ${theme.colors.border}` }}>Current</th>
                     <th style={{ padding: "4px 6px", fontSize: 7, fontWeight: 700, textAlign: "center", borderRight: `1px solid ${theme.colors.border}` }}>1–14 Days</th>
                     <th style={{ padding: "4px 6px", fontSize: 7, fontWeight: 700, textAlign: "center", borderRight: `1px solid ${theme.colors.border}` }}>15–30 Days</th>
@@ -230,7 +230,6 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
           <KeepTogether>
             <div
               style={{
-                backgroundColor: theme.colors.muted,
                 border: `1px solid ${theme.colors.border}`,
                 borderRadius: theme.primitives.borderRadius.sm,
                 padding: "8px 12px",

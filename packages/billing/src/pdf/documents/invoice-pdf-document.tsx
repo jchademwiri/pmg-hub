@@ -201,7 +201,6 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
               {data.banking && (
                 <div
                   style={{
-                    backgroundColor: theme.colors.muted,
                     border: `1px solid ${theme.colors.border}`,
                     borderRadius: theme.primitives.borderRadius.sm,
                     padding: 10,
@@ -250,7 +249,6 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
             <div
               style={{
                 width: "42%",
-                backgroundColor: theme.colors.muted,
                 border: `1px solid ${theme.colors.border}`,
                 borderRadius: theme.primitives.borderRadius.sm,
                 padding: "10px 12px",

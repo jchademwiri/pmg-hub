@@ -160,7 +160,6 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
             <div
               style={{
                 width: "42%",
-                backgroundColor: theme.colors.muted,
                 border: `1px solid ${theme.colors.border}`,
                 borderRadius: theme.primitives.borderRadius.sm,
                 padding: "10px 12px",

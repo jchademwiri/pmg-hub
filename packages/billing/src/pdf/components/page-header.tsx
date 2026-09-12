@@ -37,9 +37,6 @@ export function PageHeader({ org, title, number, status, style }: PageHeaderProp
 
   return (
     <div style={{ display: "flex", flexDirection: "column", width: "100%", marginBottom: theme.spacing.sectionGap, ...style }}>
-      {/* Top brand accent bar */}
-      <div style={{ width: "100%", height: 3, backgroundColor: theme.colors.primary, marginBottom: 16 }} />
-
       <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
         {/* Left: Org Details */}
         <div style={{ display: "flex", flexDirection: "column", maxWidth: "45%" }}>
@@ -105,6 +102,9 @@ export function PageHeader({ org, title, number, status, style }: PageHeaderProp
           )}
         </div>
       </div>
+
+      {/* Thin line just before the client/metadata row */}
+      <div style={{ width: "100%", height: 1, backgroundColor: theme.colors.border, marginTop: 14 }} />
     </div>
   );
 }

@@ -182,7 +182,6 @@ export function QuotePdfDocument({ data }: { data: QuotePdfData }) {
                   borderRadius: theme.primitives.borderRadius.sm,
                   padding: 10,
                   marginBottom: 10,
-                  backgroundColor: "#fafafa",
                 }}
               >
                 <span
@@ -227,7 +226,6 @@ export function QuotePdfDocument({ data }: { data: QuotePdfData }) {
             <div
               style={{
                 width: "42%",
-                backgroundColor: theme.colors.muted,
                 border: `1px solid ${theme.colors.border}`,
                 borderRadius: theme.primitives.borderRadius.sm,
                 padding: "10px 12px",
