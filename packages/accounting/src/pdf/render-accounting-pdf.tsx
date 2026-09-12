@@ -1,8 +1,15 @@
 import "server-only";
 
 import React from "react";
-import { renderDocumentToPdf, pmgTheme } from "@pmg/billing/pdf";
+import { renderDocumentToPdf, pmgTheme, getLogoDataUri } from "@pmg/billing/pdf";
 import { type PdfOrgHeader } from "@pmg/billing/pdf-shell";
+
+function resolveOrg(org: PdfOrgHeader): PdfOrgHeader {
+  return {
+    ...org,
+    logoDataUri: org.logoDataUri || getLogoDataUri(org.name),
+  };
+}
 import type {
   ProfitAndLossResult,
   ProfitAndLossByDivisionRow,
@@ -41,7 +48,7 @@ export async function renderDeclarativeProfitAndLoss(
     <ProfitAndLossDocument
       result={result}
       byDivision={byDivision}
-      org={org}
+      org={resolveOrg(org)}
       periodLabel={periodLabel}
       divisionLabel={divisionLabel}
       generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
@@ -61,7 +68,7 @@ export async function renderDeclarativeDivisionPerformance(
   const element = (
     <DivisionPerformanceDocument
       rows={rows}
-      org={org}
+      org={resolveOrg(org)}
       periodLabel={periodLabel}
       divisionLabel={divisionLabel}
       generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
@@ -81,7 +88,7 @@ export async function renderDeclarativeBalanceSheet(
   const element = (
     <BalanceSheetDocument
       result={result}
-      org={org}
+      org={resolveOrg(org)}
       periodLabel={periodLabel}
       divisionLabel={divisionLabel}
       generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
@@ -101,7 +108,7 @@ export async function renderDeclarativeCashFlow(
   const element = (
     <CashFlowDocument
       result={result}
-      org={org}
+      org={resolveOrg(org)}
       periodLabel={periodLabel}
       divisionLabel={divisionLabel}
       generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
@@ -121,7 +128,7 @@ export async function renderDeclarativeTrialBalance(
   const element = (
     <TrialBalanceDocument
       rows={rows}
-      org={org}
+      org={resolveOrg(org)}
       periodLabel={periodLabel}
       divisionLabel={divisionLabel}
       generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
@@ -143,7 +150,7 @@ export async function renderDeclarativeGeneralLedger(
     <GeneralLedgerDocument
       rows={rows}
       totalCount={totalCount}
-      org={org}
+      org={resolveOrg(org)}
       periodLabel={periodLabel}
       divisionLabel={divisionLabel}
       generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
@@ -167,7 +174,7 @@ export async function renderDeclarativeJournalEntries(
       entries={entries}
       linesByEntry={linesByEntry}
       totalCount={totalCount}
-      org={org}
+      org={resolveOrg(org)}
       periodLabel={periodLabel}
       divisionLabel={divisionLabel}
       generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
@@ -185,7 +192,7 @@ export async function renderDeclarativeChartOfAccounts(
   const element = (
     <ChartOfAccountsDocument
       grouped={grouped}
-      org={org}
+      org={resolveOrg(org)}
       generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
     />
   );
@@ -202,7 +209,7 @@ export async function renderDeclarativeClientPerformance(
   const element = (
     <ClientPerformanceDocument
       clients={clients}
-      org={org}
+      org={resolveOrg(org)}
       periodLabel={periodLabel}
       generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
     />
@@ -220,7 +227,7 @@ export async function renderDeclarativeAnnualFinancialStatements(
   const element = (
     <AnnualFinancialStatementsDocument
       result={result}
-      org={org}
+      org={resolveOrg(org)}
       periodLabel={periodLabel}
       generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
     />

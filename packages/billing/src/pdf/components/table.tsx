@@ -47,7 +47,9 @@ export function TableRow({ children, header, striped, style }: TableRowProps) {
       : striped
         ? "#fcfcfd"
         : "transparent",
-    borderBottom: `1px solid ${theme.colors.border}`,
+    borderBottom: header
+      ? `1px solid ${theme.colors.border}`
+      : "1px solid #f4f4f5",
     ...style,
   };
 

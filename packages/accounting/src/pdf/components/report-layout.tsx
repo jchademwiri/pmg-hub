@@ -85,6 +85,13 @@ export function AccountingReportLayout({
             )}
           </div>
 
+          {/* Optional Centered Logo */}
+          {org.logoDataUri && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", margin: "0 12px" }}>
+              <img src={org.logoDataUri} alt={org.name} style={{ width: 44, height: 44, objectFit: "contain" }} />
+            </div>
+          )}
+
           {/* Report Title & Metadata */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", maxWidth: "45%" }}>
             <span
