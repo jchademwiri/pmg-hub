@@ -77,12 +77,12 @@ export function GeneralLedgerDocument({
         <TableBody>
           {rows.length === 0 ? (
             <TableRow>
-              <TableCell style={{ width: "100%", color: "#a1a1aa", fontSize: 8 }}>
+              <TableCell colSpan={6} style={{ width: "100%", color: "#a1a1aa", fontSize: 8, textAlign: "center", padding: 12 }}>
                 No general ledger transactions found for the specified criteria.
               </TableCell>
             </TableRow>
           ) : (
-            rows.map((row, idx) => (
+            (rows ?? []).map((row, idx) => (
               <TableRow key={`gl-${idx}`}>
                 <TableCell style={{ width: "12%", fontSize: 7.5, color: "#52525b" }}>
                   {fmtDate(row.entryDate)}

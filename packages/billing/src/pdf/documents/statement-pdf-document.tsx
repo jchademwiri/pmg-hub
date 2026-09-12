@@ -155,7 +155,7 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
             </TableRow>
 
             {/* Transaction Rows */}
-            {data.transactions.map((tx, idx) => (
+            {(data.transactions ?? []).map((tx, idx) => (
               <TableRow key={idx} striped={idx % 2 === 1}>
                 <TableCell>{fmtDate(tx.date)}</TableCell>
                 <TableCell bold>{tx.reference}</TableCell>

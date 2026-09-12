@@ -150,7 +150,7 @@ export function AnnualFinancialStatementsDocument({
                   <TableCell style={{ width: "25%", textAlign: "right", fontSize: 8, fontVariantNumeric: "tabular-nums" }}>{formatZAR(dr.businessActivities.revenue.current)}</TableCell>
                   <TableCell style={{ width: "25%", textAlign: "right", fontSize: 8, fontVariantNumeric: "tabular-nums" }}>{formatZAR(dr.businessActivities.revenue.prior)}</TableCell>
                 </TableRow>
-                {dr.divisionBreakdown.map((div, idx) => (
+                {(dr.divisionBreakdown ?? []).map((div, idx) => (
                   <TableRow key={`dr-div-${idx}`}>
                     <TableCell style={{ width: "50%", fontSize: 7.5, color: "#52525b", paddingLeft: 14 }}>• {div.divisionName}</TableCell>
                     <TableCell style={{ width: "25%", textAlign: "right", fontSize: 7.5, fontVariantNumeric: "tabular-nums" }}>{formatZAR(div.current)}</TableCell>
@@ -234,7 +234,7 @@ export function AnnualFinancialStatementsDocument({
               <TableCell style={{ width: "20%", textAlign: "right", fontSize: 8, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{formatZAR(pnl.revenue.current)}</TableCell>
               <TableCell style={{ width: "20%", textAlign: "right", fontSize: 8, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{formatZAR(pnl.revenue.prior)}</TableCell>
             </TableRow>
-            {pnl.divisionBreakdown.map((div, idx) => (
+            {(pnl.divisionBreakdown ?? []).map((div, idx) => (
               <TableRow key={`pnl-div-${idx}`}>
                 <TableCell style={{ width: "45%", fontSize: 7.5, color: "#52525b", paddingLeft: 14 }}>• {div.divisionName}</TableCell>
                 <TableCell style={{ width: "15%", textAlign: "center", fontSize: 7.5, color: "#71717a" }}>Note 2</TableCell>
@@ -301,9 +301,9 @@ export function AnnualFinancialStatementsDocument({
           </TableHeader>
           <TableBody>
             <TableRow style={{ backgroundColor: "#f8fafc" }}>
-              <TableCell style={{ width: "100%", fontSize: 8, fontWeight: 700, color: "#1e3a8a" }}>ASSETS</TableCell>
+              <TableCell colSpan={4} style={{ width: "100%", fontSize: 8, fontWeight: 700, color: "#1e3a8a" }}>ASSETS</TableCell>
             </TableRow>
-            {bs.assets.map((a, idx) => (
+            {(bs.assets ?? []).map((a, idx) => (
               <TableRow key={`bs-asset-${idx}`}>
                 <TableCell style={{ width: "45%", fontSize: 7.5, color: "#18181b", paddingLeft: 10 }}>{a.accountName}</TableCell>
                 <TableCell style={{ width: "15%", textAlign: "center", fontSize: 7.5, color: "#71717a" }}>Note 5</TableCell>
@@ -319,7 +319,7 @@ export function AnnualFinancialStatementsDocument({
             </TableRow>
 
             <TableRow style={{ backgroundColor: "#f8fafc" }}>
-              <TableCell style={{ width: "100%", fontSize: 8, fontWeight: 700, color: "#1e3a8a" }}>EQUITY AND LIABILITIES</TableCell>
+              <TableCell colSpan={4} style={{ width: "100%", fontSize: 8, fontWeight: 700, color: "#1e3a8a" }}>EQUITY AND LIABILITIES</TableCell>
             </TableRow>
             <TableRow>
               <TableCell style={{ width: "45%", fontSize: 7.5, paddingLeft: 10 }}>Shareholders Contribution</TableCell>
@@ -333,7 +333,7 @@ export function AnnualFinancialStatementsDocument({
               <TableCell style={{ width: "20%", textAlign: "right", fontSize: 7.5, fontVariantNumeric: "tabular-nums" }}>{formatZAR(pnl.netProfit.current)}</TableCell>
               <TableCell style={{ width: "20%", textAlign: "right", fontSize: 7.5, fontVariantNumeric: "tabular-nums" }}>{formatZAR(pnl.netProfit.prior)}</TableCell>
             </TableRow>
-            {bs.liabilities.map((l, idx) => (
+            {(bs.liabilities ?? []).map((l, idx) => (
               <TableRow key={`bs-liab-${idx}`}>
                 <TableCell style={{ width: "45%", fontSize: 7.5, paddingLeft: 10 }}>{l.accountName}</TableCell>
                 <TableCell style={{ width: "15%", textAlign: "center", fontSize: 7.5, color: "#71717a" }}>Note 11</TableCell>
@@ -485,14 +485,14 @@ export function AnnualFinancialStatementsDocument({
           </TableHeader>
           <TableBody>
             <TableRow style={{ backgroundColor: "#f8fafc" }}>
-              <TableCell style={{ width: "100%", fontSize: 8, fontWeight: 700, color: "#1e3a8a" }}>INCOME</TableCell>
+              <TableCell colSpan={3} style={{ width: "100%", fontSize: 8, fontWeight: 700, color: "#1e3a8a" }}>INCOME</TableCell>
             </TableRow>
             <TableRow>
               <TableCell style={{ width: "55%", fontSize: 8 }}>Sales Revenue (excluding VAT)</TableCell>
               <TableCell style={{ width: "22.5%", textAlign: "right", fontSize: 8, fontVariantNumeric: "tabular-nums" }}>{formatZAR(det.revenue.current)}</TableCell>
               <TableCell style={{ width: "22.5%", textAlign: "right", fontSize: 8, fontVariantNumeric: "tabular-nums" }}>{formatZAR(det.revenue.prior)}</TableCell>
             </TableRow>
-            {det.divisionBreakdown.map((div, idx) => (
+            {(det.divisionBreakdown ?? []).map((div, idx) => (
               <TableRow key={`det-div-${idx}`}>
                 <TableCell style={{ width: "55%", fontSize: 7.5, color: "#52525b", paddingLeft: 14 }}>• {div.divisionName}</TableCell>
                 <TableCell style={{ width: "22.5%", textAlign: "right", fontSize: 7.5, fontVariantNumeric: "tabular-nums" }}>{formatZAR(div.current)}</TableCell>
@@ -501,9 +501,9 @@ export function AnnualFinancialStatementsDocument({
             ))}
 
             <TableRow style={{ backgroundColor: "#f8fafc" }}>
-              <TableCell style={{ width: "100%", fontSize: 8, fontWeight: 700, color: "#1e3a8a" }}>OPERATING EXPENSES</TableCell>
+              <TableCell colSpan={3} style={{ width: "100%", fontSize: 8, fontWeight: 700, color: "#1e3a8a" }}>OPERATING EXPENSES</TableCell>
             </TableRow>
-            {det.expenses.map((exp, idx) => (
+            {(det.expenses ?? []).map((exp, idx) => (
               <TableRow key={`det-exp-${idx}`}>
                 <TableCell style={{ width: "55%", fontSize: 7.5, color: "#18181b", paddingLeft: 10 }}>{exp.accountCode} — {exp.accountName}</TableCell>
                 <TableCell style={{ width: "22.5%", textAlign: "right", fontSize: 7.5, fontVariantNumeric: "tabular-nums" }}>{formatZAR(exp.amount)}</TableCell>

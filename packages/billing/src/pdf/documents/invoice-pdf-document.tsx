@@ -153,25 +153,33 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.items.map((item, idx) => (
-              <TableRow key={idx} striped={idx % 2 === 1}>
-                <TableCell>
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    {item.itemName && (
-                      <span style={{ fontWeight: 600, color: theme.colors.foreground, fontSize: 8.5 }}>
-                        {item.itemName}
-                      </span>
-                    )}
-                    <span style={{ color: item.itemName ? theme.colors.mutedForeground : theme.colors.foreground, fontSize: 8 }}>
-                      {item.description}
-                    </span>
-                  </div>
+            {!data.items || data.items.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} align="center" style={{ color: theme.colors.mutedForeground, padding: 12 }}>
+                  No items listed
                 </TableCell>
-                <TableCell align="center" tabular>{item.qty}</TableCell>
-                <TableCell align="right" tabular>{formatZAR(item.unitPrice)}</TableCell>
-                <TableCell align="right" bold tabular>{formatZAR(item.amount)}</TableCell>
               </TableRow>
-            ))}
+            ) : (
+              data.items.map((item, idx) => (
+                <TableRow key={idx} striped={idx % 2 === 1}>
+                  <TableCell>
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      {item.itemName && (
+                        <span style={{ fontWeight: 600, color: theme.colors.foreground, fontSize: 8.5 }}>
+                          {item.itemName}
+                        </span>
+                      )}
+                      <span style={{ color: item.itemName ? theme.colors.mutedForeground : theme.colors.foreground, fontSize: 8 }}>
+                        {item.description}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell align="center" tabular>{item.qty}</TableCell>
+                  <TableCell align="right" tabular>{formatZAR(item.unitPrice)}</TableCell>
+                  <TableCell align="right" bold tabular>{formatZAR(item.amount)}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
 

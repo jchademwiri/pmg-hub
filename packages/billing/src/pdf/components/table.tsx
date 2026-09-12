@@ -57,6 +57,7 @@ export interface TableCellProps {
   children?: ReactNode;
   align?: "left" | "center" | "right";
   width?: string | number;
+  colSpan?: number;
   header?: boolean;
   bold?: boolean;
   tabular?: boolean;
@@ -67,6 +68,7 @@ export function TableCell({
   children,
   align = "left",
   width,
+  colSpan,
   header = false,
   bold = false,
   tabular = false,
@@ -89,10 +91,18 @@ export function TableCell({
   };
 
   if (header) {
-    return <th style={cellStyle}>{children}</th>;
+    return (
+      <th colSpan={colSpan} style={cellStyle}>
+        {children}
+      </th>
+    );
   }
 
-  return <td style={cellStyle}>{children}</td>;
+  return (
+    <td colSpan={colSpan} style={cellStyle}>
+      {children}
+    </td>
+  );
 }
 
 export function TableHead(props: TableCellProps) {
