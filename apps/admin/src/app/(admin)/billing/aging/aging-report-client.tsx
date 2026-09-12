@@ -382,11 +382,11 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
               </div>
 
               {/* Desktop View */}
-              <div className="hidden md:block overflow-x-auto border rounded-lg bg-card">
-                <Table>
+              <div className="hidden md:block overflow-hidden border rounded-lg bg-card">
+                <Table className="table-fixed w-full" containerClassName="overflow-hidden">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[200px]">
+                      <TableHead className="px-2 text-xs">
                         <button
                           onClick={() => handleSort('name')}
                           className="group flex items-center hover:text-foreground font-semibold"
@@ -395,7 +395,7 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                           <SortIcon field="name" />
                         </button>
                       </TableHead>
-                      <TableHead className="text-right">
+                      <TableHead className="w-[95px] px-2 text-right text-xs">
                         <button
                           onClick={() => handleSort('totalOutstanding')}
                           className="group ml-auto flex items-center hover:text-foreground font-semibold"
@@ -404,7 +404,7 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                           <SortIcon field="totalOutstanding" />
                         </button>
                       </TableHead>
-                      <TableHead className="text-right">
+                      <TableHead className="w-[80px] px-2 text-right text-xs">
                         <button
                           onClick={() => handleSort('current')}
                           className="group ml-auto flex items-center hover:text-foreground font-semibold"
@@ -413,7 +413,7 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                           <SortIcon field="current" />
                         </button>
                       </TableHead>
-                      <TableHead className="text-right">
+                      <TableHead className="w-[80px] px-2 text-right text-xs">
                         <button
                           onClick={() => handleSort('bucket_1_14')}
                           className="group ml-auto flex items-center hover:text-foreground font-semibold"
@@ -422,7 +422,7 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                           <SortIcon field="bucket_1_14" />
                         </button>
                       </TableHead>
-                      <TableHead className="text-right">
+                      <TableHead className="w-[80px] px-2 text-right text-xs">
                         <button
                           onClick={() => handleSort('bucket_15_30')}
                           className="group ml-auto flex items-center hover:text-foreground font-semibold"
@@ -431,7 +431,7 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                           <SortIcon field="bucket_15_30" />
                         </button>
                       </TableHead>
-                      <TableHead className="text-right">
+                      <TableHead className="w-[80px] px-2 text-right text-xs">
                         <button
                           onClick={() => handleSort('bucket_31_60')}
                           className="group ml-auto flex items-center hover:text-foreground font-semibold"
@@ -440,7 +440,7 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                           <SortIcon field="bucket_31_60" />
                         </button>
                       </TableHead>
-                      <TableHead className="text-right">
+                      <TableHead className="w-[80px] px-2 text-right text-xs">
                         <button
                           onClick={() => handleSort('bucket_61_plus')}
                           className="group ml-auto flex items-center hover:text-foreground font-semibold"
@@ -449,7 +449,7 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                           <SortIcon field="bucket_61_plus" />
                         </button>
                       </TableHead>
-                      <TableHead className="w-[100px] text-center">Actions</TableHead>
+                      <TableHead className="w-[75px] px-2 text-center text-xs">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -473,28 +473,34 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                             }
                           }}
                         >
-                          <TableCell className="font-medium text-primary hover:underline">
+                          <TableCell
+                            className="font-medium text-primary hover:underline px-2 text-xs truncate"
+                            title={client.businessName || client.clientName}
+                          >
                             {client.businessName || client.clientName}
                           </TableCell>
-                          <TableCell className="text-right font-bold tabular-nums">
+                          <TableCell className="text-right font-bold tabular-nums px-2 text-xs whitespace-nowrap">
                             {formatZAR(client.totalOutstanding)}
                           </TableCell>
-                          <TableCell className="text-right tabular-nums text-emerald-600">
+                          <TableCell className="text-right tabular-nums text-emerald-600 px-2 text-xs whitespace-nowrap">
                             {client.current > 0 ? formatZAR(client.current) : '—'}
                           </TableCell>
-                          <TableCell className="text-right tabular-nums text-amber-600">
+                          <TableCell className="text-right tabular-nums text-amber-600 px-2 text-xs whitespace-nowrap">
                             {client.bucket_1_14 > 0 ? formatZAR(client.bucket_1_14) : '—'}
                           </TableCell>
-                          <TableCell className="text-right tabular-nums text-orange-600">
+                          <TableCell className="text-right tabular-nums text-orange-600 px-2 text-xs whitespace-nowrap">
                             {client.bucket_15_30 > 0 ? formatZAR(client.bucket_15_30) : '—'}
                           </TableCell>
-                          <TableCell className="text-right tabular-nums text-rose-600">
+                          <TableCell className="text-right tabular-nums text-rose-600 px-2 text-xs whitespace-nowrap">
                             {client.bucket_31_60 > 0 ? formatZAR(client.bucket_31_60) : '—'}
                           </TableCell>
-                          <TableCell className="text-right tabular-nums text-red-600 font-semibold">
+                          <TableCell className="text-right tabular-nums text-red-600 font-semibold px-2 text-xs whitespace-nowrap">
                             {client.bucket_61_plus > 0 ? formatZAR(client.bucket_61_plus) : '—'}
                           </TableCell>
-                          <TableCell onClick={(e) => e.stopPropagation()}>
+                          <TableCell
+                            className="px-2 text-center"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <div className="flex items-center justify-center gap-2">
                               <Button
                                 asChild

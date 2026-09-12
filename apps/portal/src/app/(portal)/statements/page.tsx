@@ -421,15 +421,15 @@ export default async function StatementsPage({ searchParams }: PageProps) {
               </p>
             ) : (
               <>
-                <div className="overflow-x-auto hidden md:block print:block">
-                  <table className="w-full text-left border-collapse">
+                <div className="overflow-hidden hidden md:block print:block">
+                  <table className="w-full table-fixed text-left border-collapse">
                     <thead>
                       <tr className="border-b border-white/5 print:border-black/20 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/75 print:text-black/60">
-                        <th className="py-3 pr-4">Date</th>
+                        <th className="py-3 pr-4 w-[100px]">Date</th>
                         <th className="py-3 px-4">Reference</th>
-                        <th className="py-3 px-4 text-right">Charge (Debit)</th>
-                        <th className="py-3 px-4 text-right">Payment (Credit)</th>
-                        <th className="py-3 pl-4 text-right">Balance</th>
+                        <th className="py-3 px-4 text-right w-[120px]">Charge</th>
+                        <th className="py-3 px-4 text-right w-[120px]">Payment</th>
+                        <th className="py-3 pl-4 text-right w-[110px]">Balance</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 print:divide-black/10 text-xs">

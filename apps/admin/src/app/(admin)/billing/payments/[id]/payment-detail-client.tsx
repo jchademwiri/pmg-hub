@@ -588,9 +588,9 @@ export function PaymentDetailClient({
       {/* Two-column layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
         {/* Document preview */}
-        <div className="lg:col-span-2 overflow-x-auto">
+        <div className="lg:col-span-2 overflow-hidden">
           <Card className="shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
-            <CardContent className="p-4 overflow-x-auto">
+            <CardContent className="p-4 overflow-hidden">
               <PaymentReceiptPreview payment={payment} client={client} divSettings={divSettings} />
             </CardContent>
           </Card>

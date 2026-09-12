@@ -137,15 +137,15 @@ export default async function InvoicesPage({ searchParams }: PageProps) {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse hidden md:table">
+            <div className="overflow-hidden">
+              <table className="w-full table-fixed text-left border-collapse hidden md:table">
                 <thead>
                   <tr className="border-b border-white/5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 bg-white/[0.01]">
-                    <th className="px-6 py-3">Invoice #</th>
-                    <th className="px-6 py-3">Issue Date</th>
-                    <th className="px-6 py-3">Due Date</th>
-                    <th className="px-6 py-3 text-right">Amount</th>
-                    <th className="px-6 py-3">Status</th>
+                    <th className="px-4 py-3 w-[140px]">Invoice #</th>
+                    <th className="px-4 py-3 w-[100px]">Issue Date</th>
+                    <th className="px-4 py-3 w-[100px]">Due Date</th>
+                    <th className="px-4 py-3 text-right w-[120px]">Amount</th>
+                    <th className="px-4 py-3 w-[100px]">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 text-xs">
@@ -154,7 +154,7 @@ export default async function InvoicesPage({ searchParams }: PageProps) {
                       key={inv.id}
                       className="relative hover:bg-white/[0.02] transition-colors group cursor-pointer"
                     >
-                      <td className="px-6 py-4 font-semibold text-white">
+                      <td className="px-4 py-3 font-semibold text-white truncate">
                         <Link
                           href={`/invoices/${inv.id}`}
                           className="absolute inset-0 z-10"
@@ -164,13 +164,13 @@ export default async function InvoicesPage({ searchParams }: PageProps) {
                         </Link>
                         <span>{inv.documentNumber}</span>
                       </td>
-                      <td className="px-6 py-4 text-muted-foreground">
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                         {formatDate(inv.invoiceDate)}
                       </td>
-                      <td className="px-6 py-4 text-muted-foreground">
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                         {inv.dueDate ? formatDate(inv.dueDate) : '—'}
                       </td>
-                      <td className="px-6 py-4 text-right font-bold text-white">
+                      <td className="px-4 py-3 text-right font-bold text-white whitespace-nowrap">
                         {formatCurrency(inv.total)}
                         {inv.status === 'partially_paid' && (
                           <span className="block text-[10px] text-muted-foreground font-medium mt-0.5">
@@ -178,7 +178,7 @@ export default async function InvoicesPage({ searchParams }: PageProps) {
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <span
                           className={`inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
                             inv.status === 'paid'
