@@ -22,13 +22,17 @@ export function PageFooter({
   return (
     <div
       style={{
-        marginTop: "auto",
-        paddingTop: 10,
+        position: "fixed",
+        bottom: 20,
+        left: theme.spacing.page.marginLeft,
+        right: theme.spacing.page.marginRight,
+        paddingTop: 8,
         borderTop: `1px solid ${theme.colors.border}`,
         display: "flex",
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
+        boxSizing: "border-box",
         ...style,
       }}
     >

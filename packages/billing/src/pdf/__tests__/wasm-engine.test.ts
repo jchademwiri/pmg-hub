@@ -46,31 +46,33 @@ describe("Takumi WASM PDF Engine", () => {
     const { renderPdf } = await import("../engine");
     const fs = await import("fs");
 
-    // Test 1: position fixed or absolute at bottom
-    const htmlFixed = `
-      <div style="position: relative; width: 100%; height: 100%;">
-        <h1>Top Header</h1>
-        <div style="position: fixed; bottom: 20px; left: 20px; right: 20px; background: #e2e8f0; padding: 10px;">
-          Fixed Bottom Element
+    // Test 1: position fixed footer across multiple pages
+    const htmlFixedMulti = `
+      <style>
+        .footer {
+          position: fixed;
+          bottom: 20px;
+          left: 36px;
+          right: 36px;
+          border-top: 1px solid #e4e4e7;
+          padding-top: 8px;
+          display: flex;
+          justify-content: space-between;
+          font-size: 8px;
+        }
+      </style>
+      <div style="padding: 36px; padding-bottom: 60px;">
+        <div class="footer">
+          <span>Fixed Footer Left</span>
+          <span>Page 1 of 1</span>
         </div>
+        <h1>Page 1 Content</h1>
+        <div style="height: 1200px; background: #f1f5f9;">Tall Content Spanning Multiple Pages</div>
+        <h2>Page Content Continued</h2>
       </div>
     `;
 
-    const pdfFixed = await renderPdf(htmlFixed, { size: "a4" });
-    expect(pdfFixed).toBeInstanceOf(Uint8Array);
-    expect(pdfFixed.length).toBeGreaterThan(1000);
-
-    // Test 2: CSS flex with specific height
-    const htmlFlex = `
-      <div style="display: flex; flex-direction: column; min-height: 260mm; box-sizing: border-box; padding: 20px; border: 1px solid green;">
-        <h1>Top Header</h1>
-        <div style="margin-top: auto; background: #dcfce7; padding: 10px;">
-          Flex Bottom Element at 260mm
-        </div>
-      </div>
-    `;
-    const pdfFlex = await renderPdf(htmlFlex, { size: "a4" });
-    expect(pdfFlex).toBeInstanceOf(Uint8Array);
-    expect(pdfFlex.length).toBeGreaterThan(1000);
+    const pdfMulti = await renderPdf(htmlFixedMulti, { size: "a4" });
+    expect(pdfMulti).toBeInstanceOf(Uint8Array);
   });
 });

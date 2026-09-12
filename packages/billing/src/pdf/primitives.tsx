@@ -172,7 +172,7 @@ export function Page({
         minHeight: orientation === "landscape" ? "185mm" : "270mm",
         paddingTop: theme.spacing.page.marginTop,
         paddingRight: theme.spacing.page.marginRight,
-        paddingBottom: theme.spacing.page.marginBottom,
+        paddingBottom: 48,
         paddingLeft: theme.spacing.page.marginLeft,
         backgroundColor: theme.colors.background,
         color: theme.colors.foreground,
