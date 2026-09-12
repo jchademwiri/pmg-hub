@@ -85,8 +85,8 @@ export function PageHeader({ org, title, number, status, style }: PageHeaderProp
 
         {/* Center: Optional Logo */}
         {org.logoDataUri && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <img src={org.logoDataUri} alt={org.name} style={{ width: 44, height: 44, objectFit: "contain" }} />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", margin: "0 12px" }}>
+            <img src={org.logoDataUri} alt={org.name} style={{ width: 54, height: 54, objectFit: "contain" }} />
           </div>
         )}
 

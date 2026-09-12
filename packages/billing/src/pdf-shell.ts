@@ -66,6 +66,7 @@ export interface PdfOrgHeader {
   website?: string;
   address?: string;
   salesRep?: string;
+  logoDataUri?: string | null;
 }
 
 export interface DrawShellHeaderOptions {

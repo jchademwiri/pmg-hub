@@ -14,6 +14,7 @@ export function Table({ children, style }: TableProps) {
         width: "100%",
         borderCollapse: "collapse",
         borderSpacing: 0,
+        tableLayout: "fixed",
         ...style,
       }}
     >
@@ -77,16 +78,17 @@ export function TableCell({
   const theme = usePdfTheme();
 
   const cellStyle: CSSProperties = {
-    padding: header ? "6px 8px" : "7px 8px",
+    boxSizing: "border-box",
+    padding: header ? "5px 3px" : "6px 4px",
     textAlign: align,
     width,
     fontSize: header ? 7.5 : 8.5,
     fontWeight: header ? 700 : bold ? 600 : 400,
     color: header ? theme.colors.mutedForeground : theme.colors.foreground,
     textTransform: header ? "uppercase" : "none",
-    ...(header ? { letterSpacing: "0.4px" } : {}),
     ...(tabular ? { fontVariantNumeric: "tabular-nums" } : {}),
     verticalAlign: "middle",
+    ...(header ? {} : { overflow: "hidden" }),
     ...style,
   };
 

@@ -30,6 +30,7 @@ import {
   ReceiptPdfDocument,
   renderDocumentToPdf,
   resolveDivisionTheme,
+  getLogoDataUri,
 } from './pdf';
 
 import { fmtDate, formatZAR, getSASTParts, getSASTToday } from './format';
@@ -93,6 +94,7 @@ type PdfDocumentData = {
     website?: string;
     address?: string;
     salesRep?: string;
+    logoDataUri?: string | null;
   };
   client: {
     name: string;
@@ -861,6 +863,11 @@ async function buildStatementPdfData(
 
 async function renderDeclarativeBillingPdf(data: PdfDocumentData): Promise<Buffer> {
   const theme = resolveDivisionTheme(data.org.name);
+  const logoDataUri = data.org.logoDataUri || getLogoDataUri(data.org.name);
+  const org = {
+    ...data.org,
+    logoDataUri,
+  };
 
   let element: React.ReactElement;
 
@@ -873,7 +880,7 @@ async function renderDeclarativeBillingPdf(data: PdfDocumentData): Promise<Buffe
         dueDate: data.dueDate,
         dueDateLabel: data.dueDateLabel,
         reference: data.reference,
-        org: data.org,
+        org,
         client: data.client,
         items: (data.lineItems || []).map((item) => ({
           itemName: item.itemName,
@@ -896,7 +903,7 @@ async function renderDeclarativeBillingPdf(data: PdfDocumentData): Promise<Buffe
         issueDate: data.issueDate,
         expiryDate: data.dueDate,
         reference: data.reference,
-        org: data.org,
+        org,
         client: data.client,
         items: (data.lineItems || []).map((item) => ({
           itemName: item.itemName,
@@ -918,7 +925,7 @@ async function renderDeclarativeBillingPdf(data: PdfDocumentData): Promise<Buffe
         status: data.status,
         periodFrom: data.periodFrom,
         periodTo: data.periodTo,
-        org: data.org,
+        org,
         client: data.client,
         openingBalance: data.openingBalance,
         totalDue: data.totals?.balanceDue,
@@ -944,7 +951,7 @@ async function renderDeclarativeBillingPdf(data: PdfDocumentData): Promise<Buffe
         reference: data.reference,
         amount: data.totals?.paid || 0,
         unallocated: 0,
-        org: data.org,
+        org,
         client: data.client,
         allocations: (data.lineItems || []).map((item) => ({
           invoiceNumber: item.itemName || item.description,

@@ -135,12 +135,12 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
         <Table variant="compact" style={{ marginBottom: theme.spacing.sectionGap }}>
           <TableHeader>
             <TableRow header>
-              <TableCell header width="14%">Date</TableCell>
+              <TableCell header width="15%">Date</TableCell>
               <TableCell header width="18%">Reference</TableCell>
-              <TableCell header width="32%">Description</TableCell>
-              <TableCell header align="right" width="12%">Debit</TableCell>
-              <TableCell header align="right" width="12%">Credit</TableCell>
-              <TableCell header align="right" width="12%">Balance</TableCell>
+              <TableCell header width="28%">Description</TableCell>
+              <TableCell header align="right" width="13%">Debit</TableCell>
+              <TableCell header align="right" width="13%">Credit</TableCell>
+              <TableCell header align="right" width="13%">Balance</TableCell>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -161,7 +161,9 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                 <TableCell bold>{tx.reference}</TableCell>
                 <TableCell>{tx.description}</TableCell>
                 <TableCell align="right" tabular>{tx.debit ? formatZAR(tx.debit) : "-"}</TableCell>
-                <TableCell align="right" tabular>{tx.credit ? `(${formatZAR(tx.credit)})` : "-"}</TableCell>
+                <TableCell align="right" tabular style={{ color: tx.credit ? theme.colors.success : undefined }}>
+                  {tx.credit ? `(${formatZAR(tx.credit)})` : "-"}
+                </TableCell>
                 <TableCell align="right" bold tabular>{tx.balance != null ? formatZAR(tx.balance) : "-"}</TableCell>
               </TableRow>
             ))}
