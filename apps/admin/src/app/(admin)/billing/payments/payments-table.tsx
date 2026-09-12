@@ -265,17 +265,17 @@ export function PaymentsTable({ entries, closedPeriods, deleteAction }: Payments
         </div>
 
         {/* Desktop View */}
-        <div className="hidden md:block border rounded-lg bg-card">
-          <Table className="table-fixed w-full">
+        <div className="hidden md:block border rounded-lg bg-card overflow-hidden">
+          <Table className="table-fixed w-full" containerClassName="overflow-hidden">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px] px-2 text-xs">Date</TableHead>
-                <TableHead className="w-[180px] px-2 text-xs">Client</TableHead>
-                <TableHead className="w-[100px] px-2 text-xs">Division</TableHead>
-                <TableHead className="px-2 text-xs">Reference / Description</TableHead>
-                <TableHead className="w-[100px] px-2 text-right text-xs">Amount</TableHead>
-                <TableHead className="w-[110px] px-2 text-right text-xs">Credit Balance</TableHead>
-                <TableHead className="text-right w-14 px-2 text-xs">Actions</TableHead>
+                <TableHead className="w-[85px] px-2 text-xs">Date</TableHead>
+                <TableHead className="w-[160px] px-2 text-xs">Client</TableHead>
+                <TableHead className="w-[90px] px-2 text-xs">Division</TableHead>
+                <TableHead className="px-2 text-xs">Reference</TableHead>
+                <TableHead className="w-[90px] px-2 text-right text-xs">Amount</TableHead>
+                <TableHead className="w-[85px] px-2 text-right text-xs">Credit</TableHead>
+                <TableHead className="text-right w-12 px-2 text-xs">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -108,15 +108,15 @@ export default async function QuotesPage({ searchParams }: PageProps) {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse hidden md:table">
+            <div className="overflow-hidden">
+              <table className="w-full table-fixed text-left border-collapse hidden md:table">
                 <thead>
                   <tr className="border-b border-white/5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 bg-white/[0.01]">
-                    <th className="px-6 py-3">Quote #</th>
-                    <th className="px-6 py-3">Quote Date</th>
-                    <th className="px-6 py-3">Expiry Date</th>
-                    <th className="px-6 py-3 text-right">Amount</th>
-                    <th className="px-6 py-3">Status</th>
+                    <th className="px-4 py-3 w-[140px]">Quote #</th>
+                    <th className="px-4 py-3 w-[100px]">Quote Date</th>
+                    <th className="px-4 py-3 w-[100px]">Expiry Date</th>
+                    <th className="px-4 py-3 text-right w-[120px]">Amount</th>
+                    <th className="px-4 py-3 w-[140px]">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 text-xs">
@@ -125,7 +125,7 @@ export default async function QuotesPage({ searchParams }: PageProps) {
                       key={q.id}
                       className="relative hover:bg-white/[0.02] transition-colors group cursor-pointer"
                     >
-                      <td className="px-6 py-4 font-semibold text-white">
+                      <td className="px-4 py-3 font-semibold text-white truncate">
                         <Link
                           href={`/quotes/${q.id}`}
                           className="absolute inset-0 z-10"
@@ -135,14 +135,16 @@ export default async function QuotesPage({ searchParams }: PageProps) {
                         </Link>
                         <span>{q.documentNumber}</span>
                       </td>
-                      <td className="px-6 py-4 text-muted-foreground">{formatDate(q.quoteDate)}</td>
-                      <td className="px-6 py-4 text-muted-foreground">
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                        {formatDate(q.quoteDate)}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                         {q.expiryDate ? formatDate(q.expiryDate) : '—'}
                       </td>
-                      <td className="px-6 py-4 text-right font-bold text-white">
+                      <td className="px-4 py-3 text-right font-bold text-white whitespace-nowrap">
                         {formatCurrency(q.total)}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <span
                           className={`inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
                             q.status === 'accepted' || q.status === 'converted'

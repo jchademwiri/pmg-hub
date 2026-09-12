@@ -371,7 +371,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       {/* Two-column layout */}
       <div className="flex flex-col-reverse lg:grid lg:grid-cols-3 gap-6 lg:items-start">
         {/* Document preview - visible on desktop only */}
-        <div className="hidden lg:block lg:col-span-2 overflow-x-auto">
+        <div className="hidden lg:block lg:col-span-2 overflow-hidden">
           <DocumentPreview id="printable-area" type="statement" {...docPreviewProps} />
         </div>
 
@@ -440,7 +440,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Rolling Periods
                   </span>
-                  <div className="flex overflow-x-auto scrollbar-none gap-2 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0 sm:flex-wrap">
+                  <div className="flex flex-wrap gap-2">
                     {[
                       { value: 'current', label: 'Current' },
                       { value: 'previous', label: 'Previous' },
@@ -466,7 +466,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Fiscal Years
                   </span>
-                  <div className="flex overflow-x-auto scrollbar-none gap-2 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0 sm:flex-wrap">
+                  <div className="flex flex-wrap gap-2">
                     {availableYears.map((y) => (
                       <Link
                         key={y}

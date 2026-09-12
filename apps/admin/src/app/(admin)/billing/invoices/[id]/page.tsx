@@ -263,8 +263,8 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
       {/* Main layout */}
       <div className="flex flex-col-reverse gap-6 lg:grid lg:grid-cols-3 lg:items-start">
-        {/* Document preview - scrollable on desktop */}
-        <div className="hidden lg:block lg:col-span-2 overflow-x-auto">
+        {/* Document preview */}
+        <div className="hidden lg:block lg:col-span-2 overflow-hidden">
           <DocumentPreview id="printable-area" type="invoice" {...docPreviewProps} />
         </div>
         <div className="block lg:hidden w-full">

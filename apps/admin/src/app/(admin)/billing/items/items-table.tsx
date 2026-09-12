@@ -246,11 +246,11 @@ export function ItemsTable({ items }: ItemsTableProps) {
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden md:block">
-        <Table>
+      <div className="hidden md:block overflow-hidden rounded-md border">
+        <Table className="table-fixed w-full" containerClassName="overflow-hidden">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[30%]">
+              <TableHead className="w-[28%] px-2 text-xs">
                 <button
                   type="button"
                   onClick={() => toggleSort('name')}
@@ -260,19 +260,19 @@ export function ItemsTable({ items }: ItemsTableProps) {
                   <ArrowUpDown className="size-3 text-muted-foreground" />
                 </button>
               </TableHead>
-              <TableHead className="w-[35%]">Description</TableHead>
-              <TableHead className="w-[15%] text-right">
+              <TableHead className="px-2 text-xs">Description</TableHead>
+              <TableHead className="w-[130px] px-2 text-right text-xs">
                 <button
                   type="button"
                   onClick={() => toggleSort('price')}
                   className="flex items-center justify-end gap-1 hover:text-foreground font-semibold ml-auto"
                 >
-                  Unit Price (excl. VAT)
+                  Price (excl. VAT)
                   <ArrowUpDown className="size-3 text-muted-foreground" />
                 </button>
               </TableHead>
-              <TableHead className="w-[10%]">Status</TableHead>
-              <TableHead className="w-[10%] text-right">Actions</TableHead>
+              <TableHead className="w-[90px] px-2 text-xs">Status</TableHead>
+              <TableHead className="w-12 px-2 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
