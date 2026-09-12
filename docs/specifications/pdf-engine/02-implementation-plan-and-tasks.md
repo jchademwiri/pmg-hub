@@ -13,9 +13,9 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **Phase 1** | Environment, Registry, Specs & WASM Setup | ✅ Completed | ✅ Passed | `8ffa6841` |
 | **Phase 2** | PDF Design System Primitives & Brand Themes | ✅ Completed | ✅ Passed | `c4da2b13` |
-| **Phase 3** | Billing Documents Modernization (`@pmg/billing`) | ⏳ In Progress | ⏳ Pending | `Pending` |
-| **Phase 4** | Financial Statements & Accounting Reports (`@pmg/accounting`) | ⏳ Not Started | ⏳ Pending | `Pending` |
-| **Phase 5** | Client Optimization, Email Attachments & Deprecations | ⏳ Not Started | ⏳ Pending | `Pending` |
+| **Phase 3** | Billing Documents Modernization (`@pmg/billing`) | ✅ Completed | ✅ Passed | `afee8dd9` |
+| **Phase 4** | Financial Statements & Accounting Reports (`@pmg/accounting`) | ✅ Completed | ✅ Passed | `Pending` |
+| **Phase 5** | Client Optimization, Email Attachments & Deprecations | ⏳ In Progress | ⏳ Pending | `Pending` |
 
 ---
 
@@ -29,7 +29,7 @@
 - [x] **Task 1.5**: Initialize shadcn MCP via `bunx --bun shadcn@latest mcp init`.
 - [x] **Task 1.6**: Install `takumi-pdf` and `@takumi-rs/helpers` dependencies in `packages/billing`.
 - [x] **Task 1.7**: Verify WASM compilation and smoke test in Next.js Turborepo pipeline (`wasm-engine.test.ts` passing).
-- [ ] **Task 1.8**: Commit Phase 1 changes (`chore: setup pdfcn registry, mcp, and takumi wasm dependencies`).
+- [x] **Task 1.8**: Commit Phase 1 changes (`chore: setup pdfcn registry, mcp, and takumi wasm dependencies` - `8ffa6841`).
 
 ---
 
@@ -46,7 +46,7 @@
   - [x] `packages/billing/src/pdf/components/page-footer.tsx`
   - [x] `packages/billing/src/pdf/primitives.tsx` (`KeepTogether`)
 - [x] **Task 2.6**: Write unit tests for primitives and theme resolution (`packages/billing/src/pdf/__tests__/primitives.test.ts` - 4/4 passing).
-- [ ] **Task 2.7**: Commit Phase 2 changes (`feat(billing): add pdfcn design system primitives and brand themes`).
+- [x] **Task 2.7**: Commit Phase 2 changes (`feat(billing): add pdfcn design system primitives and brand themes` - `c4da2b13`).
 
 ---
 
@@ -58,17 +58,17 @@
 - [x] **Task 3.5**: Integrate new declarative documents into `generateBillingPdf()` in `server-billing-pdf.ts` with fallback flag.
 - [x] **Task 3.6**: Create Vitest test suite for billing documents (`packages/billing/src/pdf/__tests__/billing-pdf.test.ts` - 4/4 passing).
 - [x] **Task 3.7**: Verify API route `apps/admin/src/app/api/billing/pdf/[type]/[id]/route.ts` and `apps/portal` endpoint (9/9 passing in admin test suite).
-- [ ] **Task 3.8**: Commit Phase 3 changes (`feat(billing): implement modern declarative invoice, quote, statement, and receipt pdf templates`).
+- [x] **Task 3.8**: Commit Phase 3 changes (`feat(billing): implement declarative invoice, quote, statement, and receipt pdf templates` - `afee8dd9`).
 
 ---
 
 ### Phase 4: Financial Statements & Accounting Reports (`@pmg/accounting`)
-- [ ] **Task 4.1**: Build `BalanceSheetDocument` & `ProfitAndLossDocument` with structured multi-column ledger format.
-- [ ] **Task 4.2**: Build `CashFlowDocument` & `ChangesInEquityDocument`.
-- [ ] **Task 4.3**: Build high-density `TrialBalanceDocument` & `GeneralLedgerDocument` with `<KeepTogether>` to prevent orphaned line splits.
-- [ ] **Task 4.4**: Integrate into `generateAccountingPdf()` in `packages/accounting/src/server-accounting-pdf.ts`.
-- [ ] **Task 4.5**: Create Vitest test suite for accounting documents (`packages/accounting/src/pdf/__tests__/accounting-pdf.test.ts`).
-- [ ] **Task 4.6**: Verify API route `apps/admin/src/app/api/accounting/export/[type]/route.ts`.
+- [x] **Task 4.1**: Build `BalanceSheetDocument` & `ProfitAndLossDocument` with structured multi-column ledger format.
+- [x] **Task 4.2**: Build `CashFlowDocument` & `ChangesInEquityDocument`.
+- [x] **Task 4.3**: Build high-density `TrialBalanceDocument` & `GeneralLedgerDocument` with `<KeepTogether>` to prevent orphaned line splits.
+- [x] **Task 4.4**: Integrate into `generateAccountingPdf()` in `packages/accounting/src/server-accounting-pdf.ts`.
+- [x] **Task 4.5**: Create Vitest test suite for accounting documents (`packages/accounting/src/pdf/__tests__/accounting-pdf.test.ts` - 6/6 passing).
+- [x] **Task 4.6**: Verify API route `apps/admin/src/app/api/accounting/export/[type]/route.ts` (4/4 passing).
 - [ ] **Task 4.7**: Commit Phase 4 changes (`feat(accounting): modernize financial statements and ledger pdf reports`).
 
 ---

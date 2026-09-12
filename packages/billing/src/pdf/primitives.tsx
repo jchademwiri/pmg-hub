@@ -151,10 +151,12 @@ export function Document({
 export function Page({
   children,
   size = "a4",
+  orientation,
   style,
 }: {
   children?: ReactNode;
   size?: string | { width: number; height: number };
+  orientation?: "portrait" | "landscape";
   style?: CSSProperties;
 }) {
   const theme = usePdfTheme();
@@ -162,6 +164,7 @@ export function Page({
   return (
     <div
       data-pdf-page={typeof size === "string" ? size : undefined}
+      data-pdf-orientation={orientation}
       style={{
         display: "flex",
         flexDirection: "column",

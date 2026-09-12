@@ -12,6 +12,7 @@
     "./document-logo": "./src/document-logo.ts",
     "./server-billing-pdf": "./src/server-billing-pdf.ts",
     "./pdf-shell": "./src/pdf-shell.ts",
+    "./pdf": "./src/pdf/index.ts",
     "./pdf/*": "./src/pdf/*.ts",
     "./*": "./src/*.ts"
   },

@@ -94,3 +94,7 @@ export function TableCell({
 
   return <td style={cellStyle}>{children}</td>;
 }
+
+export function TableHead(props: TableCellProps) {
+  return <TableCell header {...props} />;
+}

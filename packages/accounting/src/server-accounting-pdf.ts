@@ -33,6 +33,18 @@ import {
   type PdfOrgHeader,
 } from '@pmg/billing/pdf-shell';
 import { jsPDF } from 'jspdf';
+import {
+  renderDeclarativeProfitAndLoss,
+  renderDeclarativeDivisionPerformance,
+  renderDeclarativeBalanceSheet,
+  renderDeclarativeCashFlow,
+  renderDeclarativeTrialBalance,
+  renderDeclarativeGeneralLedger,
+  renderDeclarativeJournalEntries,
+  renderDeclarativeChartOfAccounts,
+  renderDeclarativeClientPerformance,
+  renderDeclarativeAnnualFinancialStatements,
+} from './pdf';
 
 export type AccountingReportType =
   | 'overview'
@@ -313,13 +325,34 @@ function drawProfitAndLossByDivisionTable(
   return y + 16;
 }
 
-async function buildProfitAndLossPdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
+async function buildProfitAndLossPdf(
+  filters: AccountingPdfFilters,
+  engine: 'declarative' | 'legacy' = 'declarative',
+): Promise<AccountingPdfResult> {
   const [result, byDivision, divisionName] = await Promise.all([
     getProfitAndLoss(filters.period, filters.divisionId),
     getProfitAndLossByDivision(filters.period),
     resolveDivisionName(filters.divisionId),
   ]);
   const header = await buildReportHeader('Profit & Loss Statement', filters.period, divisionName);
+  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
+  const fileName = `profit-and-loss-${suffix}.pdf`;
+
+  if (engine === 'declarative') {
+    try {
+      const buffer = await renderDeclarativeProfitAndLoss(
+        result,
+        byDivision.length > 0 ? byDivision : undefined,
+        header.org,
+        header.periodLabel,
+        divisionName,
+        header.generatedAt,
+      );
+      return { fileName, buffer };
+    } catch (err) {
+      console.error('[buildProfitAndLossPdf] Declarative engine error, falling back to legacy jsPDF:', err);
+    }
+  }
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   drawReportHeader(doc, header);
@@ -331,9 +364,8 @@ async function buildProfitAndLossPdf(filters: AccountingPdfFilters): Promise<Acc
   }
   drawReportFooter(doc, header);
 
-  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
   return {
-    fileName: `profit-and-loss-${suffix}.pdf`,
+    fileName,
     buffer: Buffer.from(doc.output('arraybuffer')),
   };
 }
@@ -413,21 +445,40 @@ function drawTrialBalanceTable(doc: jsPDF, startY: number, rows: TrialBalanceRow
   return y + 16;
 }
 
-async function buildTrialBalancePdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
+async function buildTrialBalancePdf(
+  filters: AccountingPdfFilters,
+  engine: 'declarative' | 'legacy' = 'declarative',
+): Promise<AccountingPdfResult> {
   const [rows, divisionName] = await Promise.all([
     getTrialBalance(filters.period, filters.divisionId),
     resolveDivisionName(filters.divisionId),
   ]);
   const header = await buildReportHeader('Trial Balance', filters.period, divisionName);
+  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
+  const fileName = `trial-balance-${suffix}.pdf`;
+
+  if (engine === 'declarative') {
+    try {
+      const buffer = await renderDeclarativeTrialBalance(
+        rows,
+        header.org,
+        header.periodLabel,
+        divisionName,
+        header.generatedAt,
+      );
+      return { fileName, buffer };
+    } catch (err) {
+      console.error('[buildTrialBalancePdf] Declarative engine error, falling back to legacy jsPDF:', err);
+    }
+  }
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   drawReportHeader(doc, header);
   drawTrialBalanceTable(doc, 72, rows);
   drawReportFooter(doc, header);
 
-  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
   return {
-    fileName: `trial-balance-${suffix}.pdf`,
+    fileName,
     buffer: Buffer.from(doc.output('arraybuffer')),
   };
 }
@@ -510,6 +561,7 @@ function drawGeneralLedgerTable(doc: jsPDF, startY: number, rows: GeneralLedgerR
 
 async function buildGeneralLedgerPdf(
   filters: AccountingPdfFilters,
+  engine: 'declarative' | 'legacy' = 'declarative',
 ): Promise<AccountingPdfResult | AccountingPdfError> {
   if (!filters.period && !filters.accountId) {
     return {
@@ -530,6 +582,25 @@ async function buildGeneralLedgerPdf(
     resolveDivisionName(filters.divisionId),
   ]);
   const header = await buildReportHeader('General Ledger', filters.period, divisionName);
+  const suffix =
+    [filters.period, filters.accountId, filters.divisionId].filter(Boolean).join('-') || 'filtered';
+  const fileName = `general-ledger-${suffix}.pdf`;
+
+  if (engine === 'declarative') {
+    try {
+      const buffer = await renderDeclarativeGeneralLedger(
+        ledgerResult.data,
+        ledgerResult.total,
+        header.org,
+        header.periodLabel,
+        divisionName,
+        header.generatedAt,
+      );
+      return { fileName, buffer };
+    } catch (err) {
+      console.error('[buildGeneralLedgerPdf] Declarative engine error, falling back to legacy jsPDF:', err);
+    }
+  }
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   drawReportHeader(doc, header);
@@ -547,10 +618,8 @@ async function buildGeneralLedgerPdf(
   }
   drawReportFooter(doc, header);
 
-  const suffix =
-    [filters.period, filters.accountId, filters.divisionId].filter(Boolean).join('-') || 'filtered';
   return {
-    fileName: `general-ledger-${suffix}.pdf`,
+    fileName,
     buffer: Buffer.from(doc.output('arraybuffer')),
   };
 }
@@ -611,7 +680,10 @@ function drawJournalEntries(
   return y;
 }
 
-async function buildJournalEntriesPdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
+async function buildJournalEntriesPdf(
+  filters: AccountingPdfFilters,
+  engine: 'declarative' | 'legacy' = 'declarative',
+): Promise<AccountingPdfResult> {
   const [entriesResult, divisionName] = await Promise.all([
     getJournalEntries({
       period: filters.period,
@@ -624,11 +696,32 @@ async function buildJournalEntriesPdf(filters: AccountingPdfFilters): Promise<Ac
   const header = await buildReportHeader('Journal Entries', filters.period, divisionName);
 
   const linesByEntry = new Map<string, JournalEntryLineRow[]>();
+  const linesByEntryRecord: Record<string, JournalEntryLineRow[]> = {};
   const allLines = await getJournalLinesForEntries(entriesResult.data.map((e) => e.id));
   for (const line of allLines) {
     const arr = linesByEntry.get(line.journalEntryId) ?? [];
     arr.push(line);
     linesByEntry.set(line.journalEntryId, arr);
+    linesByEntryRecord[line.journalEntryId] = arr;
+  }
+  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
+  const fileName = `journal-entries-${suffix}.pdf`;
+
+  if (engine === 'declarative') {
+    try {
+      const buffer = await renderDeclarativeJournalEntries(
+        entriesResult.data,
+        linesByEntryRecord,
+        entriesResult.total,
+        header.org,
+        header.periodLabel,
+        divisionName,
+        header.generatedAt,
+      );
+      return { fileName, buffer };
+    } catch (err) {
+      console.error('[buildJournalEntriesPdf] Declarative engine error, falling back to legacy jsPDF:', err);
+    }
   }
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -647,9 +740,8 @@ async function buildJournalEntriesPdf(filters: AccountingPdfFilters): Promise<Ac
   }
   drawReportFooter(doc, header);
 
-  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
   return {
-    fileName: `journal-entries-${suffix}.pdf`,
+    fileName,
     buffer: Buffer.from(doc.output('arraybuffer')),
   };
 }
@@ -721,11 +813,27 @@ function drawChartOfAccountsTable(
   return y;
 }
 
-async function buildChartOfAccountsPdf(): Promise<AccountingPdfResult> {
+async function buildChartOfAccountsPdf(
+  engine: 'declarative' | 'legacy' = 'declarative',
+): Promise<AccountingPdfResult> {
   const [grouped, header] = await Promise.all([
     getChartAccountsByType(),
     buildReportHeader('Chart of Accounts', undefined),
   ]);
+  const fileName = 'chart-of-accounts.pdf';
+
+  if (engine === 'declarative') {
+    try {
+      const buffer = await renderDeclarativeChartOfAccounts(
+        grouped,
+        header.org,
+        header.generatedAt,
+      );
+      return { fileName, buffer };
+    } catch (err) {
+      console.error('[buildChartOfAccountsPdf] Declarative engine error, falling back to legacy jsPDF:', err);
+    }
+  }
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   drawReportHeader(doc, header);
@@ -733,13 +841,14 @@ async function buildChartOfAccountsPdf(): Promise<AccountingPdfResult> {
   drawReportFooter(doc, header);
 
   return {
-    fileName: 'chart-of-accounts.pdf',
+    fileName,
     buffer: Buffer.from(doc.output('arraybuffer')),
   };
 }
 
 async function buildDivisionPerformancePdf(
   filters: AccountingPdfFilters,
+  engine: 'declarative' | 'legacy' = 'declarative',
 ): Promise<AccountingPdfResult> {
   const [byDivision, divisionName] = await Promise.all([
     getProfitAndLossByDivision(filters.period),
@@ -750,15 +859,31 @@ async function buildDivisionPerformancePdf(
     filters.period,
     divisionName,
   );
+  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
+  const fileName = `division-performance-${suffix}.pdf`;
+
+  if (engine === 'declarative') {
+    try {
+      const buffer = await renderDeclarativeDivisionPerformance(
+        byDivision,
+        header.org,
+        header.periodLabel,
+        divisionName,
+        header.generatedAt,
+      );
+      return { fileName, buffer };
+    } catch (err) {
+      console.error('[buildDivisionPerformancePdf] Declarative engine error, falling back to legacy jsPDF:', err);
+    }
+  }
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   drawReportHeader(doc, header);
   drawProfitAndLossByDivisionTable(doc, 72, byDivision);
   drawReportFooter(doc, header);
 
-  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
   return {
-    fileName: `division-performance-${suffix}.pdf`,
+    fileName,
     buffer: Buffer.from(doc.output('arraybuffer')),
   };
 }
@@ -780,7 +905,10 @@ function drawAccountSubtable(
   return drawTotalRow(doc, y, totalLabel, totalAmount);
 }
 
-async function buildBalanceSheetPdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
+async function buildBalanceSheetPdf(
+  filters: AccountingPdfFilters,
+  engine: 'declarative' | 'legacy' = 'declarative',
+): Promise<AccountingPdfResult> {
   const [result, divisionName] = await Promise.all([
     getBalanceSheet(filters.period, filters.divisionId),
     resolveDivisionName(filters.divisionId),
@@ -790,6 +918,23 @@ async function buildBalanceSheetPdf(filters: AccountingPdfFilters): Promise<Acco
     filters.period,
     divisionName,
   );
+  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
+  const fileName = `balance-sheet-${suffix}.pdf`;
+
+  if (engine === 'declarative') {
+    try {
+      const buffer = await renderDeclarativeBalanceSheet(
+        result,
+        header.org,
+        header.periodLabel,
+        divisionName,
+        header.generatedAt,
+      );
+      return { fileName, buffer };
+    } catch (err) {
+      console.error('[buildBalanceSheetPdf] Declarative engine error, falling back to legacy jsPDF:', err);
+    }
+  }
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   drawReportHeader(doc, header);
@@ -849,19 +994,38 @@ async function buildBalanceSheetPdf(filters: AccountingPdfFilters): Promise<Acco
 
   drawReportFooter(doc, header);
 
-  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
   return {
-    fileName: `balance-sheet-${suffix}.pdf`,
+    fileName,
     buffer: Buffer.from(doc.output('arraybuffer')),
   };
 }
 
-async function buildCashFlowPdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
+async function buildCashFlowPdf(
+  filters: AccountingPdfFilters,
+  engine: 'declarative' | 'legacy' = 'declarative',
+): Promise<AccountingPdfResult> {
   const [result, divisionName] = await Promise.all([
     getCashFlowStatement(filters.period, filters.divisionId),
     resolveDivisionName(filters.divisionId),
   ]);
   const header = await buildReportHeader('Cash Flow Statement', filters.period, divisionName);
+  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
+  const fileName = `cash-flow-${suffix}.pdf`;
+
+  if (engine === 'declarative') {
+    try {
+      const buffer = await renderDeclarativeCashFlow(
+        result,
+        header.org,
+        header.periodLabel,
+        divisionName,
+        header.generatedAt,
+      );
+      return { fileName, buffer };
+    } catch (err) {
+      console.error('[buildCashFlowPdf] Declarative engine error, falling back to legacy jsPDF:', err);
+    }
+  }
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   drawReportHeader(doc, header);
@@ -898,18 +1062,34 @@ async function buildCashFlowPdf(filters: AccountingPdfFilters): Promise<Accounti
 
   drawReportFooter(doc, header);
 
-  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
   return {
-    fileName: `cash-flow-${suffix}.pdf`,
+    fileName,
     buffer: Buffer.from(doc.output('arraybuffer')),
   };
 }
 
 async function buildAnnualFinancialStatementsPdf(
   filters: AccountingPdfFilters,
+  engine: 'declarative' | 'legacy' = 'declarative',
 ): Promise<AccountingPdfResult> {
   const result = await getAnnualFinancialStatements(filters.period, filters.divisionId);
   const header = await buildReportHeader('Annual Financial Statements (AFS)', filters.period);
+  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
+  const fileName = `annual-financial-statements-${suffix}.pdf`;
+
+  if (engine === 'declarative') {
+    try {
+      const buffer = await renderDeclarativeAnnualFinancialStatements(
+        result,
+        header.org,
+        header.periodLabel,
+        header.generatedAt,
+      );
+      return { fileName, buffer };
+    } catch (err) {
+      console.error('[buildAnnualFinancialStatementsPdf] Declarative engine error, falling back to legacy jsPDF:', err);
+    }
+  }
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const info = result.generalInfo;
@@ -1429,18 +1609,34 @@ async function buildAnnualFinancialStatementsPdf(
   doc.text(formatZAR(det.netProfit.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
   drawReportFooter(doc, header);
 
-  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
   return {
-    fileName: `annual-financial-statements-${suffix}.pdf`,
+    fileName,
     buffer: Buffer.from(doc.output('arraybuffer')),
   };
 }
 
 async function buildClientPerformancePdf(
   filters: AccountingPdfFilters,
+  engine: 'declarative' | 'legacy' = 'declarative',
 ): Promise<AccountingPdfResult> {
   const clients = await getClientPerformance(filters.period);
   const header = await buildReportHeader('Client Performance Report', filters.period);
+  const suffix = [filters.period ?? 'all-time'].filter(Boolean).join('-');
+  const fileName = `client-performance-${suffix}.pdf`;
+
+  if (engine === 'declarative') {
+    try {
+      const buffer = await renderDeclarativeClientPerformance(
+        clients,
+        header.org,
+        header.periodLabel,
+        header.generatedAt,
+      );
+      return { fileName, buffer };
+    } catch (err) {
+      console.error('[buildClientPerformancePdf] Declarative engine error, falling back to legacy jsPDF:', err);
+    }
+  }
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   drawReportHeader(doc, header);
@@ -1496,45 +1692,43 @@ async function buildClientPerformancePdf(
 
   drawReportFooter(doc, header);
 
-  const suffix = [filters.period ?? 'all-time'].filter(Boolean).join('-');
   return {
-    fileName: `client-performance-${suffix}.pdf`,
+    fileName,
     buffer: Buffer.from(doc.output('arraybuffer')),
   };
 }
 
 /**
  * Generates a PDF for one of the 10 accounting reports on /accounting/reports.
- * Returns null for a valid-but-not-yet-implemented type (filled in phase by
- * phase) or when the underlying data can't be found, or an
- * `AccountingPdfError` when the caller needs to fix their request (e.g.
- * missing a required filter).
+ * Uses modern declarative PDF engine by default, falling back gracefully to
+ * jsPDF on error.
  */
 export async function generateAccountingPdf(
   type: AccountingReportType,
   filters: AccountingPdfFilters = {},
+  engine: 'declarative' | 'legacy' = 'declarative',
 ): Promise<AccountingPdfResult | AccountingPdfError | null> {
   switch (type) {
     case 'annual-financial-statements':
-      return buildAnnualFinancialStatementsPdf(filters);
+      return buildAnnualFinancialStatementsPdf(filters, engine);
     case 'balance-sheet':
-      return buildBalanceSheetPdf(filters);
+      return buildBalanceSheetPdf(filters, engine);
     case 'profit-and-loss':
-      return buildProfitAndLossPdf(filters);
+      return buildProfitAndLossPdf(filters, engine);
     case 'division-performance':
-      return buildDivisionPerformancePdf(filters);
+      return buildDivisionPerformancePdf(filters, engine);
     case 'client-performance':
-      return buildClientPerformancePdf(filters);
+      return buildClientPerformancePdf(filters, engine);
     case 'trial-balance':
-      return buildTrialBalancePdf(filters);
+      return buildTrialBalancePdf(filters, engine);
     case 'cash-flow':
-      return buildCashFlowPdf(filters);
+      return buildCashFlowPdf(filters, engine);
     case 'general-ledger':
-      return buildGeneralLedgerPdf(filters);
+      return buildGeneralLedgerPdf(filters, engine);
     case 'journal-entries':
-      return buildJournalEntriesPdf(filters);
+      return buildJournalEntriesPdf(filters, engine);
     case 'chart-of-accounts':
-      return buildChartOfAccountsPdf();
+      return buildChartOfAccountsPdf(engine);
     default:
       return null;
   }
