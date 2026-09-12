@@ -1,6 +1,6 @@
 # PMG Hub PDF Generation Engine — Implementation Plan & Master Task List
 
-> **Status**: In Progress  
+> **Status**: ✅ Completed (All 5 Phases)  
 > **Branch**: `feat/pdf-engine-pdfcn`  
 > **Reference Docs**: [`docs/references/pdfcn-llms.txt`](../references/pdfcn-llms.txt)  
 > **Technical Spec**: [`docs/specifications/pdf-engine/01-pdf-engine-spec.md`](./01-pdf-engine-spec.md)  
@@ -15,7 +15,7 @@
 | **Phase 2** | PDF Design System Primitives & Brand Themes | ✅ Completed | ✅ Passed | `c4da2b13` |
 | **Phase 3** | Billing Documents Modernization (`@pmg/billing`) | ✅ Completed | ✅ Passed | `afee8dd9` |
 | **Phase 4** | Financial Statements & Accounting Reports (`@pmg/accounting`) | ✅ Completed | ✅ Passed | `7c9f1103` |
-| **Phase 5** | Client Optimization, Email Attachments & Deprecations | ✅ Completed | ✅ Passed | `Pending` |
+| **Phase 5** | Client Optimization, Email Attachments & Deprecations | ✅ Completed | ✅ Passed | `169cc7ef` |
 
 ---
 
@@ -78,4 +78,4 @@
 - [x] **Task 5.2**: Test email attachments with Resend in `apps/admin/src/actions/system/email-delivery.ts` (< 10MB quota verification).
 - [x] **Task 5.3**: Run full monorepo test suite and typecheck (`bun run check-types` passed with 0 errors).
 - [x] **Task 5.4**: Deprecate legacy `packages/billing/src/pdf-shell.ts`.
-- [ ] **Task 5.5**: Commit Phase 5 changes (`refactor: deprecate legacy coordinate pdf engine and remove html2canvas`).
+- [x] **Task 5.5**: Commit Phase 5 changes (`refactor: deprecate legacy coordinate pdf engine and verify email quotas` - `169cc7ef`).
