@@ -82,8 +82,8 @@ export function TableCell({
     fontWeight: header ? 700 : bold ? 600 : 400,
     color: header ? theme.colors.mutedForeground : theme.colors.foreground,
     textTransform: header ? "uppercase" : "none",
-    letterSpacing: header ? "0.4px" : "normal",
-    fontVariantNumeric: tabular ? "tabular-nums" : "normal",
+    ...(header ? { letterSpacing: "0.4px" } : {}),
+    ...(tabular ? { fontVariantNumeric: "tabular-nums" } : {}),
     verticalAlign: "middle",
     ...style,
   };

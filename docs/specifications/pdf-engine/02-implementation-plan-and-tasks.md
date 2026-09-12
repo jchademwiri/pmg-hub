@@ -12,8 +12,8 @@
 | Phase | Description | Status | Tests Passed | Commit |
 | :--- | :--- | :--- | :--- | :--- |
 | **Phase 1** | Environment, Registry, Specs & WASM Setup | ✅ Completed | ✅ Passed | `8ffa6841` |
-| **Phase 2** | PDF Design System Primitives & Brand Themes | ⏳ In Progress | ⏳ Pending | `Pending` |
-| **Phase 3** | Billing Documents Modernization (`@pmg/billing`) | ⏳ Not Started | ⏳ Pending | `Pending` |
+| **Phase 2** | PDF Design System Primitives & Brand Themes | ✅ Completed | ✅ Passed | `c4da2b13` |
+| **Phase 3** | Billing Documents Modernization (`@pmg/billing`) | ⏳ In Progress | ⏳ Pending | `Pending` |
 | **Phase 4** | Financial Statements & Accounting Reports (`@pmg/accounting`) | ⏳ Not Started | ⏳ Pending | `Pending` |
 | **Phase 5** | Client Optimization, Email Attachments & Deprecations | ⏳ Not Started | ⏳ Pending | `Pending` |
 
@@ -51,13 +51,13 @@
 ---
 
 ### Phase 3: Billing Documents Modernization (`@pmg/billing`)
-- [ ] **Task 3.1**: Build `InvoicePdfDocument` (`packages/billing/src/pdf/documents/invoice-pdf-document.tsx`) with full ZAR formatting, VAT summary, and banking info.
-- [ ] **Task 3.2**: Build `QuotePdfDocument` (`packages/billing/src/pdf/documents/quote-pdf-document.tsx`) with validity timeline and signature placeholder.
-- [ ] **Task 3.3**: Build `StatementPdfDocument` (`packages/billing/src/pdf/documents/statement-pdf-document.tsx`) with transaction table and 5-tier ageing buckets.
-- [ ] **Task 3.4**: Build `ReceiptPdfDocument` (`packages/billing/src/pdf/documents/receipt-pdf-document.tsx`).
-- [ ] **Task 3.5**: Integrate new declarative documents into `generateBillingPdf()` in `server-billing-pdf.ts` with fallback flag.
-- [ ] **Task 3.6**: Create Vitest test suite for billing documents (`packages/billing/src/pdf/__tests__/billing-pdf.test.ts`).
-- [ ] **Task 3.7**: Verify API route `apps/admin/src/app/api/billing/pdf/[type]/[id]/route.ts` and `apps/portal` endpoint.
+- [x] **Task 3.1**: Build `InvoicePdfDocument` (`packages/billing/src/pdf/documents/invoice-pdf-document.tsx`) with full ZAR formatting, VAT summary, and banking info.
+- [x] **Task 3.2**: Build `QuotePdfDocument` (`packages/billing/src/pdf/documents/quote-pdf-document.tsx`) with validity timeline and signature placeholder.
+- [x] **Task 3.3**: Build `StatementPdfDocument` (`packages/billing/src/pdf/documents/statement-pdf-document.tsx`) with transaction table and 5-tier ageing buckets.
+- [x] **Task 3.4**: Build `ReceiptPdfDocument` (`packages/billing/src/pdf/documents/receipt-pdf-document.tsx`).
+- [x] **Task 3.5**: Integrate new declarative documents into `generateBillingPdf()` in `server-billing-pdf.ts` with fallback flag.
+- [x] **Task 3.6**: Create Vitest test suite for billing documents (`packages/billing/src/pdf/__tests__/billing-pdf.test.ts` - 4/4 passing).
+- [x] **Task 3.7**: Verify API route `apps/admin/src/app/api/billing/pdf/[type]/[id]/route.ts` and `apps/portal` endpoint (9/9 passing in admin test suite).
 - [ ] **Task 3.8**: Commit Phase 3 changes (`feat(billing): implement modern declarative invoice, quote, statement, and receipt pdf templates`).
 
 ---

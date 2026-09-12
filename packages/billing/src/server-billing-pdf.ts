@@ -21,6 +21,16 @@ import {
 } from '@pmg/db';
 import { generateReceiptNumber } from '@pmg/utils';
 import { jsPDF } from 'jspdf';
+import React from 'react';
+
+import {
+  InvoicePdfDocument,
+  QuotePdfDocument,
+  StatementPdfDocument,
+  ReceiptPdfDocument,
+  renderDocumentToPdf,
+  resolveDivisionTheme,
+} from './pdf';
 
 import { fmtDate, formatZAR, getSASTParts, getSASTToday } from './format';
 import { calculateAgeing, totalAgeingDue } from './billing-ageing';
@@ -849,6 +859,108 @@ async function buildStatementPdfData(
   };
 }
 
+async function renderDeclarativeBillingPdf(data: PdfDocumentData): Promise<Buffer> {
+  const theme = resolveDivisionTheme(data.org.name);
+
+  let element: React.ReactElement;
+
+  if (data.type === 'invoice') {
+    element = React.createElement(InvoicePdfDocument, {
+      data: {
+        invoiceNumber: data.number,
+        status: data.status,
+        issueDate: data.issueDate,
+        dueDate: data.dueDate,
+        dueDateLabel: data.dueDateLabel,
+        reference: data.reference,
+        org: data.org,
+        client: data.client,
+        items: (data.lineItems || []).map((item) => ({
+          itemName: item.itemName,
+          description: item.description,
+          qty: item.qty,
+          unitPrice: item.unitPrice,
+          amount: item.amount,
+        })),
+        totals: data.totals || {},
+        banking: data.banking,
+        notes: data.notes,
+        terms: data.terms,
+      },
+    });
+  } else if (data.type === 'quote') {
+    element = React.createElement(QuotePdfDocument, {
+      data: {
+        quoteNumber: data.number,
+        status: data.status,
+        issueDate: data.issueDate,
+        expiryDate: data.dueDate,
+        reference: data.reference,
+        org: data.org,
+        client: data.client,
+        items: (data.lineItems || []).map((item) => ({
+          itemName: item.itemName,
+          description: item.description,
+          qty: item.qty,
+          unitPrice: item.unitPrice,
+          amount: item.amount,
+        })),
+        totals: data.totals || {},
+        banking: data.banking,
+        notes: data.notes,
+        terms: data.terms,
+      },
+    });
+  } else if (data.type === 'statement') {
+    element = React.createElement(StatementPdfDocument, {
+      data: {
+        statementNumber: data.number,
+        status: data.status,
+        periodFrom: data.periodFrom,
+        periodTo: data.periodTo,
+        org: data.org,
+        client: data.client,
+        openingBalance: data.openingBalance,
+        totalDue: data.totals?.balanceDue,
+        transactions: (data.transactions || []).map((tx) => ({
+          date: tx.date,
+          reference: tx.reference,
+          description: tx.description,
+          debit: tx.debit,
+          credit: tx.credit,
+          balance: tx.balance,
+        })),
+        ageing: data.ageing,
+        banking: data.banking,
+        terms: data.terms,
+      },
+    });
+  } else if (data.type === 'receipt') {
+    element = React.createElement(ReceiptPdfDocument, {
+      data: {
+        receiptNumber: data.number,
+        paymentDate: data.issueDate,
+        paymentMethod: data.reference || 'Electronic Funds Transfer',
+        reference: data.reference,
+        amount: data.totals?.paid || 0,
+        unallocated: 0,
+        org: data.org,
+        client: data.client,
+        allocations: (data.lineItems || []).map((item) => ({
+          invoiceNumber: item.itemName || item.description,
+          amount: item.amount,
+        })),
+        notes: data.notes,
+      },
+    });
+  } else {
+    throw new Error(`Unsupported declarative PDF document type: ${data.type}`);
+  }
+
+  const uint8 = await renderDocumentToPdf(element, { theme });
+  return Buffer.from(uint8);
+}
+
 export async function generateBillingPdf(
   type: BillingPdfType,
   id: string,
@@ -859,6 +971,7 @@ export async function generateBillingPdf(
     includeDraftInvoiceId?: string;
     divisionId?: string;
   },
+  engine: 'declarative' | 'legacy' = 'declarative',
 ) {
   const data =
     type === 'invoice'
@@ -871,8 +984,22 @@ export async function generateBillingPdf(
 
   if (!data) return null;
 
+  const fileName = `${data.title}-${data.number}.pdf`.replace(/[^a-zA-Z0-9_.-]/g, '-');
+
+  if (engine === 'declarative') {
+    try {
+      const buffer = await renderDeclarativeBillingPdf(data);
+      return {
+        fileName,
+        buffer,
+      };
+    } catch (err) {
+      console.error('[generateBillingPdf] Declarative engine error, falling back to legacy jsPDF:', err);
+    }
+  }
+
   return {
-    fileName: `${data.title}-${data.number}.pdf`.replace(/[^a-zA-Z0-9_.-]/g, '-'),
+    fileName,
     buffer: renderPdf(data),
   };
 }
