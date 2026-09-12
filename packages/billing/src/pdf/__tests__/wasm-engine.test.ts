@@ -41,4 +41,36 @@ describe("Takumi WASM PDF Engine", () => {
     const header = String.fromCharCode(...pdfBytes.slice(0, 5));
     expect(header).toBe("%PDF-");
   });
+
+  it("handles full page height and bottom-aligned elements", async () => {
+    const { renderPdf } = await import("../engine");
+    const fs = await import("fs");
+
+    // Test 1: position fixed or absolute at bottom
+    const htmlFixed = `
+      <div style="position: relative; width: 100%; height: 100%;">
+        <h1>Top Header</h1>
+        <div style="position: fixed; bottom: 20px; left: 20px; right: 20px; background: #e2e8f0; padding: 10px;">
+          Fixed Bottom Element
+        </div>
+      </div>
+    `;
+
+    const pdfFixed = await renderPdf(htmlFixed, { size: "a4" });
+    expect(pdfFixed).toBeInstanceOf(Uint8Array);
+    expect(pdfFixed.length).toBeGreaterThan(1000);
+
+    // Test 2: CSS flex with specific height
+    const htmlFlex = `
+      <div style="display: flex; flex-direction: column; min-height: 260mm; box-sizing: border-box; padding: 20px; border: 1px solid green;">
+        <h1>Top Header</h1>
+        <div style="margin-top: auto; background: #dcfce7; padding: 10px;">
+          Flex Bottom Element at 260mm
+        </div>
+      </div>
+    `;
+    const pdfFlex = await renderPdf(htmlFlex, { size: "a4" });
+    expect(pdfFlex).toBeInstanceOf(Uint8Array);
+    expect(pdfFlex.length).toBeGreaterThan(1000);
+  });
 });

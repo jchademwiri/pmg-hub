@@ -170,10 +170,11 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
           </TableBody>
         </Table>
 
-        {/* Ageing Analysis Table */}
-        {data.ageing && (
-          <KeepTogether>
-            <div style={{ marginTop: 12, marginBottom: 16 }}>
+        {/* Bottom Fixed Section: Ageing Analysis, Banking Notice, & Footer */}
+        <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", breakInside: "avoid", pageBreakInside: "avoid" }}>
+          {/* Ageing Analysis Table */}
+          {data.ageing && (
+            <div style={{ marginTop: 12, marginBottom: 12 }}>
               <span
                 style={{
                   fontSize: 7.5,
@@ -222,12 +223,10 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                 </tbody>
               </table>
             </div>
-          </KeepTogether>
-        )}
+          )}
 
-        {/* Banking Notice */}
-        {data.banking && (
-          <KeepTogether>
+          {/* Banking Notice */}
+          {data.banking && (
             <div
               style={{
                 border: `1px solid ${theme.colors.border}`,
@@ -237,7 +236,7 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                 flexDirection: "row",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginTop: 8,
+                marginBottom: 10,
               }}
             >
               <div style={{ display: "flex", flexDirection: "column" }}>
@@ -252,12 +251,13 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                 Ref: {data.client.name.slice(0, 12).toUpperCase()}
               </span>
             </div>
-          </KeepTogether>
-        )}
+          )}
 
-        <PageFooter
-          leftText={data.terms || "Please contact accounts@playhousemedia.co.za if you have queries regarding this statement."}
-        />
+          <PageFooter
+            leftText={data.terms || "Please contact accounts@playhousemedia.co.za if you have queries regarding this statement."}
+            style={{ marginTop: 0 }}
+          />
+        </div>
       </Page>
     </Document>
   );

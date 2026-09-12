@@ -169,7 +169,7 @@ export function Page({
         display: "flex",
         flexDirection: "column",
         boxSizing: "border-box",
-        minHeight: "100%",
+        minHeight: orientation === "landscape" ? "185mm" : "270mm",
         paddingTop: theme.spacing.page.marginTop,
         paddingRight: theme.spacing.page.marginRight,
         paddingBottom: theme.spacing.page.marginBottom,
