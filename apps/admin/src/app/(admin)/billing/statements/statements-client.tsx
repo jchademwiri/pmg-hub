@@ -138,11 +138,11 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden md:block overflow-x-auto">
-        <Table>
+      <div className="hidden md:block overflow-hidden rounded-md border border-border">
+        <Table className="table-fixed w-full" containerClassName="overflow-hidden">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[35%] py-4">
+              <TableHead className="px-2 py-3 text-xs">
                 <button
                   onClick={() => handleSort('name')}
                   className="group inline-flex items-center text-xs font-semibold hover:text-foreground text-left"
@@ -151,25 +151,25 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
                   <SortIcon field="name" currentField={sortField} order={sortOrder} />
                 </button>
               </TableHead>
-              <TableHead className="text-right py-4">
+              <TableHead className="w-[110px] px-2 py-3 text-right text-xs">
                 <button
                   onClick={() => handleSort('totalInvoiced')}
                   className="group inline-flex items-center text-xs font-semibold hover:text-foreground"
                 >
-                  Total Invoiced
+                  Invoiced
                   <SortIcon field="totalInvoiced" currentField={sortField} order={sortOrder} />
                 </button>
               </TableHead>
-              <TableHead className="text-right py-4">
+              <TableHead className="w-[100px] px-2 py-3 text-right text-xs">
                 <button
                   onClick={() => handleSort('totalPaid')}
                   className="group inline-flex items-center text-xs font-semibold hover:text-foreground"
                 >
-                  Total Paid
+                  Paid
                   <SortIcon field="totalPaid" currentField={sortField} order={sortOrder} />
                 </button>
               </TableHead>
-              <TableHead className="text-right py-4">
+              <TableHead className="w-[110px] px-2 py-3 text-right text-xs">
                 <button
                   onClick={() => handleSort('totalOutstanding')}
                   className="group inline-flex items-center text-xs font-semibold hover:text-foreground"
@@ -178,12 +178,12 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
                   <SortIcon field="totalOutstanding" currentField={sortField} order={sortOrder} />
                 </button>
               </TableHead>
-              <TableHead className="py-4">
+              <TableHead className="w-[95px] px-2 py-3 text-xs">
                 <button
                   onClick={() => handleSort('lastActivityDate')}
                   className="group inline-flex items-center text-xs font-semibold hover:text-foreground"
                 >
-                  Last Activity
+                  Activity
                   <SortIcon field="lastActivityDate" currentField={sortField} order={sortOrder} />
                 </button>
               </TableHead>
@@ -207,26 +207,29 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
                     className="cursor-pointer hover:bg-muted/40 transition-colors border-b border-border"
                     onClick={() => router.push(`/billing/statements/${client.id}`)}
                   >
-                    <TableCell className="font-medium text-sm py-4">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-foreground hover:text-primary hover:underline">
+                    <TableCell
+                      className="font-medium text-xs py-3 px-2 truncate"
+                      title={client.businessName ?? client.name}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="font-medium text-foreground hover:text-primary hover:underline truncate">
                           {client.businessName ?? client.name}
                         </span>
                         {hasOutstanding && (
                           <span
-                            className="inline-flex h-1.5 w-1.5 rounded-full bg-red-500"
+                            className="inline-flex h-1.5 w-1.5 shrink-0 rounded-full bg-red-500"
                             title="Has outstanding balance"
                           />
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-sm font-medium py-4">
+                    <TableCell className="text-right tabular-nums text-xs font-medium py-3 px-2 whitespace-nowrap">
                       {formatZAR(client.totalInvoiced)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-sm text-emerald-600 dark:text-emerald-400 font-medium py-4">
+                    <TableCell className="text-right tabular-nums text-xs text-emerald-600 dark:text-emerald-400 font-medium py-3 px-2 whitespace-nowrap">
                       {formatZAR(client.totalPaid)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-sm py-4">
+                    <TableCell className="text-right tabular-nums text-xs py-3 px-2 whitespace-nowrap">
                       <span
                         className={
                           hasOutstanding ? 'text-red-500 font-semibold' : 'text-muted-foreground'
@@ -235,7 +238,7 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
                         {formatZAR(client.totalOutstanding)}
                       </span>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground py-4">
+                    <TableCell className="text-xs text-muted-foreground py-3 px-2 whitespace-nowrap">
                       {client.lastActivityDate ? fmtDate(client.lastActivityDate) : '-'}
                     </TableCell>
                   </TableRow>

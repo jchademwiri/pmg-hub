@@ -197,90 +197,88 @@ export function ClientAgingDetailClient({
       {/* Client Aging Summary Row */}
       <Card className="shadow-none">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent bg-muted/20">
-                  <TableHead
-                    onClick={() => setActiveBucket(null)}
-                    className="text-center font-semibold h-10 cursor-pointer hover:text-foreground transition-colors"
-                  >
-                    Outstanding
-                  </TableHead>
-                  <TableHead
-                    onClick={() => setActiveBucket(activeBucket === 'current' ? null : 'current')}
-                    className={`text-center font-semibold h-10 cursor-pointer transition-colors ${activeBucket === 'current' ? 'text-foreground font-bold bg-muted/30' : 'hover:text-foreground'}`}
-                  >
-                    Current
-                  </TableHead>
-                  <TableHead
-                    onClick={() => setActiveBucket(activeBucket === '1_14' ? null : '1_14')}
-                    className={`text-center font-semibold h-10 cursor-pointer transition-colors ${activeBucket === '1_14' ? 'text-foreground font-bold bg-muted/30' : 'hover:text-foreground'}`}
-                  >
-                    1–14 Days
-                  </TableHead>
-                  <TableHead
-                    onClick={() => setActiveBucket(activeBucket === '15_30' ? null : '15_30')}
-                    className={`text-center font-semibold h-10 cursor-pointer transition-colors ${activeBucket === '15_30' ? 'text-foreground font-bold bg-muted/30' : 'hover:text-foreground'}`}
-                  >
-                    15–30 Days
-                  </TableHead>
-                  <TableHead
-                    onClick={() => setActiveBucket(activeBucket === '31_60' ? null : '31_60')}
-                    className={`text-center font-semibold h-10 cursor-pointer transition-colors ${activeBucket === '31_60' ? 'text-foreground font-bold bg-muted/30' : 'hover:text-foreground'}`}
-                  >
-                    31–60 Days
-                  </TableHead>
-                  <TableHead
-                    onClick={() => setActiveBucket(activeBucket === '61_plus' ? null : '61_plus')}
-                    className={`text-center font-semibold h-10 cursor-pointer transition-colors ${activeBucket === '61_plus' ? 'text-foreground font-bold bg-muted/30' : 'hover:text-foreground'}`}
-                  >
-                    61+ Days
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow className="hover:bg-transparent text-center font-medium tabular-nums">
-                  <TableCell
-                    onClick={() => setActiveBucket(null)}
-                    className={`font-bold text-base h-12 cursor-pointer transition-colors ${!activeBucket ? 'bg-muted/10' : 'opacity-50 hover:opacity-100'}`}
-                  >
-                    {formatZAR(totalOutstanding)}
-                  </TableCell>
-                  <TableCell
-                    onClick={() => setActiveBucket(activeBucket === 'current' ? null : 'current')}
-                    className={`text-emerald-600 h-12 cursor-pointer transition-colors ${activeBucket === 'current' ? 'bg-emerald-500/10 font-bold' : activeBucket ? 'opacity-50 hover:opacity-100' : ''}`}
-                  >
-                    {current > 0 ? formatZAR(current) : '—'}
-                  </TableCell>
-                  <TableCell
-                    onClick={() => setActiveBucket(activeBucket === '1_14' ? null : '1_14')}
-                    className={`text-amber-600 h-12 cursor-pointer transition-colors ${activeBucket === '1_14' ? 'bg-amber-500/10 font-bold' : activeBucket ? 'opacity-50 hover:opacity-100' : ''}`}
-                  >
-                    {bucket_1_14 > 0 ? formatZAR(bucket_1_14) : '—'}
-                  </TableCell>
-                  <TableCell
-                    onClick={() => setActiveBucket(activeBucket === '15_30' ? null : '15_30')}
-                    className={`text-orange-600 h-12 cursor-pointer transition-colors ${activeBucket === '15_30' ? 'bg-orange-500/10 font-bold' : activeBucket ? 'opacity-50 hover:opacity-100' : ''}`}
-                  >
-                    {bucket_15_30 > 0 ? formatZAR(bucket_15_30) : '—'}
-                  </TableCell>
-                  <TableCell
-                    onClick={() => setActiveBucket(activeBucket === '31_60' ? null : '31_60')}
-                    className={`text-rose-600 h-12 cursor-pointer transition-colors ${activeBucket === '31_60' ? 'bg-rose-500/10 font-bold' : activeBucket ? 'opacity-50 hover:opacity-100' : ''}`}
-                  >
-                    {bucket_31_60 > 0 ? formatZAR(bucket_31_60) : '—'}
-                  </TableCell>
-                  <TableCell
-                    onClick={() => setActiveBucket(activeBucket === '61_plus' ? null : '61_plus')}
-                    className={`text-red-600 font-semibold h-12 cursor-pointer transition-colors ${activeBucket === '61_plus' ? 'bg-red-500/10 font-bold' : activeBucket ? 'opacity-50 hover:opacity-100' : ''}`}
-                  >
-                    {bucket_61_plus > 0 ? formatZAR(bucket_61_plus) : '—'}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </div>
+          <Table className="table-fixed w-full" containerClassName="overflow-hidden">
+            <TableHeader>
+              <TableRow className="hover:bg-transparent bg-muted/20">
+                <TableHead
+                  onClick={() => setActiveBucket(null)}
+                  className="text-center font-semibold h-10 cursor-pointer hover:text-foreground transition-colors"
+                >
+                  Outstanding
+                </TableHead>
+                <TableHead
+                  onClick={() => setActiveBucket(activeBucket === 'current' ? null : 'current')}
+                  className={`text-center font-semibold h-10 cursor-pointer transition-colors ${activeBucket === 'current' ? 'text-foreground font-bold bg-muted/30' : 'hover:text-foreground'}`}
+                >
+                  Current
+                </TableHead>
+                <TableHead
+                  onClick={() => setActiveBucket(activeBucket === '1_14' ? null : '1_14')}
+                  className={`text-center font-semibold h-10 cursor-pointer transition-colors ${activeBucket === '1_14' ? 'text-foreground font-bold bg-muted/30' : 'hover:text-foreground'}`}
+                >
+                  1–14 Days
+                </TableHead>
+                <TableHead
+                  onClick={() => setActiveBucket(activeBucket === '15_30' ? null : '15_30')}
+                  className={`text-center font-semibold h-10 cursor-pointer transition-colors ${activeBucket === '15_30' ? 'text-foreground font-bold bg-muted/30' : 'hover:text-foreground'}`}
+                >
+                  15–30 Days
+                </TableHead>
+                <TableHead
+                  onClick={() => setActiveBucket(activeBucket === '31_60' ? null : '31_60')}
+                  className={`text-center font-semibold h-10 cursor-pointer transition-colors ${activeBucket === '31_60' ? 'text-foreground font-bold bg-muted/30' : 'hover:text-foreground'}`}
+                >
+                  31–60 Days
+                </TableHead>
+                <TableHead
+                  onClick={() => setActiveBucket(activeBucket === '61_plus' ? null : '61_plus')}
+                  className={`text-center font-semibold h-10 cursor-pointer transition-colors ${activeBucket === '61_plus' ? 'text-foreground font-bold bg-muted/30' : 'hover:text-foreground'}`}
+                >
+                  61+ Days
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow className="hover:bg-transparent text-center font-medium tabular-nums">
+                <TableCell
+                  onClick={() => setActiveBucket(null)}
+                  className={`font-bold text-base h-12 cursor-pointer transition-colors ${!activeBucket ? 'bg-muted/10' : 'opacity-50 hover:opacity-100'}`}
+                >
+                  {formatZAR(totalOutstanding)}
+                </TableCell>
+                <TableCell
+                  onClick={() => setActiveBucket(activeBucket === 'current' ? null : 'current')}
+                  className={`text-emerald-600 h-12 cursor-pointer transition-colors ${activeBucket === 'current' ? 'bg-emerald-500/10 font-bold' : activeBucket ? 'opacity-50 hover:opacity-100' : ''}`}
+                >
+                  {current > 0 ? formatZAR(current) : '—'}
+                </TableCell>
+                <TableCell
+                  onClick={() => setActiveBucket(activeBucket === '1_14' ? null : '1_14')}
+                  className={`text-amber-600 h-12 cursor-pointer transition-colors ${activeBucket === '1_14' ? 'bg-amber-500/10 font-bold' : activeBucket ? 'opacity-50 hover:opacity-100' : ''}`}
+                >
+                  {bucket_1_14 > 0 ? formatZAR(bucket_1_14) : '—'}
+                </TableCell>
+                <TableCell
+                  onClick={() => setActiveBucket(activeBucket === '15_30' ? null : '15_30')}
+                  className={`text-orange-600 h-12 cursor-pointer transition-colors ${activeBucket === '15_30' ? 'bg-orange-500/10 font-bold' : activeBucket ? 'opacity-50 hover:opacity-100' : ''}`}
+                >
+                  {bucket_15_30 > 0 ? formatZAR(bucket_15_30) : '—'}
+                </TableCell>
+                <TableCell
+                  onClick={() => setActiveBucket(activeBucket === '31_60' ? null : '31_60')}
+                  className={`text-rose-600 h-12 cursor-pointer transition-colors ${activeBucket === '31_60' ? 'bg-rose-500/10 font-bold' : activeBucket ? 'opacity-50 hover:opacity-100' : ''}`}
+                >
+                  {bucket_31_60 > 0 ? formatZAR(bucket_31_60) : '—'}
+                </TableCell>
+                <TableCell
+                  onClick={() => setActiveBucket(activeBucket === '61_plus' ? null : '61_plus')}
+                  className={`text-red-600 font-semibold h-12 cursor-pointer transition-colors ${activeBucket === '61_plus' ? 'bg-red-500/10 font-bold' : activeBucket ? 'opacity-50 hover:opacity-100' : ''}`}
+                >
+                  {bucket_61_plus > 0 ? formatZAR(bucket_61_plus) : '—'}
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
           {totalOutstanding > 0 && (
             <div className="h-1.5 w-full flex bg-muted overflow-hidden rounded-b-xl">
               {segments.map((segment) => {
@@ -357,20 +355,20 @@ export function ClientAgingDetailClient({
               All caught up! No outstanding invoices found.
             </div>
           ) : (
-            <div>
-              <Table className="table-fixed w-full">
+            <div className="overflow-hidden">
+              <Table className="table-fixed w-full" containerClassName="overflow-hidden">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[95px] px-2 text-xs">
+                    <TableHead className="w-[85px] px-2 text-xs">
                       <button
                         onClick={() => handleSort('invoiceDate')}
                         className="group flex items-center hover:text-foreground font-semibold"
                       >
-                        Invoice Date
+                        Date
                         <SortIcon field="invoiceDate" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
-                    <TableHead className="w-[125px] px-2 text-xs">
+                    <TableHead className="w-[130px] px-2 text-xs">
                       <button
                         onClick={() => handleSort('documentNumber')}
                         className="group flex items-center hover:text-foreground font-semibold"
@@ -384,7 +382,7 @@ export function ClientAgingDetailClient({
                       </button>
                     </TableHead>
                     <TableHead className="px-2 text-xs">Reference</TableHead>
-                    <TableHead className="w-[90px] px-2 text-xs">
+                    <TableHead className="w-[85px] px-2 text-xs">
                       <button
                         onClick={() => handleSort('dueDate')}
                         className="group flex items-center hover:text-foreground font-semibold"
@@ -393,35 +391,35 @@ export function ClientAgingDetailClient({
                         <SortIcon field="dueDate" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
-                    <TableHead className="w-[95px] px-2 text-center text-xs">
+                    <TableHead className="w-[80px] px-2 text-center text-xs">
                       <button
                         onClick={() => handleSort('daysPastDue')}
                         className="group mx-auto flex items-center hover:text-foreground font-semibold"
                       >
-                        Days Overdue
+                        Overdue
                         <SortIcon field="daysPastDue" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
-                    <TableHead className="w-[90px] px-2 text-right text-xs">
+                    <TableHead className="w-[85px] px-2 text-right text-xs">
                       <button
                         onClick={() => handleSort('total')}
                         className="group ml-auto flex items-center hover:text-foreground font-semibold"
                       >
-                        Total Amount
+                        Total
                         <SortIcon field="total" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
                     <TableHead className="w-[80px] px-2 text-right text-xs">Paid</TableHead>
-                    <TableHead className="w-[90px] px-2 text-right text-xs">
+                    <TableHead className="w-[85px] px-2 text-right text-xs">
                       <button
                         onClick={() => handleSort('outstanding')}
                         className="group ml-auto flex items-center hover:text-foreground font-semibold"
                       >
-                        Unpaid Balance
+                        Balance
                         <SortIcon field="outstanding" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
-                    <TableHead className="w-[50px] px-2 text-center text-xs">Actions</TableHead>
+                    <TableHead className="w-[40px] px-2 text-center text-xs">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -475,7 +473,7 @@ export function ClientAgingDetailClient({
                         <TableCell className="text-right tabular-nums font-bold text-red-600 text-xs px-2 whitespace-nowrap">
                           {formatZAR(inv.outstanding)}
                         </TableCell>
-                        <TableCell className="px-2">
+                        <TableCell className="px-2 w-[40px] text-center">
                           <div className="flex items-center justify-center">
                             <Button
                               asChild

@@ -317,19 +317,19 @@ export function CreditsClient({
           <CardDescription>All credit notes and their current status</CardDescription>
         </CardHeader>
         <CardContent className="p-0 px-6 pb-4">
-          <div className="overflow-x-auto">
-            <Table>
+          <div className="overflow-hidden">
+            <Table className="table-fixed w-full" containerClassName="overflow-hidden">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Document #</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-right">Remaining</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="w-20"></TableHead>
+                  <TableHead className="w-[115px] px-2 text-xs">Document #</TableHead>
+                  <TableHead className="px-2 text-xs">Client</TableHead>
+                  <TableHead className="w-[110px] px-2 text-xs">Type</TableHead>
+                  <TableHead className="px-2 text-xs">Reason</TableHead>
+                  <TableHead className="w-[85px] px-2 text-right text-xs">Amount</TableHead>
+                  <TableHead className="w-[85px] px-2 text-right text-xs">Remaining</TableHead>
+                  <TableHead className="w-[85px] px-2 text-xs">Status</TableHead>
+                  <TableHead className="w-[80px] px-2 text-xs">Date</TableHead>
+                  <TableHead className="w-12 px-2"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -355,29 +355,36 @@ export function CreditsClient({
 
                     return (
                       <TableRow key={note.id} className="hover:bg-muted/40 transition-colors group">
-                        <TableCell className="font-medium text-xs">
+                        <TableCell className="font-medium text-xs px-2 truncate">
                           <Link
                             href={`/billing/credits/${note.id}`}
-                            className="text-primary hover:underline inline-flex items-center gap-1"
+                            className="text-primary hover:underline inline-flex items-center gap-1 font-mono"
                           >
                             {note.documentNumber}
                             <ExternalLink className="size-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                           </Link>
                         </TableCell>
-                        <TableCell className="text-xs">
-                          {clientMap.get(note.clientId) ?? 'Unknown'}
-                        </TableCell>
-                        <TableCell className="text-xs">{getTypeLabel(note.type)}</TableCell>
                         <TableCell
-                          className="text-xs truncate max-w-[200px]"
-                          title={note.reason ?? ''}
+                          className="text-xs px-2 truncate"
+                          title={clientMap.get(note.clientId) ?? 'Unknown'}
                         >
-                          {note.reason ?? '-'}
+                          <span className="truncate block">
+                            {clientMap.get(note.clientId) ?? 'Unknown'}
+                          </span>
                         </TableCell>
-                        <TableCell className="text-right tabular-nums font-semibold text-xs">
+                        <TableCell
+                          className="text-xs px-2 truncate"
+                          title={getTypeLabel(note.type)}
+                        >
+                          {getTypeLabel(note.type)}
+                        </TableCell>
+                        <TableCell className="text-xs truncate px-2" title={note.reason ?? ''}>
+                          <span className="truncate block">{note.reason ?? '-'}</span>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums font-semibold text-xs px-2 whitespace-nowrap">
                           {formatZAR(note.amount)}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums text-xs">
+                        <TableCell className="text-right tabular-nums text-xs px-2 whitespace-nowrap">
                           {amountRemainingNum > 0 ? (
                             <span className="font-bold text-emerald-600">
                               {formatZAR(amountRemainingNum)}
@@ -386,11 +393,11 @@ export function CreditsClient({
                             <span className="text-muted-foreground">-</span>
                           )}
                         </TableCell>
-                        <TableCell>{getStatusBadge(note.status)}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
+                        <TableCell className="px-2">{getStatusBadge(note.status)}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground px-2 whitespace-nowrap">
                           {fmtDate(note.createdAt)}
                         </TableCell>
-                        <TableCell className="text-right py-1">
+                        <TableCell className="text-right py-1 px-2">
                           <div className="flex items-center justify-end gap-1">
                             {isRefundable && (
                               <Button

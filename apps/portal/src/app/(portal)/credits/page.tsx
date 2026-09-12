@@ -45,33 +45,33 @@ export default async function CreditNotesPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+            <div className="overflow-hidden">
+              <table className="w-full table-fixed text-left border-collapse">
                 <thead>
                   <tr className="border-b border-white/5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 bg-white/[0.01]">
-                    <th className="px-6 py-3">Credit Note #</th>
-                    <th className="px-6 py-3">Date</th>
-                    <th className="px-6 py-3 text-right">Original Amount</th>
-                    <th className="px-6 py-3 text-right">Remaining Balance</th>
-                    <th className="px-6 py-3">Status</th>
+                    <th className="px-4 py-3 w-[150px]">Credit Note #</th>
+                    <th className="px-4 py-3 w-[110px]">Date</th>
+                    <th className="px-4 py-3 text-right w-[120px]">Amount</th>
+                    <th className="px-4 py-3 text-right w-[120px]">Remaining</th>
+                    <th className="px-4 py-3 w-[100px]">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 text-xs">
                   {allCredits.map((credit) => (
                     <tr key={credit.id} className="hover:bg-white/[0.01] transition-colors">
-                      <td className="px-6 py-4 font-semibold text-white">
+                      <td className="px-4 py-3 font-semibold text-white font-mono truncate">
                         {credit.documentNumber}
                       </td>
-                      <td className="px-6 py-4 text-muted-foreground">
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                         {formatDate(credit.createdAt)}
                       </td>
-                      <td className="px-6 py-4 text-right text-muted-foreground">
+                      <td className="px-4 py-3 text-right text-muted-foreground whitespace-nowrap">
                         {formatCurrency(credit.amount)}
                       </td>
-                      <td className="px-6 py-4 text-right font-bold text-white">
+                      <td className="px-4 py-3 text-right font-bold text-white whitespace-nowrap">
                         {formatCurrency(credit.amountRemaining ?? '0.00')}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <span
                           className={`inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
                             credit.status === 'active'

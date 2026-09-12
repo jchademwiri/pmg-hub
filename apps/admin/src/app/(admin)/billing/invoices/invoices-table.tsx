@@ -234,8 +234,8 @@ export function InvoicesTable({ entries, issueAction, voidAction }: InvoicesTabl
         </div>
       )}
 
-      <div className="rounded-md border border-border">
-        <Table className="table-fixed w-full">
+      <div className="rounded-md border border-border overflow-hidden">
+        <Table className="table-fixed w-full" containerClassName="overflow-hidden">
           <TableHeader>
             <TableRow>
               <TableHead className="w-9 px-2 text-center">

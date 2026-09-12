@@ -120,17 +120,17 @@ export function QuotesTable({
   }
 
   const desktopView = (
-    <div className="rounded-md border border-border">
-      <Table className="table-fixed w-full">
+    <div className="rounded-md border border-border overflow-hidden">
+      <Table className="table-fixed w-full" containerClassName="overflow-hidden">
         <TableHeader>
           <TableRow>
             <TableHead className="w-[130px] px-2 text-xs">Quote #</TableHead>
             <TableHead className="px-2 text-xs">Reference</TableHead>
             <TableHead className="px-2 text-xs">Client</TableHead>
-            <TableHead className="w-[85px] px-2 text-xs">Issue Date</TableHead>
-            <TableHead className="w-[85px] px-2 text-xs">Expiry Date</TableHead>
+            <TableHead className="w-[80px] px-2 text-xs">Date</TableHead>
+            <TableHead className="w-[80px] px-2 text-xs">Expires</TableHead>
             <TableHead className="w-[85px] px-2 text-right text-xs">Amount</TableHead>
-            <TableHead className="w-[95px] px-2 text-center text-xs">Status</TableHead>
+            <TableHead className="w-[90px] px-2 text-center text-xs">Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
