@@ -11,8 +11,8 @@
 
 | Phase | Description | Status | Tests Passed | Commit |
 | :--- | :--- | :--- | :--- | :--- |
-| **Phase 1** | Environment, Registry, Specs & WASM Setup | ✅ Completed | ✅ Passed | `commit pending` |
-| **Phase 2** | PDF Design System Primitives & Brand Themes | ⏳ Not Started | ⏳ Pending | `Pending` |
+| **Phase 1** | Environment, Registry, Specs & WASM Setup | ✅ Completed | ✅ Passed | `8ffa6841` |
+| **Phase 2** | PDF Design System Primitives & Brand Themes | ⏳ In Progress | ⏳ Pending | `Pending` |
 | **Phase 3** | Billing Documents Modernization (`@pmg/billing`) | ⏳ Not Started | ⏳ Pending | `Pending` |
 | **Phase 4** | Financial Statements & Accounting Reports (`@pmg/accounting`) | ⏳ Not Started | ⏳ Pending | `Pending` |
 | **Phase 5** | Client Optimization, Email Attachments & Deprecations | ⏳ Not Started | ⏳ Pending | `Pending` |
@@ -34,18 +34,18 @@
 ---
 
 ### Phase 2: PDF Design System Primitives & Brand Themes
-- [ ] **Task 2.1**: Implement core declarative primitives in `packages/billing/src/pdf/primitives.tsx` (`Document`, `Page`, `View`, `Text`, `Image`, `Link`, `StyleSheet`).
-- [ ] **Task 2.2**: Implement SVG primitives in `packages/billing/src/pdf/svg.tsx` (`Svg`, `Rect`, `Circle`, `Path`, `Line`, `SvgText`).
-- [ ] **Task 2.3**: Implement theme context & provider in `packages/billing/src/pdf/theme-provider.tsx`.
-- [ ] **Task 2.4**: Define multi-brand theme palettes in `packages/billing/src/pdf/themes.ts` (Playhouse Media Group, TenderEdge Solutions, Apex Web Solutions).
-- [ ] **Task 2.5**: Pull and assemble reusable PDF blocks:
-  - [ ] `packages/billing/src/pdf/components/table.tsx`
-  - [ ] `packages/billing/src/pdf/components/key-value.tsx`
-  - [ ] `packages/billing/src/pdf/components/badge.tsx`
-  - [ ] `packages/billing/src/pdf/components/page-header.tsx`
-  - [ ] `packages/billing/src/pdf/components/page-footer.tsx`
-  - [ ] `packages/billing/src/pdf/components/keep-together.tsx`
-- [ ] **Task 2.6**: Write unit tests for primitives and theme resolution (`packages/billing/src/pdf/__tests__/primitives.test.ts`).
+- [x] **Task 2.1**: Implement core declarative primitives in `packages/billing/src/pdf/primitives.tsx` (`Document`, `Page`, `View`, `Text`, `Image`, `Link`, `StyleSheet`).
+- [x] **Task 2.2**: Implement SVG primitives in `packages/billing/src/pdf/svg.tsx` (`Svg`, `Rect`, `Circle`, `Path`, `Line`, `SvgText`).
+- [x] **Task 2.3**: Implement theme context & provider in `packages/billing/src/pdf/theme-provider.tsx`.
+- [x] **Task 2.4**: Define multi-brand theme palettes in `packages/billing/src/pdf/themes.ts` (Playhouse Media Group, TenderEdge Solutions, Apex Web Solutions).
+- [x] **Task 2.5**: Pull and assemble reusable PDF blocks:
+  - [x] `packages/billing/src/pdf/components/table.tsx`
+  - [x] `packages/billing/src/pdf/components/key-value.tsx`
+  - [x] `packages/billing/src/pdf/components/badge.tsx`
+  - [x] `packages/billing/src/pdf/components/page-header.tsx`
+  - [x] `packages/billing/src/pdf/components/page-footer.tsx`
+  - [x] `packages/billing/src/pdf/primitives.tsx` (`KeepTogether`)
+- [x] **Task 2.6**: Write unit tests for primitives and theme resolution (`packages/billing/src/pdf/__tests__/primitives.test.ts` - 4/4 passing).
 - [ ] **Task 2.7**: Commit Phase 2 changes (`feat(billing): add pdfcn design system primitives and brand themes`).
 
 ---
