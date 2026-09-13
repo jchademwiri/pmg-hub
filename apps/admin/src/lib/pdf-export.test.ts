@@ -52,7 +52,7 @@ describe('pdf-export helpers', () => {
     expect(() => assertEmailPdfSize(smallBase64, 'Invoice PDF')).not.toThrow();
 
     // Massive rasterized PDF exceeding 8MB quota
-    const oversizedBase64 = 'A'.repeat(Math.ceil((MAX_EMAIL_PDF_BYTES + 1000) * 4 / 3));
+    const oversizedBase64 = 'A'.repeat(Math.ceil(((MAX_EMAIL_PDF_BYTES + 1000) * 4) / 3));
     expect(() => assertEmailPdfSize(oversizedBase64, 'Rasterized PDF')).toThrow(
       'Rasterized PDF is too large to email',
     );

@@ -75,7 +75,9 @@ describe('Accounting Export API Route (GET /api/accounting/export/[type])', () =
       buffer: dummyPdfBuffer,
     });
 
-    const req = new Request('http://localhost:3000/api/accounting/export/profit-and-loss?period=2026-03');
+    const req = new Request(
+      'http://localhost:3000/api/accounting/export/profit-and-loss?period=2026-03',
+    );
     const params = Promise.resolve({ type: 'profit-and-loss' });
     const res = await GET(req, { params });
 

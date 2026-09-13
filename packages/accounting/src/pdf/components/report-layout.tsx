@@ -1,6 +1,6 @@
-import React, { type CSSProperties, type ReactNode } from "react";
-import { Document, Page, View, Text } from "@pmg/billing/pdf";
-import { type PdfOrgHeader } from "@pmg/billing/pdf-shell";
+import React, { type CSSProperties, type ReactNode } from 'react';
+import { Document, Page, View, Text } from '@pmg/billing/pdf';
+import { type PdfOrgHeader } from '@pmg/billing/pdf-shell';
 
 export interface AccountingReportLayoutProps {
   title: string;
@@ -9,7 +9,7 @@ export interface AccountingReportLayoutProps {
   generatedAt?: string;
   org: PdfOrgHeader;
   children: ReactNode;
-  orientation?: "portrait" | "landscape";
+  orientation?: 'portrait' | 'landscape';
   style?: CSSProperties;
 }
 
@@ -20,87 +20,91 @@ export function AccountingReportLayout({
   generatedAt,
   org,
   children,
-  orientation = "portrait",
+  orientation = 'portrait',
   style,
 }: AccountingReportLayoutProps) {
   const fullTitle = divisionLabel ? `${title} — ${divisionLabel}` : title;
 
   return (
     <Document>
-      <Page size="A4" orientation={orientation} style={{ padding: 28, backgroundColor: "#ffffff", ...style }}>
+      <Page
+        size="A4"
+        orientation={orientation}
+        style={{ padding: 28, backgroundColor: '#ffffff', ...style }}
+      >
         {/* Top Brand Accent Bar */}
-        <div style={{ width: "100%", height: 3, backgroundColor: "#0f172a", marginBottom: 14 }} />
+        <div style={{ width: '100%', height: 3, backgroundColor: '#0f172a', marginBottom: 14 }} />
 
         {/* Report Header Band */}
         <div
           style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
             paddingBottom: 12,
-            borderBottom: "1px solid #e4e4e7",
+            borderBottom: '1px solid #e4e4e7',
             marginBottom: 16,
           }}
         >
           {/* Company Info */}
-          <div style={{ display: "flex", flexDirection: "column", maxWidth: "55%" }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 2 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', maxWidth: '55%' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 2 }}>
               {org.name}
             </span>
             {org.divisionOf && (
-              <span style={{ fontSize: 7.5, color: "#71717a" }}>
+              <span style={{ fontSize: 7.5, color: '#71717a' }}>
                 A division of {org.divisionOf}
               </span>
             )}
             {org.registrationNumber && (
-              <span style={{ fontSize: 7.5, color: "#71717a" }}>
-                Reg: {org.registrationNumber}
-              </span>
+              <span style={{ fontSize: 7.5, color: '#71717a' }}>Reg: {org.registrationNumber}</span>
             )}
             {org.vatNumber && (
-              <span style={{ fontSize: 7.5, color: "#71717a" }}>
-                VAT: {org.vatNumber}
-              </span>
+              <span style={{ fontSize: 7.5, color: '#71717a' }}>VAT: {org.vatNumber}</span>
             )}
-            {org.email && (
-              <span style={{ fontSize: 7.5, color: "#71717a" }}>
-                {org.email}
-              </span>
-            )}
-            {org.phone && (
-              <span style={{ fontSize: 7.5, color: "#71717a" }}>
-                {org.phone}
-              </span>
-            )}
-            {org.website && (
-              <span style={{ fontSize: 7.5, color: "#71717a" }}>
-                {org.website}
-              </span>
-            )}
+            {org.email && <span style={{ fontSize: 7.5, color: '#71717a' }}>{org.email}</span>}
+            {org.phone && <span style={{ fontSize: 7.5, color: '#71717a' }}>{org.phone}</span>}
+            {org.website && <span style={{ fontSize: 7.5, color: '#71717a' }}>{org.website}</span>}
             {org.address && (
-              <span style={{ fontSize: 7.5, color: "#71717a", marginTop: 2 }}>
-                {org.address}
-              </span>
+              <span style={{ fontSize: 7.5, color: '#71717a', marginTop: 2 }}>{org.address}</span>
             )}
           </div>
 
           {/* Optional Centered Logo */}
           {org.logoDataUri && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", margin: "0 12px" }}>
-              <img src={org.logoDataUri} alt={org.name} style={{ width: 44, height: 44, objectFit: "contain" }} />
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 12px',
+              }}
+            >
+              <img
+                src={org.logoDataUri}
+                alt={org.name}
+                style={{ width: 44, height: 44, objectFit: 'contain' }}
+              />
             </div>
           )}
 
           {/* Report Title & Metadata */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", maxWidth: "45%" }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              maxWidth: '45%',
+            }}
+          >
             <span
               style={{
                 fontSize: 13,
                 fontWeight: 700,
-                color: "#1e3a8a",
-                textAlign: "right",
-                letterSpacing: "0.4px",
+                color: '#1e3a8a',
+                textAlign: 'right',
+                letterSpacing: '0.4px',
                 marginBottom: 4,
               }}
             >
@@ -111,8 +115,8 @@ export function AccountingReportLayout({
                 style={{
                   fontSize: 9,
                   fontWeight: 600,
-                  color: "#27272a",
-                  textAlign: "right",
+                  color: '#27272a',
+                  textAlign: 'right',
                   marginBottom: 2,
                 }}
               >
@@ -120,7 +124,7 @@ export function AccountingReportLayout({
               </span>
             )}
             {generatedAt && (
-              <span style={{ fontSize: 7.5, color: "#71717a", textAlign: "right" }}>
+              <span style={{ fontSize: 7.5, color: '#71717a', textAlign: 'right' }}>
                 Generated {generatedAt}
               </span>
             )}
@@ -128,7 +132,7 @@ export function AccountingReportLayout({
         </div>
 
         {/* Report Body */}
-        <div style={{ display: "flex", flexDirection: "column", width: "100%", flexGrow: 1 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%', flexGrow: 1 }}>
           {children}
         </div>
 
@@ -137,19 +141,19 @@ export function AccountingReportLayout({
           style={{
             marginTop: 20,
             paddingTop: 10,
-            borderTop: "1px solid #e4e4e7",
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
+            borderTop: '1px solid #e4e4e7',
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
-          <span style={{ fontSize: 7, color: "#71717a" }}>
-            {org.divisionOf ? `A division of ${org.divisionOf}` : "Playhouse Media Group (Pty) Ltd — Confidential Accounting Report"}
+          <span style={{ fontSize: 7, color: '#71717a' }}>
+            {org.divisionOf
+              ? `A division of ${org.divisionOf}`
+              : 'Playhouse Media Group (Pty) Ltd — Confidential Accounting Report'}
           </span>
-          <span style={{ fontSize: 7, color: "#71717a" }}>
-            Official Financial Record
-          </span>
+          <span style={{ fontSize: 7, color: '#71717a' }}>Official Financial Record</span>
         </div>
       </Page>
     </Document>

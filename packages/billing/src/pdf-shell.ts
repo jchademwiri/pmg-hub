@@ -167,8 +167,7 @@ export function drawShellFooter(doc: jsPDF, opts: DrawShellFooterOptions): void 
     doc.line(PAGE.margin, 282, PAGE.width - PAGE.margin, 282);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    const footerText =
-      'A division of Playhouse Media Group · Reg: 2023/683669/07';
+    const footerText = 'A division of Playhouse Media Group · Reg: 2023/683669/07';
     doc.text(footerText, PAGE.margin, 288);
     doc.text(`Page ${i} of ${pageCount}`, PAGE.width - PAGE.margin, 288, { align: 'right' });
   }

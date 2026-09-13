@@ -1,8 +1,8 @@
-import "server-only";
+import 'server-only';
 
-import React from "react";
-import { renderDocumentToPdf, pmgTheme, getLogoDataUri } from "@pmg/billing/pdf";
-import { type PdfOrgHeader } from "@pmg/billing/pdf-shell";
+import React from 'react';
+import { renderDocumentToPdf, pmgTheme, getLogoDataUri } from '@pmg/billing/pdf';
+import { type PdfOrgHeader } from '@pmg/billing/pdf-shell';
 
 function resolveOrg(org: PdfOrgHeader): PdfOrgHeader {
   return {
@@ -19,7 +19,7 @@ import type {
   JournalEntryLineRow,
   ChartAccount,
   AnnualFinancialStatementsResult,
-} from "@pmg/db";
+} from '@pmg/db';
 import {
   ProfitAndLossDocument,
   DivisionPerformanceDocument,
@@ -34,7 +34,7 @@ import {
   ClientPerformanceDocument,
   type ClientPerformanceRow,
   AnnualFinancialStatementsDocument,
-} from "./index";
+} from './index';
 
 export async function renderDeclarativeProfitAndLoss(
   result: ProfitAndLossResult,
@@ -51,7 +51,7 @@ export async function renderDeclarativeProfitAndLoss(
       org={resolveOrg(org)}
       periodLabel={periodLabel}
       divisionLabel={divisionLabel}
-      generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
+      generatedAt={generatedAt || new Date().toLocaleDateString('en-ZA')}
     />
   );
   const uint8 = await renderDocumentToPdf(element, { theme: pmgTheme });
@@ -71,7 +71,7 @@ export async function renderDeclarativeDivisionPerformance(
       org={resolveOrg(org)}
       periodLabel={periodLabel}
       divisionLabel={divisionLabel}
-      generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
+      generatedAt={generatedAt || new Date().toLocaleDateString('en-ZA')}
     />
   );
   const uint8 = await renderDocumentToPdf(element, { theme: pmgTheme });
@@ -91,7 +91,7 @@ export async function renderDeclarativeBalanceSheet(
       org={resolveOrg(org)}
       periodLabel={periodLabel}
       divisionLabel={divisionLabel}
-      generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
+      generatedAt={generatedAt || new Date().toLocaleDateString('en-ZA')}
     />
   );
   const uint8 = await renderDocumentToPdf(element, { theme: pmgTheme });
@@ -111,7 +111,7 @@ export async function renderDeclarativeCashFlow(
       org={resolveOrg(org)}
       periodLabel={periodLabel}
       divisionLabel={divisionLabel}
-      generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
+      generatedAt={generatedAt || new Date().toLocaleDateString('en-ZA')}
     />
   );
   const uint8 = await renderDocumentToPdf(element, { theme: pmgTheme });
@@ -131,7 +131,7 @@ export async function renderDeclarativeTrialBalance(
       org={resolveOrg(org)}
       periodLabel={periodLabel}
       divisionLabel={divisionLabel}
-      generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
+      generatedAt={generatedAt || new Date().toLocaleDateString('en-ZA')}
     />
   );
   const uint8 = await renderDocumentToPdf(element, { theme: pmgTheme });
@@ -153,7 +153,7 @@ export async function renderDeclarativeGeneralLedger(
       org={resolveOrg(org)}
       periodLabel={periodLabel}
       divisionLabel={divisionLabel}
-      generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
+      generatedAt={generatedAt || new Date().toLocaleDateString('en-ZA')}
     />
   );
   const uint8 = await renderDocumentToPdf(element, { theme: pmgTheme });
@@ -177,7 +177,7 @@ export async function renderDeclarativeJournalEntries(
       org={resolveOrg(org)}
       periodLabel={periodLabel}
       divisionLabel={divisionLabel}
-      generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
+      generatedAt={generatedAt || new Date().toLocaleDateString('en-ZA')}
     />
   );
   const uint8 = await renderDocumentToPdf(element, { theme: pmgTheme });
@@ -193,7 +193,7 @@ export async function renderDeclarativeChartOfAccounts(
     <ChartOfAccountsDocument
       grouped={grouped}
       org={resolveOrg(org)}
-      generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
+      generatedAt={generatedAt || new Date().toLocaleDateString('en-ZA')}
     />
   );
   const uint8 = await renderDocumentToPdf(element, { theme: pmgTheme });
@@ -211,7 +211,7 @@ export async function renderDeclarativeClientPerformance(
       clients={clients}
       org={resolveOrg(org)}
       periodLabel={periodLabel}
-      generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
+      generatedAt={generatedAt || new Date().toLocaleDateString('en-ZA')}
     />
   );
   const uint8 = await renderDocumentToPdf(element, { theme: pmgTheme });
@@ -229,7 +229,7 @@ export async function renderDeclarativeAnnualFinancialStatements(
       result={result}
       org={resolveOrg(org)}
       periodLabel={periodLabel}
-      generatedAt={generatedAt || new Date().toLocaleDateString("en-ZA")}
+      generatedAt={generatedAt || new Date().toLocaleDateString('en-ZA')}
     />
   );
   const uint8 = await renderDocumentToPdf(element, { theme: pmgTheme });

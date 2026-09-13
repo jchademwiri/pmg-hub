@@ -350,7 +350,10 @@ async function buildProfitAndLossPdf(
       );
       return { fileName, buffer };
     } catch (err) {
-      console.error('[buildProfitAndLossPdf] Declarative engine error, falling back to legacy jsPDF:', err);
+      console.error(
+        '[buildProfitAndLossPdf] Declarative engine error, falling back to legacy jsPDF:',
+        err,
+      );
     }
   }
 
@@ -468,7 +471,10 @@ async function buildTrialBalancePdf(
       );
       return { fileName, buffer };
     } catch (err) {
-      console.error('[buildTrialBalancePdf] Declarative engine error, falling back to legacy jsPDF:', err);
+      console.error(
+        '[buildTrialBalancePdf] Declarative engine error, falling back to legacy jsPDF:',
+        err,
+      );
     }
   }
 
@@ -598,7 +604,10 @@ async function buildGeneralLedgerPdf(
       );
       return { fileName, buffer };
     } catch (err) {
-      console.error('[buildGeneralLedgerPdf] Declarative engine error, falling back to legacy jsPDF:', err);
+      console.error(
+        '[buildGeneralLedgerPdf] Declarative engine error, falling back to legacy jsPDF:',
+        err,
+      );
     }
   }
 
@@ -720,7 +729,10 @@ async function buildJournalEntriesPdf(
       );
       return { fileName, buffer };
     } catch (err) {
-      console.error('[buildJournalEntriesPdf] Declarative engine error, falling back to legacy jsPDF:', err);
+      console.error(
+        '[buildJournalEntriesPdf] Declarative engine error, falling back to legacy jsPDF:',
+        err,
+      );
     }
   }
 
@@ -831,7 +843,10 @@ async function buildChartOfAccountsPdf(
       );
       return { fileName, buffer };
     } catch (err) {
-      console.error('[buildChartOfAccountsPdf] Declarative engine error, falling back to legacy jsPDF:', err);
+      console.error(
+        '[buildChartOfAccountsPdf] Declarative engine error, falling back to legacy jsPDF:',
+        err,
+      );
     }
   }
 
@@ -873,7 +888,10 @@ async function buildDivisionPerformancePdf(
       );
       return { fileName, buffer };
     } catch (err) {
-      console.error('[buildDivisionPerformancePdf] Declarative engine error, falling back to legacy jsPDF:', err);
+      console.error(
+        '[buildDivisionPerformancePdf] Declarative engine error, falling back to legacy jsPDF:',
+        err,
+      );
     }
   }
 
@@ -932,7 +950,10 @@ async function buildBalanceSheetPdf(
       );
       return { fileName, buffer };
     } catch (err) {
-      console.error('[buildBalanceSheetPdf] Declarative engine error, falling back to legacy jsPDF:', err);
+      console.error(
+        '[buildBalanceSheetPdf] Declarative engine error, falling back to legacy jsPDF:',
+        err,
+      );
     }
   }
 
@@ -1023,7 +1044,10 @@ async function buildCashFlowPdf(
       );
       return { fileName, buffer };
     } catch (err) {
-      console.error('[buildCashFlowPdf] Declarative engine error, falling back to legacy jsPDF:', err);
+      console.error(
+        '[buildCashFlowPdf] Declarative engine error, falling back to legacy jsPDF:',
+        err,
+      );
     }
   }
 
@@ -1087,7 +1111,10 @@ async function buildAnnualFinancialStatementsPdf(
       );
       return { fileName, buffer };
     } catch (err) {
-      console.error('[buildAnnualFinancialStatementsPdf] Declarative engine error, falling back to legacy jsPDF:', err);
+      console.error(
+        '[buildAnnualFinancialStatementsPdf] Declarative engine error, falling back to legacy jsPDF:',
+        err,
+      );
     }
   }
 
@@ -1634,7 +1661,10 @@ async function buildClientPerformancePdf(
       );
       return { fileName, buffer };
     } catch (err) {
-      console.error('[buildClientPerformancePdf] Declarative engine error, falling back to legacy jsPDF:', err);
+      console.error(
+        '[buildClientPerformancePdf] Declarative engine error, falling back to legacy jsPDF:',
+        err,
+      );
     }
   }
 
