@@ -3,9 +3,9 @@ import React, {
   type ReactNode,
   type ImgHTMLAttributes,
   type AnchorHTMLAttributes,
-} from "react";
-import { resolveColor } from "./resolve-color";
-import { usePdfTheme } from "./theme-provider";
+} from 'react';
+import { resolveColor } from './resolve-color';
+import { usePdfTheme } from './theme-provider';
 
 export const StyleSheet = {
   create<T extends Record<string, CSSProperties>>(styles: T): T {
@@ -24,12 +24,12 @@ export interface ViewProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function View({ children, style, className, wrap, break: br, fixed, ...rest }: ViewProps) {
   const merged: CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    boxSizing: "border-box",
-    ...(br ? { breakBefore: "page" } : {}),
-    ...(wrap === false ? { breakInside: "avoid" } : {}),
-    ...(fixed ? { position: "fixed" } : {}),
+    display: 'flex',
+    flexDirection: 'column',
+    boxSizing: 'border-box',
+    ...(br ? { breakBefore: 'page' } : {}),
+    ...(wrap === false ? { breakInside: 'avoid' } : {}),
+    ...(fixed ? { position: 'fixed' } : {}),
     ...style,
   };
 
@@ -44,19 +44,19 @@ export interface TextProps extends React.HTMLAttributes<HTMLSpanElement> {
   children?: ReactNode;
   style?: CSSProperties;
   className?: string;
-  variant?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "body" | "sm" | "xs";
+  variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'body' | 'sm' | 'xs';
   color?: string;
-  weight?: "normal" | "medium" | "semibold" | "bold" | number;
+  weight?: 'normal' | 'medium' | 'semibold' | 'bold' | number;
   tabular?: boolean;
-  align?: "left" | "center" | "right";
-  transform?: "uppercase" | "lowercase" | "capitalize" | "none";
+  align?: 'left' | 'center' | 'right';
+  transform?: 'uppercase' | 'lowercase' | 'capitalize' | 'none';
 }
 
 export function Text({
   children,
   style,
   className,
-  variant = "body",
+  variant = 'body',
   color,
   weight,
   tabular = false,
@@ -71,37 +71,47 @@ export function Text({
   let fontWeight: number | string = 400;
 
   switch (variant) {
-    case "h1":
+    case 'h1':
       fontSize = theme.typography.heading.fontSize.h1;
       lineHeight = theme.typography.heading.lineHeight;
       fontWeight = 700;
       break;
-    case "h2":
+    case 'h2':
       fontSize = theme.typography.heading.fontSize.h2;
       lineHeight = theme.typography.heading.lineHeight;
       fontWeight = 700;
       break;
-    case "h3":
+    case 'h3':
       fontSize = theme.typography.heading.fontSize.h3;
       lineHeight = theme.typography.heading.lineHeight;
       fontWeight = 600;
       break;
-    case "h4":
+    case 'h4':
       fontSize = theme.typography.heading.fontSize.h4;
       lineHeight = theme.typography.heading.lineHeight;
       fontWeight = 600;
       break;
-    case "sm":
+    case 'sm':
       fontSize = theme.typography.body.fontSize - 1;
       break;
-    case "xs":
+    case 'xs':
       fontSize = theme.typography.body.fontSize - 2.5;
       break;
     default:
       break;
   }
 
-  if (weight) fontWeight = typeof weight === "number" ? weight : weight === "bold" ? 700 : weight === "semibold" ? 600 : weight === "medium" ? 500 : 400;
+  if (weight)
+    fontWeight =
+      typeof weight === 'number'
+        ? weight
+        : weight === 'bold'
+          ? 700
+          : weight === 'semibold'
+            ? 600
+            : weight === 'medium'
+              ? 500
+              : 400;
 
   const resolvedColor = color ? resolveColor(color, theme.colors) : theme.colors.foreground;
 
@@ -111,7 +121,7 @@ export function Text({
     lineHeight,
     fontWeight,
     color: resolvedColor,
-    ...(tabular ? { fontVariantNumeric: "tabular-nums" } : {}),
+    ...(tabular ? { fontVariantNumeric: 'tabular-nums' } : {}),
     ...(align ? { textAlign: align } : {}),
     ...(transform ? { textTransform: transform } : {}),
     ...style,
@@ -137,9 +147,9 @@ export function Document({
     <div
       data-pdf-document={title}
       style={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
         ...style,
       }}
     >
@@ -150,26 +160,26 @@ export function Document({
 
 export function Page({
   children,
-  size = "a4",
+  size = 'a4',
   orientation,
   style,
 }: {
   children?: ReactNode;
   size?: string | { width: number; height: number };
-  orientation?: "portrait" | "landscape";
+  orientation?: 'portrait' | 'landscape';
   style?: CSSProperties;
 }) {
   const theme = usePdfTheme();
 
   return (
     <div
-      data-pdf-page={typeof size === "string" ? size : undefined}
+      data-pdf-page={typeof size === 'string' ? size : undefined}
       data-pdf-orientation={orientation}
       style={{
-        display: "flex",
-        flexDirection: "column",
-        boxSizing: "border-box",
-        minHeight: orientation === "landscape" ? "185mm" : "270mm",
+        display: 'flex',
+        flexDirection: 'column',
+        boxSizing: 'border-box',
+        minHeight: orientation === 'landscape' ? '185mm' : '270mm',
         paddingTop: theme.spacing.page.marginTop,
         paddingRight: theme.spacing.page.marginRight,
         paddingBottom: 48,
@@ -185,35 +195,31 @@ export function Page({
 }
 
 export function KeepTogether({ children, style }: { children: ReactNode; style?: CSSProperties }) {
-  return (
-    <div style={{ breakInside: "avoid", pageBreakInside: "avoid", ...style }}>
-      {children}
-    </div>
-  );
+  return <div style={{ breakInside: 'avoid', pageBreakInside: 'avoid', ...style }}>{children}</div>;
 }
 
 export function PageBreak() {
-  return <div style={{ breakBefore: "page", pageBreakBefore: "always" }} />;
+  return <div style={{ breakBefore: 'page', pageBreakBefore: 'always' }} />;
 }
 
 export function Image({
   src,
   style,
-  alt = "",
+  alt = '',
   ...rest
 }: {
   src: string;
   style?: CSSProperties;
   alt?: string;
-} & Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "style">) {
+} & Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'style'>) {
   return (
     <img
       src={src}
       alt={alt}
       style={{
-        display: "block",
-        maxWidth: "100%",
-        objectFit: "contain",
+        display: 'block',
+        maxWidth: '100%',
+        objectFit: 'contain',
         ...style,
       }}
       {...rest}
@@ -230,13 +236,13 @@ export function Link({
   href: string;
   children?: ReactNode;
   style?: CSSProperties;
-} & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href" | "style">) {
+} & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href' | 'style'>) {
   return (
     <a
       href={href}
       style={{
-        color: "inherit",
-        textDecoration: "none",
+        color: 'inherit',
+        textDecoration: 'none',
         ...style,
       }}
       {...rest}

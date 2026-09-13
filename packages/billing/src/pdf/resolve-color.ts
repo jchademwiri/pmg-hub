@@ -1,18 +1,18 @@
-import type { ColorTokens } from "./types";
+import type { ColorTokens } from './types';
 
 export const THEME_COLOR_KEYS = [
-  "foreground",
-  "background",
-  "muted",
-  "mutedForeground",
-  "primary",
-  "primaryForeground",
-  "border",
-  "accent",
-  "destructive",
-  "success",
-  "warning",
-  "info",
+  'foreground',
+  'background',
+  'muted',
+  'mutedForeground',
+  'primary',
+  'primaryForeground',
+  'border',
+  'accent',
+  'destructive',
+  'success',
+  'warning',
+  'info',
 ] as const satisfies (keyof ColorTokens)[];
 
 export type ThemeColorKey = (typeof THEME_COLOR_KEYS)[number];

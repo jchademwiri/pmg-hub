@@ -184,7 +184,10 @@ export function PaymentReceiptPreview({
                 >
                   <td className="py-3 pr-4 text-zinc-900 font-medium">{alloc.invoiceNumber}</td>
                   <td className="py-3 px-4 text-zinc-500 text-xs">
-                    {fmtDateLong(alloc.invoiceDate || (alloc.createdAt ? new Date(alloc.createdAt) : payment.date))}
+                    {fmtDateLong(
+                      alloc.invoiceDate ||
+                        (alloc.createdAt ? new Date(alloc.createdAt) : payment.date),
+                    )}
                   </td>
                   <td className="py-3 pl-4 text-right tabular-nums font-semibold text-emerald-600">
                     {formatZAR(Number(alloc.amount))}

@@ -1,11 +1,11 @@
-import React from "react";
-import { formatZAR, fmtDateLong } from "../../format";
-import { Document, Page, KeepTogether } from "../primitives";
-import { PageHeader, type OrgDetails } from "../components/page-header";
-import { PageFooter } from "../components/page-footer";
-import { Table, TableHeader, TableBody, TableRow, TableCell } from "../components/table";
-import { KeyValue } from "../components/key-value";
-import { usePdfTheme } from "../theme-provider";
+import React from 'react';
+import { formatZAR, fmtDateLong } from '../../format';
+import { Document, Page, KeepTogether } from '../primitives';
+import { PageHeader, type OrgDetails } from '../components/page-header';
+import { PageFooter } from '../components/page-footer';
+import { Table, TableHeader, TableBody, TableRow, TableCell } from '../components/table';
+import { KeyValue } from '../components/key-value';
+import { usePdfTheme } from '../theme-provider';
 
 export interface ReceiptAllocation {
   invoiceNumber: string;
@@ -48,28 +48,35 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
         {/* Client & Receipt Metadata */}
         <div
           style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
             marginBottom: theme.spacing.sectionGap,
             gap: 20,
           }}
         >
           {/* Received From */}
-          <div style={{ display: "flex", flexDirection: "column", width: "50%" }}>
+          <div style={{ display: 'flex', flexDirection: 'column', width: '50%' }}>
             <span
               style={{
                 fontSize: 7.5,
                 fontWeight: 700,
                 color: theme.colors.primary,
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
                 marginBottom: 4,
               }}
             >
               Received From
             </span>
-            <span style={{ fontSize: 9.5, fontWeight: 700, color: theme.colors.foreground, marginBottom: 2 }}>
+            <span
+              style={{
+                fontSize: 9.5,
+                fontWeight: 700,
+                color: theme.colors.foreground,
+                marginBottom: 2,
+              }}
+            >
               {data.client.name}
             </span>
             {data.client.contactName && (
@@ -90,14 +97,14 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
           </div>
 
           {/* Receipt Details */}
-          <div style={{ display: "flex", flexDirection: "column", width: "45%" }}>
+          <div style={{ display: 'flex', flexDirection: 'column', width: '45%' }}>
             <span
               style={{
                 fontSize: 7.5,
                 fontWeight: 700,
                 color: theme.colors.primary,
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
                 marginBottom: 4,
               }}
             >
@@ -106,9 +113,9 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
             <KeyValue
               size="sm"
               items={[
-                { key: "Payment Date", value: fmtDateLong(data.paymentDate) },
+                { key: 'Payment Date', value: fmtDateLong(data.paymentDate) },
                 {
-                  key: "Total Received",
+                  key: 'Total Received',
                   value: formatZAR(data.amount),
                   keyStyle: { fontWeight: 700, color: theme.colors.foreground },
                   valueStyle: { fontWeight: 700, color: theme.colors.primary, fontSize: 10 },
@@ -126,15 +133,15 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
                 fontSize: 7.5,
                 fontWeight: 700,
                 color: theme.colors.primary,
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-                display: "block",
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                display: 'block',
                 marginBottom: 3,
               }}
             >
               Payment Reference
             </span>
-            <span style={{ fontSize: 8.5, color: theme.colors.foreground, lineHeight: "13px" }}>
+            <span style={{ fontSize: 8.5, color: theme.colors.foreground, lineHeight: '13px' }}>
               {data.reference}
             </span>
           </div>
@@ -146,9 +153,9 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
             fontSize: 7.5,
             fontWeight: 700,
             color: theme.colors.primary,
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
-            display: "block",
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            display: 'block',
             marginBottom: 6,
           }}
         >
@@ -157,9 +164,15 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
         <Table variant="compact" style={{ marginBottom: theme.spacing.sectionGap }}>
           <TableHeader>
             <TableRow header>
-              <TableCell header width="38%">Invoice Number</TableCell>
-              <TableCell header width="32%">Invoice Date</TableCell>
-              <TableCell header align="right" width="30%">Allocated Amount</TableCell>
+              <TableCell header width="38%">
+                Invoice Number
+              </TableCell>
+              <TableCell header width="32%">
+                Invoice Date
+              </TableCell>
+              <TableCell header align="right" width="30%">
+                Allocated Amount
+              </TableCell>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -167,14 +180,22 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
               <TableRow>
                 <TableCell width="38%">Unallocated Payment on Account</TableCell>
                 <TableCell width="32%">-</TableCell>
-                <TableCell width="30%" align="right" bold tabular>{formatZAR(data.amount)}</TableCell>
+                <TableCell width="30%" align="right" bold tabular>
+                  {formatZAR(data.amount)}
+                </TableCell>
               </TableRow>
             ) : (
               data.allocations.map((alloc, idx) => (
                 <TableRow key={idx} striped={idx % 2 === 1}>
-                  <TableCell width="38%" bold>#{alloc.invoiceNumber}</TableCell>
-                  <TableCell width="32%">{alloc.invoiceDate ? fmtDateLong(alloc.invoiceDate) : "-"}</TableCell>
-                  <TableCell width="30%" align="right" bold tabular>{formatZAR(alloc.amount)}</TableCell>
+                  <TableCell width="38%" bold>
+                    #{alloc.invoiceNumber}
+                  </TableCell>
+                  <TableCell width="32%">
+                    {alloc.invoiceDate ? fmtDateLong(alloc.invoiceDate) : '-'}
+                  </TableCell>
+                  <TableCell width="30%" align="right" bold tabular>
+                    {formatZAR(alloc.amount)}
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -183,21 +204,23 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
 
         {/* Total Summary */}
         <KeepTogether>
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10, marginBottom: 16 }}>
+          <div
+            style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10, marginBottom: 16 }}
+          >
             <div
               style={{
-                width: "42%",
-                display: "flex",
-                flexDirection: "column",
+                width: '42%',
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 6,
               }}
             >
               <div
                 style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                   borderBottom: `2px solid ${theme.colors.primary}`,
                   paddingBottom: 6,
                 }}
@@ -205,17 +228,24 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
                 <span style={{ fontSize: 9, fontWeight: 700, color: theme.colors.foreground }}>
                   Total Received
                 </span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: theme.colors.primary, fontVariantNumeric: "tabular-nums" }}>
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: theme.colors.primary,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
                   {formatZAR(data.amount)}
                 </span>
               </div>
               {data.unallocated && data.unallocated > 0 ? (
                 <div
                   style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                     borderBottom: `1px solid ${theme.colors.border}`,
                     paddingBottom: 4,
                   }}
@@ -223,7 +253,14 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
                   <span style={{ fontSize: 8, color: theme.colors.mutedForeground }}>
                     Account Credit
                   </span>
-                  <span style={{ fontSize: 8.5, fontWeight: 600, color: theme.colors.success, fontVariantNumeric: "tabular-nums" }}>
+                  <span
+                    style={{
+                      fontSize: 8.5,
+                      fontWeight: 600,
+                      color: theme.colors.success,
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
                     {formatZAR(data.unallocated)}
                   </span>
                 </div>

@@ -254,14 +254,8 @@ export function CreditNoteDetailClient({
               Edit
             </Button>
           )}
-          <PrintButton
-            label="Print"
-            documentTitle={`Credit-Note-${note.documentNumber}`}
-          />
-          <ExportPdfButton
-            fileName={`CreditNote-${note.documentNumber}.pdf`}
-            pdfUrl={pdfUrl}
-          />
+          <PrintButton label="Print" documentTitle={`Credit-Note-${note.documentNumber}`} />
+          <ExportPdfButton fileName={`CreditNote-${note.documentNumber}.pdf`} pdfUrl={pdfUrl} />
           <UniversalEmailDialog
             documentId={note.id}
             documentNumber={note.documentNumber}

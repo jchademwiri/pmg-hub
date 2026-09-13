@@ -1,4 +1,4 @@
-import React, { type SVGProps } from "react";
+import React, { type SVGProps } from 'react';
 
 export function Svg({ children, style, width, height, viewBox, ...rest }: SVGProps<SVGSVGElement>) {
   return (
@@ -6,7 +6,7 @@ export function Svg({ children, style, width, height, viewBox, ...rest }: SVGPro
       width={width}
       height={height}
       viewBox={viewBox}
-      style={{ display: "inline-block", ...style }}
+      style={{ display: 'inline-block', ...style }}
       {...rest}
     >
       {children}
@@ -36,7 +36,7 @@ export function G(props: SVGProps<SVGGElement>) {
 
 export function SvgText({ children, style, ...rest }: SVGProps<SVGTextElement>) {
   return (
-    <text style={{ fontFamily: "Helvetica, sans-serif", ...style }} {...rest}>
+    <text style={{ fontFamily: 'Helvetica, sans-serif', ...style }} {...rest}>
       {children}
     </text>
   );

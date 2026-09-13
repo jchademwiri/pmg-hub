@@ -1,7 +1,7 @@
-import React, { type CSSProperties } from "react";
-import { usePdfTheme } from "../theme-provider";
+import React, { type CSSProperties } from 'react';
+import { usePdfTheme } from '../theme-provider';
 
-import type { OrgDetails } from "./page-header";
+import type { OrgDetails } from './page-header';
 
 export interface PageFooterProps {
   org?: OrgDetails;
@@ -23,30 +23,33 @@ export function PageFooter({
   const theme = usePdfTheme();
   const pageLabel = rightText || `Page ${pageNumber} of ${totalPages}`;
 
-  const resolvedLeftText =
-    leftText || "A division of Playhouse Media Group · Reg: 2023/683669/07";
+  const resolvedLeftText = leftText || 'A division of Playhouse Media Group · Reg: 2023/683669/07';
 
   return (
     <div
       style={{
-        position: "fixed",
+        position: 'fixed',
         bottom: 20,
         left: theme.spacing.page.marginLeft,
         right: theme.spacing.page.marginRight,
         paddingTop: 8,
         borderTop: `1px solid ${theme.colors.border}`,
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        boxSizing: "border-box",
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        boxSizing: 'border-box',
         ...style,
       }}
     >
-      <span style={{ fontSize: 7, color: theme.colors.mutedForeground }}>
-        {resolvedLeftText}
-      </span>
-      <span style={{ fontSize: 7, color: theme.colors.mutedForeground, fontVariantNumeric: "tabular-nums" }}>
+      <span style={{ fontSize: 7, color: theme.colors.mutedForeground }}>{resolvedLeftText}</span>
+      <span
+        style={{
+          fontSize: 7,
+          color: theme.colors.mutedForeground,
+          fontVariantNumeric: 'tabular-nums',
+        }}
+      >
         {pageLabel}
       </span>
     </div>

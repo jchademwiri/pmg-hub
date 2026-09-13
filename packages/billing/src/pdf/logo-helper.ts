@@ -1,6 +1,6 @@
-import "server-only";
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import 'server-only';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const LOGO_CACHE = new Map<string, string>();
 
@@ -9,26 +9,26 @@ const LOGO_CACHE = new Map<string, string>();
  * Works across monorepo packages, Next.js Server Components / Actions, and tests.
  */
 export function getLogoDataUri(orgName?: string | null): string | null {
-  const normalized = (orgName || "").toLowerCase();
+  const normalized = (orgName || '').toLowerCase();
   const fileName = /tender edge|edge solutions|tes/.test(normalized)
-    ? "tes-logo.png"
+    ? 'tes-logo.png'
     : /apex web|apex|aws/.test(normalized)
-      ? "aws-logo.png"
-      : "pmg-logo.png";
+      ? 'aws-logo.png'
+      : 'pmg-logo.png';
 
   if (LOGO_CACHE.has(fileName)) {
     return LOGO_CACHE.get(fileName)!;
   }
 
   const candidates = [
-    join(process.cwd(), "public", "logo", fileName),
-    join(process.cwd(), "apps", "admin", "public", "logo", fileName),
-    join(process.cwd(), "apps", "portal", "public", "logo", fileName),
-    join(process.cwd(), "..", "..", "apps", "admin", "public", "logo", fileName),
-    join(process.cwd(), "..", "apps", "admin", "public", "logo", fileName),
-    join(__dirname, "../../../../apps/admin/public/logo", fileName),
-    join(__dirname, "../../../apps/admin/public/logo", fileName),
-    join(__dirname, "../../apps/admin/public/logo", fileName),
+    join(process.cwd(), 'public', 'logo', fileName),
+    join(process.cwd(), 'apps', 'admin', 'public', 'logo', fileName),
+    join(process.cwd(), 'apps', 'portal', 'public', 'logo', fileName),
+    join(process.cwd(), '..', '..', 'apps', 'admin', 'public', 'logo', fileName),
+    join(process.cwd(), '..', 'apps', 'admin', 'public', 'logo', fileName),
+    join(__dirname, '../../../../apps/admin/public/logo', fileName),
+    join(__dirname, '../../../apps/admin/public/logo', fileName),
+    join(__dirname, '../../apps/admin/public/logo', fileName),
   ];
 
   const foundPath = candidates.find((p) => {
@@ -42,7 +42,7 @@ export function getLogoDataUri(orgName?: string | null): string | null {
   if (foundPath) {
     try {
       const buffer = readFileSync(foundPath);
-      const dataUri = `data:image/png;base64,${buffer.toString("base64")}`;
+      const dataUri = `data:image/png;base64,${buffer.toString('base64')}`;
       LOGO_CACHE.set(fileName, dataUri);
       return dataUri;
     } catch (err) {

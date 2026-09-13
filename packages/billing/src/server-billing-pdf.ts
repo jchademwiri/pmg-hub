@@ -1186,7 +1186,10 @@ export async function generateBillingPdf(
         buffer,
       };
     } catch (err) {
-      console.error('[generateBillingPdf] Declarative engine error, falling back to legacy jsPDF:', err);
+      console.error(
+        '[generateBillingPdf] Declarative engine error, falling back to legacy jsPDF:',
+        err,
+      );
     }
   }
 

@@ -64,7 +64,7 @@ export interface PdfTheme {
   spacing: SpacingTokens;
   primitives: PrimitiveTokens;
   page: {
-    size: "a4" | "letter";
-    orientation: "portrait" | "landscape";
+    size: 'a4' | 'letter';
+    orientation: 'portrait' | 'landscape';
   };
 }

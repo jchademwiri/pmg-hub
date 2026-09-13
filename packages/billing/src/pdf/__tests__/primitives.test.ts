@@ -1,30 +1,30 @@
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it, mock } from 'bun:test';
 
-mock.module("server-only", () => ({}));
+mock.module('server-only', () => ({}));
 
-describe("PDF Design System Primitives & Themes", () => {
-  it("resolves division branding themes accurately", async () => {
-    const { resolveDivisionTheme, pmgTheme, tesTheme, awsTheme } = await import("../themes");
+describe('PDF Design System Primitives & Themes', () => {
+  it('resolves division branding themes accurately', async () => {
+    const { resolveDivisionTheme, pmgTheme, tesTheme, awsTheme } = await import('../themes');
 
-    expect(resolveDivisionTheme("Playhouse Media Group")).toEqual(pmgTheme);
-    expect(resolveDivisionTheme("TenderEdge Solutions")).toEqual(tesTheme);
-    expect(resolveDivisionTheme("TES")).toEqual(tesTheme);
-    expect(resolveDivisionTheme("Apex Web Solutions")).toEqual(awsTheme);
-    expect(resolveDivisionTheme("AWS")).toEqual(awsTheme);
+    expect(resolveDivisionTheme('Playhouse Media Group')).toEqual(pmgTheme);
+    expect(resolveDivisionTheme('TenderEdge Solutions')).toEqual(tesTheme);
+    expect(resolveDivisionTheme('TES')).toEqual(tesTheme);
+    expect(resolveDivisionTheme('Apex Web Solutions')).toEqual(awsTheme);
+    expect(resolveDivisionTheme('AWS')).toEqual(awsTheme);
     expect(resolveDivisionTheme(undefined)).toEqual(pmgTheme);
   });
 
-  it("resolves color tokens correctly", async () => {
-    const { resolveColor } = await import("../resolve-color");
-    const { pmgTheme } = await import("../themes");
+  it('resolves color tokens correctly', async () => {
+    const { resolveColor } = await import('../resolve-color');
+    const { pmgTheme } = await import('../themes');
 
-    expect(resolveColor("primary", pmgTheme.colors)).toBe(pmgTheme.colors.primary);
-    expect(resolveColor("destructive", pmgTheme.colors)).toBe(pmgTheme.colors.destructive);
-    expect(resolveColor("#ff00ff", pmgTheme.colors)).toBe("#ff00ff");
+    expect(resolveColor('primary', pmgTheme.colors)).toBe(pmgTheme.colors.primary);
+    expect(resolveColor('destructive', pmgTheme.colors)).toBe(pmgTheme.colors.destructive);
+    expect(resolveColor('#ff00ff', pmgTheme.colors)).toBe('#ff00ff');
   });
 
-  it("renders a full declarative PDF document using Takumi WASM", async () => {
-    const { renderPdf } = await import("../engine");
+  it('renders a full declarative PDF document using Takumi WASM', async () => {
+    const { renderPdf } = await import('../engine');
 
     const html = `
       <div style="padding: 40px; font-family: Helvetica, sans-serif;">
@@ -58,11 +58,11 @@ describe("PDF Design System Primitives & Themes", () => {
       </div>
     `;
 
-    const pdfBytes = await renderPdf(html, { size: "a4" });
+    const pdfBytes = await renderPdf(html, { size: 'a4' });
     expect(pdfBytes).toBeInstanceOf(Uint8Array);
     expect(pdfBytes.length).toBeGreaterThan(1500);
 
     const header = String.fromCharCode(...pdfBytes.slice(0, 5));
-    expect(header).toBe("%PDF-");
+    expect(header).toBe('%PDF-');
   });
 });

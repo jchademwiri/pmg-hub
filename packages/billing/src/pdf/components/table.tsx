@@ -1,9 +1,9 @@
-import React, { type CSSProperties, type ReactNode } from "react";
-import { usePdfTheme } from "../theme-provider";
+import React, { type CSSProperties, type ReactNode } from 'react';
+import { usePdfTheme } from '../theme-provider';
 
 export interface TableProps {
   children: ReactNode;
-  variant?: "default" | "compact" | "striped" | "bordered";
+  variant?: 'default' | 'compact' | 'striped' | 'bordered';
   style?: CSSProperties;
 }
 
@@ -11,9 +11,9 @@ export function Table({ children, style }: TableProps) {
   return (
     <div
       style={{
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         ...style,
       }}
     >
@@ -26,10 +26,10 @@ export function TableHeader({ children, style }: { children: ReactNode; style?: 
   return (
     <div
       style={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
-        backgroundColor: "#f9fafb",
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        backgroundColor: '#f9fafb',
         ...style,
       }}
     >
@@ -42,9 +42,9 @@ export function TableBody({ children, style }: { children: ReactNode; style?: CS
   return (
     <div
       style={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
         ...style,
       }}
     >
@@ -64,15 +64,13 @@ export function TableRow({ children, header, striped, style }: TableRowProps) {
   const theme = usePdfTheme();
 
   const rowStyle: CSSProperties = {
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    width: "100%",
-    backgroundColor: header ? "#f9fafb" : "transparent",
-    borderBottom: header
-      ? `1px solid ${theme.colors.border}`
-      : "1px solid #f4f4f5",
-    boxSizing: "border-box",
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    backgroundColor: header ? '#f9fafb' : 'transparent',
+    borderBottom: header ? `1px solid ${theme.colors.border}` : '1px solid #f4f4f5',
+    boxSizing: 'border-box',
     ...style,
   };
 
@@ -81,7 +79,7 @@ export function TableRow({ children, header, striped, style }: TableRowProps) {
 
 export interface TableCellProps {
   children?: ReactNode;
-  align?: "left" | "center" | "right";
+  align?: 'left' | 'center' | 'right';
   width?: string | number;
   colSpan?: number;
   header?: boolean;
@@ -92,7 +90,7 @@ export interface TableCellProps {
 
 export function TableCell({
   children,
-  align = "left",
+  align = 'left',
   width,
   colSpan,
   header = false,
@@ -103,17 +101,17 @@ export function TableCell({
   const theme = usePdfTheme();
 
   const cellStyle: CSSProperties = {
-    boxSizing: "border-box",
-    width: width || (colSpan ? "100%" : undefined),
-    flex: width ? `0 0 ${width}` : colSpan ? "1 1 100%" : "1 1 0%",
-    padding: header ? "5px 4px" : "6px 4px",
+    boxSizing: 'border-box',
+    width: width || (colSpan ? '100%' : undefined),
+    flex: width ? `0 0 ${width}` : colSpan ? '1 1 100%' : '1 1 0%',
+    padding: header ? '5px 4px' : '6px 4px',
     textAlign: align,
     fontSize: header ? 7.5 : 8.5,
     fontWeight: header ? 700 : bold ? 600 : 400,
     color: header ? theme.colors.mutedForeground : theme.colors.foreground,
-    textTransform: header ? "uppercase" : "none",
-    ...(tabular ? { fontVariantNumeric: "tabular-nums" } : {}),
-    overflow: "hidden",
+    textTransform: header ? 'uppercase' : 'none',
+    ...(tabular ? { fontVariantNumeric: 'tabular-nums' } : {}),
+    overflow: 'hidden',
     ...style,
   };
 

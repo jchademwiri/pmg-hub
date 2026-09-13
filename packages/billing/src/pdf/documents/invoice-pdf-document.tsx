@@ -1,11 +1,11 @@
-import React from "react";
-import { formatZAR, fmtDate } from "../../format";
-import { Document, Page, View, Text, KeepTogether } from "../primitives";
-import { PageHeader, type OrgDetails } from "../components/page-header";
-import { PageFooter } from "../components/page-footer";
-import { Table, TableHeader, TableBody, TableRow, TableCell } from "../components/table";
-import { KeyValue } from "../components/key-value";
-import { usePdfTheme } from "../theme-provider";
+import React from 'react';
+import { formatZAR, fmtDate } from '../../format';
+import { Document, Page, View, Text, KeepTogether } from '../primitives';
+import { PageHeader, type OrgDetails } from '../components/page-header';
+import { PageFooter } from '../components/page-footer';
+import { Table, TableHeader, TableBody, TableRow, TableCell } from '../components/table';
+import { KeyValue } from '../components/key-value';
+import { usePdfTheme } from '../theme-provider';
 
 export interface InvoiceLineItem {
   itemName?: string | null;
@@ -59,7 +59,7 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
   const paid = data.totals.paid ?? 0;
   const balanceDue = data.totals.balanceDue ?? total - paid;
   const isVatApplied = vat > 0;
-  const documentTitle = isVatApplied ? "Tax Invoice" : "Invoice";
+  const documentTitle = isVatApplied ? 'Tax Invoice' : 'Invoice';
 
   return (
     <Document title={`${documentTitle} ${data.invoiceNumber}`}>
@@ -75,28 +75,35 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
         {/* Client & Metadata Section */}
         <div
           style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
             marginBottom: theme.spacing.sectionGap,
             gap: 20,
           }}
         >
           {/* Bill To */}
-          <div style={{ display: "flex", flexDirection: "column", width: "50%" }}>
+          <div style={{ display: 'flex', flexDirection: 'column', width: '50%' }}>
             <span
               style={{
                 fontSize: 7.5,
                 fontWeight: 700,
                 color: theme.colors.primary,
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
                 marginBottom: 4,
               }}
             >
               Bill To
             </span>
-            <span style={{ fontSize: 10, fontWeight: 700, color: theme.colors.foreground, marginBottom: 2 }}>
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: theme.colors.foreground,
+                marginBottom: 2,
+              }}
+            >
               {data.client.name}
             </span>
             {data.client.email && (
@@ -117,14 +124,14 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
           </div>
 
           {/* Invoice Details */}
-          <div style={{ display: "flex", flexDirection: "column", width: "45%" }}>
+          <div style={{ display: 'flex', flexDirection: 'column', width: '45%' }}>
             <span
               style={{
                 fontSize: 7.5,
                 fontWeight: 700,
                 color: theme.colors.primary,
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
                 marginBottom: 4,
               }}
             >
@@ -133,12 +140,14 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
             <KeyValue
               size="sm"
               items={[
-                { key: "Issue Date", value: fmtDate(data.issueDate) },
+                { key: 'Issue Date', value: fmtDate(data.issueDate) },
                 ...(data.dueDate
-                  ? [{ key: data.dueDateLabel || "Due Date", value: fmtDate(data.dueDate) }]
+                  ? [{ key: data.dueDateLabel || 'Due Date', value: fmtDate(data.dueDate) }]
                   : []),
-                ...(data.reference ? [{ key: "Reference", value: data.reference }] : []),
-                ...(data.org.salesRep ? [{ key: "Account Manager", value: data.org.salesRep }] : []),
+                ...(data.reference ? [{ key: 'Reference', value: data.reference }] : []),
+                ...(data.org.salesRep
+                  ? [{ key: 'Account Manager', value: data.org.salesRep }]
+                  : []),
               ]}
             />
           </div>
@@ -148,16 +157,28 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
         <Table variant="compact" style={{ marginBottom: theme.spacing.sectionGap }}>
           <TableHeader>
             <TableRow header>
-              <TableCell header width="52%">Description</TableCell>
-              <TableCell header align="center" width="12%">Qty</TableCell>
-              <TableCell header align="right" width="18%">Unit Price</TableCell>
-              <TableCell header align="right" width="18%">Amount</TableCell>
+              <TableCell header width="52%">
+                Description
+              </TableCell>
+              <TableCell header align="center" width="12%">
+                Qty
+              </TableCell>
+              <TableCell header align="right" width="18%">
+                Unit Price
+              </TableCell>
+              <TableCell header align="right" width="18%">
+                Amount
+              </TableCell>
             </TableRow>
           </TableHeader>
           <TableBody>
             {!data.items || data.items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} align="center" style={{ color: theme.colors.mutedForeground, padding: 12 }}>
+                <TableCell
+                  colSpan={4}
+                  align="center"
+                  style={{ color: theme.colors.mutedForeground, padding: 12 }}
+                >
                   No items listed
                 </TableCell>
               </TableRow>
@@ -165,20 +186,35 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
               data.items.map((item, idx) => (
                 <TableRow key={idx} striped={idx % 2 === 1}>
                   <TableCell width="52%">
-                    <div style={{ display: "flex", flexDirection: "column" }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
                       {item.itemName && (
-                        <span style={{ fontWeight: 600, color: theme.colors.foreground, fontSize: 8.5 }}>
+                        <span
+                          style={{ fontWeight: 600, color: theme.colors.foreground, fontSize: 8.5 }}
+                        >
                           {item.itemName}
                         </span>
                       )}
-                      <span style={{ color: item.itemName ? theme.colors.mutedForeground : theme.colors.foreground, fontSize: 8 }}>
+                      <span
+                        style={{
+                          color: item.itemName
+                            ? theme.colors.mutedForeground
+                            : theme.colors.foreground,
+                          fontSize: 8,
+                        }}
+                      >
                         {item.description}
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell align="center" width="12%" tabular>{item.qty}</TableCell>
-                  <TableCell align="right" width="18%" tabular>{formatZAR(item.unitPrice)}</TableCell>
-                  <TableCell align="right" width="18%" bold tabular>{formatZAR(item.amount)}</TableCell>
+                  <TableCell align="center" width="12%" tabular>
+                    {item.qty}
+                  </TableCell>
+                  <TableCell align="right" width="18%" tabular>
+                    {formatZAR(item.unitPrice)}
+                  </TableCell>
+                  <TableCell align="right" width="18%" bold tabular>
+                    {formatZAR(item.amount)}
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -189,17 +225,17 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
         <KeepTogether>
           <div
             style={{
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
               gap: 24,
               marginTop: 8,
               marginBottom: 16,
             }}
           >
             {/* Left: Banking Details & Notes */}
-            <div style={{ display: "flex", flexDirection: "column", width: "50%" }}>
+            <div style={{ display: 'flex', flexDirection: 'column', width: '50%' }}>
               {data.banking && (
                 <div
                   style={{
@@ -214,9 +250,9 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
                       fontSize: 7.5,
                       fontWeight: 700,
                       color: theme.colors.primary,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                      display: "block",
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      display: 'block',
                       marginBottom: 6,
                     }}
                   >
@@ -225,23 +261,38 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
                   <KeyValue
                     size="sm"
                     items={[
-                      { key: "Bank", value: data.banking.bankName },
-                      { key: "Account Name", value: data.banking.accountName },
-                      { key: "Account Number", value: data.banking.accountNumber },
-                      { key: "Branch Code", value: data.banking.branchCode },
-                      { key: "Reference", value: data.invoiceNumber },
+                      { key: 'Bank', value: data.banking.bankName },
+                      { key: 'Account Name', value: data.banking.accountName },
+                      { key: 'Account Number', value: data.banking.accountNumber },
+                      { key: 'Branch Code', value: data.banking.branchCode },
+                      { key: 'Reference', value: data.invoiceNumber },
                     ]}
                   />
                 </div>
               )}
 
               {/* Notes */}
-              <div style={{ display: "flex", flexDirection: "column", marginTop: 4 }}>
-                <span style={{ fontSize: 7.5, fontWeight: 700, color: theme.colors.mutedForeground, textTransform: "uppercase" }}>
+              <div style={{ display: 'flex', flexDirection: 'column', marginTop: 4 }}>
+                <span
+                  style={{
+                    fontSize: 7.5,
+                    fontWeight: 700,
+                    color: theme.colors.mutedForeground,
+                    textTransform: 'uppercase',
+                  }}
+                >
                   Notes
                 </span>
-                <span style={{ fontSize: 7.5, color: theme.colors.mutedForeground, marginTop: 2, lineHeight: 1.4 }}>
-                  {data.notes?.trim() || "Payment is due within agreed terms. Please use the invoice number as payment reference."}
+                <span
+                  style={{
+                    fontSize: 7.5,
+                    color: theme.colors.mutedForeground,
+                    marginTop: 2,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {data.notes?.trim() ||
+                    'Payment is due within agreed terms. Please use the invoice number as payment reference.'}
                 </span>
               </div>
             </div>
@@ -249,23 +300,32 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
             {/* Right: Totals Card */}
             <div
               style={{
-                width: "42%",
+                width: '42%',
                 border: `1px solid ${theme.colors.border}`,
                 borderRadius: theme.primitives.borderRadius.sm,
-                padding: "10px 12px",
+                padding: '10px 12px',
               }}
             >
               <KeyValue
                 size="sm"
                 divided
                 items={[
-                  { key: "Subtotal", value: formatZAR(subtotal) },
-                  ...(data.totals.discount ? [{ key: "Discount", value: `-${formatZAR(data.totals.discount)}` }] : []),
-                  ...(vat > 0 ? [{ key: "VAT (15%)", value: formatZAR(vat) }] : [{ key: "VAT", value: "Exempt / R 0.00" }]),
-                  { key: "Total", value: formatZAR(total), keyStyle: { fontWeight: 700 }, valueStyle: { fontWeight: 700 } },
-                  ...(paid > 0 ? [{ key: "Amount Paid", value: `-${formatZAR(paid)}` }] : []),
+                  { key: 'Subtotal', value: formatZAR(subtotal) },
+                  ...(data.totals.discount
+                    ? [{ key: 'Discount', value: `-${formatZAR(data.totals.discount)}` }]
+                    : []),
+                  ...(vat > 0
+                    ? [{ key: 'VAT (15%)', value: formatZAR(vat) }]
+                    : [{ key: 'VAT', value: 'Exempt / R 0.00' }]),
                   {
-                    key: "Balance Due",
+                    key: 'Total',
+                    value: formatZAR(total),
+                    keyStyle: { fontWeight: 700 },
+                    valueStyle: { fontWeight: 700 },
+                  },
+                  ...(paid > 0 ? [{ key: 'Amount Paid', value: `-${formatZAR(paid)}` }] : []),
+                  {
+                    key: 'Balance Due',
                     value: formatZAR(balanceDue),
                     keyStyle: { fontWeight: 700, fontSize: 10, color: theme.colors.foreground },
                     valueStyle: { fontWeight: 700, fontSize: 11, color: theme.colors.primary },

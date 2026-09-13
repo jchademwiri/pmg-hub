@@ -667,10 +667,19 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
 
       const ccRecipients: string[] = [];
       if (adminCc) ccRecipients.push(adminCc);
-      if (cc) cc.split(',').map((email) => email.trim()).filter(Boolean).forEach((email) => ccRecipients.push(email));
+      if (cc)
+        cc.split(',')
+          .map((email) => email.trim())
+          .filter(Boolean)
+          .forEach((email) => ccRecipients.push(email));
 
       const bccRecipients: string[] = [];
-      if (bcc) bcc.split(',').map((email) => email.trim()).filter(Boolean).forEach((email) => bccRecipients.push(email));
+      if (bcc)
+        bcc
+          .split(',')
+          .map((email) => email.trim())
+          .filter(Boolean)
+          .forEach((email) => bccRecipients.push(email));
 
       const { data, error } = await emailClient({
         to: recipientEmail,

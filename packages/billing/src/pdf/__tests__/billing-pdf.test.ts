@@ -1,51 +1,61 @@
-import React from "react";
-import { describe, expect, it, mock } from "bun:test";
+import React from 'react';
+import { describe, expect, it, mock } from 'bun:test';
 
-mock.module("server-only", () => ({}));
+mock.module('server-only', () => ({}));
 
-describe("Declarative Billing PDF Documents", () => {
+describe('Declarative Billing PDF Documents', () => {
   const sampleOrg = {
-    name: "Playhouse Media Group",
-    divisionOf: "Playhouse Media Group (Pty) Ltd",
-    registrationNumber: "2017/123456/07",
-    vatNumber: "4123456789",
-    email: "billing@playhousemedia.co.za",
-    phone: "+27 11 555 0100",
-    website: "https://playhousemedia.co.za",
-    address: "Sandton, Johannesburg, 2196",
-    salesRep: "Jacob C.",
+    name: 'Playhouse Media Group',
+    divisionOf: 'Playhouse Media Group (Pty) Ltd',
+    registrationNumber: '2017/123456/07',
+    vatNumber: '4123456789',
+    email: 'billing@playhousemedia.co.za',
+    phone: '+27 11 555 0100',
+    website: 'https://playhousemedia.co.za',
+    address: 'Sandton, Johannesburg, 2196',
+    salesRep: 'Jacob C.',
   };
 
   const sampleClient = {
-    name: "Acme Enterprises SA",
-    email: "finance@acme.co.za",
-    phone: "+27 11 234 5678",
-    address: "Rosebank, Johannesburg, 2196",
+    name: 'Acme Enterprises SA',
+    email: 'finance@acme.co.za',
+    phone: '+27 11 234 5678',
+    address: 'Rosebank, Johannesburg, 2196',
   };
 
   const sampleBanking = {
-    bankName: "First National Bank",
-    accountName: "Playhouse Media Group",
-    accountNumber: "62812345678",
-    branchCode: "250655",
+    bankName: 'First National Bank',
+    accountName: 'Playhouse Media Group',
+    accountNumber: '62812345678',
+    branchCode: '250655',
   };
 
-  it("renders a Tax Invoice document into a valid PDF", async () => {
-    const { InvoicePdfDocument } = await import("../documents/invoice-pdf-document");
-    const { renderDocumentToPdf } = await import("../render-document");
+  it('renders a Tax Invoice document into a valid PDF', async () => {
+    const { InvoicePdfDocument } = await import('../documents/invoice-pdf-document');
+    const { renderDocumentToPdf } = await import('../render-document');
 
     const element = React.createElement(InvoicePdfDocument, {
       data: {
-        invoiceNumber: "INV-2026-0089",
-        status: "Paid",
-        issueDate: "2026-03-01",
-        dueDate: "2026-03-15",
-        reference: "PO-ACME-99",
+        invoiceNumber: 'INV-2026-0089',
+        status: 'Paid',
+        issueDate: '2026-03-01',
+        dueDate: '2026-03-15',
+        reference: 'PO-ACME-99',
         org: sampleOrg,
         client: sampleClient,
         items: [
-          { description: "Website Redesign & Turborepo Setup", qty: 1, unitPrice: 35000, amount: 35000 },
-          { description: "Cloudflare & Vercel Pro Deployment", qty: 1, unitPrice: 5000, amount: 5000 },
+          {
+            description: 'Website Redesign & Turborepo Setup',
+            qty: 1,
+            unitPrice: 35000,
+            amount: 35000,
+          },
+          {
+            description: 'Cloudflare & Vercel Pro Deployment',
+            qty: 1,
+            unitPrice: 5000,
+            amount: 5000,
+          },
         ],
         totals: {
           subtotal: 40000,
@@ -55,30 +65,30 @@ describe("Declarative Billing PDF Documents", () => {
           balanceDue: 0,
         },
         banking: sampleBanking,
-        notes: "Thank you for choosing Playhouse Media Group.",
+        notes: 'Thank you for choosing Playhouse Media Group.',
       },
     });
 
     const pdfBytes = await renderDocumentToPdf(element);
     expect(pdfBytes).toBeInstanceOf(Uint8Array);
     expect(pdfBytes.length).toBeGreaterThan(2000);
-    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe("%PDF-");
+    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe('%PDF-');
   });
 
-  it("renders a Quotation document into a valid PDF", async () => {
-    const { QuotePdfDocument } = await import("../documents/quote-pdf-document");
-    const { renderDocumentToPdf } = await import("../render-document");
+  it('renders a Quotation document into a valid PDF', async () => {
+    const { QuotePdfDocument } = await import('../documents/quote-pdf-document');
+    const { renderDocumentToPdf } = await import('../render-document');
 
     const element = React.createElement(QuotePdfDocument, {
       data: {
-        quoteNumber: "QT-2026-0042",
-        status: "Draft",
-        issueDate: "2026-03-05",
-        expiryDate: "2026-04-05",
+        quoteNumber: 'QT-2026-0042',
+        status: 'Draft',
+        issueDate: '2026-03-05',
+        expiryDate: '2026-04-05',
         org: sampleOrg,
         client: sampleClient,
         items: [
-          { description: "Custom Next.js App Development", qty: 80, unitPrice: 850, amount: 68000 },
+          { description: 'Custom Next.js App Development', qty: 80, unitPrice: 850, amount: 68000 },
         ],
         totals: {
           subtotal: 68000,
@@ -92,28 +102,52 @@ describe("Declarative Billing PDF Documents", () => {
     const pdfBytes = await renderDocumentToPdf(element);
     expect(pdfBytes).toBeInstanceOf(Uint8Array);
     expect(pdfBytes.length).toBeGreaterThan(2000);
-    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe("%PDF-");
+    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe('%PDF-');
   });
 
-  it("renders a Statement of Account with Ageing into a valid PDF", async () => {
-    const { StatementPdfDocument } = await import("../documents/statement-pdf-document");
-    const { renderDocumentToPdf } = await import("../render-document");
+  it('renders a Statement of Account with Ageing into a valid PDF', async () => {
+    const { StatementPdfDocument } = await import('../documents/statement-pdf-document');
+    const { renderDocumentToPdf } = await import('../render-document');
 
     const element = React.createElement(StatementPdfDocument, {
       data: {
-        statementNumber: "STMT-2026-03",
-        status: "Active",
-        periodFrom: "2026-01-01",
-        periodTo: "2026-03-31",
+        statementNumber: 'STMT-2026-03',
+        status: 'Active',
+        periodFrom: '2026-01-01',
+        periodTo: '2026-03-31',
         org: sampleOrg,
         client: sampleClient,
         openingBalance: 12000,
         totalDue: 45000,
         transactions: [
-          { date: "2026-01-15", reference: "INV-1001", description: "Design Retainer Jan", debit: 15000, balance: 27000 },
-          { date: "2026-01-28", reference: "RCT-501", description: "EFT Payment Recd", credit: 15000, balance: 12000 },
-          { date: "2026-02-15", reference: "INV-1015", description: "Design Retainer Feb", debit: 15000, balance: 27000 },
-          { date: "2026-03-15", reference: "INV-1030", description: "Design Retainer Mar", debit: 18000, balance: 45000 },
+          {
+            date: '2026-01-15',
+            reference: 'INV-1001',
+            description: 'Design Retainer Jan',
+            debit: 15000,
+            balance: 27000,
+          },
+          {
+            date: '2026-01-28',
+            reference: 'RCT-501',
+            description: 'EFT Payment Recd',
+            credit: 15000,
+            balance: 12000,
+          },
+          {
+            date: '2026-02-15',
+            reference: 'INV-1015',
+            description: 'Design Retainer Feb',
+            debit: 15000,
+            balance: 27000,
+          },
+          {
+            date: '2026-03-15',
+            reference: 'INV-1030',
+            description: 'Design Retainer Mar',
+            debit: 18000,
+            balance: 45000,
+          },
         ],
         ageing: {
           current: 18000,
@@ -129,24 +163,24 @@ describe("Declarative Billing PDF Documents", () => {
     const pdfBytes = await renderDocumentToPdf(element);
     expect(pdfBytes).toBeInstanceOf(Uint8Array);
     expect(pdfBytes.length).toBeGreaterThan(2500);
-    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe("%PDF-");
+    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe('%PDF-');
   });
 
-  it("renders a Payment Receipt into a valid PDF", async () => {
-    const { ReceiptPdfDocument } = await import("../documents/receipt-pdf-document");
-    const { renderDocumentToPdf } = await import("../render-document");
+  it('renders a Payment Receipt into a valid PDF', async () => {
+    const { ReceiptPdfDocument } = await import('../documents/receipt-pdf-document');
+    const { renderDocumentToPdf } = await import('../render-document');
 
     const element = React.createElement(ReceiptPdfDocument, {
       data: {
-        receiptNumber: "RCT-2026-098",
-        paymentDate: "2026-03-12",
-        reference: "Payment for TES-INV-2026-024, TES-INV-2026-027, TES-INV-2026-026",
+        receiptNumber: 'RCT-2026-098',
+        paymentDate: '2026-03-12',
+        reference: 'Payment for TES-INV-2026-024, TES-INV-2026-027, TES-INV-2026-026',
         amount: 25000,
         org: sampleOrg,
         client: sampleClient,
         allocations: [
-          { invoiceNumber: "INV-2026-0080", invoiceDate: "2026-02-01", amount: 20000 },
-          { invoiceNumber: "INV-2026-0089", invoiceDate: "2026-03-01", amount: 5000 },
+          { invoiceNumber: 'INV-2026-0080', invoiceDate: '2026-02-01', amount: 20000 },
+          { invoiceNumber: 'INV-2026-0089', invoiceDate: '2026-03-01', amount: 5000 },
         ],
       },
     });
@@ -154,23 +188,21 @@ describe("Declarative Billing PDF Documents", () => {
     const pdfBytes = await renderDocumentToPdf(element);
     expect(pdfBytes).toBeInstanceOf(Uint8Array);
     expect(pdfBytes.length).toBeGreaterThan(2000);
-    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe("%PDF-");
+    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe('%PDF-');
   });
 
   it("renders non-VAT invoice with 'Invoice' title and default payment notes", async () => {
-    const { InvoicePdfDocument } = await import("../documents/invoice-pdf-document");
-    const { renderDocumentToPdf } = await import("../render-document");
+    const { InvoicePdfDocument } = await import('../documents/invoice-pdf-document');
+    const { renderDocumentToPdf } = await import('../render-document');
 
     const element = React.createElement(InvoicePdfDocument, {
       data: {
-        invoiceNumber: "INV-2026-0090",
-        status: "Draft",
-        issueDate: "2026-03-15",
+        invoiceNumber: 'INV-2026-0090',
+        status: 'Draft',
+        issueDate: '2026-03-15',
         org: sampleOrg,
         client: sampleClient,
-        items: [
-          { description: "Consulting Services", qty: 2, unitPrice: 2500, amount: 5000 },
-        ],
+        items: [{ description: 'Consulting Services', qty: 2, unitPrice: 2500, amount: 5000 }],
         totals: {
           subtotal: 5000,
           vat: 0,
@@ -184,21 +216,21 @@ describe("Declarative Billing PDF Documents", () => {
     const pdfBytes = await renderDocumentToPdf(element);
     expect(pdfBytes).toBeInstanceOf(Uint8Array);
     expect(pdfBytes.length).toBeGreaterThan(2000);
-    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe("%PDF-");
+    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe('%PDF-');
   });
 
-  it("renders a Credit Note document into a valid PDF", async () => {
-    const { CreditNotePdfDocument } = await import("../documents/credit-note-pdf-document");
-    const { renderDocumentToPdf } = await import("../render-document");
+  it('renders a Credit Note document into a valid PDF', async () => {
+    const { CreditNotePdfDocument } = await import('../documents/credit-note-pdf-document');
+    const { renderDocumentToPdf } = await import('../render-document');
 
     const element = React.createElement(CreditNotePdfDocument, {
       data: {
-        creditNoteNumber: "CN-2026-0001",
-        status: "Active",
-        issueDate: "2026-03-10",
-        type: "Invoice Adjustment",
-        reason: "Overcharge adjustment on services rendered",
-        originalInvoiceNumber: "INV-2026-0089",
+        creditNoteNumber: 'CN-2026-0001',
+        status: 'Active',
+        issueDate: '2026-03-10',
+        type: 'Invoice Adjustment',
+        reason: 'Overcharge adjustment on services rendered',
+        originalInvoiceNumber: 'INV-2026-0089',
         amount: 5000,
         amountRemaining: 2000,
         amountApplied: 3000,
@@ -206,8 +238,8 @@ describe("Declarative Billing PDF Documents", () => {
         client: sampleClient,
         applications: [
           {
-            invoiceNumber: "INV-2026-0089",
-            appliedDate: "2026-03-11",
+            invoiceNumber: 'INV-2026-0089',
+            appliedDate: '2026-03-11',
             amount: 3000,
           },
         ],
@@ -217,38 +249,38 @@ describe("Declarative Billing PDF Documents", () => {
     const pdfBytes = await renderDocumentToPdf(element);
     expect(pdfBytes).toBeInstanceOf(Uint8Array);
     expect(pdfBytes.length).toBeGreaterThan(2000);
-    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe("%PDF-");
+    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe('%PDF-');
   });
 
-  it("renders a single-adjustment Credit Note matching the exact TES user scenario", async () => {
-    const { CreditNotePdfDocument } = await import("../documents/credit-note-pdf-document");
-    const { renderDocumentToPdf } = await import("../render-document");
-    const fs = await import("fs");
+  it('renders a single-adjustment Credit Note matching the exact TES user scenario', async () => {
+    const { CreditNotePdfDocument } = await import('../documents/credit-note-pdf-document');
+    const { renderDocumentToPdf } = await import('../render-document');
+    const fs = await import('fs');
 
     const element = React.createElement(CreditNotePdfDocument, {
       data: {
-        creditNoteNumber: "TES-CN-2026-0001",
-        status: "Active",
-        issueDate: "2026-09-11",
-        type: "Overpayment",
-        reason: "Overpayment from: Advance Payment",
+        creditNoteNumber: 'TES-CN-2026-0001',
+        status: 'Active',
+        issueDate: '2026-09-11',
+        type: 'Overpayment',
+        reason: 'Overpayment from: Advance Payment',
         amount: 5000,
         amountRemaining: 5000,
         amountApplied: 0,
         org: {
-          name: "Tender Edge Solutions",
-          divisionOf: "Playhouse Media Group",
-          registrationNumber: "2023/683669/07",
-          email: "tenders@tenderedgesolutions.co.za",
-          phone: "+27 74 501 7094",
-          website: "www.tenderedgesolutions.co.za",
-          address: "RASLOUW AH, CENTURION, 0157",
+          name: 'Tender Edge Solutions',
+          divisionOf: 'Playhouse Media Group',
+          registrationNumber: '2023/683669/07',
+          email: 'tenders@tenderedgesolutions.co.za',
+          phone: '+27 74 501 7094',
+          website: 'www.tenderedgesolutions.co.za',
+          address: 'RASLOUW AH, CENTURION, 0157',
           logoDataUri: null,
         },
         client: {
-          name: "Basadipele",
-          email: "info@basadipeleserv.co.za",
-          phone: "+27 72 531 0590",
+          name: 'Basadipele',
+          email: 'info@basadipeleserv.co.za',
+          phone: '+27 72 531 0590',
         },
       },
     });
@@ -256,45 +288,40 @@ describe("Declarative Billing PDF Documents", () => {
     const pdfBytes = await renderDocumentToPdf(element);
     expect(pdfBytes).toBeInstanceOf(Uint8Array);
     expect(pdfBytes.length).toBeGreaterThan(2000);
-    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe("%PDF-");
-
-    fs.writeFileSync(
-      "C:/Users/JacobC/.gemini/antigravity/brain/7da18899-029c-4b89-90e2-c57517eab84d/scratch/credit-note-preview-updated.pdf",
-      Buffer.from(pdfBytes)
-    );
+    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe('%PDF-');
   });
 
-  it("renders a multi-allocation Payment Receipt matching the exact TES receipt layout", async () => {
-    const { ReceiptPdfDocument } = await import("../documents/receipt-pdf-document");
-    const { renderDocumentToPdf } = await import("../render-document");
-    const fs = await import("fs");
+  it('renders a multi-allocation Payment Receipt matching the exact TES receipt layout', async () => {
+    const { ReceiptPdfDocument } = await import('../documents/receipt-pdf-document');
+    const { renderDocumentToPdf } = await import('../render-document');
+    const fs = await import('fs');
 
     const element = React.createElement(ReceiptPdfDocument, {
       data: {
-        receiptNumber: "TES-REC-D2170DF6",
-        paymentDate: "2026-09-04",
-        reference: "Payment for TES-INV-2026-024, TES-INV-2026-027, TES-INV-2026-026",
+        receiptNumber: 'TES-REC-D2170DF6',
+        paymentDate: '2026-09-04',
+        reference: 'Payment for TES-INV-2026-024, TES-INV-2026-027, TES-INV-2026-026',
         amount: 5000,
         org: {
-          name: "Tender Edge Solutions",
-          divisionOf: "Playhouse Media Group (Pty) Ltd",
-          registrationNumber: "2023/683669/07",
-          email: "tenders@tenderedgesolutions.co.za",
-          phone: "+27 74 501 7094",
-          website: "www.tenderedgesolutions.co.za",
-          address: "RASLOUW AH, CENTURION, 0157",
+          name: 'Tender Edge Solutions',
+          divisionOf: 'Playhouse Media Group (Pty) Ltd',
+          registrationNumber: '2023/683669/07',
+          email: 'tenders@tenderedgesolutions.co.za',
+          phone: '+27 74 501 7094',
+          website: 'www.tenderedgesolutions.co.za',
+          address: 'RASLOUW AH, CENTURION, 0157',
           logoDataUri: null,
         },
         client: {
-          name: "Mathange Tradings",
-          contactName: "Sabelo Given Magagula",
-          email: "sabelomagagula1@gmail.com",
-          phone: "0765189056",
+          name: 'Mathange Tradings',
+          contactName: 'Sabelo Given Magagula',
+          email: 'sabelomagagula1@gmail.com',
+          phone: '0765189056',
         },
         allocations: [
-          { invoiceNumber: "TES-INV-2026-024", invoiceDate: "2026-09-04", amount: 80 },
-          { invoiceNumber: "TES-INV-2026-026", invoiceDate: "2026-09-04", amount: 2420 },
-          { invoiceNumber: "TES-INV-2026-027", invoiceDate: "2026-09-04", amount: 2500 },
+          { invoiceNumber: 'TES-INV-2026-024', invoiceDate: '2026-09-04', amount: 80 },
+          { invoiceNumber: 'TES-INV-2026-026', invoiceDate: '2026-09-04', amount: 2420 },
+          { invoiceNumber: 'TES-INV-2026-027', invoiceDate: '2026-09-04', amount: 2500 },
         ],
       },
     });
@@ -302,6 +329,6 @@ describe("Declarative Billing PDF Documents", () => {
     const pdfBytes = await renderDocumentToPdf(element);
     expect(pdfBytes).toBeInstanceOf(Uint8Array);
     expect(pdfBytes.length).toBeGreaterThan(2000);
-    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe("%PDF-");
+    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe('%PDF-');
   });
 });

@@ -1,10 +1,10 @@
-import "server-only";
+import 'server-only';
 
-import React, { type ReactElement } from "react";
-import { renderPdf, type RenderPdfOptions } from "./engine";
-import { runWithPdfTheme } from "./theme-provider";
-import { resolveDivisionTheme } from "./themes";
-import type { PdfTheme } from "./types";
+import React, { type ReactElement } from 'react';
+import { renderPdf, type RenderPdfOptions } from './engine';
+import { runWithPdfTheme } from './theme-provider';
+import { resolveDivisionTheme } from './themes';
+import type { PdfTheme } from './types';
 
 export interface RenderDocumentOptions extends RenderPdfOptions {
   theme?: PdfTheme;
@@ -21,13 +21,13 @@ export async function renderDocumentToPdf(
 ): Promise<Uint8Array> {
   const theme = options?.theme ?? resolveDivisionTheme(options?.divisionName);
 
-  const { renderToStaticMarkup } = await import("react-dom/server");
+  const { renderToStaticMarkup } = await import('react-dom/server');
 
   const markup = runWithPdfTheme(theme, () => renderToStaticMarkup(element));
 
   return renderPdf(markup, {
     size: options?.size ?? theme.page.size,
-    landscape: options?.landscape ?? (theme.page.orientation === "landscape"),
+    landscape: options?.landscape ?? theme.page.orientation === 'landscape',
     margin: options?.margin,
     backgroundColor: options?.backgroundColor ?? theme.colors.background,
   });
