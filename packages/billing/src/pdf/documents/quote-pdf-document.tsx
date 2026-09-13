@@ -174,48 +174,33 @@ export function QuotePdfDocument({ data }: { data: QuotePdfData }) {
               marginBottom: 16,
             }}
           >
-            {/* Left: Acceptance Placeholder & Notes */}
+            {/* Left: Special Conditions & Notes */}
             <div style={{ display: "flex", flexDirection: "column", width: "50%" }}>
-              <div
-                style={{
-                  border: `1px dashed ${theme.colors.border}`,
-                  borderRadius: theme.primitives.borderRadius.sm,
-                  padding: 10,
-                  marginBottom: 10,
-                }}
-              >
+              <div style={{ display: "flex", flexDirection: "column" }}>
                 <span
                   style={{
                     fontSize: 7.5,
                     fontWeight: 700,
-                    color: theme.colors.foreground,
+                    color: theme.colors.primary,
                     textTransform: "uppercase",
                     letterSpacing: "0.5px",
                     display: "block",
                     marginBottom: 4,
                   }}
                 >
-                  Customer Acceptance
+                  Special Conditions
                 </span>
-                <span style={{ fontSize: 7, color: theme.colors.mutedForeground, display: "block", marginBottom: 12 }}>
-                  Sign below to accept this quotation and authorize commencement of work.
+                <span style={{ fontSize: 7.5, color: theme.colors.mutedForeground, lineHeight: 1.45 }}>
+                  Quotation valid for 30 days. 50% deposit required prior to development commencement. Final website/project deployment upon receipt of full balance.
                 </span>
-                <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
-                  <div style={{ width: "60%", borderBottom: `1px solid ${theme.colors.border}`, paddingBottom: 2 }}>
-                    <span style={{ fontSize: 6.5, color: theme.colors.mutedForeground }}>Signature</span>
-                  </div>
-                  <div style={{ width: "35%", borderBottom: `1px solid ${theme.colors.border}`, paddingBottom: 2 }}>
-                    <span style={{ fontSize: 6.5, color: theme.colors.mutedForeground }}>Date</span>
-                  </div>
-                </div>
               </div>
 
               {data.notes && (
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  <span style={{ fontSize: 7.5, fontWeight: 700, color: theme.colors.mutedForeground, textTransform: "uppercase" }}>
-                    Special Conditions
+                <div style={{ display: "flex", flexDirection: "column", marginTop: 8 }}>
+                  <span style={{ fontSize: 7.5, fontWeight: 700, color: theme.colors.mutedForeground, textTransform: "uppercase", marginBottom: 2 }}>
+                    Notes
                   </span>
-                  <span style={{ fontSize: 7.5, color: theme.colors.mutedForeground, marginTop: 2, lineHeight: 1.4 }}>
+                  <span style={{ fontSize: 7.5, color: theme.colors.mutedForeground, lineHeight: 1.4 }}>
                     {data.notes}
                   </span>
                 </div>
