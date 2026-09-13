@@ -7,6 +7,7 @@ interface Allocation {
   id: string;
   invoiceId: string;
   invoiceNumber: string;
+  invoiceDate?: string;
   amount: string;
   createdAt: Date | string;
 }
@@ -168,10 +169,10 @@ export function PaymentReceiptPreview({
                   Invoice Number
                 </th>
                 <th className="py-2 px-4 text-left text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
-                  Date Allocated
+                  Invoice Date
                 </th>
                 <th className="py-2 pl-4 text-right text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
-                  Amount Allocated
+                  Allocated Amount
                 </th>
               </tr>
             </thead>
@@ -183,7 +184,7 @@ export function PaymentReceiptPreview({
                 >
                   <td className="py-3 pr-4 text-zinc-900 font-medium">{alloc.invoiceNumber}</td>
                   <td className="py-3 px-4 text-zinc-500 text-xs">
-                    {fmtDateLong(alloc.createdAt ? new Date(alloc.createdAt) : payment.date)}
+                    {fmtDateLong(alloc.invoiceDate || (alloc.createdAt ? new Date(alloc.createdAt) : payment.date))}
                   </td>
                   <td className="py-3 pl-4 text-right tabular-nums font-semibold text-emerald-600">
                     {formatZAR(Number(alloc.amount))}

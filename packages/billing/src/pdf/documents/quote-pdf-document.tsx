@@ -140,7 +140,7 @@ export function QuotePdfDocument({ data }: { data: QuotePdfData }) {
             ) : (
               data.items.map((item, idx) => (
                 <TableRow key={idx} striped={idx % 2 === 1}>
-                  <TableCell>
+                  <TableCell width="52%">
                     <div style={{ display: "flex", flexDirection: "column" }}>
                       {item.itemName && (
                         <span style={{ fontWeight: 600, color: theme.colors.foreground, fontSize: 8.5 }}>
@@ -152,9 +152,9 @@ export function QuotePdfDocument({ data }: { data: QuotePdfData }) {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell align="center" tabular>{item.qty}</TableCell>
-                  <TableCell align="right" tabular>{formatZAR(item.unitPrice)}</TableCell>
-                  <TableCell align="right" bold tabular>{formatZAR(item.amount)}</TableCell>
+                  <TableCell align="center" width="12%" tabular>{item.qty}</TableCell>
+                  <TableCell align="right" width="18%" tabular>{formatZAR(item.unitPrice)}</TableCell>
+                  <TableCell align="right" width="18%" bold tabular>{formatZAR(item.amount)}</TableCell>
                 </TableRow>
               ))
             )}

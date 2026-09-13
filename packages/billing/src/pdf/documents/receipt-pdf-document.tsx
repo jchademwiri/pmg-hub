@@ -141,24 +141,24 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
         <Table variant="compact" style={{ marginBottom: theme.spacing.sectionGap }}>
           <TableHeader>
             <TableRow header>
-              <TableCell header width="40%">Invoice Number</TableCell>
-              <TableCell header width="30%">Invoice Date</TableCell>
+              <TableCell header width="38%">Invoice Number</TableCell>
+              <TableCell header width="32%">Invoice Date</TableCell>
               <TableCell header align="right" width="30%">Allocated Amount</TableCell>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.allocations.length === 0 ? (
               <TableRow>
-                <TableCell>Unallocated Payment on Account</TableCell>
-                <TableCell>-</TableCell>
-                <TableCell align="right" bold tabular>{formatZAR(data.amount)}</TableCell>
+                <TableCell width="38%">Unallocated Payment on Account</TableCell>
+                <TableCell width="32%">-</TableCell>
+                <TableCell width="30%" align="right" bold tabular>{formatZAR(data.amount)}</TableCell>
               </TableRow>
             ) : (
               data.allocations.map((alloc, idx) => (
                 <TableRow key={idx} striped={idx % 2 === 1}>
-                  <TableCell bold>#{alloc.invoiceNumber}</TableCell>
-                  <TableCell>{alloc.invoiceDate ? fmtDate(alloc.invoiceDate) : "-"}</TableCell>
-                  <TableCell align="right" bold tabular>{formatZAR(alloc.amount)}</TableCell>
+                  <TableCell width="38%" bold>#{alloc.invoiceNumber}</TableCell>
+                  <TableCell width="32%">{alloc.invoiceDate ? fmtDate(alloc.invoiceDate) : "-"}</TableCell>
+                  <TableCell width="30%" align="right" bold tabular>{formatZAR(alloc.amount)}</TableCell>
                 </TableRow>
               ))
             )}

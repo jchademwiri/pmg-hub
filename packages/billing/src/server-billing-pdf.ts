@@ -106,6 +106,11 @@ type PdfDocumentData = {
   };
   reference?: string | null;
   lineItems?: PdfLineItem[];
+  allocations?: {
+    invoiceNumber: string;
+    invoiceDate?: string;
+    amount: number;
+  }[];
   transactions?: PdfTransaction[];
   openingBalance?: number;
   ageing?: PdfAgeing;
@@ -658,6 +663,20 @@ async function buildReceiptPdfData(id: string): Promise<PdfDocumentData | null> 
       name: payment.clientName ?? 'Client',
     },
     reference,
+    allocations: allocations.map((alloc) => {
+      let invDate = alloc.invoiceDate;
+      if (!invDate && alloc.createdAt) {
+        invDate =
+          alloc.createdAt instanceof Date
+            ? alloc.createdAt.toISOString().split('T')[0]
+            : String(alloc.createdAt).split('T')[0];
+      }
+      return {
+        invoiceNumber: alloc.invoiceNumber,
+        invoiceDate: invDate || undefined,
+        amount: safeNumber(alloc.amount),
+      };
+    }),
     lineItems: allocations.map((alloc) => ({
       itemName: alloc.invoiceNumber,
       description: alloc.invoiceDate || '',
@@ -1063,7 +1082,15 @@ async function renderDeclarativeBillingPdf(data: PdfDocumentData): Promise<Buffe
     });
   } else if (data.type === 'receipt') {
     const amount = data.totals?.paid || 0;
-    const totalAllocated = (data.lineItems || []).reduce((sum, item) => sum + item.amount, 0);
+    const allocationsList =
+      data.allocations && data.allocations.length > 0
+        ? data.allocations
+        : (data.lineItems || []).map((item) => ({
+            invoiceNumber: item.itemName || item.description,
+            invoiceDate: item.itemName && item.description ? item.description : undefined,
+            amount: item.amount,
+          }));
+    const totalAllocated = allocationsList.reduce((sum, item) => sum + item.amount, 0);
     const unallocated = data.totals?.balanceDue ?? Math.max(0, amount - totalAllocated);
 
     element = React.createElement(ReceiptPdfDocument, {
@@ -1075,11 +1102,7 @@ async function renderDeclarativeBillingPdf(data: PdfDocumentData): Promise<Buffe
         unallocated,
         org,
         client: data.client,
-        allocations: (data.lineItems || []).map((item) => ({
-          invoiceNumber: item.itemName || item.description,
-          invoiceDate: item.itemName && item.description ? item.description : undefined,
-          amount: item.amount,
-        })),
+        allocations: allocationsList,
         notes: data.notes,
       },
     });

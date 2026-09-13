@@ -219,4 +219,44 @@ describe("Declarative Billing PDF Documents", () => {
     expect(pdfBytes.length).toBeGreaterThan(2000);
     expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe("%PDF-");
   });
+
+  it("renders a multi-allocation Payment Receipt matching the exact TES receipt layout", async () => {
+    const { ReceiptPdfDocument } = await import("../documents/receipt-pdf-document");
+    const { renderDocumentToPdf } = await import("../render-document");
+    const fs = await import("fs");
+
+    const element = React.createElement(ReceiptPdfDocument, {
+      data: {
+        receiptNumber: "TES-REC-2026-0001",
+        paymentDate: "2026-07-14",
+        reference: "Payment for TES-INV-2026-024, TES-INV-2026-027, TES-INV-2026-026 | Bank ref: NED-9988",
+        amount: 5000,
+        org: {
+          name: "Tender Edge Solutions",
+          divisionOf: "Playhouse Media Group (Pty) Ltd",
+          registrationNumber: "2023/683669/07",
+          email: "tenders@tenderedgesolutions.co.za",
+          phone: "+27 74 501 7094",
+          website: "www.tenderedgesolutions.co.za",
+          address: "RASLOUW AH, CENTURION, 0157",
+          logoDataUri: null,
+        },
+        client: {
+          name: "Mathange Tradings",
+          email: "sabelomagagula1@gmail.com",
+          phone: "0765189056",
+        },
+        allocations: [
+          { invoiceNumber: "TES-INV-2026-024", invoiceDate: "2026-07-14", amount: 80 },
+          { invoiceNumber: "TES-INV-2026-026", invoiceDate: "2026-07-14", amount: 2420 },
+          { invoiceNumber: "TES-INV-2026-027", invoiceDate: "2026-07-14", amount: 2500 },
+        ],
+      },
+    });
+
+    const pdfBytes = await renderDocumentToPdf(element);
+    expect(pdfBytes).toBeInstanceOf(Uint8Array);
+    expect(pdfBytes.length).toBeGreaterThan(2000);
+    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe("%PDF-");
+  });
 });

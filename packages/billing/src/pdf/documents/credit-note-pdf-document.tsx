@@ -148,9 +148,9 @@ export function CreditNotePdfDocument({ data }: { data: CreditNotePdfData }) {
             <TableBody>
               {data.applications.map((app, idx) => (
                 <TableRow key={idx} striped={idx % 2 === 1}>
-                  <TableCell bold>#{app.invoiceNumber}</TableCell>
-                  <TableCell>{fmtDate(app.appliedDate)}</TableCell>
-                  <TableCell align="right" bold tabular>{formatZAR(app.amount)}</TableCell>
+                  <TableCell width="40%" bold>#{app.invoiceNumber}</TableCell>
+                  <TableCell width="30%">{fmtDate(app.appliedDate)}</TableCell>
+                  <TableCell width="30%" align="right" bold tabular>{formatZAR(app.amount)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -165,7 +165,7 @@ export function CreditNotePdfDocument({ data }: { data: CreditNotePdfData }) {
             </TableHeader>
             <TableBody>
               <TableRow>
-                <TableCell>
+                <TableCell width="70%">
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span style={{ fontWeight: 600, color: theme.colors.foreground, fontSize: 8.5 }}>
                       {data.type}
@@ -175,7 +175,7 @@ export function CreditNotePdfDocument({ data }: { data: CreditNotePdfData }) {
                     </span>
                   </div>
                 </TableCell>
-                <TableCell align="right" bold tabular>{formatZAR(data.amount)}</TableCell>
+                <TableCell width="30%" align="right" bold tabular>{formatZAR(data.amount)}</TableCell>
               </TableRow>
             </TableBody>
           </Table>

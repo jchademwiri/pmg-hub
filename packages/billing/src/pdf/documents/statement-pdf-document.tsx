@@ -154,25 +154,25 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
           <TableBody>
             {/* Opening Balance Row */}
             <TableRow striped={false}>
-              <TableCell>{data.periodFrom ? fmtDate(data.periodFrom) : "-"}</TableCell>
-              <TableCell bold>OPENING</TableCell>
-              <TableCell>Opening Balance</TableCell>
-              <TableCell align="right">-</TableCell>
-              <TableCell align="right">-</TableCell>
-              <TableCell align="right" bold tabular>{formatZAR(openingBalance)}</TableCell>
+              <TableCell width="15%">{data.periodFrom ? fmtDate(data.periodFrom) : "-"}</TableCell>
+              <TableCell width="18%" bold>OPENING</TableCell>
+              <TableCell width="28%">Opening Balance</TableCell>
+              <TableCell width="13%" align="right">-</TableCell>
+              <TableCell width="13%" align="right">-</TableCell>
+              <TableCell width="13%" align="right" bold tabular>{formatZAR(openingBalance)}</TableCell>
             </TableRow>
 
             {/* Transaction Rows */}
             {(data.transactions ?? []).map((tx, idx) => (
               <TableRow key={idx} striped={idx % 2 === 1}>
-                <TableCell>{fmtDate(tx.date)}</TableCell>
-                <TableCell bold>{tx.reference}</TableCell>
-                <TableCell>{tx.description}</TableCell>
-                <TableCell align="right" tabular>{tx.debit ? formatZAR(tx.debit) : "-"}</TableCell>
-                <TableCell align="right" tabular style={{ color: tx.credit ? theme.colors.success : undefined }}>
+                <TableCell width="15%">{fmtDate(tx.date)}</TableCell>
+                <TableCell width="18%" bold>{tx.reference}</TableCell>
+                <TableCell width="28%">{tx.description}</TableCell>
+                <TableCell width="13%" align="right" tabular>{tx.debit ? formatZAR(tx.debit) : "-"}</TableCell>
+                <TableCell width="13%" align="right" tabular style={{ color: tx.credit ? theme.colors.success : undefined }}>
                   {tx.credit ? `(${formatZAR(tx.credit)})` : "-"}
                 </TableCell>
-                <TableCell align="right" bold tabular>{tx.balance != null ? formatZAR(tx.balance) : "-"}</TableCell>
+                <TableCell width="13%" align="right" bold tabular>{tx.balance != null ? formatZAR(tx.balance) : "-"}</TableCell>
               </TableRow>
             ))}
           </TableBody>
