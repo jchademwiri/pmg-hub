@@ -41,6 +41,8 @@ export interface StatementPdfData {
   transactions: StatementTransaction[];
   ageing?: StatementAgeing;
   totalDue?: number;
+  subtotal?: number;
+  totalPaid?: number;
   banking?: InvoiceBankingDetails;
   terms?: string | null;
 }
@@ -48,8 +50,14 @@ export interface StatementPdfData {
 export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
   const theme = usePdfTheme();
 
-  const totalDue = data.totalDue ?? 0;
   const openingBalance = data.openingBalance ?? 0;
+  const subtotal =
+    data.subtotal ??
+    ((data.transactions ?? []).reduce((sum, tx) => sum + (tx.debit || 0), 0) + openingBalance);
+  const totalPaid =
+    data.totalPaid ??
+    (data.transactions ?? []).reduce((sum, tx) => sum + (tx.credit || 0), 0);
+  const totalDue = data.totalDue ?? Math.max(0, subtotal - totalPaid);
 
   return (
     <Document title={`Statement ${data.statementNumber}`}>
@@ -170,11 +178,97 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
           </TableBody>
         </Table>
 
-        {/* Bottom Fixed Section: Ageing Analysis, Banking Notice, & Footer */}
+        {/* Section Below Last Line Item: Banking on Left, Totals Breakdown on Right */}
+        <KeepTogether>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              gap: 24,
+              marginTop: 6,
+              marginBottom: 12,
+            }}
+          >
+            {/* Left: Banking Details */}
+            <div style={{ display: "flex", flexDirection: "column", width: "52%" }}>
+              {data.banking && (
+                <div
+                  style={{
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: theme.primitives.borderRadius.sm,
+                    padding: "10px 12px",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 7.5,
+                      fontWeight: 700,
+                      color: theme.colors.primary,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                      display: "block",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Banking Details
+                  </span>
+                  <KeyValue
+                    size="sm"
+                    items={[
+                      { key: "Bank", value: data.banking.bankName },
+                      { key: "Account Name", value: data.banking.accountName },
+                      { key: "Account Number", value: data.banking.accountNumber },
+                      { key: "Branch Code", value: data.banking.branchCode },
+                      { key: "Reference", value: data.client.name.slice(0, 14).toUpperCase() },
+                    ]}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Right: Breakdown Card (Subtotal, Less Payments, Balance Due) */}
+            <div
+              style={{
+                width: "42%",
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: theme.primitives.borderRadius.sm,
+                padding: "10px 12px",
+              }}
+            >
+              <KeyValue
+                size="sm"
+                divided
+                items={[
+                  {
+                    key: "Subtotal",
+                    value: formatZAR(subtotal),
+                    keyStyle: { fontWeight: 700 },
+                    valueStyle: { fontWeight: 700 },
+                  },
+                  {
+                    key: "Less Payments",
+                    value: totalPaid > 0 ? `-${formatZAR(totalPaid)}` : "-R 0,00",
+                    valueStyle: { color: totalPaid > 0 ? theme.colors.success : theme.colors.mutedForeground },
+                  },
+                  {
+                    key: "Balance Due",
+                    value: formatZAR(totalDue),
+                    keyStyle: { fontWeight: 700, fontSize: 10, color: theme.colors.foreground },
+                    valueStyle: { fontWeight: 700, fontSize: 11, color: theme.colors.primary },
+                  },
+                ]}
+              />
+            </div>
+          </div>
+        </KeepTogether>
+
+        {/* Bottom Fixed Section: Ageing Summary & Footer */}
         <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", breakInside: "avoid", pageBreakInside: "avoid" }}>
-          {/* Ageing Analysis Table */}
+          {/* Ageing Summary Table */}
           {data.ageing && (
-            <div style={{ marginTop: 12, marginBottom: 12 }}>
+            <div style={{ marginTop: 8, marginBottom: 8 }}>
               <span
                 style={{
                   fontSize: 7.5,
@@ -186,7 +280,7 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                   marginBottom: 6,
                 }}
               >
-                Ageing Analysis (Due Dates)
+                Ageing Summary
               </span>
               <table style={{ width: "100%", borderCollapse: "collapse", border: `1px solid ${theme.colors.border}` }}>
                 <thead>
@@ -222,34 +316,6 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                   </tr>
                 </tbody>
               </table>
-            </div>
-          )}
-
-          {/* Banking Notice */}
-          {data.banking && (
-            <div
-              style={{
-                border: `1px solid ${theme.colors.border}`,
-                borderRadius: theme.primitives.borderRadius.sm,
-                padding: "8px 12px",
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 10,
-              }}
-            >
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontSize: 7, fontWeight: 700, color: theme.colors.primary, textTransform: "uppercase" }}>
-                  Remittance / Banking Details
-                </span>
-                <span style={{ fontSize: 7.5, color: theme.colors.foreground, marginTop: 2 }}>
-                  {data.banking.bankName} · Acc: {data.banking.accountNumber} · Branch: {data.banking.branchCode} · Acc Name: {data.banking.accountName}
-                </span>
-              </div>
-              <span style={{ fontSize: 7.5, fontWeight: 600, color: theme.colors.mutedForeground }}>
-                Ref: {data.client.name.slice(0, 12).toUpperCase()}
-              </span>
             </div>
           )}
 

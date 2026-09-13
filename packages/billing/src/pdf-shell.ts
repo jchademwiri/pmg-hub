@@ -167,13 +167,8 @@ export function drawShellFooter(doc: jsPDF, opts: DrawShellFooterOptions): void 
     doc.line(PAGE.margin, 282, PAGE.width - PAGE.margin, 282);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.setTextColor(113, 113, 122);
-    const legalParts = [
-      opts.divisionOf ? `A division of ${opts.divisionOf}` : undefined,
-      opts.registrationNumber ? `Reg: ${opts.registrationNumber}` : undefined,
-    ].filter(Boolean);
     const footerText =
-      legalParts.length > 0 ? legalParts.join(' · ') : 'Thank you for your business.';
+      'A division of Playhouse Media Group · Reg: 2023/683669/07';
     doc.text(footerText, PAGE.margin, 288);
     doc.text(`Page ${i} of ${pageCount}`, PAGE.width - PAGE.margin, 288, { align: 'right' });
   }

@@ -23,14 +23,8 @@ export function PageFooter({
   const theme = usePdfTheme();
   const pageLabel = rightText || `Page ${pageNumber} of ${totalPages}`;
 
-  const legalParts = [
-    org?.divisionOf ? `A division of ${org.divisionOf}` : null,
-    org?.registrationNumber ? `Reg: ${org.registrationNumber}` : null,
-  ].filter(Boolean);
-
-  const legalText = legalParts.length > 0 ? legalParts.join(" · ") : null;
   const resolvedLeftText =
-    legalText || leftText || "Thank you for your business. Payment is due according to agreed terms.";
+    leftText || "A division of Playhouse Media Group · Reg: 2023/683669/07";
 
   return (
     <div

@@ -1045,6 +1045,8 @@ async function renderDeclarativeBillingPdf(data: PdfDocumentData): Promise<Buffe
         org,
         client: data.client,
         openingBalance: data.openingBalance,
+        subtotal: data.totals?.subtotal,
+        totalPaid: data.totals?.paid,
         totalDue: data.totals?.balanceDue,
         transactions: (data.transactions || []).map((tx) => ({
           date: tx.date,
