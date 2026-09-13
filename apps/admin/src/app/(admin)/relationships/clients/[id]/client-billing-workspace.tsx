@@ -1699,7 +1699,7 @@ export function ClientBillingWorkspace({
                                   {note.documentNumber}
                                 </TableCell>
                                 <TableCell className="text-xs">
-                                  {note.type === 'overpayment' && 'Overpayment'}
+                                  {note.type === 'overpayment' && 'Advance Payment'}
                                   {note.type === 'manual_adjustment' && 'Manual Adjustment'}
                                   {note.type === 'credit_note' && 'Credit Note'}
                                   {note.type === 'promotional' && 'Promotional'}

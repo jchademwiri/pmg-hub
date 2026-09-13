@@ -135,7 +135,7 @@ function getStatusBadge(status: string) {
 function getTypeLabel(type: string) {
   switch (type) {
     case 'overpayment':
-      return 'Overpayment';
+      return 'Advance Payment';
     case 'manual_adjustment':
       return 'Manual Adjustment';
     case 'credit_note':

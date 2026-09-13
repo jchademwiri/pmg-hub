@@ -801,7 +801,10 @@ async function buildCreditNotePdfData(id: string): Promise<PdfDocumentData | nul
       paid: amountApplied,
     },
     creditDetails: {
-      creditType: note.type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+      creditType:
+        note.type === 'overpayment'
+          ? 'Advance Payment'
+          : note.type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
       originalInvoiceNumber: originalInvoice,
     },
   };

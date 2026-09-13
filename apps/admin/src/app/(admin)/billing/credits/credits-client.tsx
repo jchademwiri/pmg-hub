@@ -117,7 +117,7 @@ function getStatusBadge(status: string) {
 function getTypeLabel(type: string) {
   switch (type) {
     case 'overpayment':
-      return 'Overpayment';
+      return 'Advance Payment';
     case 'manual_adjustment':
       return 'Manual Adjustment';
     case 'credit_note':
@@ -289,7 +289,7 @@ export function CreditsClient({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="overpayment">Overpayment</SelectItem>
+              <SelectItem value="overpayment">Advance Payment</SelectItem>
               <SelectItem value="manual_adjustment">Manual Adjustment</SelectItem>
               <SelectItem value="credit_note">Credit Note</SelectItem>
               <SelectItem value="promotional">Promotional</SelectItem>
