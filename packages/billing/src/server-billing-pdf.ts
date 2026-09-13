@@ -626,6 +626,20 @@ async function buildReceiptPdfData(id: string): Promise<PdfDocumentData | null> 
     getOrganisationSettings(),
   ]);
 
+  const paymentAmount = safeNumber(payment.amount);
+  const totalAllocated = allocations.reduce((sum, a) => sum + safeNumber(a.amount), 0);
+  const unallocated = Math.max(0, paymentAmount - totalAllocated);
+
+  let reference = payment.description;
+  if (
+    allocations.length > 1 ||
+    (payment.description && /payment for .*,.*/i.test(payment.description))
+  ) {
+    const bankRefMatch = payment.description?.match(/\|\s*Bank ref:.*$/i);
+    const bankRefPart = bankRefMatch ? ` ${bankRefMatch[0]}` : '';
+    reference = `Thank you payment${bankRefPart}`;
+  }
+
   return {
     type: 'receipt',
     title: 'Receipt',
@@ -636,7 +650,14 @@ async function buildReceiptPdfData(id: string): Promise<PdfDocumentData | null> 
     client: {
       name: payment.clientName ?? 'Client',
     },
-    reference: payment.description,
+    reference,
+    lineItems: allocations.map((alloc) => ({
+      itemName: alloc.invoiceNumber,
+      description: alloc.invoiceDate || '',
+      qty: 1,
+      unitPrice: safeNumber(alloc.amount),
+      amount: safeNumber(alloc.amount),
+    })),
     transactions: allocations.length
       ? allocations.map((allocation) => ({
           date:
@@ -653,12 +674,13 @@ async function buildReceiptPdfData(id: string): Promise<PdfDocumentData | null> 
             date: payment.date,
             reference: '-',
             description: payment.description ?? 'Unallocated payment / retainer',
-            credit: safeNumber(payment.amount),
+            credit: paymentAmount,
             balance: 0,
           },
         ],
     totals: {
-      paid: safeNumber(payment.amount),
+      paid: paymentAmount,
+      balanceDue: unallocated,
     },
     notes: `This is an official payment receipt issued by ${payment.divisionName}.`,
   };
@@ -947,18 +969,22 @@ async function renderDeclarativeBillingPdf(data: PdfDocumentData): Promise<Buffe
       },
     });
   } else if (data.type === 'receipt') {
+    const amount = data.totals?.paid || 0;
+    const totalAllocated = (data.lineItems || []).reduce((sum, item) => sum + item.amount, 0);
+    const unallocated = data.totals?.balanceDue ?? Math.max(0, amount - totalAllocated);
+
     element = React.createElement(ReceiptPdfDocument, {
       data: {
         receiptNumber: data.number,
         paymentDate: data.issueDate,
-        paymentMethod: data.reference || 'Electronic Funds Transfer',
         reference: data.reference,
-        amount: data.totals?.paid || 0,
-        unallocated: 0,
+        amount,
+        unallocated,
         org,
         client: data.client,
         allocations: (data.lineItems || []).map((item) => ({
           invoiceNumber: item.itemName || item.description,
+          invoiceDate: item.itemName && item.description ? item.description : undefined,
           amount: item.amount,
         })),
         notes: data.notes,

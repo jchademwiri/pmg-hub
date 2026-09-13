@@ -199,6 +199,7 @@ export async function getIncomeAllocations(incomeId: string): Promise<
     id: string;
     invoiceId: string;
     invoiceNumber: string;
+    invoiceDate?: string;
     amount: string;
     createdAt: Date;
   }[]
@@ -208,6 +209,7 @@ export async function getIncomeAllocations(incomeId: string): Promise<
       id: paymentAllocations.id,
       invoiceId: paymentAllocations.invoiceId,
       invoiceNumber: invoices.documentNumber,
+      invoiceDate: sql<string>`${invoices.invoiceDate}::text`,
       amount: paymentAllocations.amount,
       createdAt: paymentAllocations.createdAt,
     })

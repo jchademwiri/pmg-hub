@@ -140,8 +140,7 @@ describe("Declarative Billing PDF Documents", () => {
       data: {
         receiptNumber: "RCT-2026-098",
         paymentDate: "2026-03-12",
-        paymentMethod: "Electronic Funds Transfer (EFT)",
-        reference: "FNB-99238411",
+        reference: "Payment for TES-INV-2026-024, TES-INV-2026-027, TES-INV-2026-026",
         amount: 25000,
         org: sampleOrg,
         client: sampleClient,

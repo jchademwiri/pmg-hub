@@ -16,7 +16,7 @@ export interface ReceiptAllocation {
 export interface ReceiptPdfData {
   receiptNumber: string;
   paymentDate: string;
-  paymentMethod: string;
+  paymentMethod?: string;
   reference?: string | null;
   amount: number;
   unallocated?: number;
@@ -32,6 +32,18 @@ export interface ReceiptPdfData {
 
 export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
   const theme = usePdfTheme();
+
+  const isMultipleInvoiceRef =
+    data.allocations.length > 1 ||
+    (data.reference ? /payment for .*,/i.test(data.reference) : false);
+
+  let displayReference = data.reference;
+  if (isMultipleInvoiceRef && data.reference) {
+    const bankRefMatch = data.reference.match(/\|\s*Bank ref:.*$/i);
+    displayReference = bankRefMatch
+      ? `Thank you payment ${bankRefMatch[0]}`
+      : "Thank you payment";
+  }
 
   return (
     <Document title={`Receipt ${data.receiptNumber}`}>
@@ -100,8 +112,7 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
               size="sm"
               items={[
                 { key: "Payment Date", value: fmtDate(data.paymentDate) },
-                { key: "Payment Method", value: data.paymentMethod },
-                ...(data.reference ? [{ key: "Payment Reference", value: data.reference }] : []),
+                ...(displayReference ? [{ key: "Payment Reference", value: displayReference }] : []),
                 {
                   key: "Total Received",
                   value: formatZAR(data.amount),
