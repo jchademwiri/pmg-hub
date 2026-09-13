@@ -101,8 +101,10 @@ type PdfDocumentData = {
   };
   client: {
     name: string;
+    contactName?: string | null;
     email?: string | null;
     phone?: string | null;
+    address?: string | null;
   };
   reference?: string | null;
   lineItems?: PdfLineItem[];
@@ -632,25 +634,30 @@ async function buildQuotePdfData(id: string): Promise<PdfDocumentData | null> {
 async function buildReceiptPdfData(id: string): Promise<PdfDocumentData | null> {
   const payment = await getIncomeById(id);
   if (!payment) return null;
-  const [settings, allocations, orgSettings] = await Promise.all([
+  const [settings, allocations, orgSettings, clientRecord] = await Promise.all([
     getDivisionBillingSettings(payment.divisionId),
     getIncomeAllocations(id),
     getOrganisationSettings(),
+    payment.clientId ? getClientById(payment.clientId) : Promise.resolve(null),
   ]);
 
   const paymentAmount = safeNumber(payment.amount);
   const totalAllocated = allocations.reduce((sum, a) => sum + safeNumber(a.amount), 0);
   const unallocated = Math.max(0, paymentAmount - totalAllocated);
 
-  let reference = payment.description;
-  if (
-    allocations.length > 1 ||
-    (payment.description && /payment for .*,.*/i.test(payment.description))
-  ) {
-    const bankRefMatch = payment.description?.match(/\|\s*Bank ref:.*$/i);
-    const bankRefPart = bankRefMatch ? ` ${bankRefMatch[0]}` : '';
-    reference = `Thank you payment${bankRefPart}`;
-  }
+  const businessName = clientRecord?.businessName;
+  const contactName = clientRecord?.name;
+  const displayName = businessName || contactName || payment.clientName || 'Client';
+  const displayContact =
+    businessName && contactName && businessName !== contactName ? contactName : undefined;
+  const clientAddress = [
+    clientRecord?.billingAddress,
+    clientRecord?.city,
+    clientRecord?.province,
+    clientRecord?.postalCode,
+  ]
+    .filter(Boolean)
+    .join(', ');
 
   return {
     type: 'receipt',
@@ -660,9 +667,13 @@ async function buildReceiptPdfData(id: string): Promise<PdfDocumentData | null> 
     issueDate: payment.date,
     org: buildOrgProps(payment.divisionName, settings, orgSettings),
     client: {
-      name: payment.clientName ?? 'Client',
+      name: displayName,
+      contactName: displayContact,
+      email: clientRecord?.email,
+      phone: clientRecord?.phone,
+      address: clientAddress || undefined,
     },
-    reference,
+    reference: payment.description,
     allocations: allocations.map((alloc) => {
       let invDate = alloc.invoiceDate;
       if (!invDate && alloc.createdAt) {

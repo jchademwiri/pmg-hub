@@ -1,5 +1,5 @@
 import React from "react";
-import { formatZAR, fmtDate } from "../../format";
+import { formatZAR, fmtDateLong } from "../../format";
 import { Document, Page, KeepTogether } from "../primitives";
 import { PageHeader, type OrgDetails } from "../components/page-header";
 import { PageFooter } from "../components/page-footer";
@@ -23,8 +23,10 @@ export interface ReceiptPdfData {
   org: OrgDetails;
   client: {
     name: string;
+    contactName?: string | null;
     email?: string | null;
     phone?: string | null;
+    address?: string | null;
   };
   allocations: ReceiptAllocation[];
   notes?: string | null;
@@ -32,18 +34,6 @@ export interface ReceiptPdfData {
 
 export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
   const theme = usePdfTheme();
-
-  const isMultipleInvoiceRef =
-    data.allocations.length > 1 ||
-    (data.reference ? /payment for .*,/i.test(data.reference) : false);
-
-  let displayReference = data.reference;
-  if (isMultipleInvoiceRef && data.reference) {
-    const bankRefMatch = data.reference.match(/\|\s*Bank ref:.*$/i);
-    displayReference = bankRefMatch
-      ? `Thank you payment ${bankRefMatch[0]}`
-      : "Thank you payment";
-  }
 
   return (
     <Document title={`Receipt ${data.receiptNumber}`}>
@@ -79,11 +69,16 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
             >
               Received From
             </span>
-            <span style={{ fontSize: 10, fontWeight: 700, color: theme.colors.foreground, marginBottom: 2 }}>
+            <span style={{ fontSize: 9.5, fontWeight: 700, color: theme.colors.foreground, marginBottom: 2 }}>
               {data.client.name}
             </span>
+            {data.client.contactName && (
+              <span style={{ fontSize: 8.5, color: theme.colors.foreground, marginBottom: 2 }}>
+                {data.client.contactName}
+              </span>
+            )}
             {data.client.email && (
-              <span style={{ fontSize: 8, color: theme.colors.mutedForeground }}>
+              <span style={{ fontSize: 8, color: theme.colors.mutedForeground, marginBottom: 1 }}>
                 {data.client.email}
               </span>
             )}
@@ -111,8 +106,7 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
             <KeyValue
               size="sm"
               items={[
-                { key: "Payment Date", value: fmtDate(data.paymentDate) },
-                ...(displayReference ? [{ key: "Payment Reference", value: displayReference }] : []),
+                { key: "Payment Date", value: fmtDateLong(data.paymentDate) },
                 {
                   key: "Total Received",
                   value: formatZAR(data.amount),
@@ -123,6 +117,28 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
             />
           </div>
         </div>
+
+        {/* Payment Reference */}
+        {data.reference && (
+          <div style={{ marginBottom: theme.spacing.sectionGap }}>
+            <span
+              style={{
+                fontSize: 7.5,
+                fontWeight: 700,
+                color: theme.colors.primary,
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+                display: "block",
+                marginBottom: 3,
+              }}
+            >
+              Payment Reference
+            </span>
+            <span style={{ fontSize: 8.5, color: theme.colors.foreground, lineHeight: "13px" }}>
+              {data.reference}
+            </span>
+          </div>
+        )}
 
         {/* Invoice Allocations Table */}
         <span
@@ -157,7 +173,7 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
               data.allocations.map((alloc, idx) => (
                 <TableRow key={idx} striped={idx % 2 === 1}>
                   <TableCell width="38%" bold>#{alloc.invoiceNumber}</TableCell>
-                  <TableCell width="32%">{alloc.invoiceDate ? fmtDate(alloc.invoiceDate) : "-"}</TableCell>
+                  <TableCell width="32%">{alloc.invoiceDate ? fmtDateLong(alloc.invoiceDate) : "-"}</TableCell>
                   <TableCell width="30%" align="right" bold tabular>{formatZAR(alloc.amount)}</TableCell>
                 </TableRow>
               ))
@@ -167,25 +183,51 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
 
         {/* Total Summary */}
         <KeepTogether>
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8, marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10, marginBottom: 16 }}>
             <div
               style={{
                 width: "42%",
-                border: `1px solid ${theme.colors.border}`,
-                borderRadius: theme.primitives.borderRadius.sm,
-                padding: "10px 12px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
               }}
             >
-              <KeyValue
-                size="sm"
-                divided
-                items={[
-                  { key: "Total Received", value: formatZAR(data.amount), keyStyle: { fontWeight: 700 }, valueStyle: { fontWeight: 700 } },
-                  ...(data.unallocated && data.unallocated > 0
-                    ? [{ key: "Account Credit", value: formatZAR(data.unallocated), valueStyle: { color: theme.colors.success, fontWeight: 700 } }]
-                    : []),
-                ]}
-              />
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  borderBottom: `2px solid ${theme.colors.primary}`,
+                  paddingBottom: 6,
+                }}
+              >
+                <span style={{ fontSize: 9, fontWeight: 700, color: theme.colors.foreground }}>
+                  Total Received
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: theme.colors.primary, fontVariantNumeric: "tabular-nums" }}>
+                  {formatZAR(data.amount)}
+                </span>
+              </div>
+              {data.unallocated && data.unallocated > 0 ? (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    borderBottom: `1px solid ${theme.colors.border}`,
+                    paddingBottom: 4,
+                  }}
+                >
+                  <span style={{ fontSize: 8, color: theme.colors.mutedForeground }}>
+                    Account Credit
+                  </span>
+                  <span style={{ fontSize: 8.5, fontWeight: 600, color: theme.colors.success, fontVariantNumeric: "tabular-nums" }}>
+                    {formatZAR(data.unallocated)}
+                  </span>
+                </div>
+              ) : null}
             </div>
           </div>
         </KeepTogether>

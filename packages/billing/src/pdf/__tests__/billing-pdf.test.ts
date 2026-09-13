@@ -227,9 +227,9 @@ describe("Declarative Billing PDF Documents", () => {
 
     const element = React.createElement(ReceiptPdfDocument, {
       data: {
-        receiptNumber: "TES-REC-2026-0001",
-        paymentDate: "2026-07-14",
-        reference: "Payment for TES-INV-2026-024, TES-INV-2026-027, TES-INV-2026-026 | Bank ref: NED-9988",
+        receiptNumber: "TES-REC-D2170DF6",
+        paymentDate: "2026-09-04",
+        reference: "Payment for TES-INV-2026-024, TES-INV-2026-027, TES-INV-2026-026",
         amount: 5000,
         org: {
           name: "Tender Edge Solutions",
@@ -243,13 +243,14 @@ describe("Declarative Billing PDF Documents", () => {
         },
         client: {
           name: "Mathange Tradings",
+          contactName: "Sabelo Given Magagula",
           email: "sabelomagagula1@gmail.com",
           phone: "0765189056",
         },
         allocations: [
-          { invoiceNumber: "TES-INV-2026-024", invoiceDate: "2026-07-14", amount: 80 },
-          { invoiceNumber: "TES-INV-2026-026", invoiceDate: "2026-07-14", amount: 2420 },
-          { invoiceNumber: "TES-INV-2026-027", invoiceDate: "2026-07-14", amount: 2500 },
+          { invoiceNumber: "TES-INV-2026-024", invoiceDate: "2026-09-04", amount: 80 },
+          { invoiceNumber: "TES-INV-2026-026", invoiceDate: "2026-09-04", amount: 2420 },
+          { invoiceNumber: "TES-INV-2026-027", invoiceDate: "2026-09-04", amount: 2500 },
         ],
       },
     });
