@@ -354,15 +354,16 @@ export function CreditsClient({
                       note.status !== 'void' && note.status !== 'expired' && amountRemainingNum > 0;
 
                     return (
-                      <TableRow key={note.id} className="hover:bg-muted/40 transition-colors group">
+                      <TableRow
+                        key={note.id}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors group"
+                        onClick={() => router.push(`/billing/credits/${note.id}`)}
+                      >
                         <TableCell className="font-medium text-xs px-2 truncate">
-                          <Link
-                            href={`/billing/credits/${note.id}`}
-                            className="text-primary hover:underline inline-flex items-center gap-1 font-mono"
-                          >
+                          <span className="text-primary group-hover:underline inline-flex items-center gap-1 font-mono">
                             {note.documentNumber}
                             <ExternalLink className="size-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </Link>
+                          </span>
                         </TableCell>
                         <TableCell
                           className="text-xs px-2 truncate"
@@ -397,7 +398,10 @@ export function CreditsClient({
                         <TableCell className="text-xs text-muted-foreground px-2 whitespace-nowrap">
                           {fmtDate(note.createdAt)}
                         </TableCell>
-                        <TableCell className="text-right py-1 px-2 whitespace-nowrap">
+                        <TableCell
+                          className="text-right py-1 px-2 whitespace-nowrap"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <div className="flex items-center justify-end gap-1">
                             {isRefundable && (
                               <Button

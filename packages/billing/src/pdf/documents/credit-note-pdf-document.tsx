@@ -115,11 +115,32 @@ export function CreditNotePdfDocument({ data }: { data: CreditNotePdfData }) {
                 { key: "Credit Type", value: data.type },
                 ...(data.originalInvoiceNumber ? [{ key: "Original Invoice", value: data.originalInvoiceNumber }] : []),
                 ...(data.expiresDate ? [{ key: "Expiry Date", value: fmtDate(data.expiresDate) }] : []),
-                ...(data.reason ? [{ key: "Reason", value: data.reason }] : []),
               ]}
             />
           </div>
         </div>
+
+        {/* Reason */}
+        {data.reason && (
+          <div style={{ marginBottom: 12 }}>
+            <span
+              style={{
+                fontSize: 7.5,
+                fontWeight: 700,
+                color: theme.colors.primary,
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+                display: "block",
+                marginBottom: 3,
+              }}
+            >
+              Reason
+            </span>
+            <span style={{ fontSize: 8.5, color: theme.colors.foreground, lineHeight: "13px" }}>
+              {data.reason}
+            </span>
+          </div>
+        )}
 
         {/* Applications / Line Items Table */}
         <span
@@ -159,23 +180,25 @@ export function CreditNotePdfDocument({ data }: { data: CreditNotePdfData }) {
           <Table variant="compact" style={{ marginBottom: theme.spacing.sectionGap }}>
             <TableHeader>
               <TableRow header>
-                <TableCell header width="70%">Description</TableCell>
-                <TableCell header align="right" width="30%">Credit Amount</TableCell>
+                <TableCell header width="65%">Description</TableCell>
+                <TableCell header align="right" width="35%">Credit Amount</TableCell>
               </TableRow>
             </TableHeader>
             <TableBody>
               <TableRow>
-                <TableCell width="70%">
+                <TableCell width="65%">
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span style={{ fontWeight: 600, color: theme.colors.foreground, fontSize: 8.5 }}>
                       {data.type}
                     </span>
-                    <span style={{ color: theme.colors.mutedForeground, fontSize: 8 }}>
-                      {data.reason || "Credit adjustment issued to client account"}
-                    </span>
+                    {data.reason && (
+                      <span style={{ color: theme.colors.mutedForeground, fontSize: 8, marginTop: 2 }}>
+                        {data.reason}
+                      </span>
+                    )}
                   </div>
                 </TableCell>
-                <TableCell width="30%" align="right" bold tabular>{formatZAR(data.amount)}</TableCell>
+                <TableCell width="35%" align="right" bold tabular>{formatZAR(data.amount)}</TableCell>
               </TableRow>
             </TableBody>
           </Table>
@@ -200,34 +223,97 @@ export function CreditNotePdfDocument({ data }: { data: CreditNotePdfData }) {
                 Notes
               </span>
               <span style={{ fontSize: 7.5, color: theme.colors.mutedForeground, marginTop: 2, lineHeight: 1.4 }}>
-                {data.notes || "This credit note can be applied against current or future invoices. Please contact accounts for queries."}
+                {data.notes && data.notes !== data.reason
+                  ? data.notes
+                  : "This credit note can be applied against current or future invoices. Please contact accounts for queries."}
               </span>
             </div>
 
-            {/* Right: Totals Card */}
+            {/* Right: Totals Summary */}
             <div
               style={{
                 width: "42%",
-                border: `1px solid ${theme.colors.border}`,
-                borderRadius: theme.primitives.borderRadius.sm,
-                padding: "10px 12px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
               }}
             >
-              <KeyValue
-                size="sm"
-                divided
-                items={[
-                  { key: "Total Credit Issued", value: formatZAR(data.amount), keyStyle: { fontWeight: 700 }, valueStyle: { fontWeight: 700 } },
-                  ...(data.amountApplied > 0 ? [{ key: "Amount Applied", value: `-${formatZAR(data.amountApplied)}` }] : []),
-                  ...(data.amountRefunded && data.amountRefunded > 0 ? [{ key: "Amount Refunded", value: `-${formatZAR(data.amountRefunded)}` }] : []),
-                  {
-                    key: "Remaining Balance",
-                    value: formatZAR(data.amountRemaining),
-                    keyStyle: { fontWeight: 700, fontSize: 10, color: theme.colors.foreground },
-                    valueStyle: { fontWeight: 700, fontSize: 11, color: theme.colors.primary },
-                  },
-                ]}
-              />
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  borderBottom: `1px solid ${theme.colors.border}`,
+                  paddingBottom: 4,
+                }}
+              >
+                <span style={{ fontSize: 8.5, fontWeight: 600, color: theme.colors.foreground }}>
+                  Total Credit Issued
+                </span>
+                <span style={{ fontSize: 9, fontWeight: 700, color: theme.colors.foreground, fontVariantNumeric: "tabular-nums" }}>
+                  {formatZAR(data.amount)}
+                </span>
+              </div>
+
+              {data.amountApplied > 0 && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    borderBottom: `1px solid #f4f4f5`,
+                    paddingBottom: 4,
+                  }}
+                >
+                  <span style={{ fontSize: 8, color: theme.colors.mutedForeground }}>
+                    Amount Applied
+                  </span>
+                  <span style={{ fontSize: 8.5, fontWeight: 600, color: theme.colors.foreground, fontVariantNumeric: "tabular-nums" }}>
+                    -{formatZAR(data.amountApplied)}
+                  </span>
+                </div>
+              )}
+
+              {data.amountRefunded != null && data.amountRefunded > 0 && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    borderBottom: `1px solid #f4f4f5`,
+                    paddingBottom: 4,
+                  }}
+                >
+                  <span style={{ fontSize: 8, color: theme.colors.mutedForeground }}>
+                    Amount Refunded
+                  </span>
+                  <span style={{ fontSize: 8.5, fontWeight: 600, color: theme.colors.foreground, fontVariantNumeric: "tabular-nums" }}>
+                    -{formatZAR(data.amountRefunded)}
+                  </span>
+                </div>
+              )}
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  borderBottom: `2px solid ${theme.colors.primary}`,
+                  paddingBottom: 6,
+                  paddingTop: 2,
+                }}
+              >
+                <span style={{ fontSize: 9, fontWeight: 700, color: theme.colors.foreground }}>
+                  Remaining Balance
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: theme.colors.primary, fontVariantNumeric: "tabular-nums" }}>
+                  {formatZAR(data.amountRemaining)}
+                </span>
+              </div>
             </div>
           </div>
         </KeepTogether>

@@ -220,6 +220,50 @@ describe("Declarative Billing PDF Documents", () => {
     expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe("%PDF-");
   });
 
+  it("renders a single-adjustment Credit Note matching the exact TES user scenario", async () => {
+    const { CreditNotePdfDocument } = await import("../documents/credit-note-pdf-document");
+    const { renderDocumentToPdf } = await import("../render-document");
+    const fs = await import("fs");
+
+    const element = React.createElement(CreditNotePdfDocument, {
+      data: {
+        creditNoteNumber: "TES-CN-2026-0001",
+        status: "Active",
+        issueDate: "2026-09-11",
+        type: "Overpayment",
+        reason: "Overpayment from: Advance Payment",
+        amount: 5000,
+        amountRemaining: 5000,
+        amountApplied: 0,
+        org: {
+          name: "Tender Edge Solutions",
+          divisionOf: "Playhouse Media Group",
+          registrationNumber: "2023/683669/07",
+          email: "tenders@tenderedgesolutions.co.za",
+          phone: "+27 74 501 7094",
+          website: "www.tenderedgesolutions.co.za",
+          address: "RASLOUW AH, CENTURION, 0157",
+          logoDataUri: null,
+        },
+        client: {
+          name: "Basadipele",
+          email: "info@basadipeleserv.co.za",
+          phone: "+27 72 531 0590",
+        },
+      },
+    });
+
+    const pdfBytes = await renderDocumentToPdf(element);
+    expect(pdfBytes).toBeInstanceOf(Uint8Array);
+    expect(pdfBytes.length).toBeGreaterThan(2000);
+    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe("%PDF-");
+
+    fs.writeFileSync(
+      "C:/Users/JacobC/.gemini/antigravity/brain/7da18899-029c-4b89-90e2-c57517eab84d/scratch/credit-note-preview-updated.pdf",
+      Buffer.from(pdfBytes)
+    );
+  });
+
   it("renders a multi-allocation Payment Receipt matching the exact TES receipt layout", async () => {
     const { ReceiptPdfDocument } = await import("../documents/receipt-pdf-document");
     const { renderDocumentToPdf } = await import("../render-document");
