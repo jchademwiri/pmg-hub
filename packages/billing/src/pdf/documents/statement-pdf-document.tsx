@@ -253,10 +253,7 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
             </div>
           )}
 
-          <PageFooter
-            leftText={data.terms || "Please contact accounts@playhousemedia.co.za if you have queries regarding this statement."}
-            style={{ marginTop: 0 }}
-          />
+          <PageFooter org={data.org} style={{ marginTop: 0 }} />
         </div>
       </Page>
     </Document>

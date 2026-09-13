@@ -1,7 +1,10 @@
 import React, { type CSSProperties } from "react";
 import { usePdfTheme } from "../theme-provider";
 
+import type { OrgDetails } from "./page-header";
+
 export interface PageFooterProps {
+  org?: OrgDetails;
   leftText?: string;
   rightText?: string;
   pageNumber?: number;
@@ -10,7 +13,8 @@ export interface PageFooterProps {
 }
 
 export function PageFooter({
-  leftText = "Thank you for your business. Payment is due according to agreed terms.",
+  org,
+  leftText,
   rightText,
   pageNumber = 1,
   totalPages = 1,
@@ -18,6 +22,15 @@ export function PageFooter({
 }: PageFooterProps) {
   const theme = usePdfTheme();
   const pageLabel = rightText || `Page ${pageNumber} of ${totalPages}`;
+
+  const legalParts = [
+    org?.divisionOf ? `A division of ${org.divisionOf}` : null,
+    org?.registrationNumber ? `Reg: ${org.registrationNumber}` : null,
+  ].filter(Boolean);
+
+  const legalText = legalParts.length > 0 ? legalParts.join(" · ") : null;
+  const resolvedLeftText =
+    legalText || leftText || "Thank you for your business. Payment is due according to agreed terms.";
 
   return (
     <div
@@ -37,7 +50,7 @@ export function PageFooter({
       }}
     >
       <span style={{ fontSize: 7, color: theme.colors.mutedForeground }}>
-        {leftText}
+        {resolvedLeftText}
       </span>
       <span style={{ fontSize: 7, color: theme.colors.mutedForeground, fontVariantNumeric: "tabular-nums" }}>
         {pageLabel}

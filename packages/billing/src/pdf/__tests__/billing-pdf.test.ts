@@ -157,4 +157,34 @@ describe("Declarative Billing PDF Documents", () => {
     expect(pdfBytes.length).toBeGreaterThan(2000);
     expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe("%PDF-");
   });
+
+  it("renders non-VAT invoice with 'Invoice' title and default payment notes", async () => {
+    const { InvoicePdfDocument } = await import("../documents/invoice-pdf-document");
+    const { renderDocumentToPdf } = await import("../render-document");
+
+    const element = React.createElement(InvoicePdfDocument, {
+      data: {
+        invoiceNumber: "INV-2026-0090",
+        status: "Draft",
+        issueDate: "2026-03-15",
+        org: sampleOrg,
+        client: sampleClient,
+        items: [
+          { description: "Consulting Services", qty: 2, unitPrice: 2500, amount: 5000 },
+        ],
+        totals: {
+          subtotal: 5000,
+          vat: 0,
+          total: 5000,
+          balanceDue: 5000,
+        },
+        banking: sampleBanking,
+      },
+    });
+
+    const pdfBytes = await renderDocumentToPdf(element);
+    expect(pdfBytes).toBeInstanceOf(Uint8Array);
+    expect(pdfBytes.length).toBeGreaterThan(2000);
+    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe("%PDF-");
+  });
 });

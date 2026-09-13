@@ -58,14 +58,16 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
   const total = data.totals.total ?? subtotal + vat;
   const paid = data.totals.paid ?? 0;
   const balanceDue = data.totals.balanceDue ?? total - paid;
+  const isVatApplied = vat > 0;
+  const documentTitle = isVatApplied ? "Tax Invoice" : "Invoice";
 
   return (
-    <Document title={`Invoice ${data.invoiceNumber}`}>
+    <Document title={`${documentTitle} ${data.invoiceNumber}`}>
       <Page size="a4">
         {/* Header */}
         <PageHeader
           org={data.org}
-          title="Tax Invoice"
+          title={documentTitle}
           number={data.invoiceNumber}
           status={data.status}
         />
@@ -233,16 +235,15 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
                 </div>
               )}
 
-              {data.notes && (
-                <div style={{ display: "flex", flexDirection: "column", marginTop: 4 }}>
-                  <span style={{ fontSize: 7.5, fontWeight: 700, color: theme.colors.mutedForeground, textTransform: "uppercase" }}>
-                    Notes
-                  </span>
-                  <span style={{ fontSize: 7.5, color: theme.colors.mutedForeground, marginTop: 2, lineHeight: 1.4 }}>
-                    {data.notes}
-                  </span>
-                </div>
-              )}
+              {/* Notes */}
+              <div style={{ display: "flex", flexDirection: "column", marginTop: 4 }}>
+                <span style={{ fontSize: 7.5, fontWeight: 700, color: theme.colors.mutedForeground, textTransform: "uppercase" }}>
+                  Notes
+                </span>
+                <span style={{ fontSize: 7.5, color: theme.colors.mutedForeground, marginTop: 2, lineHeight: 1.4 }}>
+                  {data.notes?.trim() || "Payment is due within agreed terms. Please use the invoice number as payment reference."}
+                </span>
+              </div>
             </div>
 
             {/* Right: Totals Card */}
@@ -276,9 +277,7 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
         </KeepTogether>
 
         {/* Footer */}
-        <PageFooter
-          leftText={data.terms || "Payment is due within agreed terms. Please use the invoice number as payment reference."}
-        />
+        <PageFooter org={data.org} />
       </Page>
     </Document>
   );

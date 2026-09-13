@@ -235,9 +235,7 @@ export function QuotePdfDocument({ data }: { data: QuotePdfData }) {
           </div>
         </KeepTogether>
 
-        <PageFooter
-          leftText={data.terms || "This quote is valid for 30 days from issue date. Subject to standard terms of service."}
-        />
+        <PageFooter org={data.org} />
       </Page>
     </Document>
   );

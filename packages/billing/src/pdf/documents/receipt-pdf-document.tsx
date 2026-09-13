@@ -179,7 +179,7 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
           </div>
         </KeepTogether>
 
-        <PageFooter leftText="This is an official receipt confirming payment received. Retain for your accounting records." />
+        <PageFooter org={data.org} />
       </Page>
     </Document>
   );

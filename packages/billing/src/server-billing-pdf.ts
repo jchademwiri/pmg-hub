@@ -136,6 +136,7 @@ function safeNumber(value: unknown) {
 function drawFooter(doc: jsPDF, data: PdfDocumentData) {
   drawShellFooter(doc, {
     divisionOf: data.org.divisionOf,
+    registrationNumber: data.org.registrationNumber,
     onPage: (doc) => {
       // Draw ageing summary on every page for statements
       if (data.type !== 'statement' || !data.ageing) return;
@@ -532,7 +533,7 @@ async function buildInvoicePdfData(id: string): Promise<PdfDocumentData | null> 
 
   return {
     type: 'invoice',
-    title: 'Invoice',
+    title: safeNumber(invoice.vatAmount) > 0 ? 'Tax Invoice' : 'Invoice',
     number: invoice.documentNumber,
     status: statusLabel(invoice.status),
     issueDate: invoice.invoiceDate,
@@ -555,7 +556,10 @@ async function buildInvoicePdfData(id: string): Promise<PdfDocumentData | null> 
           ? safeNumber(line.lineTotal)
           : safeNumber(line.quantity) * safeNumber(line.unitPrice),
     })),
-    notes: invoice.notes ?? settings?.invoiceNotes,
+    notes:
+      invoice.notes ??
+      settings?.invoiceNotes ??
+      'Payment is due within agreed terms. Please use the invoice number as payment reference.',
     terms: invoice.terms,
     banking: buildBankingProps(settings),
     totals: {

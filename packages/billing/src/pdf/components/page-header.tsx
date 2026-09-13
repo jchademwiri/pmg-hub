@@ -43,16 +43,6 @@ export function PageHeader({ org, title, number, status, style }: PageHeaderProp
           <span style={{ fontSize: 13, fontWeight: 700, color: theme.colors.foreground, marginBottom: 2 }}>
             {org.name}
           </span>
-          {org.divisionOf && (
-            <span style={{ fontSize: 7.5, color: theme.colors.mutedForeground }}>
-              A division of {org.divisionOf}
-            </span>
-          )}
-          {org.registrationNumber && (
-            <span style={{ fontSize: 7.5, color: theme.colors.mutedForeground }}>
-              Reg: {org.registrationNumber}
-            </span>
-          )}
           {org.vatNumber && (
             <span style={{ fontSize: 7.5, color: theme.colors.mutedForeground }}>
               VAT: {org.vatNumber}
