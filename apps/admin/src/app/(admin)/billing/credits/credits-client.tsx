@@ -317,19 +317,19 @@ export function CreditsClient({
           <CardDescription>All credit notes and their current status</CardDescription>
         </CardHeader>
         <CardContent className="p-0 px-6 pb-4">
-          <div className="overflow-hidden">
-            <Table className="table-fixed w-full" containerClassName="overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table className="table-fixed w-full min-w-[960px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[115px] px-2 text-xs">Document #</TableHead>
-                  <TableHead className="px-2 text-xs">Client</TableHead>
-                  <TableHead className="w-[110px] px-2 text-xs">Type</TableHead>
-                  <TableHead className="px-2 text-xs">Reason</TableHead>
-                  <TableHead className="w-[85px] px-2 text-right text-xs">Amount</TableHead>
-                  <TableHead className="w-[85px] px-2 text-right text-xs">Remaining</TableHead>
+                  <TableHead className="w-[130px] px-2 text-xs">Document #</TableHead>
+                  <TableHead className="px-2 text-xs min-w-[120px]">Client</TableHead>
+                  <TableHead className="w-[115px] px-2 text-xs">Type</TableHead>
+                  <TableHead className="px-2 text-xs min-w-[130px]">Reason</TableHead>
+                  <TableHead className="w-[95px] px-2 text-right text-xs">Amount</TableHead>
+                  <TableHead className="w-[95px] px-2 text-right text-xs">Remaining</TableHead>
                   <TableHead className="w-[85px] px-2 text-xs">Status</TableHead>
-                  <TableHead className="w-[80px] px-2 text-xs">Date</TableHead>
-                  <TableHead className="w-12 px-2"></TableHead>
+                  <TableHead className="w-[95px] px-2 text-xs">Date</TableHead>
+                  <TableHead className="w-[120px] px-2 text-right"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -397,7 +397,7 @@ export function CreditsClient({
                         <TableCell className="text-xs text-muted-foreground px-2 whitespace-nowrap">
                           {fmtDate(note.createdAt)}
                         </TableCell>
-                        <TableCell className="text-right py-1 px-2">
+                        <TableCell className="text-right py-1 px-2 whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1">
                             {isRefundable && (
                               <Button

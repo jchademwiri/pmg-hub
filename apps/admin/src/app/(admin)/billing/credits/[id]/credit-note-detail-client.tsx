@@ -42,6 +42,9 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PrintButton } from '@/components/billing/print-button';
+import { ExportPdfButton } from '@/components/billing/export-pdf-button';
+import { UniversalEmailDialog } from '@/components/billing/universal-email-dialog';
 
 interface CreditNoteDetail {
   id: string;
@@ -77,7 +80,7 @@ interface RefundDetail {
 
 interface Props {
   note: CreditNoteDetail;
-  client: { id: string; name: string } | null;
+  client: { id: string; name: string; email?: string | null } | null;
   division: { id: string; name: string } | null;
   creator: { name: string | null; email: string | null } | null;
   originalInvoice: { documentNumber: string } | null;
@@ -169,6 +172,7 @@ export function CreditNoteDetailClient({
   const canEdit = note.status !== 'void';
   const usedAmount = note.amount - note.amountRemaining;
   const totalRefunded = refunds.reduce((sum, r) => sum + r.amount, 0);
+  const pdfUrl = `/api/billing/pdf/credit-note/${note.id}`;
 
   async function handleVoid() {
     setIsVoiding(true);
@@ -250,6 +254,21 @@ export function CreditNoteDetailClient({
               Edit
             </Button>
           )}
+          <PrintButton
+            label="Print"
+            documentTitle={`Credit-Note-${note.documentNumber}`}
+          />
+          <ExportPdfButton
+            fileName={`CreditNote-${note.documentNumber}.pdf`}
+            pdfUrl={pdfUrl}
+          />
+          <UniversalEmailDialog
+            documentId={note.id}
+            documentNumber={note.documentNumber}
+            documentType="credit_note"
+            defaultRecipientEmail={client?.email ?? ''}
+            pdfUrl={pdfUrl}
+          />
           {canVoid && (
             <AlertDialog>
               <AlertDialogTrigger asChild>

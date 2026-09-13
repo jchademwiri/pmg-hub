@@ -186,4 +186,37 @@ describe("Declarative Billing PDF Documents", () => {
     expect(pdfBytes.length).toBeGreaterThan(2000);
     expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe("%PDF-");
   });
+
+  it("renders a Credit Note document into a valid PDF", async () => {
+    const { CreditNotePdfDocument } = await import("../documents/credit-note-pdf-document");
+    const { renderDocumentToPdf } = await import("../render-document");
+
+    const element = React.createElement(CreditNotePdfDocument, {
+      data: {
+        creditNoteNumber: "CN-2026-0001",
+        status: "Active",
+        issueDate: "2026-03-10",
+        type: "Invoice Adjustment",
+        reason: "Overcharge adjustment on services rendered",
+        originalInvoiceNumber: "INV-2026-0089",
+        amount: 5000,
+        amountRemaining: 2000,
+        amountApplied: 3000,
+        org: sampleOrg,
+        client: sampleClient,
+        applications: [
+          {
+            invoiceNumber: "INV-2026-0089",
+            appliedDate: "2026-03-11",
+            amount: 3000,
+          },
+        ],
+      },
+    });
+
+    const pdfBytes = await renderDocumentToPdf(element);
+    expect(pdfBytes).toBeInstanceOf(Uint8Array);
+    expect(pdfBytes.length).toBeGreaterThan(2000);
+    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe("%PDF-");
+  });
 });

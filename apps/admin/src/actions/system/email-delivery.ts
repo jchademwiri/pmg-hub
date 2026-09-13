@@ -10,6 +10,7 @@ import {
   divisions,
   eq,
   income,
+  creditNotes,
   sql,
 } from '@pmg/db';
 import { issueInvoiceInternal } from '@/actions/billing/invoices';
@@ -74,7 +75,7 @@ const CommaSeparatedEmails = z
 const EmailPayloadSchema = z
   .object({
     documentId: z.string().uuid(),
-    documentType: z.enum(['invoice', 'quote', 'statement']),
+    documentType: z.enum(['invoice', 'quote', 'statement', 'credit_note']),
     recipientEmail: z.string().email(),
     cc: CommaSeparatedEmails,
     bcc: CommaSeparatedEmails,
@@ -105,7 +106,7 @@ const EmailPayloadSchema = z
 const EmailPreviewPayloadSchema = z
   .object({
     documentId: z.string().uuid(),
-    documentType: z.enum(['invoice', 'quote', 'statement']),
+    documentType: z.enum(['invoice', 'quote', 'statement', 'credit_note']),
     personalMessage: z.string().optional(),
     hasStatementAttached: z.boolean().optional(),
     statementData: z
@@ -254,6 +255,76 @@ export async function getDocumentEmailPreviewAction(rawPayload: unknown): Promis
       return { success: true, html };
     }
 
+    if (documentType === 'credit_note') {
+      const [note] = await db
+        .select({
+          id: creditNotes.id,
+          documentNumber: creditNotes.documentNumber,
+          amount: creditNotes.amount,
+          amountRemaining: creditNotes.amountRemaining,
+          reason: creditNotes.reason,
+          type: creditNotes.type,
+          createdAt: creditNotes.createdAt,
+          clientId: creditNotes.clientId,
+          divisionId: creditNotes.divisionId,
+          divisionName: divisions.name,
+        })
+        .from(creditNotes)
+        .innerJoin(divisions, eq(divisions.id, creditNotes.divisionId))
+        .where(eq(creditNotes.id, documentId));
+
+      if (!note) return { success: false, error: 'Credit note not found.' };
+
+      const [client] = await db.select().from(clients).where(eq(clients.id, note.clientId));
+
+      const clientName = client?.businessName || client?.name || 'Client';
+      const safeClientName = escapeHtml(clientName);
+      const safeDocNumber = escapeHtml(note.documentNumber);
+      const safeReason = escapeHtml(note.reason || 'Credit adjustment');
+      const safeDivisionName = escapeHtml(note.divisionName);
+      const safePersonalMessage = personalMessage ? escapeHtml(personalMessage) : '';
+
+      const html = `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+          <h2 style="color: #1d4ed8; margin-top: 0;">Credit Note Issued</h2>
+          <p>Dear ${safeClientName},</p>
+          <p>A credit note has been issued to your account. Please find attached the official document <strong>${safeDocNumber}</strong>.</p>
+          
+          <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            <table style="width: 100%; font-size: 14px;">
+              <tr>
+                <td style="padding: 4px 0; color: #4b5563;"><strong>Credit Note:</strong></td>
+                <td style="padding: 4px 0;">${safeDocNumber}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #4b5563;"><strong>Date Issued:</strong></td>
+                <td style="padding: 4px 0;">${fmtDate(note.createdAt)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #4b5563;"><strong>Total Credit:</strong></td>
+                <td style="padding: 4px 0; font-weight: bold; color: #1d4ed8;">${formatMoney(note.amount)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #4b5563;"><strong>Remaining Balance:</strong></td>
+                <td style="padding: 4px 0; font-weight: bold; color: #059669;">${formatMoney(note.amountRemaining)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #4b5563;"><strong>Reason / Reference:</strong></td>
+                <td style="padding: 4px 0;">${safeReason}</td>
+              </tr>
+            </table>
+          </div>
+
+          ${safePersonalMessage ? `<p style="white-space: pre-wrap; font-style: italic; border-left: 3px solid #d1d5db; padding-left: 10px; color: #4b5563;">${safePersonalMessage}</p>` : ''}
+
+          <p>This credit can be applied against current or upcoming invoices. If you have any questions, please reply directly to this email.</p>
+          <p style="margin-bottom: 0;">Kind regards,<br><strong>${safeDivisionName}</strong></p>
+        </div>
+      `;
+
+      return { success: true, html };
+    }
+
     const [quote] = await db
       .select({
         id: quotations.id,
@@ -334,7 +405,13 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       statementData,
     } = parsed.data;
     const docLabel =
-      documentType === 'invoice' ? 'Invoice' : documentType === 'quote' ? 'Quote' : 'Statement';
+      documentType === 'invoice'
+        ? 'Invoice'
+        : documentType === 'quote'
+          ? 'Quote'
+          : documentType === 'credit_note'
+            ? 'Credit Note'
+            : 'Statement';
     const pdfError =
       getPdfAttachmentError(base64Pdf, `${docLabel} PDF`) ??
       getPdfAttachmentError(base64StatementPdf, 'Statement PDF');
@@ -486,6 +563,131 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         }
       }
 
+      return { success: true, sendId: data?.id };
+
+      // ── CREDIT NOTE DELIVERY FLOW ─────────────────────────────────────────
+    } else if (documentType === 'credit_note') {
+      const [note] = await db
+        .select({
+          id: creditNotes.id,
+          documentNumber: creditNotes.documentNumber,
+          amount: creditNotes.amount,
+          amountRemaining: creditNotes.amountRemaining,
+          reason: creditNotes.reason,
+          type: creditNotes.type,
+          createdAt: creditNotes.createdAt,
+          clientId: creditNotes.clientId,
+          divisionId: creditNotes.divisionId,
+          divisionName: divisions.name,
+        })
+        .from(creditNotes)
+        .innerJoin(divisions, eq(divisions.id, creditNotes.divisionId))
+        .where(eq(creditNotes.id, documentId));
+
+      if (!note) return { error: 'Credit note not found.' };
+
+      const [client] = await db.select().from(clients).where(eq(clients.id, note.clientId));
+
+      const [billingConfig] = await db
+        .select()
+        .from(divisionBillingSettings)
+        .where(eq(divisionBillingSettings.divisionId, note.divisionId));
+
+      const apiKey = resolveResendApiKey(note.divisionName);
+      const defaultFrom = resolveDefaultFromEmail(note.divisionName);
+      const fromName = resolveDivisionSenderName(note.divisionName);
+      const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
+
+      const emailClient = createEmailClient({
+        apiKey,
+        from: `${fromName} <${fromEmail}>`,
+        adminEmail: fromEmail,
+      });
+
+      const clientName = client?.businessName || client?.name || 'Client';
+      const safeClientName = escapeHtml(clientName);
+      const safeDocNumber = escapeHtml(note.documentNumber);
+      const safeReason = escapeHtml(note.reason || 'Credit adjustment');
+      const safeDivisionName = escapeHtml(note.divisionName);
+      const safePersonalMessage = personalMessage ? escapeHtml(personalMessage) : '';
+
+      const htmlBody = `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+          <h2 style="color: #1d4ed8; margin-top: 0;">Credit Note Issued</h2>
+          <p>Dear ${safeClientName},</p>
+          <p>A credit note has been issued to your account. Please find attached the official document <strong>${safeDocNumber}</strong>.</p>
+          
+          <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            <table style="width: 100%; font-size: 14px;">
+              <tr>
+                <td style="padding: 4px 0; color: #4b5563;"><strong>Credit Note:</strong></td>
+                <td style="padding: 4px 0;">${safeDocNumber}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #4b5563;"><strong>Date Issued:</strong></td>
+                <td style="padding: 4px 0;">${fmtDate(note.createdAt)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #4b5563;"><strong>Total Credit:</strong></td>
+                <td style="padding: 4px 0; font-weight: bold; color: #1d4ed8;">${formatMoney(note.amount)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #4b5563;"><strong>Remaining Balance:</strong></td>
+                <td style="padding: 4px 0; font-weight: bold; color: #059669;">${formatMoney(note.amountRemaining)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #4b5563;"><strong>Reason / Reference:</strong></td>
+                <td style="padding: 4px 0;">${safeReason}</td>
+              </tr>
+            </table>
+          </div>
+
+          ${safePersonalMessage ? `<p style="white-space: pre-wrap; font-style: italic; border-left: 3px solid #d1d5db; padding-left: 10px; color: #4b5563;">${safePersonalMessage}</p>` : ''}
+
+          <p>This credit can be applied against current or upcoming invoices. If you have any questions, please reply directly to this email.</p>
+          <p style="margin-bottom: 0;">Kind regards,<br><strong>${safeDivisionName}</strong></p>
+        </div>
+      `;
+
+      const attachments = [
+        {
+          filename: `${note.documentNumber}.pdf`,
+          content: Buffer.from(base64Pdf, 'base64'),
+        },
+        ...(customAttachments || []).map((att) => ({
+          filename: att.filename,
+          content: Buffer.from(att.content, 'base64'),
+        })),
+      ];
+
+      const adminCc = resolveDivisionAdminEmail(
+        note.divisionName,
+        billingConfig?.salesRepEmail ?? null,
+      );
+
+      const ccRecipients: string[] = [];
+      if (adminCc) ccRecipients.push(adminCc);
+      if (cc) cc.split(', ').forEach((email) => ccRecipients.push(email));
+
+      const bccRecipients: string[] = [];
+      if (bcc) bcc.split(', ').forEach((email) => bccRecipients.push(email));
+
+      const { data, error } = await emailClient({
+        to: recipientEmail,
+        cc: ccRecipients.length > 0 ? ccRecipients : undefined,
+        bcc: bccRecipients.length > 0 ? bccRecipients : undefined,
+        subject,
+        react: React.createElement('div', { dangerouslySetInnerHTML: { __html: htmlBody } }),
+        replyTo: DEFAULT_REPLY_TO,
+        attachments,
+      });
+
+      if (error) {
+        return { error: `Failed to deliver email: ${error.message}` };
+      }
+
+      revalidatePath('/billing/credits');
+      revalidatePath(`/billing/credits/${note.id}`);
       return { success: true, sendId: data?.id };
 
       // ── QUOTATION DELIVERY FLOW ──────────────────────────────────────────────

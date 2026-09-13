@@ -15,4 +15,5 @@ export * from "./documents/invoice-pdf-document";
 export * from "./documents/quote-pdf-document";
 export * from "./documents/statement-pdf-document";
 export * from "./documents/receipt-pdf-document";
+export * from "./documents/credit-note-pdf-document";
 export * from "./logo-helper";

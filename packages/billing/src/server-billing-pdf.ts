@@ -4,6 +4,8 @@ import {
   and,
   creditNotes,
   creditRefunds,
+  creditApplications,
+  invoices,
   eq,
   getAllIncome,
   getClientById,
@@ -28,6 +30,7 @@ import {
   QuotePdfDocument,
   StatementPdfDocument,
   ReceiptPdfDocument,
+  CreditNotePdfDocument,
   renderDocumentToPdf,
   resolveDivisionTheme,
   getLogoDataUri,
@@ -46,7 +49,7 @@ import {
 } from './client-billing-helpers';
 import { PAGE, split, ensurePage, drawShellHeader, drawShellFooter } from './pdf-shell';
 
-type BillingPdfType = 'invoice' | 'quote' | 'statement' | 'receipt';
+type BillingPdfType = 'invoice' | 'quote' | 'statement' | 'receipt' | 'credit-note' | 'credit_note';
 
 type PdfLineItem = {
   itemName?: string | null;
@@ -122,6 +125,10 @@ type PdfDocumentData = {
     paid?: number;
     writtenOff?: number;
     balanceDue?: number;
+  };
+  creditDetails?: {
+    creditType?: string;
+    originalInvoiceNumber?: string | null;
   };
 };
 
@@ -686,6 +693,90 @@ async function buildReceiptPdfData(id: string): Promise<PdfDocumentData | null> 
   };
 }
 
+async function buildCreditNotePdfData(id: string): Promise<PdfDocumentData | null> {
+  const db = getDb();
+  const [note] = await db.select().from(creditNotes).where(eq(creditNotes.id, id)).limit(1);
+  if (!note) return null;
+
+  const [clientRecord, settings, orgSettings, apps, originalInvoice] = await Promise.all([
+    getClientById(note.clientId),
+    getDivisionBillingSettings(note.divisionId),
+    getOrganisationSettings(),
+    db
+      .select({
+        id: creditApplications.id,
+        amount: creditApplications.amount,
+        appliedAt: creditApplications.appliedAt,
+        invoiceNumber: invoices.documentNumber,
+      })
+      .from(creditApplications)
+      .innerJoin(invoices, eq(invoices.id, creditApplications.invoiceId))
+      .where(eq(creditApplications.creditNoteId, id)),
+    note.originalInvoiceId
+      ? db
+          .select({ documentNumber: invoices.documentNumber })
+          .from(invoices)
+          .where(eq(invoices.id, note.originalInvoiceId))
+          .limit(1)
+          .then((res) => res[0]?.documentNumber ?? null)
+      : Promise.resolve(null),
+  ]);
+
+  const allDivisions = await getAllDivisions();
+  const division = allDivisions.find((d) => d.id === note.divisionId);
+  const divisionName = division?.name ?? 'Playhouse Media Group';
+
+  const totalAmount = safeNumber(note.amount);
+  const amountRemaining = safeNumber(note.amountRemaining);
+  const amountApplied = Math.max(0, totalAmount - amountRemaining);
+
+  const issueDateStr =
+    note.createdAt instanceof Date
+      ? note.createdAt.toISOString().split('T')[0]
+      : String(note.createdAt).split('T')[0];
+  const expiresDateStr = note.expiresAt
+    ? note.expiresAt instanceof Date
+      ? note.expiresAt.toISOString().split('T')[0]
+      : String(note.expiresAt).split('T')[0]
+    : null;
+
+  return {
+    type: 'credit-note',
+    title: 'Credit Note',
+    number: note.documentNumber,
+    status: statusLabel(note.status),
+    issueDate: issueDateStr,
+    dueDate: expiresDateStr,
+    reference: originalInvoice ? `Invoice: ${originalInvoice}` : note.reason,
+    org: buildOrgProps(divisionName, settings, orgSettings),
+    client: {
+      name: clientRecord?.businessName ?? clientRecord?.name ?? 'Client',
+      email: clientRecord?.email,
+      phone: clientRecord?.phone,
+    },
+    lineItems: apps.map((app) => ({
+      itemName: app.invoiceNumber,
+      description:
+        app.appliedAt instanceof Date
+          ? app.appliedAt.toISOString().split('T')[0]
+          : String(app.appliedAt).split('T')[0],
+      qty: 1,
+      unitPrice: safeNumber(app.amount),
+      amount: safeNumber(app.amount),
+    })),
+    notes: note.reason,
+    totals: {
+      total: totalAmount,
+      balanceDue: amountRemaining,
+      paid: amountApplied,
+    },
+    creditDetails: {
+      creditType: note.type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+      originalInvoiceNumber: originalInvoice,
+    },
+  };
+}
+
 async function buildStatementPdfData(
   clientId: string,
   filters?: {
@@ -990,6 +1081,29 @@ async function renderDeclarativeBillingPdf(data: PdfDocumentData): Promise<Buffe
         notes: data.notes,
       },
     });
+  } else if (data.type === 'credit-note' || data.type === 'credit_note') {
+    element = React.createElement(CreditNotePdfDocument, {
+      data: {
+        creditNoteNumber: data.number,
+        status: data.status,
+        issueDate: data.issueDate,
+        expiresDate: data.dueDate,
+        type: data.creditDetails?.creditType || 'Credit Note',
+        reason: data.notes,
+        originalInvoiceNumber: data.creditDetails?.originalInvoiceNumber,
+        amount: data.totals?.total || 0,
+        amountRemaining: data.totals?.balanceDue || 0,
+        amountApplied: data.totals?.paid || 0,
+        org,
+        client: data.client,
+        applications: (data.lineItems || []).map((item) => ({
+          invoiceNumber: item.itemName || '',
+          appliedDate: item.description,
+          amount: item.amount,
+        })),
+        notes: data.notes,
+      },
+    });
   } else {
     throw new Error(`Unsupported declarative PDF document type: ${data.type}`);
   }
@@ -1017,7 +1131,9 @@ export async function generateBillingPdf(
         ? await buildQuotePdfData(id)
         : type === 'receipt'
           ? await buildReceiptPdfData(id)
-          : await buildStatementPdfData(id, filters);
+          : type === 'credit-note' || type === 'credit_note'
+            ? await buildCreditNotePdfData(id)
+            : await buildStatementPdfData(id, filters);
 
   if (!data) return null;
 

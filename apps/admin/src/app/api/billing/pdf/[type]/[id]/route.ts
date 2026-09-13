@@ -4,9 +4,16 @@ import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { generateBillingPdf } from '@/lib/server-billing-pdf';
 
-type PdfType = 'invoice' | 'quote' | 'statement' | 'receipt';
+type PdfType = 'invoice' | 'quote' | 'statement' | 'receipt' | 'credit-note' | 'credit_note';
 
-const TYPES = new Set<PdfType>(['invoice', 'quote', 'statement', 'receipt']);
+const TYPES = new Set<PdfType>([
+  'invoice',
+  'quote',
+  'statement',
+  'receipt',
+  'credit-note',
+  'credit_note',
+]);
 const PERIODS = new Set(['current', 'previous', 'past3', 'past6']);
 
 export const dynamic = 'force-dynamic';

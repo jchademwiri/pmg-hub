@@ -38,9 +38,9 @@ import { EmailPreviewPanel } from '@/components/billing/email-preview-panel';
 import { elementToPdfBase64, serverPdfUrlToBase64 } from '@/lib/pdf-export';
 
 interface UniversalEmailDialogProps {
-  documentId: string; // Can be invoiceId, quoteId, or incomeId (receipt)
+  documentId: string; // Can be invoiceId, quoteId, incomeId (receipt), or creditNoteId
   documentNumber: string;
-  documentType: 'invoice' | 'quote' | 'receipt';
+  documentType: 'invoice' | 'quote' | 'receipt' | 'credit_note';
   defaultRecipientEmail: string;
   printableElementId?: string;
   statementElementId?: string;
@@ -117,7 +117,9 @@ export function UniversalEmailDialog({
       ? `New Invoice ${documentNumber}`
       : documentType === 'quote'
         ? `New Quotation ${documentNumber}`
-        : `Payment Receipt ${documentNumber}`;
+        : documentType === 'credit_note'
+          ? `Credit Note ${documentNumber}`
+          : `Payment Receipt ${documentNumber}`;
 
   const [subject, setSubject] = useState(defaultSubjectText);
   const [message, setMessage] = useState('');
@@ -224,7 +226,13 @@ export function UniversalEmailDialog({
     try {
       // 1. Compile primary document
       const docLabel =
-        documentType === 'invoice' ? 'Invoice' : documentType === 'quote' ? 'Quote' : 'Receipt';
+        documentType === 'invoice'
+          ? 'Invoice'
+          : documentType === 'quote'
+            ? 'Quote'
+            : documentType === 'credit_note'
+              ? 'Credit Note'
+              : 'Receipt';
       setStatusText(`Compiling ${docLabel.toLowerCase()} PDF...`);
       const pdfBase64 = pdfUrl
         ? await serverPdfUrlToBase64(pdfUrl, `${docLabel} PDF`)
@@ -310,7 +318,9 @@ export function UniversalEmailDialog({
       ? `Invoice-${documentNumber}.pdf`
       : documentType === 'quote'
         ? `Quote-${documentNumber}.pdf`
-        : `Receipt-${documentNumber}.pdf`;
+        : documentType === 'credit_note'
+          ? `CreditNote-${documentNumber}.pdf`
+          : `Receipt-${documentNumber}.pdf`;
 
   return (
     <Dialog open={currentOpen} onOpenChange={handleOpenChange}>
@@ -335,7 +345,9 @@ export function UniversalEmailDialog({
                 ? 'Invoice'
                 : documentType === 'quote'
                   ? 'Quote'
-                  : 'Receipt'}
+                  : documentType === 'credit_note'
+                    ? 'Credit Note'
+                    : 'Receipt'}
             </Button>
           )}
         </DialogTrigger>
@@ -348,7 +360,9 @@ export function UniversalEmailDialog({
               ? 'Invoice'
               : documentType === 'quote'
                 ? 'Quotation'
-                : 'Payment Receipt'}
+                : documentType === 'credit_note'
+                  ? 'Credit Note'
+                  : 'Payment Receipt'}
           </DialogTitle>
           <DialogDescription>
             Send document **{documentNumber}** directly to the client as a high-fidelity PDF
