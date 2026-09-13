@@ -9,26 +9,48 @@ export interface TableProps {
 
 export function Table({ children, style }: TableProps) {
   return (
-    <table
+    <div
       style={{
         width: "100%",
-        borderCollapse: "collapse",
-        borderSpacing: 0,
-        tableLayout: "fixed",
+        display: "flex",
+        flexDirection: "column",
         ...style,
       }}
     >
       {children}
-    </table>
+    </div>
   );
 }
 
 export function TableHeader({ children, style }: { children: ReactNode; style?: CSSProperties }) {
-  return <thead style={style}>{children}</thead>;
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        backgroundColor: "#f9fafb",
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function TableBody({ children, style }: { children: ReactNode; style?: CSSProperties }) {
-  return <tbody style={style}>{children}</tbody>;
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
 }
 
 export interface TableRowProps {
@@ -42,14 +64,19 @@ export function TableRow({ children, header, striped, style }: TableRowProps) {
   const theme = usePdfTheme();
 
   const rowStyle: CSSProperties = {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
     backgroundColor: header ? "#f9fafb" : "transparent",
     borderBottom: header
       ? `1px solid ${theme.colors.border}`
       : "1px solid #f4f4f5",
+    boxSizing: "border-box",
     ...style,
   };
 
-  return <tr style={rowStyle}>{children}</tr>;
+  return <div style={rowStyle}>{children}</div>;
 }
 
 export interface TableCellProps {
@@ -77,32 +104,20 @@ export function TableCell({
 
   const cellStyle: CSSProperties = {
     boxSizing: "border-box",
-    padding: header ? "5px 3px" : "6px 4px",
+    width: width || (colSpan ? "100%" : undefined),
+    flex: width ? `0 0 ${width}` : colSpan ? "1 1 100%" : "1 1 0%",
+    padding: header ? "5px 4px" : "6px 4px",
     textAlign: align,
-    width,
     fontSize: header ? 7.5 : 8.5,
     fontWeight: header ? 700 : bold ? 600 : 400,
     color: header ? theme.colors.mutedForeground : theme.colors.foreground,
     textTransform: header ? "uppercase" : "none",
     ...(tabular ? { fontVariantNumeric: "tabular-nums" } : {}),
-    verticalAlign: "middle",
-    ...(header ? {} : { overflow: "hidden" }),
+    overflow: "hidden",
     ...style,
   };
 
-  if (header) {
-    return (
-      <th colSpan={colSpan} style={cellStyle}>
-        {children}
-      </th>
-    );
-  }
-
-  return (
-    <td colSpan={colSpan} style={cellStyle}>
-      {children}
-    </td>
-  );
+  return <div style={cellStyle}>{children}</div>;
 }
 
 export function TableHead(props: TableCellProps) {

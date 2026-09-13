@@ -75,4 +75,49 @@ describe("Takumi WASM PDF Engine", () => {
     const pdfMulti = await renderPdf(htmlFixedMulti, { size: "a4" });
     expect(pdfMulti).toBeInstanceOf(Uint8Array);
   });
+
+  it("renders table header with background spanning full width", async () => {
+    const { renderPdf } = await import("../engine");
+
+    // Test C: full flex-based Table with header and data rows
+    const htmlC = `
+      <style>
+        * { box-sizing: border-box; }
+        .table { display: flex; flex-direction: column; width: 100%; }
+        .row-header { display: flex; flex-direction: row; width: 100%; background-color: #f9fafb; border-bottom: 1px solid #e4e4e7; }
+        .row-body { display: flex; flex-direction: row; width: 100%; border-bottom: 1px solid #f4f4f5; }
+        .th-cell { font-size: 7.5px; font-weight: bold; color: #71717a; text-transform: uppercase; padding: 6px 4px; }
+        .td-cell { font-size: 8.5px; color: #18181b; padding: 6px 4px; }
+        .col-desc { width: 52%; text-align: left; }
+        .col-qty { width: 12%; text-align: center; }
+        .col-price { width: 18%; text-align: right; }
+        .col-amount { width: 18%; text-align: right; }
+      </style>
+      <div style="padding: 30px;">
+        <div class="table">
+          <div class="row-header">
+            <div class="th-cell col-desc">DESCRIPTION</div>
+            <div class="th-cell col-qty">QTY</div>
+            <div class="th-cell col-price">UNIT PRICE</div>
+            <div class="th-cell col-amount">AMOUNT</div>
+          </div>
+          <div class="row-body">
+            <div class="td-cell col-desc">Website Redesign & Turborepo Setup</div>
+            <div class="td-cell col-qty">1</div>
+            <div class="td-cell col-price">R 35,000.00</div>
+            <div class="td-cell col-amount" style="font-weight: bold;">R 35,000.00</div>
+          </div>
+          <div class="row-body">
+            <div class="td-cell col-desc">Cloudflare & Vercel Pro Deployment</div>
+            <div class="td-cell col-qty">1</div>
+            <div class="td-cell col-price">R 5,000.00</div>
+            <div class="td-cell col-amount" style="font-weight: bold;">R 5,000.00</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const pdfC = await renderPdf(htmlC, { size: "a4" });
+    expect(pdfC).toBeInstanceOf(Uint8Array);
+  });
 });
