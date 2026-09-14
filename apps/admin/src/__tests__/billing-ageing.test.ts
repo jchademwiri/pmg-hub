@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { calculateAgeing, totalAgeingDue } from '@/lib/billing-ageing';
 import type { AgeingInvoice } from '@/lib/billing-ageing';
+import { formatZARWithCR } from '@/lib/format';
 
 const today = '2026-06-22';
 
@@ -195,5 +196,27 @@ describe('totalAgeingDue', () => {
       days61plus: 0,
     });
     expect(result).toBeCloseTo(100, 2);
+  });
+});
+
+describe('formatZARWithCR', () => {
+  it('formats positive numbers as regular ZAR', () => {
+    const res = formatZARWithCR(1500);
+    expect(res).toContain('1');
+    expect(res).toContain('500');
+    expect(res).not.toContain('CR');
+  });
+
+  it('formats zero as regular ZAR without CR', () => {
+    const res = formatZARWithCR(0);
+    expect(res).not.toContain('CR');
+  });
+
+  it('formats negative numbers with CR suffix and absolute amount', () => {
+    const res = formatZARWithCR(-2500);
+    expect(res).toContain('2');
+    expect(res).toContain('500');
+    expect(res).toMatch(/CR$/);
+    expect(res).not.toContain('-');
   });
 });

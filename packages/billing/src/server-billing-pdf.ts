@@ -36,7 +36,7 @@ import {
   getLogoDataUri,
 } from './pdf';
 
-import { fmtDate, formatZAR, getSASTParts, getSASTToday } from './format';
+import { fmtDate, formatZAR, formatZARWithCR, getSASTParts, getSASTToday } from './format';
 import { calculateAgeing, totalAgeingDue } from './billing-ageing';
 import {
   buildOrgProps,
@@ -200,7 +200,7 @@ function drawFooter(doc: jsPDF, data: PdfDocumentData) {
         }
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(6.5);
-        doc.text(formatZAR(amount), x + colWidth / 2, tableY + 13, { align: 'center' });
+        doc.text(formatZARWithCR(amount), x + colWidth / 2, tableY + 13, { align: 'center' });
       });
     },
   });
@@ -214,7 +214,7 @@ function drawHeader(doc: jsPDF, data: PdfDocumentData) {
     status: data.status,
     highlight:
       data.type === 'statement' && data.totals?.balanceDue != null
-        ? { label: 'Total Due', value: formatZAR(data.totals.balanceDue) }
+        ? { label: 'Total Due', value: formatZARWithCR(data.totals.balanceDue) }
         : undefined,
   });
 }
@@ -984,13 +984,33 @@ async function buildStatementPdfData(
     : null;
 
   const status = determineStatementStatus(statement.summary.totalOutstanding, statement.invoices);
+
+  // Calculate earliest due date among unpaid invoices
+  let earliestDueDate: string | undefined;
+  const unpaidWithDueDates = (statement.outstandingInvoices ?? statement.invoices)
+    .filter(
+      (i) =>
+        i.dueDate &&
+        i.status !== 'paid' &&
+        i.status !== 'void' &&
+        i.status !== 'written_off',
+    )
+    .sort((a, b) => (a.dueDate! < b.dueDate! ? -1 : 1));
+  if (unpaidWithDueDates.length > 0) {
+    earliestDueDate = unpaidWithDueDates[0]!.dueDate!;
+  }
+
   return {
     type: 'statement',
     statementType: filters?.statementType ?? 'activity',
-    title: 'Statement',
+    title:
+      filters?.statementType === 'outstanding'
+        ? 'Statement of Outstanding Invoices'
+        : 'Statement',
     number: `ST-${statement.client.name.toUpperCase().substring(0, 3)}-${filters?.year ?? currentYear}`,
     status,
     issueDate: getSASTToday(),
+    dueDate: earliestDueDate,
     periodFrom,
     periodTo,
     org: buildOrgProps(divisionName, settings, orgSettings),
@@ -1072,9 +1092,11 @@ async function renderDeclarativeBillingPdf(data: PdfDocumentData): Promise<Buffe
     element = React.createElement(StatementPdfDocument, {
       data: {
         statementNumber: data.number,
+        statementType: data.statementType,
         status: data.status,
         periodFrom: data.periodFrom,
         periodTo: data.periodTo,
+        dueDate: data.dueDate ?? undefined,
         org,
         client: data.client,
         openingBalance: data.openingBalance,

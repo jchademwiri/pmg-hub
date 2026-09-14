@@ -25,7 +25,7 @@ import {
 } from '@pmg/db';
 import { getClientCreditBalanceV2 } from '@/app/actions/credit-management';
 import { calculateAgeing } from '@/lib/billing-ageing';
-import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
+import { formatZAR, formatZARWithCR, fmtDate, getSASTToday } from '@/lib/format';
 import {
   buildOrgProps,
   determineStatementStatus,
@@ -61,12 +61,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 interface Props {
   params: Promise<{ clientId: string }>;
-  searchParams: Promise<{ year?: string; monthPeriod?: string }>;
+  searchParams: Promise<{ year?: string; monthPeriod?: string; statementType?: string }>;
 }
 
 export default async function StatementDetailPage({ params, searchParams }: Props) {
   const { clientId } = await params;
-  const { year: yearParam, monthPeriod: monthPeriodParam } = await searchParams;
+  const {
+    year: yearParam,
+    monthPeriod: monthPeriodParam,
+    statementType: statementTypeParam,
+  } = await searchParams;
+
+  const statementType: 'activity' | 'outstanding' =
+    statementTypeParam === 'outstanding' ? 'outstanding' : 'activity';
 
   const now = new Date();
   const currentFY = now.getMonth() < 2 ? now.getFullYear() - 1 : now.getFullYear();
@@ -111,7 +118,22 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
   const statementPdfParams = new URLSearchParams();
   if (monthPeriod) statementPdfParams.set('monthPeriod', monthPeriod);
   if (year) statementPdfParams.set('year', String(year));
+  if (statementType === 'outstanding') statementPdfParams.set('statementType', 'outstanding');
   const statementPdfUrl = `/api/billing/pdf/statement/${clientId}${statementPdfParams.size ? `?${statementPdfParams.toString()}` : ''}`;
+
+  const buildStatementUrl = (opts: {
+    monthPeriod?: string;
+    year?: number | string;
+    statementType?: string;
+  }) => {
+    const sp = new URLSearchParams();
+    if (opts.monthPeriod) sp.set('monthPeriod', opts.monthPeriod);
+    else if (opts.year) sp.set('year', String(opts.year));
+    if (opts.statementType && opts.statementType !== 'activity') {
+      sp.set('statementType', opts.statementType);
+    }
+    return `/billing/statements/${clientId}${sp.size ? `?${sp.toString()}` : ''}`;
+  };
 
   // ── DocumentPreview props ─────────────────────────────────────────────────
   let periodLabel = '';
@@ -228,6 +250,37 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     })
     .sort((a, b) => new Date(a.invoiceDate).getTime() - new Date(b.invoiceDate).getTime());
 
+  // Outstanding transactions list when viewing "Outstanding Only"
+  const outstandingTransactions: StatementTransaction[] = outstandingInvoicesList.map((inv) => ({
+    date: inv.invoiceDate,
+    reference: inv.documentNumber,
+    description: inv.reference ?? 'Invoice',
+    debit: Number(inv.total),
+    credit: Number(inv.allocatedAmount ?? 0) > 0 ? Number(inv.allocatedAmount) : undefined,
+    balance: Number(inv.total) - Number(inv.allocatedAmount ?? 0),
+    invoiceId: inv.id,
+  }));
+
+  const displayTransactions =
+    statementType === 'outstanding' ? outstandingTransactions : transactions;
+
+  const displayBalance =
+    statementType === 'outstanding'
+      ? outstandingInvoicesList.reduce(
+          (sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)),
+          0,
+        )
+      : currentBalance;
+
+  // Calculate earliest due date among unpaid invoices
+  let earliestDueDate: string | undefined;
+  const unpaidWithDueDates = (statement.outstandingInvoices ?? invoices)
+    .filter((i) => i.dueDate && i.status !== 'paid' && i.status !== 'void')
+    .sort((a, b) => (a.dueDate! < b.dueDate! ? -1 : 1));
+  if (unpaidWithDueDates.length > 0) {
+    earliestDueDate = unpaidWithDueDates[0]!.dueDate!;
+  }
+
   const clientRecord = await getClientById(clientId);
   const allDivisions = await getAllDivisions();
   const { divisionName: orgName, effectiveDivisionId } = resolveDivisionBranding(
@@ -242,8 +295,10 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
   const docPreviewProps = {
     number: `STMT-${monthPeriod ? monthPeriod.toUpperCase() : year ? year : currentFY}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
     status: docStatus,
+    dueDate: earliestDueDate,
+    statementType,
     issueDate: now.toISOString().split('T')[0]!,
-    periodFrom,
+    periodFrom: statementType === 'outstanding' ? undefined : periodFrom,
     periodTo,
     org: buildOrgProps(
       orgName,
@@ -257,10 +312,10 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       phone: client.phone ?? undefined,
     },
     banking: buildBankingProps(divSettings),
-    transactions,
+    transactions: displayTransactions,
     ageing,
-    balanceDue: currentBalance,
-    openingBalance: adjustedOpeningBalance,
+    balanceDue: displayBalance,
+    openingBalance: statementType === 'outstanding' ? undefined : adjustedOpeningBalance,
   };
 
   return (
@@ -275,6 +330,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground truncate">
               Account statement - {periodLabel}
+              {statementType === 'outstanding' ? ' (Outstanding Invoices Only)' : ''}
             </p>
           </div>
         </div>
@@ -291,7 +347,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
             statementPdfUrl={statementPdfUrl}
             statementDate={fmtDate(new Date())}
             period={periodLabel}
-            totalAmountDue={formatZAR(currentBalance)}
+            totalAmountDue={formatZARWithCR(displayBalance)}
           />
           <ExportPdfButton
             fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
@@ -321,7 +377,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
           },
           {
             label: 'Outstanding',
-            value: formatZAR(currentBalance),
+            value: formatZARWithCR(currentBalance),
             colorClass: currentBalance > 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground',
           },
           {
@@ -419,6 +475,35 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
           <Card size="sm">
             <CardContent className="pt-4">
               <div className="flex flex-col gap-3">
+                {/* Statement View Toggle: Activity (Ledger) vs Outstanding Only */}
+                <div className="flex flex-col gap-1.5 pb-2 border-b border-border/40">
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Statement View
+                  </span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { value: 'activity', label: 'Activity (Ledger)' },
+                      { value: 'outstanding', label: 'Outstanding Only' },
+                    ].map((t) => (
+                      <Link
+                        key={t.value}
+                        href={buildStatementUrl({
+                          monthPeriod,
+                          year,
+                          statementType: t.value,
+                        })}
+                        className={`flex items-center justify-center text-center whitespace-nowrap rounded-md border px-2.5 py-1.5 text-xs transition-all ${
+                          statementType === t.value
+                            ? 'border-primary bg-primary/10 font-semibold text-primary shadow-xs'
+                            : 'border-border text-muted-foreground hover:bg-muted'
+                        }`}
+                      >
+                        {t.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Rolling Periods
@@ -432,7 +517,10 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                     ].map((p) => (
                       <Link
                         key={p.value}
-                        href={`/billing/statements/${clientId}?monthPeriod=${p.value}`}
+                        href={buildStatementUrl({
+                          monthPeriod: p.value,
+                          statementType,
+                        })}
                         className={`flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs transition-all ${
                           monthPeriod === p.value
                             ? 'border-primary bg-primary/10 font-semibold text-primary'
@@ -453,7 +541,10 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                     {availableYears.map((y) => (
                       <Link
                         key={y}
-                        href={`/billing/statements/${clientId}?year=${y}`}
+                        href={buildStatementUrl({
+                          year: y,
+                          statementType,
+                        })}
                         className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs transition-all ${
                           !monthPeriod && String(y) === String(year)
                             ? 'border-primary bg-primary/10 font-semibold text-primary'

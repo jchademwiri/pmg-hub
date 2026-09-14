@@ -10,6 +10,20 @@ export function formatZAR(amount: number | string | null | undefined): string {
 }
 
 /**
+ * Format an amount in ZAR, appending ' CR' if negative (credit balance/refund/overpayment)
+ * e.g. -2500 -> "R 2 500,00 CR"
+ * Standard South African accounting notation for debtor credit balances.
+ */
+export function formatZARWithCR(amount: number | string | null | undefined): string {
+  const val = typeof amount === 'number' ? amount : parseFloat(String(amount ?? 0));
+  const num = isNaN(val) ? 0 : val;
+  if (num < 0) {
+    return `${formatZAR(Math.abs(num))} CR`;
+  }
+  return formatZAR(num);
+}
+
+/**
  * Format an ISO date string (YYYY-MM-DD) or Date object as "08 May 2026".
  * The T00:00:00 suffix prevents timezone-offset day-shift on ISO strings.
  */

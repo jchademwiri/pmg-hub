@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatZAR, fmtDate } from '../../format';
+import { formatZAR, formatZARWithCR, fmtDate } from '../../format';
 import { Document, Page, KeepTogether } from '../primitives';
 import { PageHeader, type OrgDetails } from '../components/page-header';
 import { PageFooter } from '../components/page-footer';
@@ -28,11 +28,14 @@ export interface StatementAgeing {
 export interface StatementPdfData {
   statementNumber: string;
   status: string;
+  statementType?: 'activity' | 'outstanding';
   periodFrom?: string;
   periodTo?: string;
+  dueDate?: string;
   org: OrgDetails;
   client: {
     name: string;
+    accountRef?: string | null;
     email?: string | null;
     phone?: string | null;
     address?: string | null;
@@ -56,14 +59,18 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
     (data.transactions ?? []).reduce((sum, tx) => sum + (tx.debit || 0), 0) + openingBalance;
   const totalPaid =
     data.totalPaid ?? (data.transactions ?? []).reduce((sum, tx) => sum + (tx.credit || 0), 0);
-  const totalDue = data.totalDue ?? Math.max(0, subtotal - totalPaid);
+  const totalDue = data.totalDue ?? (subtotal - totalPaid);
 
   return (
     <Document title={`Statement ${data.statementNumber}`}>
       <Page size="a4">
         <PageHeader
           org={data.org}
-          title="Statement of Account"
+          title={
+            data.statementType === 'outstanding'
+              ? 'Statement of Outstanding Invoices'
+              : 'Statement of Account'
+          }
           number={data.statementNumber}
           status={data.status}
         />
@@ -131,16 +138,25 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
             <KeyValue
               size="sm"
               items={[
-                ...(data.periodFrom
+                ...(data.statementType !== 'outstanding' && data.periodFrom
                   ? [{ key: 'Period From', value: fmtDate(data.periodFrom) }]
                   : []),
                 ...(data.periodTo ? [{ key: 'Period To', value: fmtDate(data.periodTo) }] : []),
-                { key: 'Opening Balance', value: formatZAR(openingBalance) },
+                ...(data.dueDate && totalDue > 0
+                  ? [{ key: 'Payment Due Date', value: fmtDate(data.dueDate) }]
+                  : []),
+                ...(data.statementType === 'outstanding'
+                  ? []
+                  : [{ key: 'Opening Balance', value: formatZARWithCR(openingBalance) }]),
                 {
                   key: 'Total Amount Due',
-                  value: formatZAR(totalDue),
+                  value: formatZARWithCR(totalDue),
                   keyStyle: { fontWeight: 700, color: theme.colors.foreground },
-                  valueStyle: { fontWeight: 700, color: theme.colors.primary, fontSize: 10 },
+                  valueStyle: {
+                    fontWeight: 700,
+                    color: totalDue > 0 ? theme.colors.primary : theme.colors.success,
+                    fontSize: 10,
+                  },
                 },
               ]}
             />
@@ -172,23 +188,25 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {/* Opening Balance Row */}
-            <TableRow striped={false}>
-              <TableCell width="15%">{data.periodFrom ? fmtDate(data.periodFrom) : '-'}</TableCell>
-              <TableCell width="18%" bold>
-                OPENING
-              </TableCell>
-              <TableCell width="28%">Opening Balance</TableCell>
-              <TableCell width="13%" align="right">
-                -
-              </TableCell>
-              <TableCell width="13%" align="right">
-                -
-              </TableCell>
-              <TableCell width="13%" align="right" bold tabular>
-                {formatZAR(openingBalance)}
-              </TableCell>
-            </TableRow>
+            {/* Opening Balance Row (only for Activity Statement) */}
+            {data.statementType !== 'outstanding' && (
+              <TableRow striped={false}>
+                <TableCell width="15%">{data.periodFrom ? fmtDate(data.periodFrom) : '-'}</TableCell>
+                <TableCell width="18%" bold>
+                  OPENING
+                </TableCell>
+                <TableCell width="28%">Opening Balance</TableCell>
+                <TableCell width="13%" align="right">
+                  -
+                </TableCell>
+                <TableCell width="13%" align="right">
+                  -
+                </TableCell>
+                <TableCell width="13%" align="right" bold tabular>
+                  {formatZARWithCR(openingBalance)}
+                </TableCell>
+              </TableRow>
+            )}
 
             {/* Transaction Rows */}
             {(data.transactions ?? []).map((tx, idx) => (
@@ -210,7 +228,7 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                   {tx.credit ? `(${formatZAR(tx.credit)})` : '-'}
                 </TableCell>
                 <TableCell width="13%" align="right" bold tabular>
-                  {tx.balance != null ? formatZAR(tx.balance) : '-'}
+                  {tx.balance != null ? formatZARWithCR(tx.balance) : '-'}
                 </TableCell>
               </TableRow>
             ))}
@@ -258,9 +276,40 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                       { key: 'Account Name', value: data.banking.accountName },
                       { key: 'Account Number', value: data.banking.accountNumber },
                       { key: 'Branch Code', value: data.banking.branchCode },
-                      { key: 'Reference', value: data.client.name.slice(0, 14).toUpperCase() },
+                      {
+                        key: 'Payment Reference',
+                        value:
+                          data.client.accountRef || data.client.name.slice(0, 14).toUpperCase(),
+                      },
                     ]}
                   />
+                  <div
+                    style={{
+                      marginTop: 6,
+                      fontSize: 6.8,
+                      color: theme.colors.mutedForeground,
+                      lineHeight: '1.4',
+                    }}
+                  >
+                    <span style={{ fontWeight: 600, color: theme.colors.foreground }}>
+                      Payment Instructions:
+                    </span>
+                    <br />
+                    • Use{' '}
+                    <span style={{ fontWeight: 600, color: theme.colors.foreground }}>
+                      {data.client.accountRef || data.client.name.slice(0, 14).toUpperCase()}
+                    </span>{' '}
+                    as your deposit reference.
+                    {data.org.email && (
+                      <>
+                        <br />
+                        • Email Proof of Payment (POP) to:{' '}
+                        <span style={{ fontWeight: 600, color: theme.colors.primary }}>
+                          {data.org.email}
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -277,23 +326,32 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                 divided
                 items={[
                   {
-                    key: 'Subtotal',
-                    value: formatZAR(subtotal),
+                    key: data.statementType === 'outstanding' ? 'Total Outstanding' : 'Subtotal',
+                    value: formatZARWithCR(subtotal),
                     keyStyle: { fontWeight: 700 },
                     valueStyle: { fontWeight: 700 },
                   },
-                  {
-                    key: 'Less Payments',
-                    value: totalPaid > 0 ? `-${formatZAR(totalPaid)}` : '-R 0,00',
-                    valueStyle: {
-                      color: totalPaid > 0 ? theme.colors.success : theme.colors.mutedForeground,
-                    },
-                  },
+                  ...(data.statementType === 'outstanding'
+                    ? []
+                    : [
+                        {
+                          key: 'Less Payments',
+                          value: totalPaid > 0 ? `-${formatZAR(totalPaid)}` : '-R 0,00',
+                          valueStyle: {
+                            color:
+                              totalPaid > 0 ? theme.colors.success : theme.colors.mutedForeground,
+                          },
+                        },
+                      ]),
                   {
                     key: 'Balance Due',
-                    value: formatZAR(totalDue),
+                    value: formatZARWithCR(totalDue),
                     keyStyle: { fontWeight: 700, fontSize: 10, color: theme.colors.foreground },
-                    valueStyle: { fontWeight: 700, fontSize: 11, color: theme.colors.primary },
+                    valueStyle: {
+                      fontWeight: 700,
+                      fontSize: 11,
+                      color: totalDue > 0 ? theme.colors.primary : theme.colors.success,
+                    },
                   },
                 ]}
               />
@@ -476,11 +534,11 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                         fontSize: 8.5,
                         textAlign: 'center',
                         fontWeight: 700,
-                        color: theme.colors.foreground,
+                        color: totalDue > 0 ? theme.colors.foreground : theme.colors.success,
                         fontVariantNumeric: 'tabular-nums',
                       }}
                     >
-                      {formatZAR(totalDue)}
+                      {formatZARWithCR(totalDue)}
                     </td>
                   </tr>
                 </tbody>
