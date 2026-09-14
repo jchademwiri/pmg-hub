@@ -114,10 +114,6 @@ export async function createInvoice(
       return { error: 'A client is required.' };
     }
 
-    if (await isPeriodClosed(invoiceDate)) {
-      const minDate = await getMinAllowedDate();
-      return { error: getMinDateErrorMessage(minDate) };
-    }
 
     if (vatEnabled) {
       try {

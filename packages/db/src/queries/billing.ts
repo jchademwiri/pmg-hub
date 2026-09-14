@@ -140,6 +140,8 @@ export type ClientStatement = {
   quotes: QuotationRow[];
   invoices: InvoiceRow[];
   outstandingInvoices: InvoiceRow[];
+  periodFrom?: string;
+  periodTo?: string;
 };
 
 // ── Billing item types ────────────────────────────────────────────────────────
@@ -957,11 +959,13 @@ export async function getClientStatement(
   }
   let statementBalanceCutoff: string | null = null;
   let periodStartDate: string | null = null;
+  let periodEndDate: string | null = null;
 
   if (filters?.monthPeriod) {
     const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
     statementBalanceCutoff = endDate;
     periodStartDate = startDate;
+    periodEndDate = endDate;
     quoteConditions.push(
       sql`${quotations.quoteDate} >= ${startDate} AND ${quotations.quoteDate} <= ${endDate}`,
     );
@@ -972,8 +976,12 @@ export async function getClientStatement(
   } else if (filters?.year) {
     const startDate = `${filters.year}-03-01`;
     const endDateExclusive = `${filters.year + 1}-03-01`;
+    const nextFYStart = new Date(filters.year + 1, 2, 1);
+    const lastDayOfFY = new Date(nextFYStart.getTime() - 24 * 60 * 60 * 1000);
+    const endDate = `${lastDayOfFY.getFullYear()}-${String(lastDayOfFY.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfFY.getDate()).padStart(2, '0')}`;
     statementBalanceCutoff = endDateExclusive;
     periodStartDate = startDate;
+    periodEndDate = endDate;
     quoteConditions.push(
       sql`${quotations.quoteDate} >= ${startDate} AND ${quotations.quoteDate} < ${endDateExclusive}`,
     );
@@ -1189,17 +1197,69 @@ export async function getClientStatement(
   ).length;
   const conversionRate = sentCount > 0 ? acceptedCount / sentCount : 0;
 
-  // Fetch all outstanding/unpaid invoices (all-time) for the ageing report
+  // Fetch outstanding/unpaid invoices as of the statement cut-off date (or all-time if live)
+  const invoiceDateCutoff = statementBalanceCutoff
+    ? filters?.year
+      ? sql`${invoices.invoiceDate} < ${statementBalanceCutoff}`
+      : sql`${invoices.invoiceDate} <= ${statementBalanceCutoff}`
+    : sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`;
+
+  const outstandingStatusCondition = statementBalanceCutoff
+    ? sql`${invoices.status} NOT IN ('draft', 'void', 'written_off')`
+    : inArray(invoices.status, ['issued', 'overdue', 'partially_paid']);
+
   const outstandingConditions = [
     eq(invoices.clientId, clientId),
-    inArray(invoices.status, ['issued', 'overdue', 'partially_paid']),
-    sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`,
+    outstandingStatusCondition,
+    invoiceDateCutoff,
   ];
   if (filters?.divisionId) {
     outstandingConditions.push(eq(invoices.divisionId, filters.divisionId));
   }
 
-  const outstandingInvoices = await db
+  const allocatedAmountSql = statementBalanceCutoff
+    ? filters?.year
+      ? sql<string>`(
+          COALESCE((
+            SELECT SUM(pa.amount)
+            FROM payment_allocations pa
+            INNER JOIN income inc ON pa.income_id = inc.id
+            WHERE pa.invoice_id = invoices.id
+              AND inc.date < ${statementBalanceCutoff}
+              AND inc.description NOT LIKE 'Credit applied to%'
+          ), 0)
+          +
+          COALESCE((
+            SELECT SUM(ca.amount)
+            FROM credit_applications ca
+            WHERE ca.invoice_id = invoices.id
+              AND ca.applied_at < ${statementBalanceCutoff}::timestamp
+          ), 0)
+        )::text`
+      : sql<string>`(
+          COALESCE((
+            SELECT SUM(pa.amount)
+            FROM payment_allocations pa
+            INNER JOIN income inc ON pa.income_id = inc.id
+            WHERE pa.invoice_id = invoices.id
+              AND inc.date <= ${statementBalanceCutoff}
+              AND inc.description NOT LIKE 'Credit applied to%'
+          ), 0)
+          +
+          COALESCE((
+            SELECT SUM(ca.amount)
+            FROM credit_applications ca
+            WHERE ca.invoice_id = invoices.id
+              AND ca.applied_at <= ${statementBalanceCutoff}::timestamp + interval '1 day'
+          ), 0)
+        )::text`
+    : sql<string>`(
+        COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0)
+        +
+        COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)
+      )::text`;
+
+  const outstandingInvoicesRaw = await db
     .select({
       id: invoices.id,
       divisionId: invoices.divisionId,
@@ -1223,11 +1283,7 @@ export async function getClientStatement(
       createdBy: invoices.createdBy,
       createdAt: invoices.createdAt,
       updatedAt: invoices.updatedAt,
-      allocatedAmount: sql<string>`(
-          COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0)
-          +
-          COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)
-        )::text`,
+      allocatedAmount: allocatedAmountSql,
     })
     .from(invoices)
     .innerJoin(divisions, eq(invoices.divisionId, divisions.id))
@@ -1235,6 +1291,15 @@ export async function getClientStatement(
     .leftJoin(quotations, eq(invoices.quotationId, quotations.id))
     .where(and(...outstandingConditions))
     .orderBy(desc(invoices.invoiceDate));
+
+  const outstandingInvoices = statementBalanceCutoff
+    ? (outstandingInvoicesRaw as InvoiceRow[])
+        .filter((inv) => Number(inv.total) - Number(inv.allocatedAmount ?? 0) > 0)
+        .map((inv) => ({
+          ...inv,
+          status: Number(inv.allocatedAmount ?? 0) > 0 ? 'partially_paid' : 'issued',
+        }))
+    : (outstandingInvoicesRaw as InvoiceRow[]);
 
   return {
     client,
@@ -1250,7 +1315,9 @@ export async function getClientStatement(
     },
     quotes: quoteRows as QuotationRow[],
     invoices: invoiceRows as InvoiceRow[],
-    outstandingInvoices: outstandingInvoices as InvoiceRow[],
+    outstandingInvoices,
+    periodFrom: periodStartDate ?? undefined,
+    periodTo: periodEndDate ?? undefined,
   };
 }
 

@@ -24,6 +24,7 @@ import {
   sql,
 } from '@pmg/db';
 import { getClientCreditBalanceV2 } from '@/app/actions/credit-management';
+import { calculateAgeing } from '@/lib/billing-ageing';
 import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
 import {
   buildOrgProps,
@@ -215,26 +216,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
   // ── Calculate dynamic status and ageing ──────────────────────────────────
   const docStatus = determineStatementStatus(summary.totalOutstanding, invoices);
 
-  const todayStr = getSASTToday();
-  const ageing = { current: 0, days1_14: 0, days15_30: 0, days31_60: 0, days61plus: 0 };
-  for (const inv of statement.outstandingInvoices ?? invoices) {
-    if (inv.status === 'issued' || inv.status === 'overdue' || inv.status === 'partially_paid') {
-      const dueStr = inv.dueDate ?? inv.invoiceDate;
-      const tDate = new Date(todayStr);
-      const dDate = new Date(dueStr);
-      const diffTime = tDate.getTime() - dDate.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      const outstanding = Number(inv.total) - Number(inv.allocatedAmount ?? 0);
-      if (outstanding <= 0) continue;
-
-      if (diffDays <= 0) ageing.current += outstanding;
-      else if (diffDays <= 14) ageing.days1_14 += outstanding;
-      else if (diffDays <= 30) ageing.days15_30 += outstanding;
-      else if (diffDays <= 60) ageing.days31_60 += outstanding;
-      else ageing.days61plus += outstanding;
-    }
-  }
+  const asOfDate = periodTo || statement.periodTo || getSASTToday();
+  const ageing = calculateAgeing(statement.outstandingInvoices ?? invoices, asOfDate);
 
   const outstandingInvoicesList = (statement.outstandingInvoices ?? invoices)
     .filter((inv) => {

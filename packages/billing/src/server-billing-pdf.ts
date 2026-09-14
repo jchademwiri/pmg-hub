@@ -968,8 +968,8 @@ async function buildStatementPdfData(
       transactions.length > 0 ? (transactions[0]!.balance ?? openingBalance) : openingBalance;
   }
 
-  const todayStr = getSASTToday();
-  const ageing = calculateAgeing(statement.outstandingInvoices ?? statement.invoices, todayStr);
+  const asOfDate = periodTo || statement.periodTo || getSASTToday();
+  const ageing = calculateAgeing(statement.outstandingInvoices ?? statement.invoices, asOfDate);
 
   const clientRecord = await getClientById(clientId);
   const allDivisions = await getAllDivisions();

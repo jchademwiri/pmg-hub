@@ -231,13 +231,11 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
             }}
           >
             {/* Left: Banking Details */}
-            <div style={{ display: 'flex', flexDirection: 'column', width: '52%' }}>
+            <div style={{ width: '54%' }}>
               {data.banking && (
                 <div
                   style={{
-                    border: `1px solid ${theme.colors.border}`,
-                    borderRadius: theme.primitives.borderRadius.sm,
-                    padding: '10px 12px',
+                    padding: '4px 0',
                   }}
                 >
                   <span
@@ -271,9 +269,7 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
             <div
               style={{
                 width: '42%',
-                border: `1px solid ${theme.colors.border}`,
-                borderRadius: theme.primitives.borderRadius.sm,
-                padding: '10px 12px',
+                padding: '4px 0',
               }}
             >
               <KeyValue
@@ -349,29 +345,7 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                         borderRight: `1px solid ${theme.colors.border}`,
                       }}
                     >
-                      Current
-                    </th>
-                    <th
-                      style={{
-                        padding: '4px 6px',
-                        fontSize: 7,
-                        fontWeight: 700,
-                        textAlign: 'center',
-                        borderRight: `1px solid ${theme.colors.border}`,
-                      }}
-                    >
-                      1–14 Days
-                    </th>
-                    <th
-                      style={{
-                        padding: '4px 6px',
-                        fontSize: 7,
-                        fontWeight: 700,
-                        textAlign: 'center',
-                        borderRight: `1px solid ${theme.colors.border}`,
-                      }}
-                    >
-                      15–30 Days
+                      61+ Days
                     </th>
                     <th
                       style={{
@@ -393,7 +367,29 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                         borderRight: `1px solid ${theme.colors.border}`,
                       }}
                     >
-                      61+ Days
+                      15–30 Days
+                    </th>
+                    <th
+                      style={{
+                        padding: '4px 6px',
+                        fontSize: 7,
+                        fontWeight: 700,
+                        textAlign: 'center',
+                        borderRight: `1px solid ${theme.colors.border}`,
+                      }}
+                    >
+                      1–14 Days
+                    </th>
+                    <th
+                      style={{
+                        padding: '4px 6px',
+                        fontSize: 7,
+                        fontWeight: 700,
+                        textAlign: 'center',
+                        borderRight: `1px solid ${theme.colors.border}`,
+                      }}
+                    >
+                      Current
                     </th>
                     <th
                       style={{
@@ -414,52 +410,6 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                         padding: '6px',
                         fontSize: 8,
                         textAlign: 'center',
-                        fontVariantNumeric: 'tabular-nums',
-                        borderRight: `1px solid ${theme.colors.border}`,
-                      }}
-                    >
-                      {formatZAR(data.ageing.current)}
-                    </td>
-                    <td
-                      style={{
-                        padding: '6px',
-                        fontSize: 8,
-                        textAlign: 'center',
-                        fontVariantNumeric: 'tabular-nums',
-                        borderRight: `1px solid ${theme.colors.border}`,
-                      }}
-                    >
-                      {formatZAR(data.ageing.days1_14)}
-                    </td>
-                    <td
-                      style={{
-                        padding: '6px',
-                        fontSize: 8,
-                        textAlign: 'center',
-                        fontVariantNumeric: 'tabular-nums',
-                        borderRight: `1px solid ${theme.colors.border}`,
-                      }}
-                    >
-                      {formatZAR(data.ageing.days15_30)}
-                    </td>
-                    <td
-                      style={{
-                        padding: '6px',
-                        fontSize: 8,
-                        textAlign: 'center',
-                        fontWeight: data.ageing.days31_60 > 0 ? 700 : 400,
-                        color: data.ageing.days31_60 > 0 ? '#d97706' : 'inherit',
-                        fontVariantNumeric: 'tabular-nums',
-                        borderRight: `1px solid ${theme.colors.border}`,
-                      }}
-                    >
-                      {formatZAR(data.ageing.days31_60)}
-                    </td>
-                    <td
-                      style={{
-                        padding: '6px',
-                        fontSize: 8,
-                        textAlign: 'center',
                         fontWeight: data.ageing.days61plus > 0 ? 700 : 400,
                         color: data.ageing.days61plus > 0 ? '#dc2626' : 'inherit',
                         fontVariantNumeric: 'tabular-nums',
@@ -471,10 +421,62 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                     <td
                       style={{
                         padding: '6px',
+                        fontSize: 8,
+                        textAlign: 'center',
+                        fontWeight: data.ageing.days31_60 > 0 ? 700 : 400,
+                        color: data.ageing.days31_60 > 0 ? '#dc2626' : 'inherit',
+                        fontVariantNumeric: 'tabular-nums',
+                        borderRight: `1px solid ${theme.colors.border}`,
+                      }}
+                    >
+                      {formatZAR(data.ageing.days31_60)}
+                    </td>
+                    <td
+                      style={{
+                        padding: '6px',
+                        fontSize: 8,
+                        textAlign: 'center',
+                        fontWeight: data.ageing.days15_30 > 0 ? 700 : 400,
+                        color: data.ageing.days15_30 > 0 ? '#d97706' : 'inherit',
+                        fontVariantNumeric: 'tabular-nums',
+                        borderRight: `1px solid ${theme.colors.border}`,
+                      }}
+                    >
+                      {formatZAR(data.ageing.days15_30)}
+                    </td>
+                    <td
+                      style={{
+                        padding: '6px',
+                        fontSize: 8,
+                        textAlign: 'center',
+                        fontWeight: data.ageing.days1_14 > 0 ? 700 : 400,
+                        color: data.ageing.days1_14 > 0 ? '#d97706' : 'inherit',
+                        fontVariantNumeric: 'tabular-nums',
+                        borderRight: `1px solid ${theme.colors.border}`,
+                      }}
+                    >
+                      {formatZAR(data.ageing.days1_14)}
+                    </td>
+                    <td
+                      style={{
+                        padding: '6px',
+                        fontSize: 8,
+                        textAlign: 'center',
+                        fontWeight: 700,
+                        color: theme.colors.foreground,
+                        fontVariantNumeric: 'tabular-nums',
+                        borderRight: `1px solid ${theme.colors.border}`,
+                      }}
+                    >
+                      {formatZAR(data.ageing.current)}
+                    </td>
+                    <td
+                      style={{
+                        padding: '6px',
                         fontSize: 8.5,
                         textAlign: 'center',
                         fontWeight: 700,
-                        color: theme.colors.primary,
+                        color: theme.colors.foreground,
                         fontVariantNumeric: 'tabular-nums',
                       }}
                     >

@@ -555,11 +555,6 @@ export function ClientBillingWorkspace({
     statement?.invoices ?? [],
   );
 
-  const statementAgeing = calculateAgeing(
-    statement?.outstandingInvoices ?? statement?.invoices ?? [],
-    getSASTToday(),
-  );
-
   const statementPeriodParam = searchParams.get('monthPeriod');
   const statementYearParam = searchParams.get('year');
   const effectivePeriod = statementPeriodParam ?? (!statementYearParam ? 'current' : null);
@@ -597,6 +592,12 @@ export function ClientBillingWorkspace({
     periodFrom = `${y}-03-01`;
     periodTo = `${y + 1}-02-28`;
   }
+
+  const asOfDate = periodTo || statement?.periodTo || getSASTToday();
+  const statementAgeing = calculateAgeing(
+    statement?.outstandingInvoices ?? statement?.invoices ?? [],
+    asOfDate,
+  );
 
   const { divisionName: statementDivisionName } = resolveDivisionBranding(
     client.divisionId,

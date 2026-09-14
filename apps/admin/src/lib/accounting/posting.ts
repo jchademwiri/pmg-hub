@@ -44,6 +44,7 @@ import {
   ACCOUNT_RATES,
   getNextJournalEntryNumber,
   ensureOpenPeriod,
+  reopenPeriod,
   type ChartAccount,
 } from '@pmg/db';
 
@@ -433,8 +434,12 @@ export async function postInvoiceIssueJournalEntry(data: {
     if (amount <= 0) return { error: 'Invoice amount must be positive.' };
 
     const period = date.slice(0, 7);
-    const p = await ensureOpenPeriod(period);
-    if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
+    let p = await ensureOpenPeriod(period);
+    if (p.status === 'locked') return { error: `Accounting period ${period} is permanently locked.` };
+    if (p.status === 'closed') {
+      await reopenPeriod(period);
+      p = await ensureOpenPeriod(period);
+    }
 
     const db = data.tx || getDb();
     const isVatActive = Boolean(vatEnabled && vatAmount && vatAmount > 0);
