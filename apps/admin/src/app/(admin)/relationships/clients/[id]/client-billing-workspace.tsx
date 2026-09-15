@@ -35,10 +35,6 @@ import {
 } from '@/components/ui/select';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { DocumentPreview } from '@/components/billing/document-preview';
-import { PrintButton } from '@/components/billing/print-button';
-import { ExportPdfButton } from '@/components/billing/export-pdf-button';
-import { UniversalEmailDialog } from '@/components/billing/universal-email-dialog';
-import { PaymentReceiptPreview } from '@/components/billing/payment-receipt-preview';
 import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
 import { ClientMetricStrip } from './client-metric-strip';
@@ -47,14 +43,11 @@ import {
   calculateClientHealth,
   calculateAverageDaysToPay,
   buildOrgProps,
-  determineStatementStatus,
   buildIncomeInvoiceMap,
   buildTransactionHistory,
-  resolveDivisionBranding,
   buildBankingProps,
 } from '@/lib/client-billing-helpers';
 import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
-import { calculateAgeing } from '@/lib/billing-ageing';
 import { appendElementToPdf, elementToPdfBase64, sanitizePdfFileName } from '@/lib/pdf-export';
 import {
   FileDown,
@@ -180,32 +173,9 @@ export function ClientBillingWorkspace({
   // Collapsible Details
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
-  // Split-Pane Preview Selection
-  const [selectedDocId, setSelectedDocId] = useState<string | null>(
-    invoices.length > 0
-      ? invoices[0]!.id
-      : quotes.length > 0
-        ? quotes[0]!.id
-        : payments?.data && payments.data.length > 0
-          ? payments.data[0]!.id
-          : null,
-  );
-  const [selectedDocType, setSelectedDocType] = useState<
-    'invoice' | 'quote' | 'statement' | 'payment'
-  >(
-    invoices.length > 0
-      ? 'invoice'
-      : quotes.length > 0
-        ? 'quote'
-        : payments?.data && payments.data.length > 0
-          ? 'payment'
-          : 'statement',
-  );
-
   // Checkbox Multiselect Layer
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<Set<string>>(new Set());
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Sequential Queue Render State (Recommendations implemented)
   const [activeRenderingDocId, setActiveRenderingDocId] = useState<string | null>(null);
@@ -248,31 +218,8 @@ export function ClientBillingWorkspace({
       setActiveTab(activeTabFromUrl);
       setSelectedInvoiceIds(new Set());
       setSelectedQuoteIds(new Set());
-      setIsPreviewOpen(false);
-      if (activeTabFromUrl === 'invoices' && invoices.length > 0) {
-        setSelectedDocId(invoices[0]!.id);
-        setSelectedDocType('invoice');
-      } else if (activeTabFromUrl === 'quotes' && quotes.length > 0) {
-        setSelectedDocId(quotes[0]!.id);
-        setSelectedDocType('quote');
-      } else if (activeTabFromUrl === 'payments' && payments?.data && payments.data.length > 0) {
-        setSelectedDocId(payments.data[0]!.id);
-        setSelectedDocType('payment');
-      } else if (activeTabFromUrl === 'statement') {
-        setSelectedDocType('statement');
-        setSelectedDocId(null);
-      } else if (
-        activeTabFromUrl === 'analytics' ||
-        activeTabFromUrl === 'credits' ||
-        activeTabFromUrl === 'projects' ||
-        activeTabFromUrl === 'compliance'
-      ) {
-        setSelectedInvoiceIds(new Set());
-        setSelectedQuoteIds(new Set());
-        setIsPreviewOpen(false);
-      }
     }
-  }, [activeTab, activeTabFromUrl, invoices, quotes, payments, projects]);
+  }, [activeTab, activeTabFromUrl]);
 
   const handleTabChange = (val: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -412,65 +359,16 @@ export function ClientBillingWorkspace({
 
     if (tabParam === 'payments' || paymentIdParam) {
       setActiveTab('payments');
-      if (paymentIdParam) {
-        const hasPayment = (payments?.data || []).some((p: PaymentItem) => p.id === paymentIdParam);
-        if (hasPayment) {
-          setSelectedDocId(paymentIdParam);
-          setSelectedDocType('payment');
-        }
-      }
     } else if (tabParam === 'invoices' || invoiceIdParam) {
       setActiveTab('invoices');
-      if (invoiceIdParam) {
-        const hasInvoice = invoices.some((inv) => inv.id === invoiceIdParam);
-        if (hasInvoice) {
-          setSelectedDocId(invoiceIdParam);
-          setSelectedDocType('invoice');
-        }
-      }
     } else if (tabParam === 'quotes' || quoteIdParam) {
       setActiveTab('quotes');
-      if (quoteIdParam) {
-        const hasQuote = quotes.some((q) => q.id === quoteIdParam);
-        if (hasQuote) {
-          setSelectedDocId(quoteIdParam);
-          setSelectedDocType('quote');
-        }
-      }
     } else if (tabParam === 'statement') {
       setActiveTab('statement');
-      setSelectedDocType('statement');
-      setSelectedDocId(null);
     } else if (tabParam === 'analytics') {
       setActiveTab('analytics');
-      setSelectedDocId(null);
     }
-  }, [searchParams, invoices, quotes, payments]);
-
-  // Find selected document detail in memory
-  const activeInvoice = invoices.find((i) => i.id === selectedDocId);
-  const activeQuote = quotes.find((q) => q.id === selectedDocId);
-  const activePayment = (payments?.data || []).find((p: PaymentItem) => p.id === selectedDocId);
-
-  let documentTitle = 'Document';
-  if (selectedDocType === 'invoice' && activeInvoice) {
-    documentTitle = `Invoice-${activeInvoice.documentNumber}`;
-  } else if (selectedDocType === 'quote' && activeQuote) {
-    documentTitle = `Quote-${activeQuote.documentNumber}`;
-  } else if (selectedDocType === 'payment' && activePayment) {
-    documentTitle = generateReceiptNumber(
-      activePayment.id,
-      activePayment.divisionName || 'General',
-    );
-  }
-
-  const navigableIds = (() => {
-    if (selectedDocType === 'invoice') return invoices.map((i) => i.id);
-    if (selectedDocType === 'quote') return quotes.map((q) => q.id);
-    if (selectedDocType === 'payment') return (payments?.data ?? []).map((p: PaymentItem) => p.id);
-    return [];
-  })();
-  const currentNavIndex = selectedDocId ? navigableIds.indexOf(selectedDocId) : -1;
+  }, [searchParams]);
 
   // Helper to compile preview props in memory
   const getInvoicePreviewProps = (inv: InvoiceDetail) => ({
@@ -550,79 +448,9 @@ export function ClientBillingWorkspace({
     statement?.summary.openingBalance ?? 0,
   );
 
-  const statementStatus = determineStatementStatus(
-    statement?.summary.totalOutstanding ?? 0,
-    statement?.invoices ?? [],
-  );
-
   const statementPeriodParam = searchParams.get('monthPeriod');
   const statementYearParam = searchParams.get('year');
   const effectivePeriod = statementPeriodParam ?? (!statementYearParam ? 'current' : null);
-  let statementPeriodLabel = '';
-  if (statementPeriodParam === 'current') statementPeriodLabel = 'Current Month';
-  else if (statementPeriodParam === 'previous') statementPeriodLabel = 'Previous Month';
-  else if (statementPeriodParam === 'past3') statementPeriodLabel = 'Past 3 Months';
-  else if (statementPeriodParam === 'past6') statementPeriodLabel = 'Past 6 Months';
-  else if (statementYearParam) statementPeriodLabel = `FY ${statementYearParam}`;
-  else statementPeriodLabel = 'Current Month';
-
-  let periodFrom = '';
-  let periodTo = '';
-  if (statementPeriodParam) {
-    // Mimic start date endDate helper
-    const now = new Date();
-    if (statementPeriodParam === 'current') {
-      periodFrom = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-      periodTo = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]!;
-    } else if (statementPeriodParam === 'previous') {
-      const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      periodFrom = prev.toISOString().split('T')[0]!;
-      periodTo = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0]!;
-    } else if (statementPeriodParam === 'past3') {
-      const past = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-      periodFrom = past.toISOString().split('T')[0]!;
-      periodTo = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]!;
-    } else {
-      const past = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-      periodFrom = past.toISOString().split('T')[0]!;
-      periodTo = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]!;
-    }
-  } else {
-    const y = statementYearParam ? parseInt(statementYearParam, 10) : currentFY;
-    periodFrom = `${y}-03-01`;
-    periodTo = `${y + 1}-02-28`;
-  }
-
-  const asOfDate = periodTo || statement?.periodTo || getSASTToday();
-  const statementAgeing = calculateAgeing(
-    statement?.outstandingInvoices ?? statement?.invoices ?? [],
-    asOfDate,
-  );
-
-  const { divisionName: statementDivisionName } = resolveDivisionBranding(
-    client.divisionId,
-    invoices,
-    divisions,
-  );
-
-  const statementPreviewProps = {
-    number: `STMT-${statementPeriodParam ? statementPeriodParam.toUpperCase() : statementYearParam ? statementYearParam : currentFY}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
-    status: statementStatus,
-    issueDate: getSASTToday(),
-    periodFrom,
-    periodTo,
-    org: buildOrgProps(statementDivisionName, divSettings, orgSettings),
-    client: {
-      name: client.businessName ?? client.name,
-      email: client.email ?? undefined,
-      phone: client.phone ?? undefined,
-    },
-    banking: buildBankingProps(divSettings),
-    transactions: statementTransactions,
-    ageing: statementAgeing,
-    balanceDue: statement?.summary.totalOutstanding ?? 0,
-    openingBalance: statement?.summary.openingBalance ?? 0,
-  };
 
   // ── Statement Filter updates ───────────────────────────────────────────────
   const updateStatementFilter = (key: string, value: string) => {
@@ -892,26 +720,9 @@ export function ClientBillingWorkspace({
     });
   };
 
-  const dialogPrintableElementId =
-    selectedDocType === 'statement'
-      ? 'dialog-statement-printable'
-      : selectedDocType === 'payment'
-        ? 'dialog-receipt-printable'
-        : 'dialog-document-printable';
   const statementPdfParams = new URLSearchParams();
   if (effectivePeriod) statementPdfParams.set('monthPeriod', effectivePeriod);
   if (statementYearParam) statementPdfParams.set('year', statementYearParam);
-  const statementPdfUrl = `/api/billing/pdf/statement/${client.id}${statementPdfParams.size ? `?${statementPdfParams.toString()}` : ''}`;
-  const activePdfUrl =
-    selectedDocType === 'invoice' && activeInvoice
-      ? `/api/billing/pdf/invoice/${activeInvoice.id}`
-      : selectedDocType === 'quote' && activeQuote
-        ? `/api/billing/pdf/quote/${activeQuote.id}`
-        : selectedDocType === 'payment' && activePayment
-          ? `/api/billing/pdf/receipt/${activePayment.id}`
-          : selectedDocType === 'statement'
-            ? statementPdfUrl
-            : undefined;
 
   return (
     <div className="flex flex-col gap-8">
@@ -1290,15 +1101,9 @@ export function ClientBillingWorkspace({
                         {filteredInvoices.map((inv) => (
                           <TableRow
                             key={inv.id}
-                            className={`cursor-pointer hover:bg-muted/30 transition-colors ${
-                              selectedDocId === inv.id && selectedDocType === 'invoice'
-                                ? 'bg-muted/50 font-medium'
-                                : ''
-                            }`}
+                            className="cursor-pointer hover:bg-muted/30 transition-colors"
                             onClick={() => {
-                              setSelectedDocId(inv.id);
-                              setSelectedDocType('invoice');
-                              setIsPreviewOpen(true);
+                              router.push(`/billing/invoices/${inv.id}`);
                             }}
                           >
                             <TableCell onClick={(e) => e.stopPropagation()}>
@@ -1387,15 +1192,9 @@ export function ClientBillingWorkspace({
                         {filteredQuotes.map((q) => (
                           <TableRow
                             key={q.id}
-                            className={`cursor-pointer hover:bg-muted/30 transition-colors ${
-                              selectedDocId === q.id && selectedDocType === 'quote'
-                                ? 'bg-muted/50 font-medium'
-                                : ''
-                            }`}
+                            className="cursor-pointer hover:bg-muted/30 transition-colors"
                             onClick={() => {
-                              setSelectedDocId(q.id);
-                              setSelectedDocType('quote');
-                              setIsPreviewOpen(true);
+                              router.push(`/billing/quotes/${q.id}`);
                             }}
                           >
                             <TableCell onClick={(e) => e.stopPropagation()}>
@@ -1464,15 +1263,9 @@ export function ClientBillingWorkspace({
                         {payments.data.map((entry: PaymentItem) => (
                           <TableRow
                             key={entry.id}
-                            className={`cursor-pointer hover:bg-muted/30 transition-colors ${
-                              selectedDocId === entry.id && selectedDocType === 'payment'
-                                ? 'bg-muted/50 font-medium'
-                                : ''
-                            }`}
+                            className="cursor-pointer hover:bg-muted/30 transition-colors"
                             onClick={() => {
-                              setSelectedDocId(entry.id);
-                              setSelectedDocType('payment');
-                              setIsPreviewOpen(true);
+                              router.push(`/billing/payments/${entry.id}`);
                             }}
                           >
                             <TableCell className="tabular-nums">{fmtDate(entry.date)}</TableCell>
@@ -1567,9 +1360,13 @@ export function ClientBillingWorkspace({
                         variant="default"
                         size="sm"
                         className="flex items-center gap-1.5 shadow-sm h-8"
-                        onClick={() => setIsPreviewOpen(true)}
+                        asChild
                       >
-                        <Eye className="size-4" /> Preview Statement PDF
+                        <Link
+                          href={`/billing/statements/${client.id}${statementPdfParams.size ? `?${statementPdfParams.toString()}` : ''}`}
+                        >
+                          <Eye className="size-4" /> View Full Statement
+                        </Link>
                       </Button>
                     </div>
                   </div>
@@ -1835,204 +1632,6 @@ export function ClientBillingWorkspace({
           </div>
         </div>
 
-        <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-6 bg-background rounded-lg shadow-2xl">
-            <DialogHeader className="p-0 pb-4 border-b flex flex-row items-center justify-between shrink-0">
-              <div className="flex flex-col gap-1">
-                <DialogTitle className="text-base font-bold flex gap-2 items-center">
-                  {selectedDocType === 'invoice' && activeInvoice?.documentNumber}
-                  {selectedDocType === 'quote' && activeQuote?.documentNumber}
-                  {selectedDocType === 'payment' &&
-                    activePayment &&
-                    generateReceiptNumber(
-                      activePayment.id,
-                      activePayment.divisionName || 'General',
-                    )}
-                  {selectedDocType === 'statement' && 'Statement'}
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      'capitalize text-[10px]',
-                      selectedDocType === 'payment' &&
-                        'bg-emerald-50 text-emerald-700 border-emerald-200',
-                    )}
-                  >
-                    {selectedDocType}
-                  </Badge>
-                </DialogTitle>
-                <DialogDescription className="text-xs">
-                  {selectedDocType === 'statement'
-                    ? statementPeriodLabel
-                    : 'Document Inspection & Operations'}
-                </DialogDescription>
-              </div>
-
-              {/* Action buttons inside dialog header */}
-              <div className="flex items-center gap-2 shrink-0 mr-8 print:hidden">
-                {selectedDocType !== 'statement' && selectedDocId && (
-                  <>
-                    <PrintButton label="Print" documentTitle={documentTitle} />
-                    <ExportPdfButton
-                      fileName={documentTitle}
-                      elementId={dialogPrintableElementId}
-                      pdfUrl={activePdfUrl}
-                    />
-                  </>
-                )}
-                {selectedDocType === 'statement' && (
-                  <>
-                    <PrintButton
-                      label="Print"
-                      documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
-                    />
-                    <ExportPdfButton
-                      fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
-                      elementId={dialogPrintableElementId}
-                      pdfUrl={statementPdfUrl}
-                    />
-                  </>
-                )}
-
-                {selectedDocType === 'invoice' && activeInvoice && (
-                  <>
-                    <UniversalEmailDialog
-                      documentId={activeInvoice.id}
-                      documentNumber={activeInvoice.documentNumber}
-                      documentType="invoice"
-                      defaultRecipientEmail={client.email ?? ''}
-                      printableElementId={dialogPrintableElementId}
-                      pdfUrl={activePdfUrl}
-                      statementPdfUrl={statementPdfUrl}
-                    />
-                    {!['paid', 'void', 'written_off'].includes(activeInvoice.status) && (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
-                      </Button>
-                    )}
-                  </>
-                )}
-                {selectedDocType === 'quote' && activeQuote && (
-                  <>
-                    <UniversalEmailDialog
-                      documentId={activeQuote.id}
-                      documentNumber={activeQuote.documentNumber}
-                      documentType="quote"
-                      defaultRecipientEmail={client.email ?? ''}
-                      printableElementId={dialogPrintableElementId}
-                      pdfUrl={activePdfUrl}
-                    />
-                    {['draft', 'sent', 'accepted'].includes(activeQuote.status) && (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
-                      </Button>
-                    )}
-                  </>
-                )}
-                {selectedDocType === 'payment' && activePayment && (
-                  <>
-                    <UniversalEmailDialog
-                      documentId={activePayment.id}
-                      documentNumber={generateReceiptNumber(
-                        activePayment.id,
-                        activePayment.divisionName || 'General',
-                      )}
-                      documentType="receipt"
-                      defaultRecipientEmail={client.email ?? ''}
-                      printableElementId={dialogPrintableElementId}
-                      pdfUrl={activePdfUrl}
-                    />
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/billing/payments/${activePayment.id}`}>View Page</Link>
-                    </Button>
-                  </>
-                )}
-              </div>
-            </DialogHeader>
-
-            <div className="mt-4 overflow-x-auto bg-muted/5 p-4 rounded border">
-              {selectedDocType === 'statement' ? (
-                <div className="bg-card rounded-lg p-4 overflow-x-auto">
-                  <DocumentPreview
-                    id={dialogPrintableElementId}
-                    type="statement"
-                    {...statementPreviewProps}
-                  />
-                </div>
-              ) : selectedDocId ? (
-                <div className="bg-card rounded-lg p-4 overflow-x-auto">
-                  {selectedDocType === 'invoice' && activeInvoice && (
-                    <DocumentPreview
-                      id={dialogPrintableElementId}
-                      type="invoice"
-                      {...getInvoicePreviewProps(activeInvoice)}
-                    />
-                  )}
-                  {selectedDocType === 'quote' && activeQuote && (
-                    <DocumentPreview
-                      id={dialogPrintableElementId}
-                      type="quote"
-                      {...getQuotePreviewProps(activeQuote)}
-                    />
-                  )}
-                  {selectedDocType === 'payment' && activePayment && (
-                    <PaymentReceiptPreview
-                      id={dialogPrintableElementId}
-                      payment={{
-                        ...activePayment,
-                        amount: String(activePayment.amount),
-                        divisionId: activePayment.divisionId ?? '',
-                        divisionName: activePayment.divisionName ?? 'General',
-                        clientName: activePayment.clientName ?? client.businessName ?? client.name,
-                        allocations: activePayment.allocations?.map((a) => ({
-                          ...a,
-                          amount: String(a.amount),
-                          invoiceNumber: a.invoiceNumber ?? '',
-                          createdAt: a.createdAt ?? activePayment.date,
-                        })),
-                      }}
-                      client={client}
-                      divSettings={divSettings}
-                    />
-                  )}
-                </div>
-              ) : (
-                <div className="h-64 flex items-center justify-center border border-dashed rounded-lg bg-card shadow-sm">
-                  <span className="text-sm text-muted-foreground">No document details found.</span>
-                </div>
-              )}
-            </div>
-
-            {navigableIds.length > 1 && currentNavIndex >= 0 && (
-              <div className="flex items-center justify-between pt-3 border-t mt-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={currentNavIndex === 0}
-                  onClick={() => {
-                    const prevId = navigableIds[currentNavIndex - 1];
-                    if (prevId) setSelectedDocId(prevId);
-                  }}
-                >
-                  ← Previous
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  {currentNavIndex + 1} of {navigableIds.length}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={currentNavIndex === navigableIds.length - 1}
-                  onClick={() => {
-                    const nextId = navigableIds[currentNavIndex + 1];
-                    if (nextId) setSelectedDocId(nextId);
-                  }}
-                >
-                  Next →
-                </Button>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
       </Tabs>
 
       {/* Checkbox Floating Action Bar */}

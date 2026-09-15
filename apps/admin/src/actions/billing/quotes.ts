@@ -453,8 +453,8 @@ export async function duplicateQuotation(id: string): Promise<{ error?: string; 
           status: 'draft',
           quoteDate: todayStr,
           expiryDate: newExpiryDate,
-          // Reference is intentionally cleared — the caller updates it for the new job
-          ...(includeReference ? { reference: null } : {}),
+          // Reference is copied from the source quotation
+          ...(includeReference ? { reference: source.reference ?? null } : {}),
           subtotal: source.subtotal,
           discountType: source.discountType ?? null,
           discountValue: source.discountValue ?? null,
@@ -482,6 +482,9 @@ export async function duplicateQuotation(id: string): Promise<{ error?: string; 
             description: li.description,
             quantity: li.quantity,
             unitPrice: li.unitPrice,
+            discountType: li.discountType ?? null,
+            discountValue: li.discountValue ?? null,
+            discountAmount: li.discountAmount ?? '0',
             vatRate: li.vatRate,
             lineTotal: li.lineTotal,
           })),
