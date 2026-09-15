@@ -1,5 +1,11 @@
 import React from 'react';
-import { formatZAR, formatZARWithCR, fmtDate } from '../../format';
+import {
+  formatZAR,
+  formatZARWithCR,
+  fmtDate,
+  formatStatementDueDate,
+  isDueDateOverdue,
+} from '../../format';
 import { Document, Page, KeepTogether } from '../primitives';
 import { PageHeader, type OrgDetails } from '../components/page-header';
 import { PageFooter } from '../components/page-footer';
@@ -143,7 +149,15 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                   : []),
                 ...(data.periodTo ? [{ key: 'Period To', value: fmtDate(data.periodTo) }] : []),
                 ...(data.dueDate && totalDue > 0
-                  ? [{ key: 'Payment Due Date', value: fmtDate(data.dueDate) }]
+                  ? [
+                      {
+                        key: 'Payment Due Date',
+                        value: formatStatementDueDate(data.dueDate),
+                        valueStyle: isDueDateOverdue(data.dueDate)
+                          ? { color: '#e11d48', fontWeight: 700 }
+                          : undefined,
+                      },
+                    ]
                   : []),
                 ...(data.statementType === 'outstanding'
                   ? []

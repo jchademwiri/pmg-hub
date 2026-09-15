@@ -275,7 +275,13 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
   // Calculate earliest due date among unpaid invoices
   let earliestDueDate: string | undefined;
   const unpaidWithDueDates = (statement.outstandingInvoices ?? invoices)
-    .filter((i) => i.dueDate && i.status !== 'paid' && i.status !== 'void')
+    .filter(
+      (i) =>
+        i.dueDate &&
+        i.status !== 'paid' &&
+        i.status !== 'void' &&
+        i.status !== 'written_off',
+    )
     .sort((a, b) => (a.dueDate! < b.dueDate! ? -1 : 1));
   if (unpaidWithDueDates.length > 0) {
     earliestDueDate = unpaidWithDueDates[0]!.dueDate!;

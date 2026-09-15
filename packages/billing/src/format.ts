@@ -65,6 +65,51 @@ export function fmtDateLong(value: string | Date | null | undefined): string {
 }
 
 /**
+ * Checks whether a due date is in the past (overdue).
+ * Compares against South Africa Standard Time today (or an optional comparison date).
+ */
+export function isDueDateOverdue(
+  dueDate?: string | Date | null,
+  asOfDate?: string | Date | null,
+): boolean {
+  if (!dueDate) return false;
+  try {
+    const isoDueDate =
+      typeof dueDate === 'string'
+        ? dueDate.length >= 10
+          ? dueDate.slice(0, 10)
+          : dueDate
+        : dueDate.toISOString().slice(0, 10);
+    const compareDate = asOfDate
+      ? typeof asOfDate === 'string'
+        ? asOfDate.length >= 10
+          ? asOfDate.slice(0, 10)
+          : asOfDate
+        : asOfDate.toISOString().slice(0, 10)
+      : getSASTToday();
+    return isoDueDate < compareDate;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Format a statement's payment due date.
+ * If the due date is in the past, displays "Immediately (Overdue)".
+ * Otherwise, formats the date (e.g. "30 Sep 2026" or "30 September 2026" if long).
+ */
+export function formatStatementDueDate(
+  dueDate?: string | Date | null,
+  options?: { long?: boolean; asOfDate?: string | Date | null },
+): string {
+  if (!dueDate) return '-';
+  if (isDueDateOverdue(dueDate, options?.asOfDate)) {
+    return 'Immediately (Overdue)';
+  }
+  return options?.long ? fmtDateLong(dueDate) : fmtDate(dueDate);
+}
+
+/**
  * Format an ISO date-time string or Date object as "22 May 2026, 07:12".
  * Standardizes time-stamped activity views across the control center.
  */

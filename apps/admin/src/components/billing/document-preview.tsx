@@ -1,7 +1,12 @@
 import Link from 'next/link';
 // Trigger Next.js cache reload
 import { cn } from '@/lib/utils';
-import { fmtDateLong, formatZAR } from '@/lib/format';
+import {
+  fmtDateLong,
+  formatZAR,
+  formatStatementDueDate,
+  isDueDateOverdue,
+} from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { totalAgeingDue } from '@/lib/billing-ageing';
 
@@ -315,7 +320,16 @@ export function DocumentPreview({
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
                   Payment Due Date
                 </span>
-                <span className="text-sm font-semibold text-amber-600">{fmtDateLong(dueDate)}</span>
+                <span
+                  className={cn(
+                    'text-sm font-semibold',
+                    isDueDateOverdue(dueDate)
+                      ? 'text-rose-600 dark:text-rose-400'
+                      : 'text-amber-600 dark:text-amber-400',
+                  )}
+                >
+                  {formatStatementDueDate(dueDate, { long: true })}
+                </span>
               </div>
             )}
           </div>
