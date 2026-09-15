@@ -94,7 +94,7 @@ export function QuoteDetailActions({
       if (result.error) {
         toast.error(result.error);
       } else if (result.id) {
-        toast.success('Quote duplicated. Update the reference and any other details.');
+        toast.success('Quote duplicated.');
         router.push(`/billing/quotes/${result.id}/edit`);
       }
     });

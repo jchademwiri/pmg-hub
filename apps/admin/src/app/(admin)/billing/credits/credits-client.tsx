@@ -117,7 +117,7 @@ function getStatusBadge(status: string) {
 function getTypeLabel(type: string) {
   switch (type) {
     case 'overpayment':
-      return 'Overpayment';
+      return 'Advance Payment';
     case 'manual_adjustment':
       return 'Manual Adjustment';
     case 'credit_note':
@@ -289,7 +289,7 @@ export function CreditsClient({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="overpayment">Overpayment</SelectItem>
+              <SelectItem value="overpayment">Advance Payment</SelectItem>
               <SelectItem value="manual_adjustment">Manual Adjustment</SelectItem>
               <SelectItem value="credit_note">Credit Note</SelectItem>
               <SelectItem value="promotional">Promotional</SelectItem>
@@ -317,19 +317,19 @@ export function CreditsClient({
           <CardDescription>All credit notes and their current status</CardDescription>
         </CardHeader>
         <CardContent className="p-0 px-6 pb-4">
-          <div className="overflow-hidden">
-            <Table className="table-fixed w-full" containerClassName="overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table className="table-fixed w-full min-w-[960px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[115px] px-2 text-xs">Document #</TableHead>
-                  <TableHead className="px-2 text-xs">Client</TableHead>
-                  <TableHead className="w-[110px] px-2 text-xs">Type</TableHead>
-                  <TableHead className="px-2 text-xs">Reason</TableHead>
-                  <TableHead className="w-[85px] px-2 text-right text-xs">Amount</TableHead>
-                  <TableHead className="w-[85px] px-2 text-right text-xs">Remaining</TableHead>
+                  <TableHead className="w-[130px] px-2 text-xs">Document #</TableHead>
+                  <TableHead className="px-2 text-xs min-w-[120px]">Client</TableHead>
+                  <TableHead className="w-[115px] px-2 text-xs">Type</TableHead>
+                  <TableHead className="px-2 text-xs min-w-[130px]">Reason</TableHead>
+                  <TableHead className="w-[95px] px-2 text-right text-xs">Amount</TableHead>
+                  <TableHead className="w-[95px] px-2 text-right text-xs">Remaining</TableHead>
                   <TableHead className="w-[85px] px-2 text-xs">Status</TableHead>
-                  <TableHead className="w-[80px] px-2 text-xs">Date</TableHead>
-                  <TableHead className="w-12 px-2"></TableHead>
+                  <TableHead className="w-[95px] px-2 text-xs">Date</TableHead>
+                  <TableHead className="w-[120px] px-2 text-right"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -354,15 +354,16 @@ export function CreditsClient({
                       note.status !== 'void' && note.status !== 'expired' && amountRemainingNum > 0;
 
                     return (
-                      <TableRow key={note.id} className="hover:bg-muted/40 transition-colors group">
+                      <TableRow
+                        key={note.id}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors group"
+                        onClick={() => router.push(`/billing/credits/${note.id}`)}
+                      >
                         <TableCell className="font-medium text-xs px-2 truncate">
-                          <Link
-                            href={`/billing/credits/${note.id}`}
-                            className="text-primary hover:underline inline-flex items-center gap-1 font-mono"
-                          >
+                          <span className="text-primary group-hover:underline inline-flex items-center gap-1 font-mono">
                             {note.documentNumber}
                             <ExternalLink className="size-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </Link>
+                          </span>
                         </TableCell>
                         <TableCell
                           className="text-xs px-2 truncate"
@@ -397,7 +398,10 @@ export function CreditsClient({
                         <TableCell className="text-xs text-muted-foreground px-2 whitespace-nowrap">
                           {fmtDate(note.createdAt)}
                         </TableCell>
-                        <TableCell className="text-right py-1 px-2">
+                        <TableCell
+                          className="text-right py-1 px-2 whitespace-nowrap"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <div className="flex items-center justify-end gap-1">
                             {isRefundable && (
                               <Button

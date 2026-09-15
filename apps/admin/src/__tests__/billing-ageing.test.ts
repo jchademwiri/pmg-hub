@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { calculateAgeing, totalAgeingDue } from '@/lib/billing-ageing';
 import type { AgeingInvoice } from '@/lib/billing-ageing';
+import { formatZARWithCR } from '@/lib/format';
 
 const today = '2026-06-22';
 
@@ -145,6 +146,22 @@ describe('calculateAgeing', () => {
     expect(result.days31_60).toBe(0);
     expect(result.days61plus).toBe(0);
   });
+
+  it('correctly evaluates statement ageing historically as-of periodTo', () => {
+    // Invoice issued in August with due date August 31
+    const augustInvoice = inv({ invoiceDate: '2026-08-15', dueDate: '2026-08-31', total: 5000 });
+
+    // When evaluated as-of August 31 (the statement cut-off date):
+    const asOfAugust = calculateAgeing([augustInvoice], '2026-08-31');
+    expect(asOfAugust.current).toBe(5000);
+    expect(asOfAugust.days1_14).toBe(0);
+    expect(asOfAugust.days15_30).toBe(0);
+
+    // If evaluated in September without historical cut-off, it would be overdue:
+    const asOfSeptember = calculateAgeing([augustInvoice], '2026-09-15');
+    expect(asOfSeptember.current).toBe(0);
+    expect(asOfSeptember.days15_30).toBe(5000);
+  });
 });
 
 describe('totalAgeingDue', () => {
@@ -179,5 +196,27 @@ describe('totalAgeingDue', () => {
       days61plus: 0,
     });
     expect(result).toBeCloseTo(100, 2);
+  });
+});
+
+describe('formatZARWithCR', () => {
+  it('formats positive numbers as regular ZAR', () => {
+    const res = formatZARWithCR(1500);
+    expect(res).toContain('1');
+    expect(res).toContain('500');
+    expect(res).not.toContain('CR');
+  });
+
+  it('formats zero as regular ZAR without CR', () => {
+    const res = formatZARWithCR(0);
+    expect(res).not.toContain('CR');
+  });
+
+  it('formats negative numbers with CR suffix and absolute amount', () => {
+    const res = formatZARWithCR(-2500);
+    expect(res).toContain('2');
+    expect(res).toContain('500');
+    expect(res).toMatch(/CR$/);
+    expect(res).not.toContain('-');
   });
 });

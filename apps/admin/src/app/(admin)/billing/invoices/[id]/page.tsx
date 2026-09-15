@@ -30,6 +30,7 @@ import {
   voidInvoice,
   writeOffInvoice,
   restoreWriteOffInvoice,
+  duplicateInvoice,
 } from '@/app/actions/billing-invoices';
 import { fmtDate, fmtDateTime, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
 import {
@@ -439,6 +440,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
             voidAction={voidInvoice}
             writeOffAction={writeOffInvoice}
             restoreWriteOffAction={restoreWriteOffInvoice}
+            duplicateAction={duplicateInvoice}
           />
         </div>
       </div>

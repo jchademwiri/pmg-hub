@@ -42,9 +42,9 @@ export function IssueCreditNoteDialog({
   const [isPending, startTransition] = useTransition();
   const [clientId, setClientId] = useState(clients.length === 1 ? clients[0].id : '');
   const [divisionId, setDivisionId] = useState(divisions[0]?.id ?? '');
-  const [creditType, setCreditType] = useState<'manual_adjustment' | 'credit_note' | 'promotional'>(
-    'credit_note',
-  );
+  const [creditType, setCreditType] = useState<
+    'overpayment' | 'manual_adjustment' | 'credit_note' | 'promotional'
+  >('credit_note');
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
 
@@ -150,6 +150,7 @@ export function IssueCreditNoteDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="credit_note">Credit Note (Billing Error / Return)</SelectItem>
+                <SelectItem value="overpayment">Advance Payment / Overpayment</SelectItem>
                 <SelectItem value="manual_adjustment">Manual Adjustment</SelectItem>
                 <SelectItem value="promotional">Promotional / Goodwill</SelectItem>
               </SelectContent>

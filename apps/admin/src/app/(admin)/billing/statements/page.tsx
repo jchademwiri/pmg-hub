@@ -55,7 +55,7 @@ export default async function StatementsPage() {
     getAgingReport(),
   ]);
 
-  const totalOutstanding = clients.reduce((s, c) => s + c.totalOutstanding, 0);
+  const totalOutstanding = agingReport.reduce((s, r) => s + r.total, 0);
 
   return (
     <div className="flex flex-col gap-6">

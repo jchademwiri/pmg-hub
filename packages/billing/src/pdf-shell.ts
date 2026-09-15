@@ -1,5 +1,11 @@
 import 'server-only';
 
+/**
+ * @deprecated Legacy coordinate-based jsPDF engine helpers.
+ * Retained for fallback safety; all primary rendering uses the declarative
+ * Takumi WASM PDF engine via `@pmg/billing/pdf`.
+ */
+
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -60,6 +66,7 @@ export interface PdfOrgHeader {
   website?: string;
   address?: string;
   salesRep?: string;
+  logoDataUri?: string | null;
 }
 
 export interface DrawShellHeaderOptions {
@@ -84,8 +91,6 @@ export function drawShellHeader(doc: jsPDF, opts: DrawShellHeaderOptions): void 
   doc.setFontSize(8);
   doc.setTextColor(82, 82, 91);
   const orgLines = [
-    opts.org.divisionOf ? `A division of ${opts.org.divisionOf}` : undefined,
-    opts.org.registrationNumber ? `Reg: ${opts.org.registrationNumber}` : undefined,
     opts.org.vatNumber ? `VAT: ${opts.org.vatNumber}` : undefined,
     opts.org.email,
     opts.org.phone,
@@ -143,6 +148,7 @@ export function drawShellHeader(doc: jsPDF, opts: DrawShellHeaderOptions): void 
 
 export interface DrawShellFooterOptions {
   divisionOf?: string;
+  registrationNumber?: string;
   /**
    * Called once per page (1-indexed), after `doc.setPage(i)` but before the
    * base footer line/page-number are drawn, for document-type-specific
@@ -161,12 +167,8 @@ export function drawShellFooter(doc: jsPDF, opts: DrawShellFooterOptions): void 
     doc.line(PAGE.margin, 282, PAGE.width - PAGE.margin, 282);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.setTextColor(113, 113, 122);
-    doc.text(
-      opts.divisionOf ? `A division of ${opts.divisionOf}` : 'Thank you for your business.',
-      PAGE.margin,
-      288,
-    );
+    const footerText = 'A division of Playhouse Media Group · Reg: 2023/683669/07';
+    doc.text(footerText, PAGE.margin, 288);
     doc.text(`Page ${i} of ${pageCount}`, PAGE.width - PAGE.margin, 288, { align: 'right' });
   }
 }

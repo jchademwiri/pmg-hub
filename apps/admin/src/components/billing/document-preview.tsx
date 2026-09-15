@@ -1,7 +1,7 @@
 import Link from 'next/link';
 // Trigger Next.js cache reload
 import { cn } from '@/lib/utils';
-import { fmtDateLong, formatZAR } from '@/lib/format';
+import { fmtDateLong, formatZAR, formatStatementDueDate, isDueDateOverdue } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { totalAgeingDue } from '@/lib/billing-ageing';
 
@@ -46,6 +46,7 @@ export interface DocumentClient {
 export interface DocumentPreviewProps {
   id?: string;
   type: 'invoice' | 'quote' | 'statement';
+  statementType?: 'activity' | 'outstanding';
   number: string;
   status: string;
   issueDate: string;
@@ -134,6 +135,7 @@ function StatusPill({ status }: { status: string }) {
 export function DocumentPreview({
   id,
   type,
+  statementType = 'activity',
   number,
   status,
   issueDate,
@@ -183,7 +185,14 @@ export function DocumentPreview({
 
   const hasLineItemDiscounts = lineItems.some((i) => (i.discountAmount || 0) > 0);
 
-  const typeLabel = type === 'invoice' ? 'Invoice' : type === 'quote' ? 'Quotation' : 'Statement';
+  const typeLabel =
+    type === 'invoice'
+      ? 'Invoice'
+      : type === 'quote'
+        ? 'Quotation'
+        : statementType === 'outstanding'
+          ? 'Outstanding Invoices'
+          : 'Statement';
 
   const dueDateLabel =
     type === 'invoice' ? 'Due Date' : type === 'quote' ? 'Expiry Date' : undefined;
@@ -284,19 +293,44 @@ export function DocumentPreview({
 
         {/* Dates - inline, far right */}
         {type === 'statement' ? (
-          <div className="flex gap-8 shrink-0">
-            <div className="flex flex-col items-end gap-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
-                Period From
-              </span>
-              <span className="text-sm font-medium">{fmtDateLong(periodFrom)}</span>
-            </div>
-            <div className="flex flex-col items-end gap-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
-                Period To
-              </span>
-              <span className="text-sm font-medium">{fmtDateLong(periodTo)}</span>
-            </div>
+          <div className="flex flex-col gap-1 items-end shrink-0">
+            {statementType !== 'outstanding' && periodFrom && (
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
+                  Period From
+                </span>
+                <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                  {fmtDateLong(periodFrom)}
+                </span>
+              </div>
+            )}
+            {periodTo && (
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
+                  Period To
+                </span>
+                <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                  {fmtDateLong(periodTo)}
+                </span>
+              </div>
+            )}
+            {dueDate && balanceDue !== undefined && balanceDue > 0 && (
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
+                  Payment Due Date
+                </span>
+                <span
+                  className={cn(
+                    'text-xs font-semibold',
+                    isDueDateOverdue(dueDate)
+                      ? 'text-rose-600 dark:text-rose-400'
+                      : 'text-amber-600 dark:text-amber-400',
+                  )}
+                >
+                  {formatStatementDueDate(dueDate, { long: true })}
+                </span>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex flex-col gap-1 items-end shrink-0">
@@ -469,25 +503,28 @@ export function DocumentPreview({
                 </tr>
               </thead>
               <tbody>
-                {/* Balance Brought Forward row (at the top with colSpan spanning Invoice No. and Description) */}
-                {openingBalance !== undefined && openingBalance !== 0 && (
-                  <tr className="border-b border-zinc-100 bg-zinc-50/50 print:break-inside-avoid [break-inside:avoid]">
-                    <td className="py-2.5 pr-4 text-xs text-zinc-500 whitespace-nowrap">
-                      {fmtDateLong(periodFrom)}
-                    </td>
-                    <td
-                      colSpan={2}
-                      className="py-2.5 px-4 text-xs text-zinc-500 italic font-normal"
-                    >
-                      Balance Brought Forward
-                    </td>
-                    <td className="py-2.5 px-4 text-right text-xs text-zinc-500">—</td>
-                    <td className="py-2.5 px-4 text-right text-xs text-zinc-500">—</td>
-                    <td className="py-2.5 px-4 text-right tabular-nums text-xs font-semibold text-zinc-500">
-                      {fmt(openingBalance)}
-                    </td>
-                  </tr>
-                )}
+                {/* Balance Brought Forward row (only for activity statement) */}
+                {statementType !== 'outstanding' &&
+                  openingBalance !== undefined &&
+                  openingBalance !== 0 && (
+                    <tr className="border-b border-zinc-100 bg-zinc-50/50 print:break-inside-avoid [break-inside:avoid]">
+                      <td className="py-2.5 pr-4 text-xs text-zinc-500 whitespace-nowrap">
+                        {fmtDateLong(periodFrom)}
+                      </td>
+                      <td
+                        colSpan={2}
+                        className="py-2.5 px-4 text-xs text-zinc-500 italic font-normal"
+                      >
+                        Balance Brought Forward
+                      </td>
+                      <td className="py-2.5 px-4 text-right text-xs text-zinc-500">—</td>
+                      <td className="py-2.5 px-4 text-right text-xs text-zinc-500">—</td>
+                      <td className="py-2.5 px-4 text-right tabular-nums text-xs font-semibold text-zinc-500">
+                        {fmt(Math.abs(openingBalance))}
+                        {openingBalance < 0 ? ' CR' : ''}
+                      </td>
+                    </tr>
+                  )}
                 {transactions.map((tx, i) => (
                   <tr
                     key={i}
@@ -530,7 +567,14 @@ export function DocumentPreview({
                       {tx.credit != null ? fmt(tx.credit) : '-'}
                     </td>
                     <td className="py-2.5 px-4 text-right tabular-nums text-xs font-semibold text-zinc-800">
-                      {tx.balance != null ? fmt(tx.balance) : '-'}
+                      {tx.balance != null ? (
+                        <>
+                          {fmt(Math.abs(tx.balance))}
+                          {tx.balance < 0 ? ' CR' : ''}
+                        </>
+                      ) : (
+                        '-'
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -550,20 +594,31 @@ export function DocumentPreview({
                     : (openingBalance ?? 0) + totalInvoiced - totalPaid;
                 return (
                   <>
-                    {openingBalance !== undefined && openingBalance !== 0 && (
-                      <div className="flex justify-between text-sm text-zinc-600">
-                        <span>Balance Brought Forward</span>
-                        <span className="tabular-nums">{fmt(openingBalance)}</span>
-                      </div>
-                    )}
+                    {statementType !== 'outstanding' &&
+                      openingBalance !== undefined &&
+                      openingBalance !== 0 && (
+                        <div className="flex justify-between text-sm text-zinc-600">
+                          <span>Balance Brought Forward</span>
+                          <span className="tabular-nums">
+                            {fmt(Math.abs(openingBalance))}
+                            {openingBalance < 0 ? ' CR' : ''}
+                          </span>
+                        </div>
+                      )}
                     <div className="flex justify-between text-sm text-zinc-600">
-                      <span>Total Invoiced (Period)</span>
+                      <span>
+                        {statementType === 'outstanding'
+                          ? 'Total Outstanding'
+                          : 'Total Invoiced (Period)'}
+                      </span>
                       <span className="tabular-nums">{fmt(totalInvoiced)}</span>
                     </div>
-                    <div className="flex justify-between text-sm text-emerald-600">
-                      <span>Total Paid (Period)</span>
-                      <span className="tabular-nums">{fmt(totalPaid)}</span>
-                    </div>
+                    {statementType !== 'outstanding' && (
+                      <div className="flex justify-between text-sm text-emerald-600">
+                        <span>Total Paid (Period)</span>
+                        <span className="tabular-nums">{fmt(totalPaid)}</span>
+                      </div>
+                    )}
                     <div className="border-t border-zinc-200 pt-2 flex justify-between text-sm font-bold">
                       <span className="text-zinc-900">Amount Due</span>
                       <span
@@ -596,13 +651,40 @@ export function DocumentPreview({
               { label: 'Account Name', value: banking.accountName },
               { label: 'Account Number', value: banking.accountNumber },
               { label: 'Branch Code', value: banking.branchCode },
+              {
+                label: 'Payment Reference',
+                value: client.name.slice(0, 14).toUpperCase(),
+              },
             ].map((f) => (
               <div key={f.label} className="flex items-center gap-2">
-                <span className="text-xs text-zinc-400 w-32 shrink-0">{f.label}:</span>
+                <span className="text-xs text-zinc-400 w-36 shrink-0">{f.label}:</span>
                 <span className="text-xs font-semibold text-zinc-700">{f.value}</span>
               </div>
             ))}
           </div>
+          {type === 'statement' && (
+            <div className="mt-3 text-xs text-zinc-500 space-y-0.5">
+              <p>
+                <span className="font-semibold text-zinc-700">Payment Reference:</span> Please use{' '}
+                <span className="font-semibold text-zinc-900">
+                  {client.name.slice(0, 14).toUpperCase()}
+                </span>{' '}
+                as your EFT deposit reference.
+              </p>
+              {org.email && (
+                <p>
+                  <span className="font-semibold text-zinc-700">Proof of Payment (POP):</span>{' '}
+                  Please email POP to{' '}
+                  <a
+                    href={`mailto:${org.email}`}
+                    className="font-medium text-blue-600 hover:underline"
+                  >
+                    {org.email}
+                  </a>
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
 
