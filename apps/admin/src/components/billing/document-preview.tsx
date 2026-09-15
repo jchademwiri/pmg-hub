@@ -298,31 +298,35 @@ export function DocumentPreview({
 
         {/* Dates - inline, far right */}
         {type === 'statement' ? (
-          <div className="flex gap-8 shrink-0">
+          <div className="flex flex-col gap-1 items-end shrink-0">
             {statementType !== 'outstanding' && periodFrom && (
-              <div className="flex flex-col items-end gap-0.5">
+              <div className="flex items-center gap-3">
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
                   Period From
                 </span>
-                <span className="text-sm font-medium">{fmtDateLong(periodFrom)}</span>
+                <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                  {fmtDateLong(periodFrom)}
+                </span>
               </div>
             )}
             {periodTo && (
-              <div className="flex flex-col items-end gap-0.5">
+              <div className="flex items-center gap-3">
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
                   Period To
                 </span>
-                <span className="text-sm font-medium">{fmtDateLong(periodTo)}</span>
+                <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                  {fmtDateLong(periodTo)}
+                </span>
               </div>
             )}
             {dueDate && balanceDue !== undefined && balanceDue > 0 && (
-              <div className="flex flex-col items-end gap-0.5">
+              <div className="flex items-center gap-3">
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
                   Payment Due Date
                 </span>
                 <span
                   className={cn(
-                    'text-sm font-semibold',
+                    'text-xs font-semibold',
                     isDueDateOverdue(dueDate)
                       ? 'text-rose-600 dark:text-rose-400'
                       : 'text-amber-600 dark:text-amber-400',

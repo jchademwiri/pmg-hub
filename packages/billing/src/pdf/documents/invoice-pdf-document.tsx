@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatZAR, fmtDate } from '../../format';
+import { formatZAR, fmtDate, fmtDateLong } from '../../format';
 import { Document, Page, View, Text, KeepTogether } from '../primitives';
 import { PageHeader, type OrgDetails } from '../components/page-header';
 import { PageFooter } from '../components/page-footer';
@@ -140,9 +140,9 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
             <KeyValue
               size="sm"
               items={[
-                { key: 'Issue Date', value: fmtDate(data.issueDate) },
+                { key: 'Issue Date', value: fmtDateLong(data.issueDate) },
                 ...(data.dueDate
-                  ? [{ key: data.dueDateLabel || 'Due Date', value: fmtDate(data.dueDate) }]
+                  ? [{ key: data.dueDateLabel || 'Due Date', value: fmtDateLong(data.dueDate) }]
                   : []),
                 ...(data.reference ? [{ key: 'Reference', value: data.reference }] : []),
                 ...(data.org.salesRep

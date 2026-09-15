@@ -25,7 +25,7 @@ import {
 } from '@pmg/db';
 import { getClientCreditBalanceV2 } from '@/app/actions/credit-management';
 import { calculateAgeing } from '@/lib/billing-ageing';
-import { formatZAR, formatZARWithCR, fmtDate, getSASTToday } from '@/lib/format';
+import { formatZAR, formatZARWithCR, fmtDate, fmtDateLong, getSASTToday } from '@/lib/format';
 import {
   buildOrgProps,
   determineStatementStatus,
@@ -351,7 +351,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
             clientName={client.businessName ?? client.name}
             defaultRecipientEmail={client.email ?? ''}
             statementPdfUrl={statementPdfUrl}
-            statementDate={fmtDate(new Date())}
+            statementDate={fmtDateLong(new Date())}
             period={periodLabel}
             totalAmountDue={formatZARWithCR(displayBalance)}
           />

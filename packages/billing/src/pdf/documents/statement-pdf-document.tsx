@@ -3,6 +3,7 @@ import {
   formatZAR,
   formatZARWithCR,
   fmtDate,
+  fmtDateLong,
   formatStatementDueDate,
   isDueDateOverdue,
 } from '../../format';
@@ -145,14 +146,14 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
               size="sm"
               items={[
                 ...(data.statementType !== 'outstanding' && data.periodFrom
-                  ? [{ key: 'Period From', value: fmtDate(data.periodFrom) }]
+                  ? [{ key: 'Period From', value: fmtDateLong(data.periodFrom) }]
                   : []),
-                ...(data.periodTo ? [{ key: 'Period To', value: fmtDate(data.periodTo) }] : []),
+                ...(data.periodTo ? [{ key: 'Period To', value: fmtDateLong(data.periodTo) }] : []),
                 ...(data.dueDate && totalDue > 0
                   ? [
                       {
                         key: 'Payment Due Date',
-                        value: formatStatementDueDate(data.dueDate),
+                        value: formatStatementDueDate(data.dueDate, { long: true }),
                         valueStyle: isDueDateOverdue(data.dueDate)
                           ? { color: '#e11d48', fontWeight: 700 }
                           : undefined,
@@ -205,7 +206,7 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
             {/* Opening Balance Row (only for Activity Statement) */}
             {data.statementType !== 'outstanding' && (
               <TableRow striped={false}>
-                <TableCell width="15%">{data.periodFrom ? fmtDate(data.periodFrom) : '-'}</TableCell>
+                <TableCell width="15%">{data.periodFrom ? fmtDateLong(data.periodFrom) : '-'}</TableCell>
                 <TableCell width="18%" bold>
                   OPENING
                 </TableCell>
@@ -225,7 +226,7 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
             {/* Transaction Rows */}
             {(data.transactions ?? []).map((tx, idx) => (
               <TableRow key={idx} striped={idx % 2 === 1}>
-                <TableCell width="15%">{fmtDate(tx.date)}</TableCell>
+                <TableCell width="15%">{fmtDateLong(tx.date)}</TableCell>
                 <TableCell width="18%" bold>
                   {tx.reference}
                 </TableCell>

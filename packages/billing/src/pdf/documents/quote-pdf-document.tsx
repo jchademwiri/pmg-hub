@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatZAR, fmtDate } from '../../format';
+import { formatZAR, fmtDate, fmtDateLong } from '../../format';
 import { Document, Page, KeepTogether } from '../primitives';
 import { PageHeader, type OrgDetails } from '../components/page-header';
 import { PageFooter } from '../components/page-footer';
@@ -118,9 +118,9 @@ export function QuotePdfDocument({ data }: { data: QuotePdfData }) {
             <KeyValue
               size="sm"
               items={[
-                { key: 'Quote Date', value: fmtDate(data.issueDate) },
+                { key: 'Quote Date', value: fmtDateLong(data.issueDate) },
                 ...(data.expiryDate
-                  ? [{ key: 'Valid Until', value: fmtDate(data.expiryDate) }]
+                  ? [{ key: 'Valid Until', value: fmtDateLong(data.expiryDate) }]
                   : []),
                 ...(data.reference ? [{ key: 'Reference', value: data.reference }] : []),
                 ...(data.org.salesRep ? [{ key: 'Prepared By', value: data.org.salesRep }] : []),

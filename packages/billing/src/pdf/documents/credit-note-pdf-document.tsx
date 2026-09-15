@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatZAR, fmtDate } from '../../format';
+import { formatZAR, fmtDate, fmtDateLong } from '../../format';
 import { Document, Page, KeepTogether } from '../primitives';
 import { PageHeader, type OrgDetails } from '../components/page-header';
 import { PageFooter } from '../components/page-footer';
@@ -118,13 +118,13 @@ export function CreditNotePdfDocument({ data }: { data: CreditNotePdfData }) {
             <KeyValue
               size="sm"
               items={[
-                { key: 'Issue Date', value: fmtDate(data.issueDate) },
+                { key: 'Issue Date', value: fmtDateLong(data.issueDate) },
                 { key: 'Credit Type', value: data.type },
                 ...(data.originalInvoiceNumber
                   ? [{ key: 'Original Invoice', value: data.originalInvoiceNumber }]
                   : []),
                 ...(data.expiresDate
-                  ? [{ key: 'Expiry Date', value: fmtDate(data.expiresDate) }]
+                  ? [{ key: 'Expiry Date', value: fmtDateLong(data.expiresDate) }]
                   : []),
               ]}
             />
