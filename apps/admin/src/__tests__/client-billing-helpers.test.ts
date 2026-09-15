@@ -492,16 +492,16 @@ describe('formatStatementDueDate & isDueDateOverdue', () => {
     expect(formatStatementDueDate('2026-07-31', { asOfDate: '2026-09-15' })).toBe(
       'Immediately (Overdue)',
     );
-    expect(
-      formatStatementDueDate('2026-07-31', { asOfDate: '2026-09-15', long: true }),
-    ).toBe('Immediately (Overdue)');
+    expect(formatStatementDueDate('2026-07-31', { asOfDate: '2026-09-15', long: true })).toBe(
+      'Immediately (Overdue)',
+    );
   });
 
   it('formatStatementDueDate formats future dates correctly (short and long)', () => {
     expect(formatStatementDueDate('2026-09-30', { asOfDate: '2026-09-15' })).toBe('30 Sept 2026');
-    expect(
-      formatStatementDueDate('2026-09-30', { asOfDate: '2026-09-15', long: true }),
-    ).toBe('30 September 2026');
+    expect(formatStatementDueDate('2026-09-30', { asOfDate: '2026-09-15', long: true })).toBe(
+      '30 September 2026',
+    );
   });
 
   it('formatStatementDueDate returns "-" for missing dates', () => {

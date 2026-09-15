@@ -66,7 +66,7 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
     (data.transactions ?? []).reduce((sum, tx) => sum + (tx.debit || 0), 0) + openingBalance;
   const totalPaid =
     data.totalPaid ?? (data.transactions ?? []).reduce((sum, tx) => sum + (tx.credit || 0), 0);
-  const totalDue = data.totalDue ?? (subtotal - totalPaid);
+  const totalDue = data.totalDue ?? subtotal - totalPaid;
 
   return (
     <Document title={`Statement ${data.statementNumber}`}>
@@ -206,7 +206,9 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
             {/* Opening Balance Row (only for Activity Statement) */}
             {data.statementType !== 'outstanding' && (
               <TableRow striped={false}>
-                <TableCell width="15%">{data.periodFrom ? fmtDateLong(data.periodFrom) : '-'}</TableCell>
+                <TableCell width="15%">
+                  {data.periodFrom ? fmtDateLong(data.periodFrom) : '-'}
+                </TableCell>
                 <TableCell width="18%" bold>
                   OPENING
                 </TableCell>
@@ -309,16 +311,14 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                     <span style={{ fontWeight: 600, color: theme.colors.foreground }}>
                       Payment Instructions:
                     </span>
-                    <br />
-                    • Use{' '}
+                    <br />• Use{' '}
                     <span style={{ fontWeight: 600, color: theme.colors.foreground }}>
                       {data.client.accountRef || data.client.name.slice(0, 14).toUpperCase()}
                     </span>{' '}
                     as your deposit reference.
                     {data.org.email && (
                       <>
-                        <br />
-                        • Email Proof of Payment (POP) to:{' '}
+                        <br />• Email Proof of Payment (POP) to:{' '}
                         <span style={{ fontWeight: 600, color: theme.colors.primary }}>
                           {data.org.email}
                         </span>

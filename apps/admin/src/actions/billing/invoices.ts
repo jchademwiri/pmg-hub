@@ -116,7 +116,6 @@ export async function createInvoice(
       return { error: 'A client is required.' };
     }
 
-
     if (vatEnabled) {
       try {
         const { getOrganisationSettings } = await import('@pmg/db');

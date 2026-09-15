@@ -435,7 +435,8 @@ export async function postInvoiceIssueJournalEntry(data: {
 
     const period = date.slice(0, 7);
     let p = await ensureOpenPeriod(period);
-    if (p.status === 'locked') return { error: `Accounting period ${period} is permanently locked.` };
+    if (p.status === 'locked')
+      return { error: `Accounting period ${period} is permanently locked.` };
     if (p.status === 'closed') {
       await reopenPeriod(period);
       p = await ensureOpenPeriod(period);

@@ -1,12 +1,7 @@
 import Link from 'next/link';
 // Trigger Next.js cache reload
 import { cn } from '@/lib/utils';
-import {
-  fmtDateLong,
-  formatZAR,
-  formatStatementDueDate,
-  isDueDateOverdue,
-} from '@/lib/format';
+import { fmtDateLong, formatZAR, formatStatementDueDate, isDueDateOverdue } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { totalAgeingDue } from '@/lib/billing-ageing';
 
@@ -509,25 +504,27 @@ export function DocumentPreview({
               </thead>
               <tbody>
                 {/* Balance Brought Forward row (only for activity statement) */}
-                {statementType !== 'outstanding' && openingBalance !== undefined && openingBalance !== 0 && (
-                  <tr className="border-b border-zinc-100 bg-zinc-50/50 print:break-inside-avoid [break-inside:avoid]">
-                    <td className="py-2.5 pr-4 text-xs text-zinc-500 whitespace-nowrap">
-                      {fmtDateLong(periodFrom)}
-                    </td>
-                    <td
-                      colSpan={2}
-                      className="py-2.5 px-4 text-xs text-zinc-500 italic font-normal"
-                    >
-                      Balance Brought Forward
-                    </td>
-                    <td className="py-2.5 px-4 text-right text-xs text-zinc-500">—</td>
-                    <td className="py-2.5 px-4 text-right text-xs text-zinc-500">—</td>
-                    <td className="py-2.5 px-4 text-right tabular-nums text-xs font-semibold text-zinc-500">
-                      {fmt(Math.abs(openingBalance))}
-                      {openingBalance < 0 ? ' CR' : ''}
-                    </td>
-                  </tr>
-                )}
+                {statementType !== 'outstanding' &&
+                  openingBalance !== undefined &&
+                  openingBalance !== 0 && (
+                    <tr className="border-b border-zinc-100 bg-zinc-50/50 print:break-inside-avoid [break-inside:avoid]">
+                      <td className="py-2.5 pr-4 text-xs text-zinc-500 whitespace-nowrap">
+                        {fmtDateLong(periodFrom)}
+                      </td>
+                      <td
+                        colSpan={2}
+                        className="py-2.5 px-4 text-xs text-zinc-500 italic font-normal"
+                      >
+                        Balance Brought Forward
+                      </td>
+                      <td className="py-2.5 px-4 text-right text-xs text-zinc-500">—</td>
+                      <td className="py-2.5 px-4 text-right text-xs text-zinc-500">—</td>
+                      <td className="py-2.5 px-4 text-right tabular-nums text-xs font-semibold text-zinc-500">
+                        {fmt(Math.abs(openingBalance))}
+                        {openingBalance < 0 ? ' CR' : ''}
+                      </td>
+                    </tr>
+                  )}
                 {transactions.map((tx, i) => (
                   <tr
                     key={i}
@@ -597,17 +594,23 @@ export function DocumentPreview({
                     : (openingBalance ?? 0) + totalInvoiced - totalPaid;
                 return (
                   <>
-                    {statementType !== 'outstanding' && openingBalance !== undefined && openingBalance !== 0 && (
-                      <div className="flex justify-between text-sm text-zinc-600">
-                        <span>Balance Brought Forward</span>
-                        <span className="tabular-nums">
-                          {fmt(Math.abs(openingBalance))}
-                          {openingBalance < 0 ? ' CR' : ''}
-                        </span>
-                      </div>
-                    )}
+                    {statementType !== 'outstanding' &&
+                      openingBalance !== undefined &&
+                      openingBalance !== 0 && (
+                        <div className="flex justify-between text-sm text-zinc-600">
+                          <span>Balance Brought Forward</span>
+                          <span className="tabular-nums">
+                            {fmt(Math.abs(openingBalance))}
+                            {openingBalance < 0 ? ' CR' : ''}
+                          </span>
+                        </div>
+                      )}
                     <div className="flex justify-between text-sm text-zinc-600">
-                      <span>{statementType === 'outstanding' ? 'Total Outstanding' : 'Total Invoiced (Period)'}</span>
+                      <span>
+                        {statementType === 'outstanding'
+                          ? 'Total Outstanding'
+                          : 'Total Invoiced (Period)'}
+                      </span>
                       <span className="tabular-nums">{fmt(totalInvoiced)}</span>
                     </div>
                     {statementType !== 'outstanding' && (
@@ -670,8 +673,12 @@ export function DocumentPreview({
               </p>
               {org.email && (
                 <p>
-                  <span className="font-semibold text-zinc-700">Proof of Payment (POP):</span> Please email POP to{' '}
-                  <a href={`mailto:${org.email}`} className="font-medium text-blue-600 hover:underline">
+                  <span className="font-semibold text-zinc-700">Proof of Payment (POP):</span>{' '}
+                  Please email POP to{' '}
+                  <a
+                    href={`mailto:${org.email}`}
+                    className="font-medium text-blue-600 hover:underline"
+                  >
                     {org.email}
                   </a>
                 </p>

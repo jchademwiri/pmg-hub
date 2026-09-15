@@ -1631,7 +1631,6 @@ export function ClientBillingWorkspace({
             </Card>
           </div>
         </div>
-
       </Tabs>
 
       {/* Checkbox Floating Action Bar */}

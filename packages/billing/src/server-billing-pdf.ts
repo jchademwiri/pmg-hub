@@ -989,11 +989,7 @@ async function buildStatementPdfData(
   let earliestDueDate: string | undefined;
   const unpaidWithDueDates = (statement.outstandingInvoices ?? statement.invoices)
     .filter(
-      (i) =>
-        i.dueDate &&
-        i.status !== 'paid' &&
-        i.status !== 'void' &&
-        i.status !== 'written_off',
+      (i) => i.dueDate && i.status !== 'paid' && i.status !== 'void' && i.status !== 'written_off',
     )
     .sort((a, b) => (a.dueDate! < b.dueDate! ? -1 : 1));
   if (unpaidWithDueDates.length > 0) {
@@ -1004,9 +1000,7 @@ async function buildStatementPdfData(
     type: 'statement',
     statementType: filters?.statementType ?? 'activity',
     title:
-      filters?.statementType === 'outstanding'
-        ? 'Statement of Outstanding Invoices'
-        : 'Statement',
+      filters?.statementType === 'outstanding' ? 'Statement of Outstanding Invoices' : 'Statement',
     number: `ST-${statement.client.name.toUpperCase().substring(0, 3)}-${filters?.year ?? currentYear}`,
     status,
     issueDate: getSASTToday(),
