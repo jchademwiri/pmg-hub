@@ -15,6 +15,8 @@ import {
   inArray,
   paymentAllocations,
   sql,
+  getInvoiceById,
+  addDays,
 } from '@pmg/db';
 import { getNextDocumentNumber } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
@@ -112,11 +114,6 @@ export async function createInvoice(
     // clientId is required - enforced by Zod but double-check
     if (!clientId) {
       return { error: 'A client is required.' };
-    }
-
-    if (await isPeriodClosed(invoiceDate)) {
-      const minDate = await getMinAllowedDate();
-      return { error: getMinDateErrorMessage(minDate) };
     }
 
     if (vatEnabled) {
@@ -1196,5 +1193,95 @@ export async function restoreWriteOffInvoice(id: string): Promise<{ error?: stri
     if (err?.message === 'NEXT_REDIRECT') throw err;
     console.error('Failed to restore write-off invoice:', err);
     return { error: err?.message || 'Failed to remove write-off.' };
+  }
+}
+
+// ── duplicateInvoice ────────────────────────────────────────────────────────
+
+export async function duplicateInvoice(id: string): Promise<{ error?: string; id?: string }> {
+  try {
+    const session = await getSessionOrRedirect();
+
+    const source = await getInvoiceById(id);
+    if (!source) return { error: 'Invoice not found.' };
+
+    const todayStr = getSASTToday();
+
+    // Preserve the same payment terms offset as original (days between invoiceDate and dueDate)
+    let newDueDate: string | null = null;
+    if (source.dueDate && source.invoiceDate) {
+      const origIssue = new Date(source.invoiceDate);
+      const origDue = new Date(source.dueDate);
+      const diffDays = Math.round(
+        (origDue.getTime() - origIssue.getTime()) / (1000 * 60 * 60 * 24),
+      );
+      newDueDate = addDays(todayStr, Math.max(0, diffDays));
+    } else {
+      newDueDate = addDays(todayStr, 30);
+    }
+
+    const year = Number(todayStr.slice(0, 4));
+    const documentNumber = await getNextDocumentNumber(source.divisionId, 'invoice', year);
+
+    const db = getDb();
+    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
+
+    const { id: insertedId } = await db.transaction(async (tx) => {
+      const [inserted] = await tx
+        .insert(invoices)
+        .values({
+          divisionId: source.divisionId,
+          clientId: source.clientId,
+          documentNumber,
+          status: 'draft',
+          invoiceDate: todayStr,
+          dueDate: newDueDate,
+          // Reference is copied from the source invoice
+          reference: source.reference ?? null,
+          subtotal: source.subtotal,
+          discountType: source.discountType ?? null,
+          discountValue: source.discountValue ?? null,
+          discountAmount: source.discountAmount ?? '0',
+          vatEnabled: source.vatEnabled,
+          vatAmount: source.vatAmount,
+          total: source.total,
+          notes: source.notes ?? null,
+          terms: source.terms ?? null,
+          createdBy: session.user.id,
+        })
+        .returning({ id: invoices.id });
+
+      if (!inserted) {
+        throw new Error('Failed to duplicate invoice.');
+      }
+
+      if (source.lineItems && source.lineItems.length > 0) {
+        await tx.insert(billingLineItems).values(
+          source.lineItems.map((li, i) => ({
+            documentType: 'invoice' as const,
+            documentId: inserted.id,
+            sortOrder: i,
+            ...(includeLineItemItemId ? { itemId: li.itemId ?? null } : {}),
+            description: li.description,
+            quantity: li.quantity,
+            unitPrice: li.unitPrice,
+            discountType: li.discountType ?? null,
+            discountValue: li.discountValue ?? null,
+            discountAmount: li.discountAmount ?? '0',
+            vatRate: li.vatRate,
+            lineTotal: li.lineTotal,
+          })),
+        );
+      }
+
+      return { id: inserted.id };
+    });
+
+    revalidatePath('/billing/invoices');
+    return { id: insertedId };
+  } catch (err: any) {
+    if (err?.message === 'NEXT_REDIRECT') throw err;
+    console.error('duplicateInvoice error:', err);
+    return { error: 'Failed to duplicate invoice. Please try again.' };
   }
 }

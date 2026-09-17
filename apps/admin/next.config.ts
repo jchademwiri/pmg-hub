@@ -7,6 +7,7 @@ const appDir = dirname(fileURLToPath(import.meta.url));
 loadEnvConfig(resolve(appDir, '../..'));
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['takumi-pdf', '@takumi-rs/helpers', '@takumi-rs/core'],
   experimental: {
     serverActions: {
       bodySizeLimit: '10mb',

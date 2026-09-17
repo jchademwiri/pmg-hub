@@ -23,13 +23,18 @@ export type AgeingInvoice = {
 };
 
 /**
- * Compute ageing buckets from a list of invoices.
+ * Compute ageing buckets from a list of invoices as of a reference date.
+ *
+ * In standard accounting practice (e.g. Sage Pastel / Xero), statement ageing
+ * is evaluated "as-at" the statement cutoff date (`periodTo`), ensuring that
+ * invoices due at month-end remain "Current" on that month's statement regardless
+ * of when the statement is re-printed.
  *
  * @param invoices - Invoice-like rows with status, dates, and financial fields.
- * @param todayStr - Today's date in YYYY-MM-DD format (SAST-aware).
+ * @param asOfDateStr - As-at reference date in YYYY-MM-DD format (statement periodTo, or SAST today for live statements).
  * @returns An AgeingBucket with totals per overdue range.
  */
-export function calculateAgeing(invoices: AgeingInvoice[], todayStr: string): AgeingBucket {
+export function calculateAgeing(invoices: AgeingInvoice[], asOfDateStr: string): AgeingBucket {
   const ageing: AgeingBucket = {
     current: 0,
     days1_14: 0,
@@ -45,7 +50,7 @@ export function calculateAgeing(invoices: AgeingInvoice[], todayStr: string): Ag
     }
 
     const dueDateStr = invoice.dueDate ?? invoice.invoiceDate;
-    const diffTime = new Date(todayStr).getTime() - new Date(dueDateStr).getTime();
+    const diffTime = new Date(asOfDateStr).getTime() - new Date(dueDateStr).getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     const total = Number(invoice.total) || 0;

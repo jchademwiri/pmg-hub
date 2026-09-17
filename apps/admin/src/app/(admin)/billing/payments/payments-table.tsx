@@ -80,27 +80,30 @@ function PaymentRow({
       className="cursor-pointer hover:bg-muted/40 transition-colors border-b border-border"
       onClick={() => router.push(`/billing/payments/${entry.id}`)}
     >
-      <TableCell className="font-medium text-xs py-3 px-2 whitespace-nowrap">
-        <div className="flex items-center gap-1.5">
+      <TableCell className="font-medium text-xs py-3 px-3 whitespace-nowrap overflow-hidden">
+        <div className="flex items-center gap-1.5 min-w-0">
           <Calendar className="size-3.5 text-muted-foreground shrink-0" />
-          {fmtDate(entry.date)}
+          <span className="truncate">{fmtDate(entry.date)}</span>
         </div>
       </TableCell>
-      <TableCell className="text-xs py-3 px-2 truncate" title={entry.clientName}>
-        <span className="truncate block">{entry.clientName}</span>
+      <TableCell className="text-xs py-3 px-3 truncate overflow-hidden" title={entry.clientName}>
+        <span className="truncate block font-medium">{entry.clientName}</span>
       </TableCell>
-      <TableCell className="py-3 px-2">
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-secondary text-secondary-foreground whitespace-nowrap">
+      <TableCell className="py-3 px-3 overflow-hidden">
+        <span
+          className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-secondary text-secondary-foreground truncate max-w-full"
+          title={entry.divisionName}
+        >
           {entry.divisionName}
         </span>
       </TableCell>
-      <TableCell className="truncate text-xs py-3 px-2" title={entry.description}>
+      <TableCell className="truncate text-xs py-3 px-3 overflow-hidden" title={entry.description}>
         <span className="truncate block text-muted-foreground">{entry.description || '-'}</span>
       </TableCell>
-      <TableCell className="text-right tabular-nums font-semibold text-xs py-3 px-2 text-emerald-600 whitespace-nowrap">
+      <TableCell className="text-right tabular-nums font-semibold text-xs py-3 px-3 text-emerald-600 whitespace-nowrap overflow-hidden">
         {formatZAR(entry.amount)}
       </TableCell>
-      <TableCell className="text-right tabular-nums text-xs py-3 px-2 whitespace-nowrap">
+      <TableCell className="text-right tabular-nums text-xs py-3 px-3 whitespace-nowrap overflow-hidden">
         {entry.credit > 0 ? (
           <span className="font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded text-[11px]">
             {formatZAR(entry.credit)}
@@ -109,7 +112,7 @@ function PaymentRow({
           <span className="text-[11px] text-muted-foreground">-</span>
         )}
       </TableCell>
-      <TableCell className="py-3 px-2 w-14" onClick={(e) => e.stopPropagation()}>
+      <TableCell className="py-3 px-3 w-14 overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-1 justify-end">
           {isLocked ? (
             <Tooltip>
@@ -266,16 +269,16 @@ export function PaymentsTable({ entries, closedPeriods, deleteAction }: Payments
 
         {/* Desktop View */}
         <div className="hidden md:block border rounded-lg bg-card overflow-hidden">
-          <Table className="table-fixed w-full" containerClassName="overflow-hidden">
+          <Table className="table-fixed w-full min-w-[850px]" containerClassName="overflow-x-auto">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[85px] px-2 text-xs">Date</TableHead>
-                <TableHead className="w-[160px] px-2 text-xs">Client</TableHead>
-                <TableHead className="w-[90px] px-2 text-xs">Division</TableHead>
-                <TableHead className="px-2 text-xs">Reference</TableHead>
-                <TableHead className="w-[90px] px-2 text-right text-xs">Amount</TableHead>
-                <TableHead className="w-[85px] px-2 text-right text-xs">Credit</TableHead>
-                <TableHead className="text-right w-12 px-2 text-xs">Actions</TableHead>
+                <TableHead className="w-[115px] px-3 text-xs">Date</TableHead>
+                <TableHead className="w-[170px] px-3 text-xs">Client</TableHead>
+                <TableHead className="w-[140px] px-3 text-xs">Division</TableHead>
+                <TableHead className="min-w-[180px] px-3 text-xs">Reference</TableHead>
+                <TableHead className="w-[100px] px-3 text-right text-xs">Amount</TableHead>
+                <TableHead className="w-[95px] px-3 text-right text-xs">Credit</TableHead>
+                <TableHead className="text-right w-14 px-3 text-xs">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

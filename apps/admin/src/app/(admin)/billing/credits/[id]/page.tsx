@@ -14,6 +14,7 @@ import {
   desc,
 } from '@pmg/db';
 import { formatZAR, fmtDate } from '@/lib/format';
+import { SetPageLabel } from '@/components/navigation/page-header-context';
 import { CreditNoteDetailClient } from './credit-note-detail-client';
 
 export const dynamic = 'force-dynamic';
@@ -50,7 +51,12 @@ export default async function CreditNoteDetailPage({
 
   // Fetch client, division, creator
   const [client] = await db
-    .select({ id: clients.id, name: clients.name, businessName: clients.businessName })
+    .select({
+      id: clients.id,
+      name: clients.name,
+      businessName: clients.businessName,
+      email: clients.email,
+    })
     .from(clients)
     .where(eq(clients.id, note.clientId))
     .limit(1);
@@ -101,40 +107,51 @@ export default async function CreditNoteDetailPage({
   }
 
   return (
-    <CreditNoteDetailClient
-      note={{
-        id: note.id,
-        documentNumber: note.documentNumber,
-        status: note.status,
-        type: note.type,
-        reason: note.reason,
-        amount: parseFloat(note.amount),
-        amountRemaining: parseFloat(note.amountRemaining),
-        createdAt: note.createdAt?.toISOString() ?? '',
-        expiresAt: note.expiresAt?.toISOString() ?? null,
-        voidedAt: note.voidedAt?.toISOString() ?? null,
-      }}
-      client={client ? { id: client.id, name: client.businessName ?? client.name } : null}
-      division={division ?? null}
-      creator={creator ?? null}
-      originalInvoice={originalInvoice}
-      applications={apps.map((a) => ({
-        id: a.id,
-        amount: parseFloat(a.amount),
-        appliedAt: a.appliedAt?.toISOString() ?? '',
-        invoiceId: a.invoiceId,
-        invoiceNumber: a.invoiceNumber,
-        invoiceStatus: a.invoiceStatus,
-      }))}
-      refunds={refunds.map((r) => ({
-        id: r.id,
-        amount: parseFloat(r.amount),
-        refundDate: r.refundDate,
-        refundMethod: r.refundMethod,
-        reference: r.reference,
-        description: r.description,
-        createdAt: r.createdAt?.toISOString() ?? '',
-      }))}
-    />
+    <>
+      <SetPageLabel value="Credit Note" />
+      <CreditNoteDetailClient
+        note={{
+          id: note.id,
+          documentNumber: note.documentNumber,
+          status: note.status,
+          type: note.type,
+          reason: note.reason,
+          amount: parseFloat(note.amount),
+          amountRemaining: parseFloat(note.amountRemaining),
+          createdAt: note.createdAt?.toISOString() ?? '',
+          expiresAt: note.expiresAt?.toISOString() ?? null,
+          voidedAt: note.voidedAt?.toISOString() ?? null,
+        }}
+        client={
+          client
+            ? {
+                id: client.id,
+                name: client.businessName ?? client.name,
+                email: client.email ?? null,
+              }
+            : null
+        }
+        division={division ?? null}
+        creator={creator ?? null}
+        originalInvoice={originalInvoice}
+        applications={apps.map((a) => ({
+          id: a.id,
+          amount: parseFloat(a.amount),
+          appliedAt: a.appliedAt?.toISOString() ?? '',
+          invoiceId: a.invoiceId,
+          invoiceNumber: a.invoiceNumber,
+          invoiceStatus: a.invoiceStatus,
+        }))}
+        refunds={refunds.map((r) => ({
+          id: r.id,
+          amount: parseFloat(r.amount),
+          refundDate: r.refundDate,
+          refundMethod: r.refundMethod,
+          reference: r.reference,
+          description: r.description,
+          createdAt: r.createdAt?.toISOString() ?? '',
+        }))}
+      />
+    </>
   );
 }

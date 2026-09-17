@@ -8,6 +8,7 @@ import {
   buildOrgProps,
   buildBankingProps,
 } from '@/lib/client-billing-helpers';
+import { formatStatementDueDate, isDueDateOverdue } from '@/lib/format';
 
 // ---------------------------------------------------------------------------
 // determineStatementStatus
@@ -471,5 +472,40 @@ describe('buildBankingProps', () => {
       accountNumber: '2520318607',
       branchCode: '470010',
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// formatStatementDueDate & isDueDateOverdue
+// ---------------------------------------------------------------------------
+describe('formatStatementDueDate & isDueDateOverdue', () => {
+  it('isDueDateOverdue returns true for past dates and false for future/today', () => {
+    expect(isDueDateOverdue('2026-07-31', '2026-09-15')).toBe(true);
+    expect(isDueDateOverdue('2026-08-31', '2026-09-15')).toBe(true);
+    expect(isDueDateOverdue('2026-09-15', '2026-09-15')).toBe(false);
+    expect(isDueDateOverdue('2026-09-30', '2026-09-15')).toBe(false);
+    expect(isDueDateOverdue(null)).toBe(false);
+    expect(isDueDateOverdue(undefined)).toBe(false);
+  });
+
+  it('formatStatementDueDate returns "Immediately (Overdue)" when due date is in the past', () => {
+    expect(formatStatementDueDate('2026-07-31', { asOfDate: '2026-09-15' })).toBe(
+      'Immediately (Overdue)',
+    );
+    expect(formatStatementDueDate('2026-07-31', { asOfDate: '2026-09-15', long: true })).toBe(
+      'Immediately (Overdue)',
+    );
+  });
+
+  it('formatStatementDueDate formats future dates correctly (short and long)', () => {
+    expect(formatStatementDueDate('2026-09-30', { asOfDate: '2026-09-15' })).toBe('30 Sept 2026');
+    expect(formatStatementDueDate('2026-09-30', { asOfDate: '2026-09-15', long: true })).toBe(
+      '30 September 2026',
+    );
+  });
+
+  it('formatStatementDueDate returns "-" for missing dates', () => {
+    expect(formatStatementDueDate(null)).toBe('-');
+    expect(formatStatementDueDate(undefined)).toBe('-');
   });
 });

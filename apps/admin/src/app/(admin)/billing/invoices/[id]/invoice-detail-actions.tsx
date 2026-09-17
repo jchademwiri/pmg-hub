@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
+import { Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { fmtDate } from '@/lib/format';
@@ -26,6 +27,7 @@ interface InvoiceDetailActionsProps {
   voidAction: (id: string) => Promise<{ error?: string }>;
   writeOffAction?: (id: string, reason: string) => Promise<{ error?: string }>;
   restoreWriteOffAction?: (id: string) => Promise<{ error?: string }>;
+  duplicateAction?: (id: string) => Promise<{ error?: string; id?: string }>;
 }
 
 export function InvoiceDetailActions({
@@ -35,9 +37,11 @@ export function InvoiceDetailActions({
   voidAction,
   writeOffAction,
   restoreWriteOffAction,
+  duplicateAction,
 }: InvoiceDetailActionsProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
   const today = new Date().toISOString().split('T')[0]!;
   const isOverdue = invoice.dueDate ? invoice.dueDate < today : false;
@@ -49,6 +53,21 @@ export function InvoiceDetailActions({
       else {
         toast.success('Invoice issued.');
         router.refresh();
+      }
+    });
+  }
+
+  function handleDuplicate() {
+    if (!duplicateAction) return;
+    setIsPending(true);
+    startTransition(async () => {
+      const result = await duplicateAction(invoice.id);
+      setIsPending(false);
+      if (result.error) {
+        toast.error(result.error);
+      } else if (result.id) {
+        toast.success('Invoice duplicated.');
+        router.push(`/billing/invoices/${result.id}/edit`);
       }
     });
   }
@@ -127,6 +146,19 @@ export function InvoiceDetailActions({
               />
             )}
           </div>
+        )}
+
+        {/* Duplicate — available for all invoice statuses */}
+        {duplicateAction && (
+          <Button
+            variant="outline"
+            className="w-full mt-1"
+            onClick={handleDuplicate}
+            disabled={isPending}
+          >
+            <Copy className="size-4 mr-2" />
+            Duplicate Invoice
+          </Button>
         )}
       </div>
     </div>

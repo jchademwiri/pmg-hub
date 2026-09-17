@@ -10,6 +10,20 @@ export function formatZAR(amount: number | string | null | undefined): string {
 }
 
 /**
+ * Format an amount in ZAR, appending ' CR' if negative (credit balance/refund/overpayment)
+ * e.g. -2500 -> "R 2 500,00 CR"
+ * Standard South African accounting notation for debtor credit balances.
+ */
+export function formatZARWithCR(amount: number | string | null | undefined): string {
+  const val = typeof amount === 'number' ? amount : parseFloat(String(amount ?? 0));
+  const num = isNaN(val) ? 0 : val;
+  if (num < 0) {
+    return `${formatZAR(Math.abs(num))} CR`;
+  }
+  return formatZAR(num);
+}
+
+/**
  * Format an ISO date string (YYYY-MM-DD) or Date object as "08 May 2026".
  * The T00:00:00 suffix prevents timezone-offset day-shift on ISO strings.
  */
@@ -48,6 +62,51 @@ export function fmtDateLong(value: string | Date | null | undefined): string {
   } catch {
     return '-';
   }
+}
+
+/**
+ * Checks whether a due date is in the past (overdue).
+ * Compares against South Africa Standard Time today (or an optional comparison date).
+ */
+export function isDueDateOverdue(
+  dueDate?: string | Date | null,
+  asOfDate?: string | Date | null,
+): boolean {
+  if (!dueDate) return false;
+  try {
+    const isoDueDate =
+      typeof dueDate === 'string'
+        ? dueDate.length >= 10
+          ? dueDate.slice(0, 10)
+          : dueDate
+        : dueDate.toISOString().slice(0, 10);
+    const compareDate = asOfDate
+      ? typeof asOfDate === 'string'
+        ? asOfDate.length >= 10
+          ? asOfDate.slice(0, 10)
+          : asOfDate
+        : asOfDate.toISOString().slice(0, 10)
+      : getSASTToday();
+    return isoDueDate < compareDate;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Format a statement's payment due date.
+ * If the due date is in the past, displays "Immediately (Overdue)".
+ * Otherwise, formats the date (e.g. "30 Sep 2026" or "30 September 2026" if long).
+ */
+export function formatStatementDueDate(
+  dueDate?: string | Date | null,
+  options?: { long?: boolean; asOfDate?: string | Date | null },
+): string {
+  if (!dueDate) return '-';
+  if (isDueDateOverdue(dueDate, options?.asOfDate)) {
+    return 'Immediately (Overdue)';
+  }
+  return options?.long ? fmtDateLong(dueDate) : fmtDate(dueDate);
 }
 
 /**
