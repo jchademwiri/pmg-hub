@@ -235,3 +235,49 @@ export function formatOrgAddress(
   );
   return parts.length > 0 ? parts.join(', ') : undefined;
 }
+
+/**
+ * Resolves a division name to its standard abbreviation (e.g. 'PMG', 'TES', 'AWS').
+ */
+export function formatDivisionAbbr(name?: string | null): string {
+  if (!name) return '—';
+  const trimmed = name.trim();
+  const lower = trimmed.toLowerCase();
+
+  if (/tender\s*edge|edge\s*solutions|tes\b/i.test(lower)) return 'TES';
+  if (/apex\s*web|apex|aws\b/i.test(lower)) return 'AWS';
+  if (/playhouse\s*media|playhouse|pmg\b/i.test(lower)) return 'PMG';
+
+  // If already short (<= 4 chars), keep it uppercase
+  if (trimmed.length <= 4) return trimmed.toUpperCase();
+
+  // Acronym from multiple words (e.g. "Cloud Data Services" -> "CDS")
+  const words = trimmed.split(/[\s_-]+/).filter(Boolean);
+  if (words.length > 1) {
+    return words.map((w) => w[0]?.toUpperCase()).join('');
+  }
+
+  return trimmed.slice(0, 3).toUpperCase();
+}
+
+/**
+ * Strips redundant prefixes (e.g. "Subscription:", "Subscription -") and redundant trailing dates
+ * (e.g. "(11 September 2026)") from expense descriptions so they remain concise and fit cleanly.
+ */
+export function stripExpenseDescription(description?: string | null): string {
+  if (!description) return '';
+  let cleaned = description.trim();
+
+  // Strip leading "Subscription:" or "Subscription -" or "Subscription" followed by delimiter
+  cleaned = cleaned.replace(/^subscription[:\s-]+/i, '').trim();
+
+  // Strip trailing date in parentheses or brackets, e.g. (11 September 2026), (2026-09-11)
+  cleaned = cleaned
+    .replace(
+      /\s*[\(\[](?:\d{1,2}\s+[A-Za-z]+|[A-Za-z]+\s+\d{1,2}|\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.]\d{4}|[A-Za-z]+\s+\d{4})[^)\]]*[\)\]]$/i,
+      '',
+    )
+    .trim();
+
+  return cleaned || description.trim();
+}
