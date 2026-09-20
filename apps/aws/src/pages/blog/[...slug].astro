@@ -1,0 +1,216 @@
+---
+import { getCollection, render } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog");
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const SITE_URL = "https://apexwebsolutions.co.za";
+const currentURL = `${SITE_URL}/blog/${post.id}`;
+const canonicalURL = post.data.canonicalUrl || currentURL;
+
+const formattedDate = post.data.publishedAt.toLocaleDateString("en-ZA", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+// JSON-LD BlogPosting Schema
+const articleSchema = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "@id": `${currentURL}#article`,
+  headline: post.data.title,
+  description: post.data.description,
+  image: post.data.coverImage
+    ? new URL(post.data.coverImage, SITE_URL).href
+    : undefined,
+  datePublished: post.data.publishedAt.toISOString(),
+  dateModified: post.data.publishedAt.toISOString(),
+  mainEntityOfPage: {
+    "@type": "WebPage",
+    "@id": currentURL,
+  },
+  author: {
+    "@type": "Person",
+    name: post.data.author,
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "Apex Web Solutions",
+    url: SITE_URL,
+    logo: {
+      "@type": "ImageObject",
+      url: `${SITE_URL}/favicon.svg`,
+    },
+  },
+};
+
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "Home",
+      item: SITE_URL,
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "Blog",
+      item: `${SITE_URL}/blog`,
+    },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: post.data.title,
+      item: currentURL,
+    },
+  ],
+};
+---
+
+<Layout
+  title={`${post.data.title} | Apex Web Solutions`}
+  description={post.data.description}
+  canonical={canonicalURL}
+>
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify(breadcrumbSchema)}
+  />
+  <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
+
+  <article class="bg-background min-h-screen pt-32 pb-24">
+    <div class="container mx-auto max-w-3xl px-4">
+      <!-- Breadcrumbs -->
+      <nav aria-label="Breadcrumb" class="text-muted-foreground mb-6 text-sm">
+        <ol class="flex items-center space-x-2">
+          <li>
+            <a href="/" class="hover:text-foreground transition-colors">Home</a>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li>
+            <a href="/blog" class="hover:text-foreground transition-colors"
+              >Blog</a
+            >
+          </li>
+          <li aria-hidden="true">/</li>
+          <li
+            class="text-foreground max-w-[200px] truncate font-medium sm:max-w-xs"
+            aria-current="page"
+          >
+            {post.data.title}
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Header -->
+      <header class="border-border/50 border-b pb-8">
+        <div class="mb-4 flex flex-wrap items-center gap-2">
+          {
+            post.data.tags.map((tag) => (
+              <span class="bg-primary/10 text-primary inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold">
+                {tag}
+              </span>
+            ))
+          }
+          {
+            post.data.draft && (
+              <span class="inline-flex items-center rounded-md bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                Draft
+              </span>
+            )
+          }
+        </div>
+
+        <h1
+          class="text-foreground text-3xl leading-tight font-bold tracking-tight sm:text-4xl"
+        >
+          {post.data.title}
+        </h1>
+
+        <p class="text-muted-foreground mt-4 text-lg leading-relaxed">
+          {post.data.description}
+        </p>
+
+        <div
+          class="text-muted-foreground mt-6 flex items-center justify-between text-sm"
+        >
+          <div class="flex items-center gap-2">
+            <span>By</span>
+            <span class="text-foreground font-semibold">{post.data.author}</span
+            >
+          </div>
+          <time datetime={post.data.publishedAt.toISOString()}>
+            {formattedDate}
+          </time>
+        </div>
+      </header>
+
+      <!-- Cover Image -->
+      {
+        post.data.coverImage && (
+          <div class="bg-muted my-8 aspect-16/9 overflow-hidden rounded-2xl shadow-sm">
+            <img
+              src={post.data.coverImage}
+              alt={post.data.title}
+              class="h-full w-full object-cover"
+            />
+          </div>
+        )
+      }
+
+      <!-- Post Content -->
+      <div
+        class="prose prose-zinc dark:prose-invert text-foreground [&_p]:text-muted-foreground [&_li]:text-muted-foreground [&_strong]:text-foreground [&_a]:text-primary hover:[&_a]:text-primary/80 [&_hr]:border-border/50 mt-8 max-w-none space-y-6 leading-relaxed [&_a]:underline [&_a]:underline-offset-4 [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:text-xl [&_h3]:font-semibold [&_hr]:my-8 [&_ol]:list-decimal [&_ol]:space-y-2 [&_ol]:pl-6 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6"
+      >
+        <Content />
+      </div>
+
+      <!-- Back link footer -->
+      <footer
+        class="border-border/50 mt-16 flex items-center justify-between border-t pt-8"
+      >
+        <a
+          href="/blog"
+          class="text-primary hover:text-primary/80 focus-visible:ring-primary inline-flex items-center gap-2 rounded-md text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="size-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m12 19-7-7 7-7"></path>
+            <path d="M19 12H5"></path>
+          </svg>
+          Back to all articles
+        </a>
+
+        <a
+          href="/"
+          class="text-muted-foreground hover:text-foreground inline-flex items-center text-sm transition-colors"
+        >
+          Apex Home
+        </a>
+      </footer>
+    </div>
+  </article>
+</Layout>

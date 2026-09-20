@@ -1,0 +1,199 @@
+# .pages.yml — Pages CMS Monorepo Configuration for pmg-hub
+
+settings:
+  commit:
+    identity: user
+    templates:
+      create: 'feat(blog): add {filename}'
+      update: 'fix(blog): update {filename}'
+      delete: 'chore(blog): remove {filename}'
+      rename: 'chore(blog): rename {oldFilename} to {newFilename}'
+
+# Media sources: mapping uploads to each app's public directory
+media:
+  - name: tes-media
+    label: 'TES Media'
+    input: apps/tes/public/images/blog
+    output: /images/blog
+    rename: safe
+    categories: [image]
+
+  - name: aws-media
+    label: 'AWS Media'
+    input: apps/aws/public/images/blog
+    output: /images/blog
+    rename: safe
+    categories: [image]
+
+  - name: pmg-media
+    label: 'PMG Media'
+    input: apps/pmg/public/images/blog
+    output: /images/blog
+    rename: safe
+    categories: [image]
+
+content:
+  # ============================================================================
+  # TenderEdge Solutions (apps/tes)
+  # ============================================================================
+  - name: tes-group
+    label: 'TenderEdge Solutions'
+    type: group
+    items:
+      - name: tes-blog
+        label: 'TES Blog Posts'
+        type: collection
+        path: apps/tes/src/content/blog
+        format: yaml-frontmatter
+        filename: '{year}-{month}-{day}-{primary}.md'
+        view:
+          primary: title
+          fields: [title, publishedAt, draft]
+          sort: publishedAt
+          order: desc
+        fields:
+          - name: title
+            label: 'Title'
+            type: string
+            required: true
+          - name: description
+            label: 'Meta Description'
+            type: text
+            required: true
+          - name: publishedAt
+            label: 'Publish Date'
+            type: date
+            required: true
+          - name: author
+            label: 'Author'
+            type: string
+            default: 'TenderEdge Team'
+          - name: draft
+            label: 'Draft'
+            type: boolean
+            default: false
+          - name: coverImage
+            label: 'Cover Image'
+            type: image
+            options:
+              media: tes-media
+          - name: tags
+            label: 'Tags'
+            type: list
+            default: ['Tenders', 'Compliance']
+          - name: canonicalUrl
+            label: 'Canonical URL (Optional - for cross-posted articles)'
+            type: string
+          - name: body
+            label: 'Article Body'
+            type: rich-text
+
+  # ============================================================================
+  # Apex Web Solutions (apps/aws)
+  # ============================================================================
+  - name: aws-group
+    label: 'Apex Web Solutions'
+    type: group
+    items:
+      - name: aws-blog
+        label: 'AWS Blog Posts'
+        type: collection
+        path: apps/aws/src/content/blog
+        format: yaml-frontmatter
+        filename: '{year}-{month}-{day}-{primary}.md'
+        view:
+          primary: title
+          fields: [title, publishedAt, draft]
+          sort: publishedAt
+          order: desc
+        fields:
+          - name: title
+            label: 'Title'
+            type: string
+            required: true
+          - name: description
+            label: 'Meta Description'
+            type: text
+            required: true
+          - name: publishedAt
+            label: 'Publish Date'
+            type: date
+            required: true
+          - name: author
+            label: 'Author'
+            type: string
+            default: 'Apex Team'
+          - name: draft
+            label: 'Draft'
+            type: boolean
+            default: false
+          - name: coverImage
+            label: 'Cover Image'
+            type: image
+            options:
+              media: aws-media
+          - name: tags
+            label: 'Tags'
+            type: list
+            default: ['Web Development', 'Performance']
+          - name: canonicalUrl
+            label: 'Canonical URL (Optional - for cross-posted articles)'
+            type: string
+          - name: body
+            label: 'Article Body'
+            type: rich-text
+
+  # ============================================================================
+  # Playhouse Media Group (apps/pmg)
+  # ============================================================================
+  - name: pmg-group
+    label: 'Playhouse Media Group'
+    type: group
+    items:
+      - name: pmg-blog
+        label: 'PMG Blog Posts'
+        type: collection
+        path: apps/pmg/src/content/blog
+        format: yaml-frontmatter
+        filename: '{year}-{month}-{day}-{primary}.md'
+        view:
+          primary: title
+          fields: [title, publishedAt, draft]
+          sort: publishedAt
+          order: desc
+        fields:
+          - name: title
+            label: 'Title'
+            type: string
+            required: true
+          - name: description
+            label: 'Meta Description'
+            type: text
+            required: true
+          - name: publishedAt
+            label: 'Publish Date'
+            type: date
+            required: true
+          - name: author
+            label: 'Author'
+            type: string
+            default: 'PMG Editorial'
+          - name: draft
+            label: 'Draft'
+            type: boolean
+            default: false
+          - name: coverImage
+            label: 'Cover Image'
+            type: image
+            options:
+              media: pmg-media
+          - name: tags
+            label: 'Tags'
+            type: list
+            default: ['Company News', 'Insights']
+          - name: canonicalUrl
+            label: 'Canonical URL (Optional - for cross-posted articles)'
+            type: string
+          - name: body
+            label: 'Article Body'
+            type: rich-text

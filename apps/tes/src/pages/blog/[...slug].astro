@@ -1,0 +1,207 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '@/layouts/Layout.astro';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const SITE_URL = 'https://www.tenderedgesolutions.co.za';
+const currentURL = `${SITE_URL}/blog/${post.id}`;
+const canonicalURL = post.data.canonicalUrl || currentURL;
+
+const formattedDate = post.data.publishedAt.toLocaleDateString('en-ZA', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+
+// JSON-LD BlogPosting Schema
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  '@id': `${currentURL}#article`,
+  headline: post.data.title,
+  description: post.data.description,
+  image: post.data.coverImage ? new URL(post.data.coverImage, SITE_URL).href : undefined,
+  datePublished: post.data.publishedAt.toISOString(),
+  dateModified: post.data.publishedAt.toISOString(),
+  mainEntityOfPage: {
+    '@type': 'WebPage',
+    '@id': currentURL,
+  },
+  author: {
+    '@type': 'Person',
+    name: post.data.author,
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'TenderEdge Solutions',
+    url: SITE_URL,
+    logo: {
+      '@type': 'ImageObject',
+      url: `${SITE_URL}/favicon.svg`,
+    },
+  },
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: SITE_URL,
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Blog',
+      item: `${SITE_URL}/blog`,
+    },
+    {
+      '@type': 'ListItem',
+      position: 3,
+      name: post.data.title,
+      item: currentURL,
+    },
+  ],
+};
+---
+
+<Layout
+  title={`${post.data.title} | TenderEdge Solutions`}
+  description={post.data.description}
+  canonical={canonicalURL}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
+
+  <article class="bg-background min-h-screen pt-28 sm:pt-36 pb-20">
+    <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+      <!-- Breadcrumbs -->
+      <nav
+        aria-label="Breadcrumb"
+        class="mb-6 text-xs uppercase tracking-widest text-muted-foreground"
+      >
+        <ol class="flex items-center space-x-2">
+          <li>
+            <a href="/" class="hover:text-primary transition-colors">Home</a>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li>
+            <a href="/blog" class="hover:text-primary transition-colors">Blog</a>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li
+            class="font-semibold text-primary truncate max-w-[200px] sm:max-w-xs"
+            aria-current="page"
+          >
+            {post.data.title}
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Header -->
+      <header class="border-b border-border/80 pb-8">
+        <div class="flex flex-wrap items-center gap-2 mb-4">
+          {
+            post.data.tags.map((tag) => (
+              <span class="inline-flex items-center rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary uppercase tracking-wider">
+                {tag}
+              </span>
+            ))
+          }
+          {
+            post.data.draft && (
+              <span class="inline-flex items-center rounded-md bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                Draft
+              </span>
+            )
+          }
+        </div>
+
+        <h1
+          class="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground font-condensed uppercase leading-tight"
+        >
+          {post.data.title}
+        </h1>
+
+        <p class="mt-4 text-lg text-muted-foreground leading-relaxed">
+          {post.data.description}
+        </p>
+
+        <div class="mt-6 flex items-center justify-between text-sm text-muted-foreground">
+          <div class="flex items-center gap-2">
+            <span>Published by</span>
+            <span class="font-semibold text-foreground">{post.data.author}</span>
+          </div>
+          <time datetime={post.data.publishedAt.toISOString()}>
+            {formattedDate}
+          </time>
+        </div>
+      </header>
+
+      <!-- Cover Image -->
+      {
+        post.data.coverImage && (
+          <div class="aspect-16/9 my-8 overflow-hidden rounded-2xl bg-muted shadow-sm">
+            <img
+              src={post.data.coverImage}
+              alt={post.data.title}
+              class="h-full w-full object-cover"
+            />
+          </div>
+        )
+      }
+
+      <!-- Post Content -->
+      <div
+        class="prose prose-zinc dark:prose-invert max-w-none mt-8 leading-relaxed space-y-6 text-foreground [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:mt-10 [&_h2]:mb-4 [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:mt-8 [&_h3]:mb-3 [&_p]:text-muted-foreground [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-2 [&_li]:text-muted-foreground [&_strong]:text-foreground [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary/80 [&_hr]:my-8 [&_hr]:border-border/60"
+      >
+        <Content />
+      </div>
+
+      <!-- Back link footer -->
+      <footer class="mt-16 border-t border-border/60 pt-8 flex items-center justify-between">
+        <a
+          href="/blog"
+          class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none rounded-md"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="size-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m12 19-7-7 7-7"></path>
+            <path d="M19 12H5"></path>
+          </svg>
+          Back to all articles
+        </a>
+
+        <a
+          href="/"
+          class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          TenderEdge Home
+        </a>
+      </footer>
+    </div>
+  </article>
+</Layout>

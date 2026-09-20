@@ -7,19 +7,24 @@ import "@/styles/starwind.css";
 import GoogleAnalytics from "@/components/GoogleAnalytics.astro";
 import HeadSEO from "@/seo/HeadSEO.astro";
 import Schema from "@/seo/Schema.astro";
-import type {
-  Graph,
-  ProfessionalService,
-  BreadcrumbList,
-  ListItem,
-} from "schema-dts";
+import type { Graph, ProfessionalService, BreadcrumbList } from "schema-dts";
+
+interface Props {
+  title?: string;
+  description?: string;
+  robots?: string;
+  canonical?: string;
+}
 
 const {
   title,
   description = "Premium web design and development for South African SMEs. Affordable, high-performance websites starting from R299/month.",
   robots,
+  canonical,
 } = Astro.props;
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const canonicalURL = canonical
+  ? new URL(canonical)
+  : new URL(Astro.url.pathname, Astro.site);
 
 const businessSchema: ProfessionalService = {
   "@type": "ProfessionalService",

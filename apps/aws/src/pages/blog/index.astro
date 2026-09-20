@@ -1,0 +1,204 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+
+export const prerender = true;
+
+// Fetch published posts
+const allPosts = await getCollection("blog", ({ data }) => {
+  return import.meta.env.PROD ? !data.draft : true;
+});
+
+// Sort newest first
+const posts = allPosts.sort(
+  (a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime(),
+);
+
+const pageTitle = "Web Design & Performance Blog | Apex Web Solutions";
+const pageDescription =
+  "Actionable insights on high-performance web development, Next.js, Astro, Core Web Vitals, and digital growth for South African SMEs.";
+
+const SITE_URL = "https://apexwebsolutions.co.za";
+const canonicalURL = `${SITE_URL}/blog`;
+
+// JSON-LD Breadcrumbs
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "Home",
+      item: SITE_URL,
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "Blog",
+      item: canonicalURL,
+    },
+  ],
+};
+
+// JSON-LD Blog Collection
+const blogSchema = {
+  "@context": "https://schema.org",
+  "@type": "Blog",
+  "@id": `${canonicalURL}#blog`,
+  name: "Apex Web Solutions Blog",
+  description: pageDescription,
+  url: canonicalURL,
+  publisher: {
+    "@type": "Organization",
+    name: "Apex Web Solutions",
+    url: SITE_URL,
+    logo: `${SITE_URL}/favicon.svg`,
+  },
+  blogPost: posts.map((post) => ({
+    "@type": "BlogPosting",
+    headline: post.data.title,
+    description: post.data.description,
+    datePublished: post.data.publishedAt.toISOString(),
+    url: `${SITE_URL}/blog/${post.id}`,
+    author: {
+      "@type": "Person",
+      name: post.data.author,
+    },
+  })),
+};
+---
+
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={canonicalURL}
+>
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify(breadcrumbSchema)}
+  />
+  <script type="application/ld+json" set:html={JSON.stringify(blogSchema)} />
+
+  <div class="bg-background min-h-screen pt-32 pb-24">
+    <div class="container mx-auto max-w-5xl px-4">
+      <!-- Breadcrumb -->
+      <nav aria-label="Breadcrumb" class="text-muted-foreground mb-6 text-sm">
+        <ol class="flex items-center space-x-2">
+          <li>
+            <a href="/" class="hover:text-foreground transition-colors">Home</a>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li class="text-foreground font-medium" aria-current="page">Blog</li>
+        </ol>
+      </nav>
+
+      <!-- Header -->
+      <div class="mb-14 max-w-2xl">
+        <div
+          class="border-primary/20 bg-primary/10 text-primary mb-4 inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium backdrop-blur-xs"
+        >
+          <span class="bg-primary mr-2 flex h-2 w-2 animate-pulse rounded-full"
+          ></span>
+          Engineering & Performance Insights
+        </div>
+        <h1
+          class="text-foreground mb-4 text-3xl font-extrabold tracking-tight sm:text-5xl"
+        >
+          Web Insights &amp; <span
+            class="from-primary to-secondary bg-linear-to-r bg-clip-text text-transparent"
+            >Engineering</span
+          >
+        </h1>
+        <p class="text-muted-foreground text-lg leading-relaxed">
+          Practical strategies on modern web performance, Next.js, Astro, Core
+          Web Vitals, search optimization, and scaling digital products for
+          South African businesses.
+        </p>
+      </div>
+
+      <!-- Posts Grid -->
+      {
+        posts.length === 0 ? (
+          <div class="border-border/80 rounded-2xl border border-dashed p-12 text-center">
+            <p class="text-foreground text-lg font-medium">
+              No articles published yet.
+            </p>
+            <p class="text-muted-foreground mt-1 text-sm">
+              Check back soon for new web performance insights.
+            </p>
+          </div>
+        ) : (
+          <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+            {posts.map((post) => {
+              const formattedDate = post.data.publishedAt.toLocaleDateString(
+                "en-ZA",
+                {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                },
+              );
+
+              return (
+                <article class="group bg-muted/30 border-border/50 hover:border-primary/50 relative flex flex-col justify-between overflow-hidden rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg">
+                  <div>
+                    {post.data.coverImage && (
+                      <div class="bg-muted mb-5 aspect-16/9 overflow-hidden rounded-xl">
+                        <img
+                          src={post.data.coverImage}
+                          alt={post.data.title}
+                          loading="lazy"
+                          decoding="async"
+                          class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-102"
+                        />
+                      </div>
+                    )}
+
+                    <div class="mb-3 flex flex-wrap items-center gap-2">
+                      {post.data.tags.map((tag) => (
+                        <span class="bg-primary/10 text-primary inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold">
+                          {tag}
+                        </span>
+                      ))}
+                      {post.data.draft && (
+                        <span class="inline-flex items-center rounded-md bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                          Draft
+                        </span>
+                      )}
+                    </div>
+
+                    <h2 class="text-foreground group-hover:text-primary text-xl font-bold tracking-tight transition-colors">
+                      <a
+                        href={`/blog/${post.id}`}
+                        class="focus-visible:ring-primary rounded-md focus-visible:ring-2 focus-visible:outline-none"
+                      >
+                        {post.data.title}
+                      </a>
+                    </h2>
+
+                    <p class="text-muted-foreground mt-3 line-clamp-3 text-sm leading-relaxed">
+                      {post.data.description}
+                    </p>
+                  </div>
+
+                  <div class="border-border/40 text-muted-foreground mt-6 flex items-center justify-between border-t pt-4 text-xs">
+                    <div class="flex items-center gap-1.5">
+                      <span>By</span>
+                      <span class="text-foreground font-medium">
+                        {post.data.author}
+                      </span>
+                    </div>
+                    <time datetime={post.data.publishedAt.toISOString()}>
+                      {formattedDate}
+                    </time>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )
+      }
+    </div>
+  </div>
+</Layout>
