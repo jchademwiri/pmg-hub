@@ -28,6 +28,12 @@ const formattedDate = post.data.publishedAt.toLocaleDateString('en-ZA', {
   day: 'numeric',
 });
 
+const allAuthors = [post.data.author, ...(post.data.coAuthors || [])];
+const authorDisplay =
+  allAuthors.length > 1
+    ? `${allAuthors.slice(0, -1).join(', ')} & ${allAuthors[allAuthors.length - 1]}`
+    : post.data.author;
+
 // JSON-LD BlogPosting Schema
 const articleSchema = {
   '@context': 'https://schema.org',
@@ -42,10 +48,10 @@ const articleSchema = {
     '@type': 'WebPage',
     '@id': currentURL,
   },
-  author: {
-    '@type': 'Person',
-    name: post.data.author,
-  },
+  author: allAuthors.map((name) => ({
+    '@type': 'Organization',
+    name,
+  })),
   publisher: {
     '@type': 'Organization',
     name: 'Playhouse Media Group',
@@ -153,7 +159,7 @@ const breadcrumbSchema = {
               <div class="mt-6 flex items-center justify-between text-sm text-slate-400">
                 <div class="flex items-center gap-2">
                   <span>By</span>
-                  <span class="font-semibold text-slate-200">{post.data.author}</span>
+                  <span class="font-semibold text-slate-200">{authorDisplay}</span>
                 </div>
                 <time datetime={post.data.publishedAt.toISOString()}>
                   {formattedDate}

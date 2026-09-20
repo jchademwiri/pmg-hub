@@ -68,6 +68,9 @@ content:
             label: 'Author'
             type: string
             default: 'TenderEdge Team'
+          - name: coAuthors
+            label: 'Co-Authors (Optional)'
+            type: list
           - name: draft
             label: 'Draft'
             type: boolean
@@ -123,6 +126,9 @@ content:
             label: 'Author'
             type: string
             default: 'Apex Team'
+          - name: coAuthors
+            label: 'Co-Authors (Optional)'
+            type: list
           - name: draft
             label: 'Draft'
             type: boolean
@@ -178,6 +184,9 @@ content:
             label: 'Author'
             type: string
             default: 'PMG Editorial'
+          - name: coAuthors
+            label: 'Co-Authors (Optional)'
+            type: list
           - name: draft
             label: 'Draft'
             type: boolean

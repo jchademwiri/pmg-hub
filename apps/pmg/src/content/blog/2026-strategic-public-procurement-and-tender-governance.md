@@ -2,7 +2,9 @@
 title: 'Strategic Public Procurement and Tender Governance: 2026 Playbook for South African Enterprises'
 description: 'A strategic deep dive into the Public Procurement Bill, PFMA governance, consortium bidding frameworks, and compliance risk mitigation.'
 publishedAt: 2026-09-20
-author: 'Playhouse Media Group'
+author: 'TenderEdge Solutions Team'
+coAuthors:
+  - 'PMG Editorial'
 draft: false
 canonicalUrl: 'https://www.tenderedgesolutions.co.za/blog/2026-strategic-public-procurement-and-tender-governance'
 tags:

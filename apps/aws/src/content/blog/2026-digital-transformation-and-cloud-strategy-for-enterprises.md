@@ -3,6 +3,8 @@ title: "Enterprise Cloud Architecture: Scalable Next-Gen Platforms for South Afr
 description: "How leading South African enterprises are migrating to modern cloud architectures, headless JAMstack, and microservices to cut costs and scale operations."
 publishedAt: 2026-09-20
 author: "Apex Web Solutions Team"
+coAuthors:
+  - "PMG Editorial"
 draft: false
 tags:
   - "Cloud Strategy"

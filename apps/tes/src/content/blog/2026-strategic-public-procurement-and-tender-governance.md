@@ -3,6 +3,8 @@ title: 'Strategic Public Procurement and Tender Governance: 2026 Playbook for So
 description: 'A strategic deep dive into the Public Procurement Bill, PFMA governance, consortium bidding frameworks, and compliance risk mitigation.'
 publishedAt: 2026-09-20
 author: 'TenderEdge Solutions Team'
+coAuthors:
+  - 'PMG Editorial'
 draft: false
 tags:
   - 'Public Procurement'

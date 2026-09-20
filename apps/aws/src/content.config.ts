@@ -8,6 +8,7 @@ const blog = defineCollection({
     description: z.string(),
     publishedAt: z.coerce.date(),
     author: z.string().default("Apex Team"),
+    coAuthors: z.array(z.string()).default([]),
     draft: z.boolean().default(false),
     coverImage: z.string().optional(),
     tags: z.array(z.string()).default([]),

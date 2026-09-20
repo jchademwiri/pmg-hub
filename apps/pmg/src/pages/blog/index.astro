@@ -61,10 +61,10 @@ const blogSchema = {
     description: post.data.description,
     datePublished: post.data.publishedAt.toISOString(),
     url: `${SITE_URL}/blog/${post.id}`,
-    author: {
-      '@type': 'Person',
-      name: post.data.author,
-    },
+    author: [post.data.author, ...(post.data.coAuthors || [])].map((name) => ({
+      '@type': 'Organization',
+      name,
+    })),
   })),
 };
 ---
@@ -165,7 +165,9 @@ const blogSchema = {
                     <div class="mt-6 flex items-center justify-between border-t border-slate-800/80 pt-4 text-xs text-slate-400">
                       <div class="flex items-center gap-1.5">
                         <span>By</span>
-                        <span class="font-medium text-slate-200">{post.data.author}</span>
+                        <span class="font-medium text-slate-200">
+                          {[post.data.author, ...(post.data.coAuthors || [])].join(' & ')}
+                        </span>
                       </div>
                       <time datetime={post.data.publishedAt.toISOString()}>{formattedDate}</time>
                     </div>
