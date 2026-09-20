@@ -1017,7 +1017,7 @@ export async function markRecurringExpenseAsPaid(
           clientId: subscription.clientId ?? null,
           date,
           category: subscription.category,
-          description: `Subscription: ${subscription.vendorName} (${fmtDateLong(date)})`,
+          description: subscription.vendorName.trim(),
           amount: subscription.amount,
         })
         .returning({ id: expenses.id });

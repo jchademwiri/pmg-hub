@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatZAR, fmtDate } from '@/lib/format';
+import { formatZAR, fmtDate, formatDivisionAbbr, stripExpenseDescription } from '@/lib/format';
 import { confirm } from '@/components/ui/confirm-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -112,38 +112,38 @@ function ExpenseTableRow({
     return (
       <>
         <TableRow className="bg-muted/30">
-          <TableCell>
+          <TableCell className="px-1.5 py-2">
             <Input
               type="date"
               value={editDate}
               max={today}
               min={isLocked ? entry.date : undefined}
               onChange={(e) => setEditDate(e.target.value)}
-              className="w-36"
+              className="w-full h-8 px-2 text-xs"
               disabled={isSaving}
             />
           </TableCell>
-          <TableCell>
+          <TableCell className="px-1.5 py-2">
             <Select value={editDivisionId} onValueChange={setEditDivisionId} disabled={isSaving}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full h-8 px-2 text-xs truncate" title="Select division">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {divisions.map((d) => (
                   <SelectItem key={d.id} value={d.id}>
-                    {d.name}
+                    {formatDivisionAbbr(d.name)} — {d.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </TableCell>
-          <TableCell>
+          <TableCell className="px-1.5 py-2">
             <Select
               value={editClientId || 'none'}
               onValueChange={(val) => setEditClientId(val === 'none' ? '' : val)}
               disabled={isSaving}
             >
-              <SelectTrigger className="w-36">
+              <SelectTrigger className="w-full h-8 px-2 text-xs truncate">
                 <SelectValue placeholder="No client" />
               </SelectTrigger>
               <SelectContent>
@@ -156,9 +156,9 @@ function ExpenseTableRow({
               </SelectContent>
             </Select>
           </TableCell>
-          <TableCell>
+          <TableCell className="px-1.5 py-2">
             <Select value={editCategory} onValueChange={setEditCategory} disabled={isSaving}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full h-8 px-2 text-xs truncate">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -170,41 +170,47 @@ function ExpenseTableRow({
               </SelectContent>
             </Select>
           </TableCell>
-          <TableCell>
+          <TableCell className="px-1.5 py-2">
             <Input
               type="text"
               value={editDesc}
               onChange={(e) => setEditDesc(e.target.value)}
               placeholder="Optional"
-              className="w-44"
+              className="w-full h-8 px-2 text-xs"
               disabled={isSaving}
             />
           </TableCell>
-          <TableCell>
+          <TableCell className="px-1.5 py-2">
             <Input
               type="number"
               min="0.01"
               step="0.01"
               value={editAmount}
               onChange={(e) => setEditAmount(e.target.value)}
-              className="w-28"
+              className="w-full h-8 px-2 text-xs text-right"
               disabled={isSaving}
             />
           </TableCell>
-          <TableCell />
-          <TableCell>
-            <div className="flex items-center gap-2">
-              <Button size="sm" onClick={handleSave} disabled={isSaving}>
-                <Check data-icon="inline-start" />
-                {isSaving ? 'Saving…' : 'Save'}
+          <TableCell className="px-1.5 py-2" />
+          <TableCell className="px-1.5 py-2">
+            <div className="flex items-center justify-end gap-1">
+              <Button
+                size="sm"
+                className="h-8 px-2 text-xs"
+                onClick={handleSave}
+                disabled={isSaving}
+              >
+                <Check className="size-3.5 mr-1" />
+                {isSaving ? '…' : 'Save'}
               </Button>
               <Button
                 size="sm"
                 variant="outline"
+                className="h-8 px-2 text-xs"
                 onClick={() => setMode('display')}
                 disabled={isSaving}
               >
-                <X data-icon />
+                <X className="size-3.5" />
               </Button>
             </div>
           </TableCell>
@@ -222,50 +228,66 @@ function ExpenseTableRow({
 
   return (
     <TableRow>
-      <TableCell>{fmtDate(entry.date)}</TableCell>
-      <TableCell>{entry.divisionName}</TableCell>
-      <TableCell className="text-muted-foreground">{entry.clientName ?? '-'}</TableCell>
-      <TableCell>{entry.category}</TableCell>
-      <TableCell>{entry.description ?? ''}</TableCell>
-      <TableCell className="tabular-nums font-medium text-amber-500">
+      <TableCell className="px-2.5 py-3 text-xs whitespace-nowrap">{fmtDate(entry.date)}</TableCell>
+      <TableCell className="px-2.5 py-3 text-xs whitespace-nowrap">
+        <span
+          className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold tracking-wider bg-muted text-foreground border border-border/50"
+          title={entry.divisionName}
+        >
+          {formatDivisionAbbr(entry.divisionName)}
+        </span>
+      </TableCell>
+      <TableCell
+        className="px-2.5 py-3 text-xs text-muted-foreground truncate"
+        title={entry.clientName ?? ''}
+      >
+        {entry.clientName ?? '—'}
+      </TableCell>
+      <TableCell className="px-2.5 py-3 text-xs truncate" title={entry.category}>
+        {entry.category}
+      </TableCell>
+      <TableCell className="px-2.5 py-3 text-xs truncate" title={entry.description ?? ''}>
+        {stripExpenseDescription(entry.description)}
+      </TableCell>
+      <TableCell className="px-2.5 py-3 text-xs tabular-nums font-medium text-amber-500 whitespace-nowrap text-right">
         −{formatZAR(Number(entry.amount))}
       </TableCell>
-      <TableCell>
+      <TableCell className="px-2.5 py-3 text-xs text-center whitespace-nowrap">
         {entry.receiptUrl ? (
           <a
             href={entry.receiptUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
+            className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
             title={entry.receiptFileName || 'View Receipt'}
           >
-            <Paperclip className="h-3 w-3" />
+            <Paperclip className="size-3" />
             <span>Receipt</span>
           </a>
         ) : (
-          <span className="text-xs text-muted-foreground/40 italic">None</span>
+          <span className="text-[11px] text-muted-foreground/40 italic">None</span>
         )}
       </TableCell>
-      <TableCell>
-        <div className="flex items-center gap-2">
+      <TableCell className="px-2.5 py-3 text-xs text-right whitespace-nowrap">
+        <div className="flex items-center justify-end gap-1">
           {isLocked ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" disabled>
-                  <Lock data-icon className="text-muted-foreground/30" />
+                <Button variant="ghost" size="icon" className="size-7" disabled>
+                  <Lock data-icon className="size-3.5 text-muted-foreground/30" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Period is closed</TooltipContent>
             </Tooltip>
           ) : (
-            <Button variant="ghost" size="icon" onClick={startEdit}>
-              <Pencil data-icon />
+            <Button variant="ghost" size="icon" className="size-7" onClick={startEdit}>
+              <Pencil data-icon className="size-3.5" />
               <span className="sr-only">Edit</span>
             </Button>
           )}
           {!isLocked && (
-            <Button variant="ghost" size="icon" onClick={handleDeleteClick}>
-              <Trash2 data-icon />
+            <Button variant="ghost" size="icon" className="size-7" onClick={handleDeleteClick}>
+              <Trash2 data-icon className="size-3.5 text-muted-foreground hover:text-destructive" />
               <span className="sr-only">Delete</span>
             </Button>
           )}
@@ -286,17 +308,17 @@ export function ExpenseTable({
   minDate,
 }: ExpenseTableProps) {
   return (
-    <Table>
+    <Table className="w-full table-fixed" containerClassName="overflow-x-hidden">
       <TableHeader>
         <TableRow>
-          <TableHead>Date</TableHead>
-          <TableHead>Division</TableHead>
-          <TableHead>Client</TableHead>
-          <TableHead>Category</TableHead>
-          <TableHead>Description</TableHead>
-          <TableHead>Amount</TableHead>
-          <TableHead>Receipt</TableHead>
-          <TableHead>Actions</TableHead>
+          <TableHead className="w-[100px] text-xs px-2.5">Date</TableHead>
+          <TableHead className="w-[70px] text-xs px-2.5">Division</TableHead>
+          <TableHead className="w-[120px] text-xs px-2.5">Client</TableHead>
+          <TableHead className="w-[120px] text-xs px-2.5">Category</TableHead>
+          <TableHead className="text-xs px-2.5">Description</TableHead>
+          <TableHead className="w-[105px] text-right text-xs px-2.5">Amount</TableHead>
+          <TableHead className="w-[85px] text-center text-xs px-2.5">Receipt</TableHead>
+          <TableHead className="w-[75px] text-right text-xs px-2.5">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
