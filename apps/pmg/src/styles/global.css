@@ -17,16 +17,24 @@
 }
 
 /* Base resets & utilities */
-html,
+html {
+  margin: 0;
+  width: 100%;
+  min-height: 100vh;
+  scroll-behavior: smooth;
+  background: #0d1b2a;
+  color: #f4f4f2;
+  font-family: 'DM Sans', sans-serif;
+}
+
 body.pmg-body {
   margin: 0;
   width: 100%;
   min-height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
   background: #0d1b2a;
   color: #f4f4f2;
   font-family: 'DM Sans', sans-serif;
+  overflow-x: clip;
 }
 
 /* Smooth scroll behavior */
