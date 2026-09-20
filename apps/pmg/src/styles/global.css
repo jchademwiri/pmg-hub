@@ -1,0 +1,188 @@
+@import 'tailwindcss';
+
+:root {
+  --navy: #0d1b2a;
+  --navy-mid: #111d2b;
+  --navy-mid-blur: rgba(17, 29, 43, 0.7);
+  --orange: #f97316;
+  --orange-hover: #ea6c10;
+  --orange-dim: rgba(249, 115, 22, 0.12);
+  --white: #f4f4f2;
+  --muted: rgba(244, 244, 242, 0.55);
+  --faint: rgba(244, 244, 242, 0.1);
+  --faint-border: rgba(244, 244, 242, 0.08);
+  --glass-bg: rgba(17, 29, 43, 0.45);
+  --glass-border: rgba(244, 244, 242, 0.06);
+  --glass-border-hover: rgba(249, 115, 22, 0.25);
+}
+
+/* Base resets & utilities */
+html {
+  margin: 0;
+  width: 100%;
+  min-height: 100vh;
+  scroll-behavior: smooth;
+  background: #0d1b2a;
+  color: #f4f4f2;
+  font-family: 'DM Sans', sans-serif;
+}
+
+body.pmg-body {
+  margin: 0;
+  width: 100%;
+  min-height: 100vh;
+  background: #0d1b2a;
+  color: #f4f4f2;
+  font-family: 'DM Sans', sans-serif;
+  overflow-x: clip;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--navy);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(244, 244, 242, 0.15);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--orange);
+}
+
+/* Grain Overlay */
+.noise {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.02;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+}
+
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+  z-index: 5;
+}
+
+/* Navigation Header */
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  width: 100%;
+  background: rgba(13, 27, 42, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid var(--faint-border) !important;
+  transition:
+    background 0.3s ease,
+    backdrop-filter 0.3s ease,
+    border-color 0.3s ease !important;
+}
+
+.header-container {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 21px;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: baseline;
+  line-height: 1;
+  text-decoration: none;
+}
+.logo-play {
+  color: var(--orange);
+}
+.logo-house {
+  color: var(--white);
+}
+.logo-media {
+  color: rgba(244, 244, 242, 0.4);
+  font-weight: 400;
+  font-size: 13px;
+  margin-left: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Header Contact Button Styles */
+.header-contact-btn {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 13.5px;
+  background: var(--orange) !important;
+  border: 1px solid var(--orange) !important;
+  color: #fff !important;
+  padding: 8px 18px !important;
+  border-radius: 20px !important;
+  cursor: pointer !important;
+  transition: all 0.25s ease !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.2) !important;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.header-contact-btn:hover {
+  background: var(--orange-hover) !important;
+  border-color: var(--orange-hover) !important;
+  color: #fff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 0 24px rgba(249, 115, 22, 0.4) !important;
+}
+
+.header-contact-btn:active {
+  transform: scale(0.97) !important;
+}
+
+/* Footer */
+.site-footer {
+  padding: 60px 0;
+  position: relative;
+  z-index: 5;
+}
+
+.footer-divider {
+  width: 100%;
+  height: 1px;
+  background: var(--faint-border);
+  margin-bottom: 40px;
+}
+
+.footer-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  color: rgba(244, 244, 242, 0.4);
+}
+
+.sep {
+  color: rgba(244, 244, 242, 0.15);
+}

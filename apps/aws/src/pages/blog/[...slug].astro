@@ -1,0 +1,451 @@
+---
+import { getCollection, render } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog");
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+const tocHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
+
+const SITE_URL = "https://apexwebsolutions.co.za";
+const currentURL = `${SITE_URL}/blog/${post.id}`;
+const canonicalURL = post.data.canonicalUrl || currentURL;
+
+const formattedDate = post.data.publishedAt.toLocaleDateString("en-ZA", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+const allAuthors = [post.data.author, ...(post.data.coAuthors || [])];
+const authorDisplay =
+  allAuthors.length > 1
+    ? `${allAuthors.slice(0, -1).join(", ")} & ${allAuthors[allAuthors.length - 1]}`
+    : post.data.author;
+
+// JSON-LD BlogPosting Schema
+const articleSchema = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "@id": `${currentURL}#article`,
+  headline: post.data.title,
+  description: post.data.description,
+  image: post.data.coverImage
+    ? new URL(post.data.coverImage, SITE_URL).href
+    : undefined,
+  datePublished: post.data.publishedAt.toISOString(),
+  dateModified: post.data.publishedAt.toISOString(),
+  mainEntityOfPage: {
+    "@type": "WebPage",
+    "@id": currentURL,
+  },
+  author: allAuthors.map((name) => ({
+    "@type": "Organization",
+    name,
+  })),
+  publisher: {
+    "@type": "Organization",
+    name: "Apex Web Solutions",
+    url: SITE_URL,
+    logo: {
+      "@type": "ImageObject",
+      url: `${SITE_URL}/favicon.svg`,
+    },
+  },
+};
+
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "Home",
+      item: SITE_URL,
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "Blog",
+      item: `${SITE_URL}/blog`,
+    },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: post.data.title,
+      item: currentURL,
+    },
+  ],
+};
+---
+
+<Layout
+  title={`${post.data.title} | Apex Web Solutions`}
+  description={post.data.description}
+  canonical={canonicalURL}
+>
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify(breadcrumbSchema)}
+  />
+  <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
+
+  <article class="bg-background min-h-screen pt-32 pb-24">
+    <div class="container mx-auto max-w-6xl px-4">
+      <!-- Breadcrumbs -->
+      <nav aria-label="Breadcrumb" class="text-muted-foreground mb-6 text-sm">
+        <ol class="flex items-center space-x-2">
+          <li>
+            <a href="/" class="hover:text-foreground transition-colors">Home</a>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li>
+            <a href="/blog" class="hover:text-foreground transition-colors"
+              >Blog</a
+            >
+          </li>
+          <li aria-hidden="true">/</li>
+          <li
+            class="text-foreground max-w-[200px] truncate font-medium sm:max-w-xs"
+            aria-current="page"
+          >
+            {post.data.title}
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Main Layout Grid -->
+      <div
+        class={tocHeadings.length > 0
+          ? "lg:grid lg:grid-cols-12 lg:gap-12 items-start"
+          : ""}
+      >
+        <!-- Primary Article Column -->
+        <div
+          class={tocHeadings.length > 0
+            ? "lg:col-span-8 min-w-0"
+            : "max-w-3xl mx-auto"}
+        >
+          <!-- Header -->
+          <header class="border-border/50 border-b pb-8">
+            <div class="mb-4 flex flex-wrap items-center gap-2">
+              {
+                post.data.tags.map((tag) => (
+                  <span class="bg-primary/10 text-primary inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold">
+                    {tag}
+                  </span>
+                ))
+              }
+              {
+                post.data.draft && (
+                  <span class="inline-flex items-center rounded-md bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                    Draft
+                  </span>
+                )
+              }
+            </div>
+
+            <h1
+              class="text-foreground text-3xl leading-tight font-bold tracking-tight sm:text-4xl"
+            >
+              {post.data.title}
+            </h1>
+
+            <p class="text-muted-foreground mt-4 text-lg leading-relaxed">
+              {post.data.description}
+            </p>
+
+            <div
+              class="text-muted-foreground mt-6 flex items-center justify-between text-sm"
+            >
+              <div class="flex items-center gap-2">
+                <span>By</span>
+                <span class="text-foreground font-semibold"
+                  >{authorDisplay}</span
+                >
+              </div>
+              <time datetime={post.data.publishedAt.toISOString()}>
+                {formattedDate}
+              </time>
+            </div>
+          </header>
+
+          <!-- Cover Image -->
+          {
+            post.data.coverImage && (
+              <div class="bg-muted my-8 aspect-16/9 overflow-hidden rounded-2xl shadow-sm">
+                <img
+                  src={post.data.coverImage}
+                  alt={post.data.title}
+                  class="h-full w-full object-cover"
+                />
+              </div>
+            )
+          }
+
+          <!-- Mobile Collapsible Table of Contents -->
+          {
+            tocHeadings.length > 0 && (
+              <details class="border-border/60 bg-muted/40 my-8 rounded-xl border p-4 transition-all duration-200 lg:hidden">
+                <summary class="text-foreground flex cursor-pointer items-center justify-between text-sm font-semibold select-none">
+                  <span class="flex items-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="text-primary size-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <line x1="8" y1="6" x2="21" y2="6" />
+                      <line x1="8" y1="12" x2="21" y2="12" />
+                      <line x1="8" y1="18" x2="21" y2="18" />
+                      <line x1="3" y1="6" x2="3.01" y2="6" />
+                      <line x1="3" y1="12" x2="3.01" y2="12" />
+                      <line x1="3" y1="18" x2="3.01" y2="18" />
+                    </svg>
+                    Table of Contents
+                  </span>
+                  <span class="text-muted-foreground text-xs font-normal">
+                    ({tocHeadings.length} sections)
+                  </span>
+                </summary>
+                <nav class="border-border/40 mt-4 space-y-1.5 border-t pt-3 text-sm">
+                  {tocHeadings.map((h) => (
+                    <a
+                      href={`#${h.slug}`}
+                      class={`hover:text-primary block py-1 transition-colors ${
+                        h.depth === 3
+                          ? "border-border/60 text-muted-foreground border-l pl-4 text-xs"
+                          : "text-foreground/90 text-sm font-medium"
+                      }`}
+                    >
+                      {h.text}
+                    </a>
+                  ))}
+                </nav>
+              </details>
+            )
+          }
+
+          <!-- Post Content -->
+          <div
+            class="prose prose-zinc dark:prose-invert text-foreground [&_p]:text-muted-foreground [&_li]:text-muted-foreground [&_strong]:text-foreground [&_a]:text-primary hover:[&_a]:text-primary/80 [&_hr]:border-border/50 mt-8 max-w-none space-y-6 leading-relaxed [&_a]:underline [&_a]:underline-offset-4 [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:scroll-mt-28 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:scroll-mt-28 [&_h3]:text-xl [&_h3]:font-semibold [&_hr]:my-8 [&_ol]:list-decimal [&_ol]:space-y-2 [&_ol]:pl-6 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6"
+          >
+            <Content />
+          </div>
+
+          <!-- Back link footer -->
+          <footer
+            class="border-border/50 mt-16 flex items-center justify-between border-t pt-8"
+          >
+            <a
+              href="/blog"
+              class="text-primary hover:text-primary/80 focus-visible:ring-primary inline-flex items-center gap-2 rounded-md text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="size-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="m12 19-7-7 7-7"></path>
+                <path d="M19 12H5"></path>
+              </svg>
+              Back to all articles
+            </a>
+
+            <a
+              href="/"
+              class="text-muted-foreground hover:text-foreground inline-flex items-center text-sm transition-colors"
+            >
+              Apex Home
+            </a>
+          </footer>
+        </div>
+
+        <!-- Sticky Sidebar Table of Contents (Desktop) -->
+        {
+          tocHeadings.length > 0 && (
+            <aside class="sticky top-32 hidden pt-2 lg:col-span-4 lg:block">
+              <div class="border-border/60 bg-muted/30 rounded-xl border p-5 shadow-xs backdrop-blur-xs">
+                <div class="border-border/50 mb-3 flex items-center gap-2 border-b pb-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="text-primary size-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <line x1="8" y1="6" x2="21" y2="6" />
+                    <line x1="8" y1="12" x2="21" y2="12" />
+                    <line x1="8" y1="18" x2="21" y2="18" />
+                    <line x1="3" y1="6" x2="3.01" y2="6" />
+                    <line x1="3" y1="12" x2="3.01" y2="12" />
+                    <line x1="3" y1="18" x2="3.01" y2="18" />
+                  </svg>
+                  <h3 class="text-foreground text-xs font-bold tracking-wider uppercase">
+                    On This Page
+                  </h3>
+                </div>
+                <nav class="max-h-[calc(100vh-14rem)] space-y-1 overflow-y-auto pr-1 text-sm">
+                  {tocHeadings.map((h) => (
+                    <a
+                      href={`#${h.slug}`}
+                      data-toc-link
+                      class={`hover:text-primary block rounded-md px-2.5 py-1.5 transition-all ${
+                        h.depth === 3
+                          ? "border-border/60 text-muted-foreground hover:border-primary border-l pl-5 text-xs"
+                          : "text-foreground/80 text-xs font-medium"
+                      }`}
+                    >
+                      {h.text}
+                    </a>
+                  ))}
+                </nav>
+                <div class="border-border/50 mt-4 border-t pt-3">
+                  <button
+                    id="toc-scroll-to-top"
+                    type="button"
+                    class="text-muted-foreground hover:text-primary flex w-full cursor-pointer items-center gap-1.5 text-left text-xs transition-colors"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="size-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <polyline points="18 15 12 9 6 15" />
+                    </svg>
+                    Back to top
+                  </button>
+                </div>
+              </div>
+            </aside>
+          )
+        }
+      </div>
+    </div>
+  </article>
+
+  <!-- Floating Scroll to Top Button -->
+  <button
+    id="scroll-to-top"
+    type="button"
+    aria-label="Scroll to top"
+    class="border-primary/40 bg-background/90 text-foreground/80 shadow-primary/5 hover:border-primary hover:text-primary focus-visible:ring-primary pointer-events-none fixed right-6 bottom-6 z-40 flex size-11 translate-y-3 items-center justify-center rounded-full border opacity-0 shadow-lg backdrop-blur-md transition-all duration-300 hover:scale-110 focus-visible:ring-2 focus-visible:outline-none active:scale-95"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="size-5"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>
+  </button>
+
+  <script>
+    // Smooth active scroll-spy observer for ToC
+    const headings = document.querySelectorAll(
+      "article h2[id], article h3[id]",
+    );
+    const tocLinks = document.querySelectorAll("[data-toc-link]");
+
+    if (headings.length > 0 && tocLinks.length > 0) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const activeId = entry.target.getAttribute("id");
+              tocLinks.forEach((link) => {
+                if (link.getAttribute("href") === `#${activeId}`) {
+                  link.classList.add(
+                    "text-primary",
+                    "font-semibold",
+                    "bg-primary/10",
+                  );
+                  link.classList.remove(
+                    "text-muted-foreground",
+                    "text-foreground/80",
+                  );
+                } else {
+                  link.classList.remove(
+                    "text-primary",
+                    "font-semibold",
+                    "bg-primary/10",
+                  );
+                }
+              });
+            }
+          });
+        },
+        { rootMargin: "-100px 0% -65% 0%", threshold: 0.1 },
+      );
+
+      headings.forEach((heading) => observer.observe(heading));
+    }
+
+    // Scroll to Top handling
+    const scrollToTopBtn = document.getElementById("scroll-to-top");
+    const tocScrollTopBtn = document.getElementById("toc-scroll-to-top");
+
+    const handleScroll = () => {
+      if (window.scrollY > 400) {
+        scrollToTopBtn?.classList.remove(
+          "opacity-0",
+          "translate-y-3",
+          "pointer-events-none",
+        );
+        scrollToTopBtn?.classList.add(
+          "opacity-100",
+          "translate-y-0",
+          "pointer-events-auto",
+        );
+      } else {
+        scrollToTopBtn?.classList.add(
+          "opacity-0",
+          "translate-y-3",
+          "pointer-events-none",
+        );
+        scrollToTopBtn?.classList.remove(
+          "opacity-100",
+          "translate-y-0",
+          "pointer-events-auto",
+        );
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    const scrollToTop = () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    scrollToTopBtn?.addEventListener("click", scrollToTop);
+    tocScrollTopBtn?.addEventListener("click", scrollToTop);
+  </script>
+</Layout>
