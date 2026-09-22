@@ -17,7 +17,16 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export function getDb() {
   if (!_db) {
     const env = getEnv();
-    const pool = new Pool({ connectionString: env.DATABASE_URL });
+    const isServerless = !!process.env.VERCEL;
+
+    const pool = new Pool({
+      connectionString: env.DATABASE_URL,
+      // In serverless runtimes (Vercel), constrain connections to 1 and reduce
+      // idle timeout so the function instance can freeze promptly without lingering.
+      max: isServerless ? 1 : 10,
+      idleTimeoutMillis: isServerless ? 3_000 : 30_000,
+      connectionTimeoutMillis: 5_000,
+    });
     _db = drizzle({ client: pool, schema });
   }
   return _db;
