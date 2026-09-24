@@ -592,35 +592,47 @@ export function DocumentPreview({
                   balanceDue !== undefined
                     ? balanceDue
                     : (openingBalance ?? 0) + totalInvoiced - totalPaid;
+                const isOutstanding = statementType === 'outstanding';
                 return (
                   <>
-                    {statementType !== 'outstanding' &&
-                      openingBalance !== undefined &&
-                      openingBalance !== 0 && (
-                        <div className="flex justify-between text-sm text-zinc-600">
-                          <span>Balance Brought Forward</span>
-                          <span className="tabular-nums">
-                            {fmt(Math.abs(openingBalance))}
-                            {openingBalance < 0 ? ' CR' : ''}
-                          </span>
-                        </div>
-                      )}
-                    <div className="flex justify-between text-sm text-zinc-600">
-                      <span>
-                        {statementType === 'outstanding'
-                          ? 'Total Outstanding'
-                          : 'Total Invoiced (Period)'}
-                      </span>
-                      <span className="tabular-nums">{fmt(totalInvoiced)}</span>
-                    </div>
-                    {statementType !== 'outstanding' && (
-                      <div className="flex justify-between text-sm text-emerald-600">
-                        <span>Total Paid (Period)</span>
-                        <span className="tabular-nums">{fmt(totalPaid)}</span>
+                    {!isOutstanding && openingBalance !== undefined && openingBalance !== 0 && (
+                      <div className="flex justify-between text-sm text-zinc-600">
+                        <span>Balance Brought Forward</span>
+                        <span className="tabular-nums">
+                          {fmt(Math.abs(openingBalance))}
+                          {openingBalance < 0 ? ' CR' : ''}
+                        </span>
                       </div>
                     )}
+                    {isOutstanding ? (
+                      totalPaid > 0 && (
+                        <>
+                          <div className="flex justify-between text-sm text-zinc-600">
+                            <span>Total Invoiced</span>
+                            <span className="tabular-nums">{fmt(totalInvoiced)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm text-emerald-600">
+                            <span>Less Payments</span>
+                            <span className="tabular-nums">-{fmt(totalPaid)}</span>
+                          </div>
+                        </>
+                      )
+                    ) : (
+                      <>
+                        <div className="flex justify-between text-sm text-zinc-600">
+                          <span>Total Invoiced (Period)</span>
+                          <span className="tabular-nums">{fmt(totalInvoiced)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm text-emerald-600">
+                          <span>Total Paid (Period)</span>
+                          <span className="tabular-nums">{fmt(totalPaid)}</span>
+                        </div>
+                      </>
+                    )}
                     <div className="border-t border-zinc-200 pt-2 flex justify-between text-sm font-bold">
-                      <span className="text-zinc-900">Amount Due</span>
+                      <span className="text-zinc-900">
+                        {isOutstanding ? 'Total Outstanding' : 'Amount Due'}
+                      </span>
                       <span
                         className={cn(
                           'tabular-nums',

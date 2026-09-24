@@ -258,6 +258,26 @@ function drawMeta(doc: jsPDF, data: PdfDocumentData) {
     doc.setFontSize(9);
     doc.setTextColor(24, 24, 27);
     doc.text(fmtDate(data.periodTo), PAGE.width - PAGE.margin, y + 7, { align: 'right' });
+  } else if (data.type === 'statement' && data.periodTo) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(113, 113, 122);
+    doc.text('PERIOD TO', PAGE.width - PAGE.margin - 45, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(24, 24, 27);
+    doc.text(fmtDate(data.periodTo), PAGE.width - PAGE.margin, y, { align: 'right' });
+
+    if (data.dueDate) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(113, 113, 122);
+      doc.text('DUE DATE', PAGE.width - PAGE.margin - 45, y + 7);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(24, 24, 27);
+      doc.text(fmtDate(data.dueDate), PAGE.width - PAGE.margin, y + 7, { align: 'right' });
+    }
   } else {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7);
@@ -436,27 +456,40 @@ function drawTotals(doc: jsPDF, data: PdfDocumentData, startY: number) {
   const totals = data.totals;
   if (!totals) return y;
 
-  const rows = [
-    totals.subtotal != null ? (['Subtotal', totals.subtotal] as const) : null,
-    totals.discount && totals.discount > 0 ? (['Discount', -totals.discount] as const) : null,
-    totals.vat && totals.vat > 0 ? (['VAT', totals.vat] as const) : null,
-    totals.total != null ? (['Total Invoiced', totals.total] as const) : null,
-    totals.paid != null && totals.paid > 0 ? (['Less Payments', -totals.paid] as const) : null,
-    totals.writtenOff != null && totals.writtenOff > 0
-      ? (['Less Write-Off', -totals.writtenOff] as const)
-      : null,
-    totals.balanceDue != null ? (['Balance Due', totals.balanceDue] as const) : null,
-  ].filter(Boolean) as ReadonlyArray<readonly [string, number]>;
+  let rows: ReadonlyArray<readonly [string, number]>;
+
+  if (data.type === 'statement' && data.statementType === 'outstanding') {
+    rows = [
+      totals.paid != null && totals.paid > 0 && totals.subtotal != null
+        ? (['Total Invoiced', totals.subtotal] as const)
+        : null,
+      totals.paid != null && totals.paid > 0 ? (['Less Payments', -totals.paid] as const) : null,
+      totals.balanceDue != null ? (['Total Outstanding', totals.balanceDue] as const) : null,
+    ].filter(Boolean) as ReadonlyArray<readonly [string, number]>;
+  } else {
+    rows = [
+      totals.subtotal != null ? (['Subtotal', totals.subtotal] as const) : null,
+      totals.discount && totals.discount > 0 ? (['Discount', -totals.discount] as const) : null,
+      totals.vat && totals.vat > 0 ? (['VAT', totals.vat] as const) : null,
+      totals.total != null ? (['Total Invoiced', totals.total] as const) : null,
+      totals.paid != null && totals.paid > 0 ? (['Less Payments', -totals.paid] as const) : null,
+      totals.writtenOff != null && totals.writtenOff > 0
+        ? (['Less Write-Off', -totals.writtenOff] as const)
+        : null,
+      totals.balanceDue != null ? (['Balance Due', totals.balanceDue] as const) : null,
+    ].filter(Boolean) as ReadonlyArray<readonly [string, number]>;
+  }
 
   for (const [label, amount] of rows) {
-    const isBold = label === 'Total Invoiced' || label === 'Balance Due';
+    const isBold =
+      label === 'Total Invoiced' || label === 'Balance Due' || label === 'Total Outstanding';
     doc.setFont('helvetica', isBold ? 'bold' : 'normal');
     doc.setFontSize(isBold ? 10 : 8);
     if (label === 'Less Payments') {
       doc.setTextColor(5, 150, 105); // green for paid
     } else if (label === 'Less Write-Off') {
       doc.setTextColor(225, 29, 72); // rose/red for write-off
-    } else if (label === 'Balance Due') {
+    } else if (label === 'Balance Due' || label === 'Total Outstanding') {
       if (amount === 0) {
         doc.setTextColor(5, 150, 105); // green for zero balance
       } else {
@@ -996,6 +1029,10 @@ async function buildStatementPdfData(
     earliestDueDate = unpaidWithDueDates[0]!.dueDate!;
   }
 
+  const isOutstanding = filters?.statementType === 'outstanding';
+  const outstandingSubtotal = transactions.reduce((sum, tx) => sum + (tx.debit ?? 0), 0);
+  const outstandingPaid = transactions.reduce((sum, tx) => sum + (tx.credit ?? 0), 0);
+
   return {
     type: 'statement',
     statementType: filters?.statementType ?? 'activity',
@@ -1005,7 +1042,7 @@ async function buildStatementPdfData(
     status,
     issueDate: getSASTToday(),
     dueDate: earliestDueDate,
-    periodFrom,
+    periodFrom: isOutstanding ? undefined : periodFrom,
     periodTo,
     org: buildOrgProps(divisionName, settings, orgSettings),
     banking: buildBankingProps(settings),
@@ -1015,11 +1052,13 @@ async function buildStatementPdfData(
       phone: statement.client.phone,
     },
     transactions,
-    openingBalance,
+    openingBalance: isOutstanding ? 0 : openingBalance,
     ageing,
     totals: {
-      subtotal: safeNumber(statement.summary.totalInvoiced) + openingBalance,
-      paid: safeNumber(statement.summary.totalPaid),
+      subtotal: isOutstanding
+        ? outstandingSubtotal
+        : safeNumber(statement.summary.totalInvoiced) + openingBalance,
+      paid: isOutstanding ? outstandingPaid : safeNumber(statement.summary.totalPaid),
       balanceDue: finalBalance,
     },
   };
