@@ -58,3 +58,41 @@ jobs:
 
       - name: Audit dependencies
         run: bun audit --audit-level=high
+
+  agentshield:
+    name: AgentShield AI audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Run AgentShield scan & generate evidence pack
+        run: |
+          bunx ecc-agentshield scan -p .claude -f sarif -o agentshield.sarif --evidence-pack security-evidence
+        continue-on-error: true
+
+      - name: Upload AgentShield evidence pack
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agentshield-evidence
+          path: security-evidence/
+          retention-days: 14
+
+      - name: Upload SARIF report
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: agentshield.sarif
+          category: agentshield
+        continue-on-error: true
