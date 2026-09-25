@@ -26,39 +26,41 @@ To ensure predictable cash flow and eliminate payment disputes, PMG Hub implemen
 ┌────────────────────────────────────────────────────────────────────────┐
 │                        MONTHLY STATEMENT PIPELINE                      │
 ├───────────────────┬───────────────────────────────┬────────────────────┤
-│  STAGE 1 (25th)   │        STAGE 2 (1st)          │   STAGE 3 (7th)    │
-│  "Early Review"   │    "Official Statement"       │  "Final Notice"    │
+│  STAGE 1 (26th)   │      STAGE 2 (Month-End)      │   STAGE 3 (8th)    │
+│  "Retainer Cycle" │      "Month-End Notice"       │  "Overdue Notice"  │
 ├───────────────────┼───────────────────────────────┼────────────────────┤
-│ Sent to Retainer  │ Sent to ALL clients with      │ Sent ONLY to       │
-│ clients 5 days    │ outstanding balances on the   │ clients with       │
-│ before month-end. │ 1st of the new month.         │ overdue balances.  │
-│                   │                               │                    │
-│ Gives clients     │ Formal monthly statement      │ Urgent notice      │
-│ time to process   │ detailing invoices, credits,  │ before service     │
-│ POs & approvals.  │ and opening/closing balances. │ suspension/freeze. │
+│ Invoices auto-    │ Sent to ALL clients with      │ Sent ONLY to       │
+│ issued on 26th    │ outstanding balances on the   │ clients with prior │
+│ with statement    │ last day of the month.        │ overdue balances.  │
+│ attached (no      │                               │                    │
+│ duplicate emails) │ Formal courtesy notice and    │ Urgent reminder    │
+│ to retainer       │ live statement before month-  │ before service     │
+│ clients.          │ end payment due date.         │ suspension/freeze. │
 └───────────────────┴───────────────────────────────┴────────────────────┘
 ```
 
-### Stage 1: Early Review Statement (25th of Month)
+### Stage 1: Retainer Billing & Statement Delivery (26th of Month)
 
-- **Target**: Retainer clients (`isRetainerClient = true`).
-- **Goal**: Gives corporate and government clients 5 to 6 business days before month-end to generate purchase orders (POs) and schedule batch EFT runs for the last day of the month.
+- **Target**: Retainer clients (`isRetainer = true`).
+- **Goal**: Generates monthly retainer invoices on the 26th and automatically attaches the client's live statement PDF in a single email delivery. Retainer clients with open balances who do not receive a recurring invoice receive their standalone statement.
 
-### Stage 2: Official Statement of Account (1st of Month)
+### Stage 2: Month-End Statement & Courtesy Due Notice (Last Day of Month)
 
 - **Target**: All active clients with an open balance greater than zero.
-- **Goal**: Provides the standard monthly statement reflecting closing balances from the previous month and opening balances for the new month.
+- **Goal**: Provides the standard monthly statement reflecting all current and carried-forward charges due for settlement at month-end.
 
-### Stage 3: Final Notice / Overdue Statement (7th of Month)
+### Stage 3: Post-Grace Overdue Notice (8th of Month)
 
-- **Target**: Clients whose invoices are overdue (past the End-of-Month due date).
-- **Goal**: Serves as a firm payment reminder before services, hosting, or ongoing tender consulting are paused.
+- **Target**: Clients whose prior-month invoices are overdue (past the End-of-Month due date).
+- **Goal**: Serves as a firm payment reminder following the standard grace period before services, hosting, or ongoing tender consulting are paused.
 
 ---
 
 ## How Statements Are Delivered
 
-1. **Automated Background Cron**: The Vercel cron job `/api/cron/automated-statements` checks the current date daily at 08:00 SAST and automatically executes the appropriate stage (25th, 1st, or 7th).
+1. **Automated Background Crons**: 
+   - Retainer invoices are generated and emailed with live statements attached on the **26th** via `/api/cron/recurring-billing` (08:00 SAST).
+   - Automated statement sweeps and reminders are processed daily at 08:10 SAST via `/api/cron/outstanding-reminders` (handling the 26th sweep with deduplication, month-end sweep, and 8th overdue notice).
 2. **Manual Batch Dispatch**: Go to `Billing -> Statements`, review client balances, select clients using the checkbox selector, and click **Send Statements**.
 3. **Single Client Dispatch**: Open any client's statement page and click **Email Statement**.
 4. **Client Portal Access**: Clients can log in to their self-service portal at `portal.playhousemedia.co.za` or `portal.tenderedgesolutions.co.za` at any time to download their live statement PDF.

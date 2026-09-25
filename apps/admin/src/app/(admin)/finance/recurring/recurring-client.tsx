@@ -92,11 +92,11 @@ function blankRow(): LineItemFormRow {
   };
 }
 
-/** Mirrors the server's default: the 25th of this month, or next month if
- *  the 25th has already passed. Just a starting point — fully editable. */
+/** Mirrors the server's default: the 26th of this month, or next month if
+ *  the 26th has already passed. Just a starting point — fully editable. */
 function defaultNextRunDate(): string {
   const now = new Date();
-  const cycleDay = 25;
+  const cycleDay = 26;
   let year = now.getFullYear();
   let month = now.getMonth();
   if (now.getDate() > cycleDay) {
@@ -795,7 +795,7 @@ export function RecurringClient({
               <h3 className="text-base font-semibold">No Client Retainer Schedules Yet</h3>
               <p className="text-sm text-muted-foreground max-w-md mx-auto mt-1 mb-4">
                 Set up recurring monthly hosting or maintenance retainers to automatically generate
-                and issue invoices on the 25th.
+                and issue invoices on the 26th with statement attached.
               </p>
               <Button size="sm" onClick={handleOpenCreateInvoice}>
                 <Plus className="h-4 w-4 mr-1.5" /> Create First Retainer Schedule
@@ -1326,8 +1326,8 @@ export function RecurringClient({
                 {editingId ? 'Edit Client Retainer Schedule' : 'Create Client Retainer Schedule'}
               </DialogTitle>
               <DialogDescription>
-                Automated recurring retainer billing. Invoices generate on the selected cadence with
-                payment due 6 days later (e.g. 25th → 1st).
+                Automated recurring retainer billing. Invoices generate on the selected cadence (defaults to the 26th)
+                with live statement attached and payment due at month-end.
               </DialogDescription>
             </DialogHeader>
 
@@ -1429,7 +1429,7 @@ export function RecurringClient({
                     required
                   />
                   <span className="text-[11px] text-muted-foreground">
-                    First scheduled run date (defaults to the 25th)
+                    First scheduled run date (defaults to the 26th)
                   </span>
                 </div>
 
