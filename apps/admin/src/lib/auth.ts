@@ -20,9 +20,16 @@ import { ROLE_HIERARCHY, type Role } from './roles';
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL,
-  trustedOrigins: process.env.BETTER_AUTH_URL
-    ? [process.env.BETTER_AUTH_URL, 'http://192.168.0.190:3000']
-    : ['http://192.168.0.190:3000'],
+  trustedOrigins: [
+    ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
+    'https://admin.playhousemedia.co.za',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    'http://192.168.0.190:3000',
+    'http://192.168.0.190:3001',
+  ],
   database: drizzleAdapter(getDb(), { provider: 'pg' }),
 
   emailAndPassword: {
@@ -33,6 +40,9 @@ export const auth = betterAuth({
     magicLink({
       expiresIn: 600, // 10 minutes in seconds
       sendMagicLink: async ({ email, url }) => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`\n🔗 [DEV AUTH] Magic Link for ${email}:\n${url}\n`);
+        }
         try {
           const emailClient = createEmailClient({
             apiKey: process.env.PMG_RESEND_API_KEY!,

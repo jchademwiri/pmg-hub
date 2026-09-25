@@ -43,25 +43,22 @@ describe('End-of-Month Due Date Engine', () => {
 });
 
 describe('Strategic Billing Lifecycle Rules', () => {
-  it('identifies 26th as retainer cycle, 15th as overdue sweep, and month-end as all-client sweep', () => {
-    // Helper replicating the lifecycle day matching logic
+  it('identifies 26th as retainer cycle, 8th as overdue sweep, and month-end as all-client sweep', () => {
+    // Helper replicating the production lifecycle day matching logic
     function getLifecycleRunType(
       dateStr: string,
     ): 'retainer_cycle' | 'month_end' | 'overdue_only' | 'none' {
       const todayDay = parseInt(dateStr.slice(8, 10), 10);
-      const d = new Date(dateStr);
-      const tomorrow = new Date(d);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const isLastDayOfMonth = tomorrow.getMonth() !== d.getMonth();
+      const isLastDayOfMonth = dateStr === getEndOfMonth(dateStr);
 
       if (todayDay === 26) return 'retainer_cycle';
       if (isLastDayOfMonth) return 'month_end';
-      if (todayDay === 15) return 'overdue_only';
+      if (todayDay === 8) return 'overdue_only';
       return 'none';
     }
 
     expect(getLifecycleRunType('2026-08-26')).toBe('retainer_cycle');
-    expect(getLifecycleRunType('2026-08-15')).toBe('overdue_only');
+    expect(getLifecycleRunType('2026-08-08')).toBe('overdue_only');
     expect(getLifecycleRunType('2026-08-31')).toBe('month_end');
     expect(getLifecycleRunType('2026-02-28')).toBe('month_end');
     expect(getLifecycleRunType('2024-02-29')).toBe('month_end');
@@ -70,8 +67,8 @@ describe('Strategic Billing Lifecycle Rules', () => {
     expect(getLifecycleRunType('2026-08-25')).toBe('none');
   });
 
-  it('correctly filters overdue invoices strictly before today for the 15th reminder', () => {
-    const todayStr = '2026-08-15';
+  it('correctly filters overdue invoices strictly before today for the 8th reminder', () => {
+    const todayStr = '2026-08-08';
     const mockInvoices = [
       { id: 'inv-1', documentNumber: 'INV-001', dueDate: '2026-07-31', outstanding: 5000 }, // Overdue from July
       { id: 'inv-2', documentNumber: 'INV-002', dueDate: '2026-06-30', outstanding: 2500 }, // Overdue from June
@@ -121,5 +118,52 @@ describe('Strategic Billing Lifecycle Rules', () => {
     expect(carriedForward).toBe(3000);
     expect(currentPeriodCharges).toBe(12000);
     expect(totalOutstanding).toBe(15000);
+  });
+
+  it('deduplicates 26th retainer statement sweep if client already received recurring invoice with statement today', () => {
+    const todayStr = '2026-08-26';
+    const auditLogs = [
+      {
+        clientId: 'client-1',
+        divisionId: 'div-pmg',
+        status: 'success',
+        createdAt: '2026-08-26T08:02:00.000Z',
+        customizationDetails: { hasStatementAttached: true, invoiceId: 'inv-101' },
+      },
+      {
+        clientId: 'client-2',
+        divisionId: 'div-pmg',
+        status: 'success',
+        createdAt: '2026-08-26T08:03:00.000Z',
+        customizationDetails: { hasStatementAttached: false, invoiceId: 'inv-102' },
+      },
+      {
+        clientId: 'client-3',
+        divisionId: 'div-pmg',
+        status: 'failed',
+        createdAt: '2026-08-26T08:04:00.000Z',
+        customizationDetails: { hasStatementAttached: true, invoiceId: 'inv-103' },
+      },
+    ];
+
+    function shouldSkipRetainerStatement(clientId: string, divisionId: string): boolean {
+      return auditLogs.some(
+        (log) =>
+          log.clientId === clientId &&
+          log.divisionId === divisionId &&
+          log.status === 'success' &&
+          log.createdAt.slice(0, 10) === todayStr &&
+          log.customizationDetails?.hasStatementAttached === true,
+      );
+    }
+
+    // client-1 already received recurring invoice with statement today -> skip duplicate
+    expect(shouldSkipRetainerStatement('client-1', 'div-pmg')).toBe(true);
+    // client-2 did not have statement attached -> send statement
+    expect(shouldSkipRetainerStatement('client-2', 'div-pmg')).toBe(false);
+    // client-3 delivery failed -> send statement
+    expect(shouldSkipRetainerStatement('client-3', 'div-pmg')).toBe(false);
+    // client-4 had no invoice -> send statement
+    expect(shouldSkipRetainerStatement('client-4', 'div-pmg')).toBe(false);
   });
 });

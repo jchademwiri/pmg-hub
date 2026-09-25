@@ -7,7 +7,9 @@ export async function getPortalSession() {
   const db = getDb();
 
   const isDevAuthEnabled =
-    process.env.DISABLE_PORTAL_AUTH === 'true' && process.env.NODE_ENV !== 'production';
+    (process.env.DISABLE_PORTAL_AUTH === 'true' ||
+      process.env.NEXT_PUBLIC_DISABLE_PORTAL_AUTH === 'true') &&
+    process.env.NODE_ENV !== 'production';
 
   // Production authentication check
   const session = await portalAuth.api.getSession({ headers: await headers() });

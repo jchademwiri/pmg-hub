@@ -6,7 +6,11 @@ import { getDb, clients, eq } from '@pmg/db';
 // Dev-only escape hatch used by the login page user switcher. Requires an
 // explicit env flag so a misconfigured NODE_ENV can never expose it.
 function isDevAuthEnabled(): boolean {
-  return process.env.DISABLE_PORTAL_AUTH === 'true' && process.env.NODE_ENV !== 'production';
+  return (
+    (process.env.DISABLE_PORTAL_AUTH === 'true' ||
+      process.env.NEXT_PUBLIC_DISABLE_PORTAL_AUTH === 'true') &&
+    process.env.NODE_ENV !== 'production'
+  );
 }
 
 export async function getDevClientsAction(): Promise<
