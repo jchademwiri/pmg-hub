@@ -58,7 +58,7 @@ To ensure predictable cash flow and eliminate payment disputes, PMG Hub implemen
 
 ## How Statements Are Delivered
 
-1. **Automated Background Crons**: 
+1. **Automated Background Crons**:
    - Retainer invoices are generated and emailed with live statements attached on the **26th** via `/api/cron/recurring-billing` (08:00 SAST).
    - Automated statement sweeps and reminders are processed daily at 08:10 SAST via `/api/cron/outstanding-reminders` (handling the 26th sweep with deduplication, month-end sweep, and 8th overdue notice).
 2. **Manual Batch Dispatch**: Go to `Billing -> Statements`, review client balances, select clients using the checkbox selector, and click **Send Statements**.

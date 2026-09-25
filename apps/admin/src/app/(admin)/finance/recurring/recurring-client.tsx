@@ -1326,8 +1326,8 @@ export function RecurringClient({
                 {editingId ? 'Edit Client Retainer Schedule' : 'Create Client Retainer Schedule'}
               </DialogTitle>
               <DialogDescription>
-                Automated recurring retainer billing. Invoices generate on the selected cadence (defaults to the 26th)
-                with live statement attached and payment due at month-end.
+                Automated recurring retainer billing. Invoices generate on the selected cadence
+                (defaults to the 26th) with live statement attached and payment due at month-end.
               </DialogDescription>
             </DialogHeader>
 
