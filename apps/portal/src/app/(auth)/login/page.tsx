@@ -15,7 +15,6 @@ export default function LoginPage() {
   const [isSent, setIsSent] = React.useState(false);
   const [useOtp, setUseOtp] = React.useState(false);
 
-  const isDev = process.env.NODE_ENV !== 'production' && process.env.DISABLE_PORTAL_AUTH === 'true';
   const [devClients, setDevClients] = React.useState<
     Array<{ id: string; name: string; businessName: string | null; email: string | null }>
   >([]);
@@ -27,15 +26,15 @@ export default function LoginPage() {
     document.cookie = 'impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
     document.cookie = 'dev_impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
 
-    if (isDev) {
+    if (process.env.NODE_ENV !== 'production') {
       getDevClientsAction().then((clients) => {
-        setDevClients(clients);
-        if (clients.length > 0) {
+        if (clients && clients.length > 0) {
+          setDevClients(clients);
           setSelectedDevClient(clients[0].id);
         }
       });
     }
-  }, [isDev]);
+  }, []);
 
   async function handleSendMagicLink(e: React.FormEvent) {
     e.preventDefault();
@@ -227,7 +226,7 @@ export default function LoginPage() {
         </div>
 
         {/* Development Mode Quick User Switcher */}
-        {isDev && devClients.length > 0 && (
+        {devClients.length > 0 && (
           <div className="mt-6 rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-5 backdrop-blur-xl shadow-xl animate-in fade-in duration-500">
             <div className="flex items-center gap-2 mb-2 text-amber-400">
               <UserCheck className="size-4" />
