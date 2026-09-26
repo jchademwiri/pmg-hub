@@ -17,7 +17,7 @@ import {
   asc,
   sql,
 } from '@pmg/db';
-import { getSASTToday, fmtDate, formatZAR } from '@/lib/format';
+import { getSASTToday, fmtDate, formatZAR, getEndOfMonth } from '@/lib/format';
 import { generateBillingPdf } from '@/lib/server-billing-pdf';
 import { getPortalBaseUrl } from '@/lib/portal-url';
 import { getSessionOrRedirect } from '@/lib/auth';
@@ -54,8 +54,16 @@ export interface StatementRunResult {
 /**
  * Internal helper to query a client's outstanding invoices without requiring an auth session.
  */
-async function getInternalClientOutstandingInvoices(clientId: string) {
+async function getInternalClientOutstandingInvoices(clientId: string, divisionId?: string) {
   const db = getDb();
+  const conditions = [
+    eq(invoices.clientId, clientId),
+    sql`${invoices.status} IN ('issued', 'partially_paid', 'overdue')`,
+  ];
+  if (divisionId) {
+    conditions.push(eq(invoices.divisionId, divisionId));
+  }
+
   const rows = await db
     .select({
       id: invoices.id,
@@ -72,12 +80,7 @@ async function getInternalClientOutstandingInvoices(clientId: string) {
       )::text`,
     })
     .from(invoices)
-    .where(
-      and(
-        eq(invoices.clientId, clientId),
-        sql`${invoices.status} IN ('issued', 'partially_paid', 'overdue')`,
-      ),
-    )
+    .where(and(...conditions))
     .groupBy(
       invoices.id,
       invoices.documentNumber,
@@ -130,10 +133,7 @@ export async function triggerAutomatedStatementsRun(
     const todayStr = asOfDate || getSASTToday();
     const todayDay = parseInt(todayStr.slice(8, 10), 10);
 
-    const d = new Date(todayStr);
-    const tomorrow = new Date(d);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const isLastDayOfMonth = tomorrow.getMonth() !== d.getMonth();
+    const isLastDayOfMonth = todayStr === getEndOfMonth(todayStr);
 
     // Determine target runType if set to 'auto' or omitted (Option B Lifecycle)
     let effectiveRunType = options?.runType || 'auto';
@@ -186,7 +186,10 @@ export async function triggerAutomatedStatementsRun(
       for (const client of divisionClients) {
         if (!client.email) continue;
 
-        const outstandingInvoices = await getInternalClientOutstandingInvoices(client.id);
+        const outstandingInvoices = await getInternalClientOutstandingInvoices(
+          client.id,
+          division.id,
+        );
 
         if (effectiveRunType === 'overdue_only') {
           // Strictly filter for invoices where dueDate < todayStr (prior unpaid debt)
@@ -200,7 +203,7 @@ export async function triggerAutomatedStatementsRun(
             continue;
           }
 
-          const idempotencyKey = `auto-overdue-8th/${client.id}/${todayStr}`;
+          const idempotencyKey = `auto-overdue-8th/${division.id}/${client.id}/${todayStr}`;
 
           // Check if already sent
           const [existingAudit] = await db
@@ -314,7 +317,7 @@ export async function triggerAutomatedStatementsRun(
           continue;
         }
 
-        const idempotencyKey = `auto-statement/${effectiveRunType}/${client.id}/${todayStr}`;
+        const idempotencyKey = `auto-statement/${effectiveRunType}/${division.id}/${client.id}/${todayStr}`;
 
         const [existingAudit] = await db
           .select({ id: emailAuditLog.id, status: emailAuditLog.status })
@@ -327,6 +330,29 @@ export async function triggerAutomatedStatementsRun(
           continue;
         }
 
+        if (effectiveRunType === 'retainer_cycle') {
+          // Deduplicate: If this client was already sent a recurring invoice today with statement attached,
+          // skip sending a redundant second standalone statement email.
+          const [alreadySentToday] = await db
+            .select({ id: emailAuditLog.id })
+            .from(emailAuditLog)
+            .where(
+              and(
+                eq(emailAuditLog.clientId, client.id),
+                eq(emailAuditLog.divisionId, division.id),
+                eq(emailAuditLog.status, 'success'),
+                sql`timezone('Africa/Johannesburg', ${emailAuditLog.createdAt})::date = ${todayStr}::date`,
+                sql`${emailAuditLog.customizationDetails}->>'hasStatementAttached' = 'true'`,
+              ),
+            )
+            .limit(1);
+
+          if (alreadySentToday) {
+            skippedZeroBalance++;
+            continue;
+          }
+        }
+
         // Calculate Carried-forward Balance vs Current Period Charges
         const carriedForward = outstandingInvoices
           .filter((inv) => inv.invoiceDate < currentMonthStart)
@@ -336,22 +362,24 @@ export async function triggerAutomatedStatementsRun(
           .filter((inv) => inv.invoiceDate >= currentMonthStart)
           .reduce((sum, inv) => sum + inv.outstanding, 0);
 
-        // Fetch recent payments in this monthly cycle
+        // Fetch recent payments in this monthly cycle for this division
         const [recentPayments] = await db
           .select({ sum: sql<string>`coalesce(sum(${income.amount}), 0)` })
           .from(income)
           .where(
             and(
               eq(income.clientId, client.id),
+              eq(income.divisionId, division.id),
               sql`${income.date} >= ${currentMonthStart}::date AND ${income.date} <= ${todayStr}::date`,
               sql`${income.description} NOT LIKE 'Credit applied to%'`,
             ),
           );
         const paymentsInPeriod = parseFloat(recentPayments?.sum ?? '0');
 
-        // Generate Statement PDF
+        // Generate Statement PDF scoped to this division
         const statementPdf = await generateBillingPdf('statement', client.id, {
           statementType: 'outstanding',
+          divisionId: division.id,
         });
         if (!statementPdf) {
           errors.push(`Failed to generate statement PDF for ${client.name}`);

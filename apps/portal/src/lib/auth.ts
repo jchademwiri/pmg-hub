@@ -71,6 +71,9 @@ export const portalAuth = betterAuth({
     magicLink({
       expiresIn: 600, // 10 minutes in seconds
       sendMagicLink: async ({ email, url }) => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`\n🔗 [DEV AUTH] Magic Link for ${email}:\n${url}\n`);
+        }
         try {
           const emailClient = createEmailClient({
             apiKey: process.env.PMG_RESEND_API_KEY!,

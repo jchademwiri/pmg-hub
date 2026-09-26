@@ -50,8 +50,8 @@ export default async function RecurringFinancePage() {
       <div>
         <h2 className="text-lg font-semibold">Recurring Retainers & Subscriptions</h2>
         <p className="text-sm text-muted-foreground">
-          Manage monthly client retainers (auto-billed on 25th) and track outbound software/hosting
-          subscriptions (Claude, Antigravity, Hetzner VPS).
+          Manage monthly client retainers (auto-billed on 26th with statement attached) and track
+          outbound software/hosting subscriptions (Claude, Antigravity, Hetzner VPS).
         </p>
       </div>
 

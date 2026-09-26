@@ -52,8 +52,8 @@ export const recurringInvoices = pgTable(
     reference: text('reference'), // e.g. "Monthly Retainer & Cloud Hosting"
     status: recurringInvoiceStatusEnum('status').notNull().default('active'),
     frequency: recurringFrequencyEnum('frequency').notNull().default('monthly'),
-    billingCycleDay: integer('billing_cycle_day').notNull().default(25), // Defaults to 25th of month
-    dueDaysOffset: integer('due_days_offset').notNull().default(6), // 25th + 6 days = 1st of next month
+    billingCycleDay: integer('billing_cycle_day').notNull().default(26), // Defaults to 26th of month
+    dueDaysOffset: integer('due_days_offset').notNull().default(5), // 26th to EOM default offset
     autoSendEmail: boolean('auto_send_email').notNull().default(true),
     subtotal: numeric('subtotal', { precision: 12, scale: 2 }).notNull().default('0'),
     discountType: text('discount_type'),

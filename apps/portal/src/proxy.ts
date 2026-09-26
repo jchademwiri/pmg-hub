@@ -40,6 +40,23 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
+  // Dev-only escape hatch: allow dev user switcher (dev_impersonate_client_id cookie)
+  // to access portal routes without a better-auth session cookie.
+  // Never active outside local development.
+  const isDevAuthBypass =
+    (process.env.DISABLE_PORTAL_AUTH === 'true' ||
+      process.env.NEXT_PUBLIC_DISABLE_PORTAL_AUTH === 'true') &&
+    process.env.NODE_ENV !== 'production';
+
+  const devClientId = isDevAuthBypass
+    ? (request.cookies.get('dev_impersonate_client_id')?.value ??
+      request.cookies.get('impersonate_client_id')?.value)
+    : undefined;
+
+  if (isDevAuthBypass && devClientId) {
+    return NextResponse.next();
+  }
+
   // Require session cookie for all authenticated portal routes
   const sessionToken =
     request.cookies.get('__Secure-better-auth.session_token') ??
@@ -48,10 +65,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Dev-only escape hatch: skip DB session validation when explicitly enabled.
-  // Lets the dev user switcher (dev_impersonate_client_id cookie) work without
-  // a real better-auth session. Never set this outside local development.
-  if (process.env.DISABLE_PORTAL_AUTH === 'true' && process.env.NODE_ENV !== 'production') {
+  // In dev mode with auth bypass enabled, skip DB session lookup if session token is present
+  if (isDevAuthBypass) {
     return NextResponse.next();
   }
 

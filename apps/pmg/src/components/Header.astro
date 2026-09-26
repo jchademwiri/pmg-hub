@@ -4,10 +4,18 @@
 
 <header class="site-header">
   <div class="header-container">
-    <div class="logo">
+    <a href="/" class="logo focus-visible:outline-none" aria-label="Playhouse Media Group - Home">
       <span class="logo-play">Play</span><span class="logo-house">house</span>
       <span class="logo-media">Media Group</span>
+    </a>
+    <div class="flex items-center gap-5 sm:gap-8">
+      <a
+        href="/blog"
+        class="text-xs sm:text-sm font-medium text-slate-300 hover:text-white transition-colors"
+      >
+        Insights
+      </a>
+      <button class="header-contact-btn" data-open-contact-modal>Contact Us</button>
     </div>
-    <button class="header-contact-btn" data-open-contact-modal>Contact Us</button>
   </div>
 </header>

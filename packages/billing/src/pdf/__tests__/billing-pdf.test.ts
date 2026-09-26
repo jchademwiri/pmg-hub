@@ -166,6 +166,55 @@ describe('Declarative Billing PDF Documents', () => {
     expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe('%PDF-');
   });
 
+  it('renders a Statement of Outstanding Invoices with partial payments into a valid PDF', async () => {
+    const { StatementPdfDocument } = await import('../documents/statement-pdf-document');
+    const { renderDocumentToPdf } = await import('../render-document');
+
+    const element = React.createElement(StatementPdfDocument, {
+      data: {
+        statementNumber: 'ST-SAB-2026',
+        status: 'Outstanding',
+        statementType: 'outstanding',
+        periodTo: '2026-09-30',
+        org: sampleOrg,
+        client: sampleClient,
+        subtotal: 15000,
+        totalPaid: 2420,
+        totalDue: 12580,
+        transactions: [
+          {
+            date: '2026-07-29',
+            reference: 'TES-INV-2026-026',
+            description: 'E3133GXGPLET - ESKOM',
+            debit: 2500,
+            credit: 2420,
+            balance: 80,
+          },
+          {
+            date: '2026-08-03',
+            reference: 'TES-INV-2026-029',
+            description: 'CSD RFQ School Uniforms',
+            debit: 500,
+            balance: 500,
+          },
+        ],
+        ageing: {
+          current: 0,
+          days1_14: 0,
+          days15_30: 500,
+          days31_60: 0,
+          days61plus: 80,
+        },
+        banking: sampleBanking,
+      },
+    });
+
+    const pdfBytes = await renderDocumentToPdf(element);
+    expect(pdfBytes).toBeInstanceOf(Uint8Array);
+    expect(pdfBytes.length).toBeGreaterThan(2000);
+    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe('%PDF-');
+  });
+
   it('renders a Payment Receipt into a valid PDF', async () => {
     const { ReceiptPdfDocument } = await import('../documents/receipt-pdf-document');
     const { renderDocumentToPdf } = await import('../render-document');

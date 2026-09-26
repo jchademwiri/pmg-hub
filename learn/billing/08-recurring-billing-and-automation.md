@@ -20,12 +20,12 @@ Instead of manually generating invoices every month, PMG Hub allows you to set u
 ## The Recurring Billing Workflow
 
 ```text
-1. Admin creates Recurring Profile in Billing -> Recurring
-2. Cron job triggers on scheduled day (00:00 SAST)
-3. System generates new Invoice in "Draft" or "Issued" state
-4. Branded invoice PDF is emailed to client's billing email
-5. Invoice appears immediately in the client's self-service Portal
-6. On the 25th, client receives Stage 1 Early Review Statement
+1. Admin creates Recurring Profile in Billing -> Recurring (defaults to 26th)
+2. Cron job triggers on scheduled day (08:00 SAST)
+3. System generates new Invoice in "Issued" state
+4. Branded invoice PDF is emailed to client's billing email with live account statement attached
+5. Invoice and statement appear immediately in the client's self-service Portal
+6. Retainer cycle is consolidated on the 26th (deduplicated so clients do not get multiple emails)
 7. Client pays via EFT -> Admin records payment -> Account reconciled
 ```
 

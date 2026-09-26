@@ -103,6 +103,7 @@ vi.mock('@/app/actions/expenses', () => ({
 import { createExpense, updateExpense, deleteExpense } from '@/app/actions/expenses';
 import { ExpenseFilterBar } from '@/components/expenses/expense-filter-bar';
 import { ExpenseTable } from '@/components/expenses/expense-table';
+import { formatDivisionAbbr, stripExpenseDescription } from '@/lib/format';
 import type { ExpenseRow } from '@pmg/db';
 
 // ─── P2: Division filter excludes other divisions ────────────────────────────
@@ -777,6 +778,33 @@ describe('ExpenseTable', () => {
     expect(editButtons.length).toBe(2);
   });
 
+  it('renders division abbreviation and stripped description', () => {
+    const entry: ExpenseRow = {
+      ...makeExpenseEntry('abc-123'),
+      divisionName: 'Playhouse Media Group',
+      description: 'Subscription: Niva City - creativecreations.co.za (11 September 2026)',
+    };
+
+    render(
+      React.createElement(ExpenseTable, {
+        entries: [entry],
+        deleteAction,
+        updateAction,
+        divisions: [{ id: 'div-1', name: 'Playhouse Media Group' }],
+        categories: ['Software'],
+        clients: [],
+      }),
+    );
+
+    // Division abbreviation 'PMG' is displayed, with full name in title attribute
+    const divBadge = screen.getByTitle('Playhouse Media Group');
+    expect(divBadge).toHaveTextContent('PMG');
+
+    // Stripped description is displayed without "Subscription:" or date
+    expect(screen.getByText('Niva City - creativecreations.co.za')).toBeInTheDocument();
+    expect(screen.queryByText(/Subscription:/)).not.toBeInTheDocument();
+  });
+
   it('empty entries array renders no table rows (only header row)', () => {
     render(
       React.createElement(ExpenseTable, {
@@ -792,6 +820,49 @@ describe('ExpenseTable', () => {
     const rows = screen.queryAllByRole('row');
     // Only the header row should be present
     expect(rows).toHaveLength(1);
+  });
+});
+
+describe('formatDivisionAbbr', () => {
+  it('abbreviates known divisions properly', () => {
+    expect(formatDivisionAbbr('Playhouse Media Group')).toBe('PMG');
+    expect(formatDivisionAbbr('TenderEdge Solutions')).toBe('TES');
+    expect(formatDivisionAbbr('Tender Edge Solutions')).toBe('TES');
+    expect(formatDivisionAbbr('Apex Web Solutions')).toBe('AWS');
+    expect(formatDivisionAbbr('PMG')).toBe('PMG');
+    expect(formatDivisionAbbr('AWS')).toBe('AWS');
+    expect(formatDivisionAbbr('TES')).toBe('TES');
+  });
+
+  it('falls back gracefully for custom division names', () => {
+    expect(formatDivisionAbbr('Cloud Data Services')).toBe('CDS');
+    expect(formatDivisionAbbr('OPS')).toBe('OPS');
+    expect(formatDivisionAbbr('')).toBe('—');
+    expect(formatDivisionAbbr(null)).toBe('—');
+  });
+});
+
+describe('stripExpenseDescription', () => {
+  it('strips redundant Subscription: prefix and trailing date', () => {
+    expect(
+      stripExpenseDescription(
+        'Subscription: Niva City - creativecreations.co.za (11 September 2026)',
+      ),
+    ).toBe('Niva City - creativecreations.co.za');
+    expect(stripExpenseDescription('Subscription: Hetzner Cloud (15 Aug 2026)')).toBe(
+      'Hetzner Cloud',
+    );
+    expect(stripExpenseDescription('Subscription: Google Workspace (2026-09-01)')).toBe(
+      'Google Workspace',
+    );
+  });
+
+  it('preserves clean descriptions without subscription prefix', () => {
+    expect(stripExpenseDescription('Office stationery and printer paper')).toBe(
+      'Office stationery and printer paper',
+    );
+    expect(stripExpenseDescription('')).toBe('');
+    expect(stripExpenseDescription(null)).toBe('');
   });
 });
 

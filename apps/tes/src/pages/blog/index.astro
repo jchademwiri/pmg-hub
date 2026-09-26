@@ -1,0 +1,189 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '@/layouts/Layout.astro';
+
+export const prerender = true;
+
+// Fetch published posts
+const allPosts = await getCollection('blog', ({ data }) => {
+  return import.meta.env.PROD ? !data.draft : true;
+});
+
+// Sort newest first
+const posts = allPosts.sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime());
+
+const pageTitle = 'Tender Insights & Compliance Blog | TenderEdge Solutions';
+const pageDescription =
+  'Actionable guides and insights on CSD registration, CIDB gradings, B-BBEE affidavits, SBD forms, and public sector tender bidding in South Africa.';
+
+const SITE_URL = 'https://www.tenderedgesolutions.co.za';
+const canonicalURL = `${SITE_URL}/blog`;
+
+// JSON-LD Breadcrumbs
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: SITE_URL,
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Blog',
+      item: canonicalURL,
+    },
+  ],
+};
+
+// JSON-LD Blog Collection
+const blogSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Blog',
+  '@id': `${canonicalURL}#blog`,
+  name: 'TenderEdge Solutions Blog',
+  description: pageDescription,
+  url: canonicalURL,
+  publisher: {
+    '@type': 'Organization',
+    name: 'TenderEdge Solutions',
+    url: SITE_URL,
+    logo: `${SITE_URL}/favicon.svg`,
+  },
+  blogPost: posts.map((post) => ({
+    '@type': 'BlogPosting',
+    headline: post.data.title,
+    description: post.data.description,
+    datePublished: post.data.publishedAt.toISOString(),
+    url: `${SITE_URL}/blog/${post.id}`,
+    author: [post.data.author, ...(post.data.coAuthors || [])].map((name) => ({
+      '@type': 'Organization',
+      name,
+    })),
+  })),
+};
+---
+
+<Layout title={pageTitle} description={pageDescription} canonical={canonicalURL}>
+  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(blogSchema)} />
+
+  <div class="bg-background min-h-screen">
+    <!-- Hero Section -->
+    <section
+      class="border-b border-border bg-card/40 pt-28 sm:pt-36 pb-16 sm:pb-20 relative overflow-hidden"
+    >
+      <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 relative z-10">
+        <nav
+          aria-label="Breadcrumb"
+          class="mb-6 text-xs uppercase tracking-widest text-muted-foreground"
+        >
+          <ol class="flex items-center space-x-2">
+            <li>
+              <a href="/" class="hover:text-primary transition-colors">Home</a>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li class="font-semibold text-primary" aria-current="page">Blog</li>
+          </ol>
+        </nav>
+        <p class="text-primary uppercase tracking-widest font-semibold text-xs mb-3">
+          Procurement Intelligence & Compliance
+        </p>
+        <h1
+          class="font-condensed uppercase text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-foreground leading-[0.95]"
+        >
+          TENDER INSIGHTS &amp; <br class="hidden sm:inline" />
+          <span class="text-primary">COMPLIANCE GUIDES.</span>
+        </h1>
+        <p class="mt-5 max-w-2xl text-base sm:text-lg text-muted-foreground leading-relaxed">
+          Practical, authoritative directives on CSD supplier registration, CIDB upgrades, B-BBEE
+          compliance affidavits, and structuring winning public procurement submissions in South
+          Africa.
+        </p>
+      </div>
+    </section>
+
+    <!-- Posts Listing Section -->
+    <section class="py-12 sm:py-16">
+      <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        {
+          posts.length === 0 ? (
+            <div class="rounded-2xl border border-dashed border-border/80 p-12 text-center">
+              <p class="text-lg font-medium text-foreground">No articles published yet.</p>
+              <p class="mt-1 text-sm text-muted-foreground">
+                Check back soon for tender compliance guides.
+              </p>
+            </div>
+          ) : (
+            <div class="grid gap-8 md:grid-cols-2">
+              {posts.map((post) => {
+                const formattedDate = post.data.publishedAt.toLocaleDateString('en-ZA', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                });
+
+                return (
+                  <article class="group flex flex-col justify-between rounded-2xl border border-border/60 bg-card p-6 shadow-xs transition-all duration-200 hover:border-primary/50 hover:shadow-md">
+                    <div>
+                      {post.data.coverImage && (
+                        <div class="aspect-16/9 mb-5 overflow-hidden rounded-xl bg-muted">
+                          <img
+                            src={post.data.coverImage}
+                            alt={post.data.title}
+                            loading="lazy"
+                            decoding="async"
+                            class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-102"
+                          />
+                        </div>
+                      )}
+
+                      <div class="flex flex-wrap items-center gap-2 mb-3">
+                        {post.data.tags.map((tag) => (
+                          <span class="inline-flex items-center rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                            {tag}
+                          </span>
+                        ))}
+                        {post.data.draft && (
+                          <span class="inline-flex items-center rounded-md bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                            Draft
+                          </span>
+                        )}
+                      </div>
+
+                      <h2 class="text-xl font-bold tracking-tight text-card-foreground group-hover:text-primary transition-colors">
+                        <a
+                          href={`/blog/${post.id}`}
+                          class="focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none rounded-md"
+                        >
+                          {post.data.title}
+                        </a>
+                      </h2>
+
+                      <p class="mt-3 text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                        {post.data.description}
+                      </p>
+                    </div>
+
+                    <div class="mt-6 flex items-center justify-between border-t border-border/40 pt-4 text-xs text-muted-foreground">
+                      <div class="flex items-center gap-1.5">
+                        <span>By</span>
+                        <span class="font-medium text-foreground">
+                          {[post.data.author, ...(post.data.coAuthors || [])].join(' & ')}
+                        </span>
+                      </div>
+                      <time datetime={post.data.publishedAt.toISOString()}>{formattedDate}</time>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )
+        }
+      </div>
+    </section>
+  </div>
+</Layout>

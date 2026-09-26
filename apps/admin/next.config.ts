@@ -4,11 +4,31 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const appDir = dirname(fileURLToPath(import.meta.url));
-loadEnvConfig(resolve(appDir, '../..'));
+const monorepoRoot = resolve(appDir, '../..');
+loadEnvConfig(monorepoRoot);
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['takumi-pdf', '@takumi-rs/helpers', '@takumi-rs/core'],
+  outputFileTracingRoot: monorepoRoot,
+  outputFileTracingExcludes: {
+    '*': [
+      'node_modules/@swc/core-linux-x64-gnu/**',
+      'node_modules/@swc/core-linux-x64-musl/**',
+      'node_modules/@swc/core-win32-x64-msvc/**',
+      'node_modules/@esbuild/**',
+      'node_modules/@playwright/**',
+      'node_modules/playwright/**',
+      'node_modules/@testing-library/**',
+      'node_modules/vitest/**',
+    ],
+  },
   experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      'radix-ui',
+      '@radix-ui/react-select',
+      'recharts',
+      'date-fns',
+    ],
     serverActions: {
       bodySizeLimit: '10mb',
       allowedOrigins: ['localhost:3000', '192.168.0.190:3000'],

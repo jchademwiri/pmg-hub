@@ -13,6 +13,7 @@ import {
   clients,
   divisions,
   divisionBillingSettings,
+  emailAuditLog,
   eq,
   ne,
   and,
@@ -56,13 +57,13 @@ export interface CreateRecurringInvoiceInput {
   reference?: string | null;
   /** Billing frequency cadence */
   frequency?: RecurringFrequency;
-  /** Explicit next/first invoice date ("YYYY-MM-DD"). Defaults to the 25th
-   *  of this month (or next month, if the 25th has passed) when omitted. */
+  /** Explicit next/first invoice date ("YYYY-MM-DD"). Defaults to the 26th
+   *  of this month (or next month, if the 26th has passed) when omitted. */
   nextRunDate?: string | null;
   /** Once the next scheduled invoice date would fall on or after this date,
    *  the schedule auto-pauses instead of generating another invoice. */
   endDate?: string | null;
-  dueDaysOffset?: number; // default 6 (due 1st)
+  dueDaysOffset?: number; // default 5 (due EOM)
   autoSendEmail?: boolean;
   notes?: string | null;
   terms?: string | null;
@@ -138,6 +139,7 @@ async function sendRecurringInvoiceEmail(params: {
   dueDate: string;
   reference: string | null;
   total: string;
+  sentBy?: string;
 }): Promise<{ error?: string }> {
   const db = getDb();
 
@@ -211,15 +213,42 @@ async function sendRecurringInvoiceEmail(params: {
   }
 
   const adminCc = resolveDivisionAdminEmail(divisionName, billingConfig?.salesRepEmail ?? null);
+  const idempotencyKey = `recurring-invoice/${params.invoiceId}`;
+  const subject = `Invoice ${params.documentNumber} from ${divisionName || 'Playhouse Media Group'}`;
 
-  const { error } = await emailClient({
+  const { data, error } = await emailClient({
     to: client.email,
     cc: adminCc ? [adminCc] : undefined,
-    subject: `Invoice ${params.documentNumber} from ${divisionName || 'Playhouse Media Group'}`,
+    subject,
     react: React.createElement(InvoiceDeliveryEmail, emailProps),
     replyTo: DEFAULT_REPLY_TO,
     attachments,
+    idempotencyKey,
   });
+
+  if (params.sentBy && params.sentBy !== 'system') {
+    await db
+      .insert(emailAuditLog)
+      .values({
+        resendEmailId: data?.id ?? null,
+        emailType: 'invoice',
+        recipientEmail: client.email,
+        subject,
+        clientId: client.id,
+        divisionId: division?.id ?? null,
+        sentBy: params.sentBy,
+        status: error ? 'failed' : 'success',
+        errorMessage: error?.message ?? null,
+        idempotencyKey,
+        customizationDetails: {
+          hasStatementAttached: !!statementPdf,
+          documentNumber: params.documentNumber,
+          invoiceId: params.invoiceId,
+          total: params.total,
+        },
+      })
+      .onConflictDoNothing();
+  }
 
   if (error) return { error: `Failed to deliver email: ${error.message}` };
   return {};
@@ -229,10 +258,10 @@ async function sendRecurringInvoiceEmail(params: {
  *  stays valid across every month when the cadence is later advanced. */
 function dayOfMonthClamped(dateStr: string): number {
   const day = Number(dateStr.slice(8, 10));
-  return Math.min(Math.max(1, day || 25), 28);
+  return Math.min(Math.max(1, day || 26), 28);
 }
 
-function calculateInitialNextRunDate(cycleDay = 25): string {
+function calculateInitialNextRunDate(cycleDay = 26): string {
   const { year, month, day } = getSASTParts();
   let targetYear = year;
   let targetMonth = month;
@@ -256,7 +285,7 @@ function calculateInitialNextRunDate(cycleDay = 25): string {
 
 function advanceNextRunDate(
   dateStr: string,
-  cycleDay = 25,
+  cycleDay = 26,
   frequency: RecurringFrequency = 'monthly',
 ): string {
   const [y, m] = dateStr.split('-').map(Number);
@@ -304,7 +333,7 @@ export async function createRecurringInvoice(
 
     const frequency = data.frequency || 'monthly';
     const explicitNextRunDate = data.nextRunDate?.trim() || null;
-    const billingCycleDay = explicitNextRunDate ? dayOfMonthClamped(explicitNextRunDate) : 25;
+    const billingCycleDay = explicitNextRunDate ? dayOfMonthClamped(explicitNextRunDate) : 26;
     const nextRunDate = explicitNextRunDate ?? calculateInitialNextRunDate(billingCycleDay);
     const endDate = data.endDate?.trim() || null;
 
@@ -778,6 +807,7 @@ export async function triggerRecurringBillingRun(
           dueDate,
           reference: schedule.reference,
           total: schedule.total,
+          sentBy: currentUserId,
         });
         if (emailResult.error) {
           console.error(`Failed to email recurring invoice ${documentNumber}:`, emailResult.error);
@@ -1017,7 +1047,7 @@ export async function markRecurringExpenseAsPaid(
           clientId: subscription.clientId ?? null,
           date,
           category: subscription.category,
-          description: `Subscription: ${subscription.vendorName} (${fmtDateLong(date)})`,
+          description: subscription.vendorName.trim(),
           amount: subscription.amount,
         })
         .returning({ id: expenses.id });

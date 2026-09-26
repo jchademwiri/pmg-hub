@@ -60,7 +60,7 @@ export interface StatementPdfData {
 export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
   const theme = usePdfTheme();
 
-  const openingBalance = data.openingBalance ?? 0;
+  const openingBalance = data.statementType === 'outstanding' ? 0 : (data.openingBalance ?? 0);
   const subtotal =
     data.subtotal ??
     (data.transactions ?? []).reduce((sum, tx) => sum + (tx.debit || 0), 0) + openingBalance;
@@ -340,15 +340,29 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                 size="sm"
                 divided
                 items={[
-                  {
-                    key: data.statementType === 'outstanding' ? 'Total Outstanding' : 'Subtotal',
-                    value: formatZARWithCR(subtotal),
-                    keyStyle: { fontWeight: 700 },
-                    valueStyle: { fontWeight: 700 },
-                  },
                   ...(data.statementType === 'outstanding'
-                    ? []
+                    ? totalPaid > 0
+                      ? [
+                          {
+                            key: 'Total Invoiced',
+                            value: formatZARWithCR(subtotal),
+                            keyStyle: { fontWeight: 700 },
+                            valueStyle: { fontWeight: 700 },
+                          },
+                          {
+                            key: 'Less Payments',
+                            value: `-${formatZAR(totalPaid)}`,
+                            valueStyle: { color: theme.colors.success },
+                          },
+                        ]
+                      : []
                     : [
+                        {
+                          key: 'Subtotal',
+                          value: formatZARWithCR(subtotal),
+                          keyStyle: { fontWeight: 700 },
+                          valueStyle: { fontWeight: 700 },
+                        },
                         {
                           key: 'Less Payments',
                           value: totalPaid > 0 ? `-${formatZAR(totalPaid)}` : '-R 0,00',
@@ -359,7 +373,7 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                         },
                       ]),
                   {
-                    key: 'Balance Due',
+                    key: data.statementType === 'outstanding' ? 'Total Outstanding' : 'Balance Due',
                     value: formatZARWithCR(totalDue),
                     keyStyle: { fontWeight: 700, fontSize: 10, color: theme.colors.foreground },
                     valueStyle: {
