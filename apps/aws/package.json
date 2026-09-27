@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@astrojs/partytown": "^2.1.8",
-    "@astrojs/react": "^6.0.6",
+    "@astrojs/react": "^7.0.0",
     "@astrojs/sitemap": "^3.7.4",
     "@astrojs/vercel": "^11.0.11",
     "@pmg/db": "workspace:*",
@@ -29,7 +29,7 @@
     "lucide-astro": "^0.556.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "react-email": "^5.0.6",
+    "react-email": "6.11.0",
     "schema-dts": "^2.0.0",
     "tailwindcss": "catalog:"
   },
@@ -40,7 +40,7 @@
     "fast-check": "^4.10.2",
     "typescript": "^5.9.3",
     "prettier": "^3.9.9",
-    "prettier-plugin-astro": "^0.14.1",
-    "prettier-plugin-tailwindcss": "^0.7.4"
+    "prettier-plugin-astro": "^1.1.0",
+    "prettier-plugin-tailwindcss": "^0.8.1"
   }
 }

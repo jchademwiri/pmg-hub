@@ -106,7 +106,8 @@ export async function generateAndSendBillingDigest(
       .where(
         and(
           sql`timezone('Africa/Johannesburg', ${emailAuditLog.createdAt})::date = ${todayStr}::date`,
-          sql`${emailAuditLog.emailType} != 'billing_digest'`,
+          sql`coalesce(${emailAuditLog.customizationDetails}->>'subType', '') != 'billing_digest'`,
+          sql`${emailAuditLog.idempotencyKey} NOT LIKE 'billing-digest/%'`,
         ),
       )
       .orderBy(desc(emailAuditLog.createdAt));
@@ -262,16 +263,16 @@ export async function generateAndSendBillingDigest(
     }
 
     // Next 8th overdue cycle
-    const currentYearMonth = todayStr.slice(0, 7);
-    const eighthThisMonth = `${currentYearMonth}-08`;
+    const [yStr, mStr] = todayStr.split('-');
+    const currentYear = Number(yStr);
+    const currentMonth = Number(mStr);
+    const eighthThisMonth = `${yStr}-${mStr}-08`;
     const nextEighth =
       todayStr <= eighthThisMonth
         ? eighthThisMonth
-        : (() => {
-            const d = new Date(todayStr);
-            d.setMonth(d.getMonth() + 1);
-            return `${d.toISOString().slice(0, 7)}-08`;
-          })();
+        : currentMonth === 12
+          ? `${currentYear + 1}-01-08`
+          : `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-08`;
 
     upcomingEvents.push({
       date: fmtDate(nextEighth),
@@ -300,7 +301,10 @@ export async function generateAndSendBillingDigest(
 
     for (const rec of upcomingRecurringSchedules) {
       if (!rec.nextRunDate) continue;
-      const recDate = new Date(rec.nextRunDate).toISOString().split('T')[0]!;
+      const recDate =
+        typeof rec.nextRunDate === 'string'
+          ? rec.nextRunDate.slice(0, 10)
+          : new Date(rec.nextRunDate).toISOString().slice(0, 10);
       upcomingEvents.push({
         date: fmtDate(recDate),
         description: `Recurring billing for ${rec.clientBusinessName || rec.clientName} (${formatZAR(rec.total)})`,
@@ -350,32 +354,49 @@ export async function generateAndSendBillingDigest(
       console.error('[BILLING:DIGEST] Failed to send digest email:', error.message);
     }
 
-    // 9. Audit the digest in email_audit_log
-    const [adminUser] = await db.select({ id: user.id }).from(user).limit(1);
-    const sentByUserId = adminUser?.id ?? 'system';
+    // 9. Audit the digest in email_audit_log (attribute to admin or session user)
+    let sentByUserId: string | undefined;
+    if (!options?.isInternal) {
+      try {
+        const { auth } = await import('@/lib/auth');
+        const { headers } = await import('next/headers');
+        const session = await auth.api.getSession({ headers: await headers() });
+        if (session?.user?.id) {
+          sentByUserId = session.user.id;
+        }
+      } catch {
+        // Fall back to querying DB
+      }
+    }
+    if (!sentByUserId) {
+      const [adminUser] = await db.select({ id: user.id }).from(user).limit(1);
+      sentByUserId = adminUser?.id;
+    }
 
-    await db
-      .insert(emailAuditLog)
-      .values({
-        resendEmailId: data?.id ?? null,
-        emailType: 'custom',
-        recipientEmail: PRIMARY_DIGEST_EMAIL,
-        subject,
-        sentBy: sentByUserId,
-        status: error ? 'failed' : 'success',
-        errorMessage: error?.message ?? null,
-        idempotencyKey,
-        customizationDetails: {
-          subType: 'billing_digest',
-          runDate: todayStr,
-          dispatchesCount: dispatches.length,
-          skippedCount: skippedClients.length,
-          errorsCount,
-          totalBalanceCommunicated: runningBalanceSum,
-          secondaryCc: SECONDARY_DIGEST_CC,
-        },
-      })
-      .onConflictDoNothing();
+    if (sentByUserId) {
+      await db
+        .insert(emailAuditLog)
+        .values({
+          resendEmailId: data?.id ?? null,
+          emailType: 'custom',
+          recipientEmail: PRIMARY_DIGEST_EMAIL,
+          subject,
+          sentBy: sentByUserId,
+          status: error ? 'failed' : 'success',
+          errorMessage: error?.message ?? null,
+          idempotencyKey,
+          customizationDetails: {
+            subType: 'billing_digest',
+            runDate: todayStr,
+            dispatchesCount: dispatches.length,
+            skippedCount: skippedClients.length,
+            errorsCount,
+            totalBalanceCommunicated: runningBalanceSum,
+            secondaryCc: SECONDARY_DIGEST_CC,
+          },
+        })
+        .onConflictDoNothing();
+    }
 
     return {
       success: !error,

@@ -68,4 +68,19 @@ describe('Billing Digest Cron Route & Configuration', () => {
     expect(body.success).toBe(false);
     expect(body.error).toBe('Resend API key missing or invalid');
   });
+
+  it('handles unexpected exceptions gracefully with HTTP 500 and structured json', async () => {
+    vi.spyOn(cronAuth, 'authorizeCronRequest').mockReturnValue(null);
+    vi.spyOn(digestActions, 'generateAndSendBillingDigest').mockRejectedValue(
+      new Error('Database connection failed'),
+    );
+
+    const req = new Request('https://admin.playhousemedia.co.za/api/cron/billing-digest');
+    const res = await GET(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Database connection failed');
+  });
 });

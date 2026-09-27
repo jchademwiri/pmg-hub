@@ -223,7 +223,7 @@ async function sendRecurringInvoiceEmail(params: {
     idempotencyKey,
   });
 
-  if (params.sentBy) {
+  if (params.sentBy && params.sentBy !== 'system') {
     await db
       .insert(emailAuditLog)
       .values({

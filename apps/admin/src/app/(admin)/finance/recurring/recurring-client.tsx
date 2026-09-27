@@ -327,16 +327,23 @@ export function RecurringClient({
   const handleTriggerDigest = () => {
     setActionMessage(null);
     startTransition(async () => {
-      const res = await generateAndSendBillingDigest(undefined, { force: true });
-      if (!res.success) {
+      try {
+        const res = await generateAndSendBillingDigest(undefined, { force: true });
+        if (!res.success) {
+          setActionMessage({
+            type: 'error',
+            text: res.error || 'Failed to dispatch billing digest email.',
+          });
+        } else {
+          setActionMessage({
+            type: 'success',
+            text: `Daily billing digest successfully dispatched to info@playhousemedia.co.za (CC hello@jacobc.co.za). Dispatches: ${res.dispatchesCount}, Skipped: ${res.skippedCount}, Errors: ${res.errorsCount}.`,
+          });
+        }
+      } catch (err: unknown) {
         setActionMessage({
           type: 'error',
-          text: res.error || 'Failed to dispatch billing digest email.',
-        });
-      } else {
-        setActionMessage({
-          type: 'success',
-          text: `Daily billing digest successfully dispatched to info@playhousemedia.co.za (CC hello@jacobc.co.za). Dispatches: ${res.dispatchesCount}, Skipped: ${res.skippedCount}, Errors: ${res.errorsCount}.`,
+          text: err instanceof Error ? err.message : 'Failed to dispatch billing digest email.',
         });
       }
     });
