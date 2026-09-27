@@ -124,7 +124,9 @@ export function RevenueByDivisionChart({ data, currentPeriod }: Props) {
                 cursor={false}
                 content={
                   <ChartTooltipContent
-                    labelFormatter={(value) => fmtMonthYear(value)}
+                    labelFormatter={(value) =>
+                      fmtMonthYear(typeof value === 'string' ? value : String(value ?? ''))
+                    }
                     formatter={(v) => formatZAR(Number(v))}
                     indicator="dashed"
                   />

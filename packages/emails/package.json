@@ -9,15 +9,16 @@
     "email:dev": "email dev --dir src/templates --port 3010"
   },
   "dependencies": {
-    "@react-email/components": "^1.0.1",
-    "resend": "^4.0.0"
+    "@react-email/components": "^1.0.12",
+    "resend": "^6.30.0"
   },
   "devDependencies": {
     "@pmg/typescript-config": "workspace:*",
     "@react-email/preview-server": "5.2.10",
-    "@react-email/ui": "6.6.5",
-    "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2",
+    "@react-email/ui": "6.11.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "esbuild": "0.28.1",
     "react-email": "latest",
     "typescript": "5.9.2"
   },

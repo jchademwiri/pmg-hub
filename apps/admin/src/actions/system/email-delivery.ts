@@ -25,7 +25,6 @@ import {
   DEFAULT_REPLY_TO,
   DEFAULT_WEBSITE_URL,
   renderEmailTemplate,
-  resolveDivisionAdminEmail,
   resolveDivisionSenderName,
   resolveFromEmail,
   resolveResendApiKey,
@@ -519,14 +518,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         });
       }
 
-      // CC the division admin so they always have a copy
-      const adminCc = resolveDivisionAdminEmail(
-        invoice.divisionName,
-        billingConfig?.salesRepEmail ?? null,
-      );
-
       const ccRecipients: string[] = [];
-      if (adminCc) ccRecipients.push(adminCc);
       if (cc?.trim()) ccRecipients.push(cc.trim());
 
       // Send email via Resend
@@ -660,13 +652,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         })),
       ];
 
-      const adminCc = resolveDivisionAdminEmail(
-        note.divisionName,
-        billingConfig?.salesRepEmail ?? null,
-      );
-
       const ccRecipients: string[] = [];
-      if (adminCc) ccRecipients.push(adminCc);
       if (cc)
         cc.split(',')
           .map((email) => email.trim())
@@ -766,14 +752,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
           : undefined,
       };
 
-      // CC the division admin so they always have a copy
-      const adminCc = resolveDivisionAdminEmail(
-        quote.divisionName,
-        billingConfig?.salesRepEmail ?? null,
-      );
-
       const ccRecipients: string[] = [];
-      if (adminCc) ccRecipients.push(adminCc);
       if (cc?.trim()) ccRecipients.push(cc.trim());
 
       // Send email via Resend
@@ -976,11 +955,6 @@ export async function sendReceiptEmailAction(rawPayload: unknown) {
       })),
     ];
 
-    const adminCc = resolveDivisionAdminEmail(
-      incomeRow.divisionName,
-      billingConfig?.salesRepEmail ?? null,
-    );
-
     const clientName = client?.businessName || client?.name || 'Client';
     const safeClientName = escapeHtml(clientName);
     const safeReceiptNumber = escapeHtml(
@@ -1025,7 +999,6 @@ export async function sendReceiptEmailAction(rawPayload: unknown) {
     `;
 
     const ccRecipients: string[] = [];
-    if (adminCc) ccRecipients.push(adminCc);
     if (cc?.trim()) ccRecipients.push(cc.trim());
 
     const { data, error } = await emailClient({

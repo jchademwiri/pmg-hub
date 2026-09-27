@@ -488,7 +488,6 @@ export async function sendCustomizedReminderAction(
 
     const { data, error } = await emailClient({
       to: auditBase.recipientEmail,
-      cc: context.adminCc,
       subject,
       react: React.createElement(OutstandingReminderEmail, context.emailProps),
       replyTo: DEFAULT_REPLY_TO,

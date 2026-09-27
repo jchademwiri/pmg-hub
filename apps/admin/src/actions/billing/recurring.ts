@@ -34,7 +34,6 @@ import {
   InvoiceDeliveryEmail,
   DEFAULT_REPLY_TO,
   DEFAULT_WEBSITE_URL,
-  resolveDivisionAdminEmail,
   resolveDivisionSenderName,
   resolveFromEmail,
   resolveResendApiKey,
@@ -212,13 +211,11 @@ async function sendRecurringInvoiceEmail(params: {
     });
   }
 
-  const adminCc = resolveDivisionAdminEmail(divisionName, billingConfig?.salesRepEmail ?? null);
   const idempotencyKey = `recurring-invoice/${params.invoiceId}`;
   const subject = `Invoice ${params.documentNumber} from ${divisionName || 'Playhouse Media Group'}`;
 
   const { data, error } = await emailClient({
     to: client.email,
-    cc: adminCc ? [adminCc] : undefined,
     subject,
     react: React.createElement(InvoiceDeliveryEmail, emailProps),
     replyTo: DEFAULT_REPLY_TO,
