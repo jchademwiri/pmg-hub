@@ -27,7 +27,6 @@ import {
   OutstandingReminderEmail,
   DEFAULT_REPLY_TO,
   DEFAULT_WEBSITE_URL,
-  resolveDivisionAdminEmail,
   resolveDivisionSenderName,
   resolveFromEmail,
   resolveResendApiKey,
@@ -221,11 +220,6 @@ export async function triggerAutomatedStatementsRun(
           const defaultFrom = resolveDefaultFromEmail(divisionName);
           const fromName = resolveDivisionSenderName(divisionName);
           const fromEmail = resolveFromEmail(divSetting?.divisionWebsite, defaultFrom);
-          const adminCc = resolveDivisionAdminEmail(
-            divisionName,
-            divSetting?.salesRepEmail ?? null,
-          );
-
           const emailClient = createEmailClient({
             apiKey,
             from: `${fromName} <${fromEmail}>`,
@@ -270,7 +264,6 @@ export async function triggerAutomatedStatementsRun(
 
           const { data, error } = await emailClient({
             to: client.email,
-            cc: adminCc ? [adminCc] : undefined,
             subject: `Overdue Payment Notice from ${divisionName || 'Playhouse Media Group'}`,
             react: React.createElement(OutstandingReminderEmail, emailProps),
             replyTo: DEFAULT_REPLY_TO,
@@ -390,7 +383,6 @@ export async function triggerAutomatedStatementsRun(
         const defaultFrom = resolveDefaultFromEmail(divisionName);
         const fromName = resolveDivisionSenderName(divisionName);
         const fromEmail = resolveFromEmail(divSetting?.divisionWebsite, defaultFrom);
-        const adminCc = resolveDivisionAdminEmail(divisionName, divSetting?.salesRepEmail ?? null);
 
         const emailClient = createEmailClient({
           apiKey,
@@ -455,7 +447,6 @@ export async function triggerAutomatedStatementsRun(
 
         const { data, error } = await emailClient({
           to: client.email,
-          cc: adminCc ? [adminCc] : undefined,
           subject,
           react: React.createElement(StatementDeliveryEmail, emailProps),
           replyTo: DEFAULT_REPLY_TO,

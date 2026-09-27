@@ -50,6 +50,10 @@ export const DEFAULT_REPLY_TO = BRAND_REPLY_TO.pmg;
 export const DEFAULT_ADMIN_EMAIL = BRAND_ADMIN_EMAIL.pmg;
 export const DEFAULT_WEBSITE_URL = `https://${DOMAINS.pmg}`;
 
+// ─── Executive Billing Digest Recipients ──────────────────────────────────────
+export const PRIMARY_DIGEST_EMAIL = 'info@playhousemedia.co.za';
+export const SECONDARY_DIGEST_CC = 'hello@jacobc.co.za';
+
 // ─── Helper: resolve API key at runtime ───────────────────────────────────────
 /**
  * Returns the Resend API key for the given brand by reading the canonical

@@ -20,6 +20,7 @@ export { default as PortalInvitationEmail } from './templates/PortalInvitationEm
 export { default as ComplianceReminderEmail } from './templates/ComplianceReminderEmail';
 export { default as AdminOnboardingNotificationEmail } from './templates/AdminOnboardingNotificationEmail';
 export { default as ClientOnboardingConfirmationEmail } from './templates/ClientOnboardingConfirmationEmail';
+export { default as BillingDigestEmail } from './templates/BillingDigestEmail';
 
 // Template prop types
 export type { AdminNewLeadEmailProps } from './templates/AdminNewLeadEmail';
@@ -36,6 +37,12 @@ export type { PortalInvitationEmailProps } from './templates/PortalInvitationEma
 export type { ComplianceReminderEmailProps } from './templates/ComplianceReminderEmail';
 export type { AdminOnboardingNotificationEmailProps } from './templates/AdminOnboardingNotificationEmail';
 export type { ClientOnboardingConfirmationEmailProps } from './templates/ClientOnboardingConfirmationEmail';
+export type {
+  BillingDigestEmailProps,
+  BillingDigestDispatchItem,
+  BillingDigestSkippedItem,
+  BillingDigestUpcomingItem,
+} from './templates/BillingDigestEmail';
 
 // Central config
 export {
@@ -48,6 +55,8 @@ export {
   DEFAULT_REPLY_TO,
   DEFAULT_ADMIN_EMAIL,
   DEFAULT_WEBSITE_URL,
+  PRIMARY_DIGEST_EMAIL,
+  SECONDARY_DIGEST_CC,
   getResendApiKey,
   resolveDivisionAdminEmail,
   resolveDivisionSenderName,
