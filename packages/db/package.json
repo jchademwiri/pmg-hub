@@ -21,17 +21,17 @@
   "dependencies": {
     "@neondatabase/serverless": "^0.9.0",
     "@pmg/utils": "workspace:*",
-    "drizzle-orm": "^0.45.1",
+    "drizzle-orm": "^0.45.3",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@pmg/typescript-config": "workspace:*",
     "@types/node": "^20.10.0",
-    "@types/pg": "^8.20.0",
+    "@types/pg": "^8.23.1",
     "dotenv": "^16.4.5",
-    "drizzle-kit": "^0.31.10",
-    "fast-check": "^4.6.0",
-    "pg": "^8.20.0",
+    "drizzle-kit": "^0.31.11",
+    "fast-check": "^4.10.2",
+    "pg": "^8.23.0",
     "typescript": "^5.4.0",
     "vitest": "^3.2.7"
   }

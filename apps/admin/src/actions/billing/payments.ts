@@ -528,7 +528,6 @@ export async function recordClientPayment(
           createEmailClient,
           PaymentThankYouEmail,
           DEFAULT_REPLY_TO,
-          resolveDivisionAdminEmail,
           resolveDivisionSenderName,
           resolveDefaultFromEmail,
         } = await import('@pmg/emails');
@@ -548,12 +547,6 @@ export async function recordClientPayment(
             fromEmail = domain.startsWith('info.') ? `noreply@${domain}` : `noreply@info.${domain}`;
           }
         }
-
-        // CC the division admin — salesRepEmail takes priority, then brand default
-        const adminCc = resolveDivisionAdminEmail(
-          divRow?.name,
-          billingConfig?.salesRepEmail ?? null,
-        );
 
         const emailClient = createEmailClient({
           apiKey,
@@ -580,7 +573,6 @@ export async function recordClientPayment(
         const React = await import('react');
         await emailClient({
           to: client.email!,
-          cc: adminCc,
           subject: `Payment Receipt Confirmation: Thank you for your payment`,
           react: React.createElement(PaymentThankYouEmail, emailProps),
           replyTo: DEFAULT_REPLY_TO,

@@ -40,6 +40,7 @@ import {
   XCircle,
   ExternalLink,
   History,
+  Mail,
 } from 'lucide-react';
 import { formatZAR, fmtDateLong } from '@/lib/format';
 import {
@@ -49,6 +50,7 @@ import {
   getRecurringInvoiceDetail,
   setRecurringInvoiceStatus,
   triggerRecurringBillingRun,
+  generateAndSendBillingDigest,
   createRecurringExpense,
   updateRecurringExpense,
   deleteRecurringExpense,
@@ -317,6 +319,24 @@ export function RecurringClient({
         setActionMessage({
           type: res.emailFailureCount ? 'error' : 'success',
           text: `Successfully processed recurring run: ${res.generatedCount} invoice(s) generated & issued.${emailNote}`,
+        });
+      }
+    });
+  };
+
+  const handleTriggerDigest = () => {
+    setActionMessage(null);
+    startTransition(async () => {
+      const res = await generateAndSendBillingDigest(undefined, { force: true });
+      if (!res.success) {
+        setActionMessage({
+          type: 'error',
+          text: res.error || 'Failed to dispatch billing digest email.',
+        });
+      } else {
+        setActionMessage({
+          type: 'success',
+          text: `Daily billing digest successfully dispatched to info@playhousemedia.co.za (CC hello@jacobc.co.za). Dispatches: ${res.dispatchesCount}, Skipped: ${res.skippedCount}, Errors: ${res.errorsCount}.`,
         });
       }
     });
@@ -761,6 +781,17 @@ export function RecurringClient({
                 <RefreshCw className={`h-4 w-4 ${isPending ? 'animate-spin' : ''}`} />
                 Run Billing Now
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTriggerDigest}
+                disabled={isPending}
+                className="gap-1.5"
+                title="Send the daily 5:00 PM billing summary digest now to info@playhousemedia.co.za (CC hello@jacobc.co.za)"
+              >
+                <Mail className="h-4 w-4" />
+                Send Digest Now
+              </Button>
               <Button size="sm" onClick={handleOpenCreateInvoice} className="gap-1.5">
                 <Plus className="h-4 w-4" /> Add Retainer Schedule
               </Button>
@@ -772,16 +803,29 @@ export function RecurringClient({
             </Button>
           )}
           {activeTab === 'history' && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleTriggerRun}
-              disabled={isPending}
-              className="gap-1.5"
-            >
-              <RefreshCw className={`h-4 w-4 ${isPending ? 'animate-spin' : ''}`} />
-              Run Billing Now
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTriggerRun}
+                disabled={isPending}
+                className="gap-1.5"
+              >
+                <RefreshCw className={`h-4 w-4 ${isPending ? 'animate-spin' : ''}`} />
+                Run Billing Now
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTriggerDigest}
+                disabled={isPending}
+                className="gap-1.5"
+                title="Send the daily 5:00 PM billing summary digest now to info@playhousemedia.co.za (CC hello@jacobc.co.za)"
+              >
+                <Mail className="h-4 w-4" />
+                Send Digest Now
+              </Button>
+            </>
           )}
         </div>
       </div>

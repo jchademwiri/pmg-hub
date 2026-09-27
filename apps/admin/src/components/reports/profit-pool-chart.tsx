@@ -52,7 +52,7 @@ export function ProfitPoolChart({ data }: Props) {
               <ChartTooltip
                 content={
                   <ChartTooltipContent
-                    labelFormatter={(v) => fmtMonthYear(v)}
+                    labelFormatter={(v) => fmtMonthYear(typeof v === 'string' ? v : String(v ?? ''))}
                     formatter={(v) => formatZAR(Number(v))}
                   />
                 }
