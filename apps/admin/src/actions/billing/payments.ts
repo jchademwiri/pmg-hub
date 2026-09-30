@@ -1248,26 +1248,49 @@ export async function getClientCreditBalanceForEdit(
 }
 
 async function enrichIncomeWithAllocations(incomeData: any[]) {
-  const { getDb, paymentAllocations, sql } = await import('@pmg/db');
+  const { getDb, paymentAllocations, creditApplications, creditNotes, sql } =
+    await import('@pmg/db');
   const db = getDb();
   const incomeIds = incomeData.map((i) => i.id);
 
   let allocationSums: { incomeId: string; sum: string }[] = [];
+  let creditAppSums: { incomeId: string | null; sum: string }[] = [];
   if (incomeIds.length > 0) {
-    const { inArray } = await import('drizzle-orm');
-    allocationSums = await db
-      .select({
-        incomeId: paymentAllocations.incomeId,
-        sum: sql<string>`sum(${paymentAllocations.amount})`,
-      })
-      .from(paymentAllocations)
-      .where(inArray(paymentAllocations.incomeId, incomeIds))
-      .groupBy(paymentAllocations.incomeId);
+    const { inArray, and, eq } = await import('drizzle-orm');
+    [allocationSums, creditAppSums] = await Promise.all([
+      db
+        .select({
+          incomeId: paymentAllocations.incomeId,
+          sum: sql<string>`sum(${paymentAllocations.amount})`,
+        })
+        .from(paymentAllocations)
+        .where(inArray(paymentAllocations.incomeId, incomeIds))
+        .groupBy(paymentAllocations.incomeId),
+      db
+        .select({
+          incomeId: creditNotes.originalPaymentId,
+          sum: sql<string>`sum(${creditApplications.amount})`,
+        })
+        .from(creditApplications)
+        .innerJoin(creditNotes, eq(creditNotes.id, creditApplications.creditNoteId))
+        .where(
+          and(
+            inArray(creditNotes.originalPaymentId, incomeIds),
+            sql`${creditNotes.status} != 'void'`,
+          ),
+        )
+        .groupBy(creditNotes.originalPaymentId),
+    ]);
   }
 
   const allocMap = new Map<string, number>();
   for (const row of allocationSums) {
     allocMap.set(row.incomeId, parseFloat(row.sum));
+  }
+  for (const row of creditAppSums) {
+    if (row.incomeId) {
+      allocMap.set(row.incomeId, (allocMap.get(row.incomeId) ?? 0) + parseFloat(row.sum));
+    }
   }
 
   return incomeData.map((r) => {
