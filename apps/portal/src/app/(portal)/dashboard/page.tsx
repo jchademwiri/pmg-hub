@@ -5,6 +5,7 @@ import {
   invoices,
   quotations,
   paymentAllocations,
+  creditApplications,
   projectScheduleEntries,
   complianceDocuments,
 } from '@pmg/db';
@@ -76,26 +77,38 @@ export default async function DashboardPage() {
     .from(complianceDocuments)
     .where(eq(complianceDocuments.clientId, client.id));
 
-  // Fetch payment allocations for these invoices to calculate exact paid/due balances
+  // Fetch payment allocations and credit applications for these invoices to calculate exact paid/due balances
   const invoiceIds = allInvoices.map((inv) => inv.id);
-  const allocations =
+  const [allocations, creditApps] =
     invoiceIds.length > 0
-      ? await db
-          .select()
-          .from(paymentAllocations)
-          .where(inArray(paymentAllocations.invoiceId, invoiceIds))
-      : [];
+      ? await Promise.all([
+          db
+            .select()
+            .from(paymentAllocations)
+            .where(inArray(paymentAllocations.invoiceId, invoiceIds)),
+          db
+            .select()
+            .from(creditApplications)
+            .where(inArray(creditApplications.invoiceId, invoiceIds)),
+        ])
+      : [[], []];
 
   const allocationMap = new Map<string, number>();
   allocations.forEach((alloc) => {
     const current = allocationMap.get(alloc.invoiceId) || 0;
     allocationMap.set(alloc.invoiceId, current + parseFloat(alloc.amount));
   });
+  creditApps.forEach((c) => {
+    const current = allocationMap.get(c.invoiceId) || 0;
+    allocationMap.set(c.invoiceId, current + parseFloat(c.amount));
+  });
 
   // Calculations
   const totalInvoiced = allInvoices.reduce((sum, inv) => sum + parseFloat(inv.total), 0);
 
-  const paidToDate = allocations.reduce((sum, alloc) => sum + parseFloat(alloc.amount), 0);
+  const paidToDate =
+    allocations.reduce((sum, alloc) => sum + parseFloat(alloc.amount), 0) +
+    creditApps.reduce((sum, c) => sum + parseFloat(c.amount), 0);
 
   const outstandingBalance = allInvoices
     .filter((inv) => ['issued', 'partially_paid', 'overdue'].includes(inv.status))

@@ -16,6 +16,8 @@ import {
   getDb,
   paymentAllocations,
   income,
+  creditApplications,
+  creditNotes,
   sql,
   desc,
   eq,
@@ -141,21 +143,60 @@ export default async function InvoiceDetailPage({ params }: Props) {
     }
   }
 
-  // Fetch payment allocations for this specific invoice
+  // Fetch payment allocations (cash income) and credit applications for this invoice
   const db = getDb();
-  const allocations = await db
-    .select({
-      id: paymentAllocations.id,
-      amount: paymentAllocations.amount,
-      date: sql<string>`${income.date}::text`,
-      description: income.description,
-    })
-    .from(paymentAllocations)
-    .innerJoin(income, eq(income.id, paymentAllocations.incomeId))
-    .where(eq(paymentAllocations.invoiceId, id))
-    .orderBy(desc(income.date));
+  const [allocations, creditApps] = await Promise.all([
+    db
+      .select({
+        id: paymentAllocations.id,
+        amount: paymentAllocations.amount,
+        date: sql<string>`${income.date}::text`,
+        description: income.description,
+      })
+      .from(paymentAllocations)
+      .innerJoin(income, eq(income.id, paymentAllocations.incomeId))
+      .where(eq(paymentAllocations.invoiceId, id))
+      .orderBy(desc(income.date)),
+    db
+      .select({
+        id: creditApplications.id,
+        amount: creditApplications.amount,
+        date: sql<string>`${creditApplications.appliedAt}::date::text`,
+        appliedAt: creditApplications.appliedAt,
+        documentNumber: creditNotes.documentNumber,
+        reason: creditNotes.reason,
+      })
+      .from(creditApplications)
+      .innerJoin(creditNotes, eq(creditNotes.id, creditApplications.creditNoteId))
+      .where(eq(creditApplications.invoiceId, id))
+      .orderBy(desc(creditApplications.appliedAt)),
+  ]);
 
-  const totalAllocated = allocations.reduce((sum, a) => sum + parseFloat(a.amount), 0);
+  const totalCashAllocated = allocations.reduce((sum, a) => sum + parseFloat(a.amount), 0);
+  const totalCreditAllocated = creditApps.reduce((sum, c) => sum + parseFloat(c.amount), 0);
+  const totalAllocated = totalCashAllocated + totalCreditAllocated;
+
+  const paymentHistory = [
+    ...allocations.map((a) => ({
+      id: a.id,
+      amount: parseFloat(a.amount),
+      date: a.date,
+      rawDate: new Date(a.date),
+      description: a.description || 'Payment Received',
+      type: 'payment' as const,
+      documentNumber: undefined as string | undefined,
+    })),
+    ...creditApps.map((c) => ({
+      id: c.id,
+      amount: parseFloat(c.amount),
+      date: c.date,
+      rawDate: new Date(c.appliedAt),
+      description: `Credit Applied (${c.documentNumber}${c.reason ? ` - ${c.reason}` : ''})`,
+      type: 'credit' as const,
+      documentNumber: c.documentNumber,
+    })),
+  ].sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime());
+
   const writeOffAmt = parseFloat(invoice.writeOffAmount ?? '0');
   const isWrittenOff = invoice.status === 'written_off' || writeOffAmt > 0;
   const effectiveWriteOff = isWrittenOff
@@ -341,31 +382,45 @@ export default async function InvoiceDetailPage({ params }: Props) {
             </Card>
           )}
 
-          {/* Payment History Log */}
-          {allocations.length > 0 && (
+          {/* Payment & Credit History Log */}
+          {paymentHistory.length > 0 && (
             <Card size="sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">Payment History</CardTitle>
+                <CardTitle className="text-sm font-semibold">Payment & Credit History</CardTitle>
               </CardHeader>
               <CardContent className="p-0 px-6 pb-4">
                 <div className="flex flex-col divide-y divide-border text-xs">
-                  {allocations.map((a, index) => {
+                  {paymentHistory.map((item, index) => {
                     const totalInvoiceAmt = parseFloat(invoice.total);
-                    const remainingAllocations = allocations.slice(index);
-                    const totalPaidUpToThis = remainingAllocations.reduce(
-                      (sum, item) => sum + parseFloat(item.amount),
+                    const remainingItems = paymentHistory.slice(index);
+                    const totalPaidUpToThis = remainingItems.reduce(
+                      (sum, it) => sum + it.amount,
                       0,
                     );
                     const remBalAfter = Math.max(0, totalInvoiceAmt - totalPaidUpToThis);
 
                     return (
-                      <div key={a.id} className="flex justify-between py-2 items-center gap-2">
+                      <div key={item.id} className="flex justify-between py-2 items-center gap-2">
                         <div className="flex flex-col gap-0.5 min-w-0">
-                          <span className="font-semibold truncate text-foreground">
-                            {a.description}
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-semibold truncate text-foreground">
+                              {item.description}
+                            </span>
+                            {item.type === 'credit' ? (
+                              <Link
+                                href="/billing/credits"
+                                className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-900 transition-colors"
+                              >
+                                Credit Note
+                              </Link>
+                            ) : (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300">
+                                Payment
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-1.5 text-muted-foreground text-[10px]">
-                            <span>{fmtDate(a.date)}</span>
+                            <span>{fmtDate(item.date)}</span>
                             <span>•</span>
                             <span className="font-medium text-muted-foreground">
                               Bal: {formatZAR(remBalAfter)}
@@ -373,7 +428,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
                           </div>
                         </div>
                         <span className="font-bold text-emerald-600 shrink-0 tabular-nums">
-                          +{formatZAR(parseFloat(a.amount))}
+                          +{formatZAR(item.amount)}
                         </span>
                       </div>
                     );
