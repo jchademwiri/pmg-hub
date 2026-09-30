@@ -25,12 +25,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  getClientOutstandingInvoices,
-  getClientCreditBalance,
-  recordClientPayment,
-} from '@/app/actions/billing-payments';
-import { applyCreditToInvoices } from '@/app/actions/credit-management';
+import { getClientOutstandingInvoices, recordClientPayment } from '@/app/actions/billing-payments';
+import { applyCreditToInvoices, getClientCreditBalanceV2 } from '@/app/actions/credit-management';
 
 export interface PaymentFormClientProps {
   divisions: { id: string; name: string }[];
@@ -107,7 +103,7 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
 
     setIsLoadingClientData(true);
     const p1 = getClientOutstandingInvoices(val);
-    const p2 = getClientCreditBalance(val);
+    const p2 = getClientCreditBalanceV2(val);
 
     Promise.all([p1, p2])
       .then(([invoicesList, credit]) => {
@@ -134,7 +130,7 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
     let mounted = true;
     Promise.all([
       getClientOutstandingInvoices(queryClientId),
-      getClientCreditBalance(queryClientId),
+      getClientCreditBalanceV2(queryClientId),
     ])
       .then(([invoicesList, credit]) => {
         if (!mounted) return;

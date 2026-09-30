@@ -9,6 +9,7 @@ import {
   clients,
   paymentAllocations,
   creditApplications,
+  creditNotes,
   eq,
   and,
   sql,
@@ -1222,11 +1223,47 @@ export async function getClientCreditBalanceForEdit(
     await getSessionOrRedirect();
     const db = getDb();
 
+    // 1. Sum active credit notes that did not originate from this payment
+    const [creditAgg] = await db
+      .select({
+        total: sql<string>`coalesce(sum(${creditNotes.amountRemaining}), 0)`,
+      })
+      .from(creditNotes)
+      .where(
+        and(
+          eq(creditNotes.clientId, clientId),
+          sql`${creditNotes.status} IN ('active', 'partially_applied')`,
+          sql`${creditNotes.amountRemaining} > 0`,
+          sql`(${creditNotes.originalPaymentId} IS NULL OR ${creditNotes.originalPaymentId} != ${currentPaymentId})`,
+        ),
+      );
+
+    const creditNoteBalance = parseFloat(creditAgg?.total ?? '0');
+
+    // 2. Fetch payments that already have an associated credit note
+    const paymentsWithCreditNotes = await db
+      .select({ paymentId: creditNotes.originalPaymentId })
+      .from(creditNotes)
+      .where(
+        and(eq(creditNotes.clientId, clientId), sql`${creditNotes.originalPaymentId} IS NOT NULL`),
+      );
+
+    const excludedPaymentIds = Array.from(
+      new Set([
+        currentPaymentId,
+        ...paymentsWithCreditNotes
+          .map((p) => p.paymentId)
+          .filter((id): id is string => Boolean(id)),
+      ]),
+    );
+
+    // 3. Legacy income excluding current payment and payments tied to credit notes
     const [incomeAgg] = await db
       .select({ totalPaid: sql<string>`coalesce(sum(${income.amount}), 0)` })
       .from(income)
-      .where(and(eq(income.clientId, clientId), sql`${income.id} != ${currentPaymentId}`));
+      .where(and(eq(income.clientId, clientId), sql`${income.id} NOT IN ${excludedPaymentIds}`));
 
+    // 4. Legacy allocations excluding current payment and credit-note-tied payments
     const [allocationAgg] = await db
       .select({ totalAllocated: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
       .from(paymentAllocations)
@@ -1234,14 +1271,15 @@ export async function getClientCreditBalanceForEdit(
       .where(
         and(
           eq(invoices.clientId, clientId),
-          sql`${paymentAllocations.incomeId} != ${currentPaymentId}`,
+          sql`${paymentAllocations.incomeId} NOT IN ${excludedPaymentIds}`,
         ),
       );
 
     const totalPaid = parseFloat(incomeAgg?.totalPaid ?? '0');
     const totalAllocated = parseFloat(allocationAgg?.totalAllocated ?? '0');
+    const legacyBalance = Math.max(0, totalPaid - totalAllocated);
 
-    return Math.max(0, totalPaid - totalAllocated);
+    return Number((creditNoteBalance + legacyBalance).toFixed(2));
   } catch (err) {
     console.error('Failed to calculate client credit balance for edit:', err);
     return 0;

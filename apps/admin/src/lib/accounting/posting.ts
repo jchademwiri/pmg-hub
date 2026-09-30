@@ -150,7 +150,7 @@ export async function postPaymentJournalEntries(data: {
     if (amount <= 0) return { error: 'Payment amount must be positive.' };
 
     const period = date.slice(0, 7);
-    const p = await ensureOpenPeriod(period);
+    const p = await ensureOpenPeriod(period, data.tx);
     if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
     const db = data.tx || getDb();
@@ -293,7 +293,9 @@ export async function postPaymentJournalEntries(data: {
     return { entryIds };
   } catch (err) {
     console.error('Failed to auto-post payment journal entries:', err);
-    return { error: 'Journal auto-post failed. Please post manually in Accounting → Journals.' };
+    return {
+      error: `Journal auto-post failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
   }
 }
 
@@ -434,12 +436,12 @@ export async function postInvoiceIssueJournalEntry(data: {
     if (amount <= 0) return { error: 'Invoice amount must be positive.' };
 
     const period = date.slice(0, 7);
-    let p = await ensureOpenPeriod(period);
+    let p = await ensureOpenPeriod(period, data.tx);
     if (p.status === 'locked')
       return { error: `Accounting period ${period} is permanently locked.` };
     if (p.status === 'closed') {
-      await reopenPeriod(period);
-      p = await ensureOpenPeriod(period);
+      await reopenPeriod(period, data.tx);
+      p = await ensureOpenPeriod(period, data.tx);
     }
 
     const db = data.tx || getDb();
@@ -542,7 +544,9 @@ export async function postInvoiceIssueJournalEntry(data: {
     return { entryId };
   } catch (err) {
     console.error('Failed to auto-post invoice issue journal entry:', err);
-    return { error: 'Journal auto-post failed. Please post manually in Accounting → Journals.' };
+    return {
+      error: `Journal auto-post failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
   }
 }
 
@@ -562,7 +566,7 @@ export async function postInvoiceWriteOffJournalEntry(data: {
     if (amount <= 0) return { error: 'Write-off amount must be positive.' };
 
     const period = date.slice(0, 7);
-    const p = await ensureOpenPeriod(period);
+    const p = await ensureOpenPeriod(period, data.tx);
     if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
     const db = data.tx || getDb();
@@ -641,7 +645,9 @@ export async function postInvoiceWriteOffJournalEntry(data: {
     return { entryId };
   } catch (err) {
     console.error('Failed to auto-post write-off entry:', err);
-    return { error: 'Journal auto-post failed.' };
+    return {
+      error: `Journal auto-post failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
   }
 }
 
@@ -662,7 +668,7 @@ export async function postBadDebtRecoveryJournalEntry(data: {
     if (amount <= 0) return { error: 'Recovery amount must be positive.' };
 
     const period = date.slice(0, 7);
-    const p = await ensureOpenPeriod(period);
+    const p = await ensureOpenPeriod(period, data.tx);
     if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
     const db = data.tx || getDb();
@@ -724,7 +730,9 @@ export async function postBadDebtRecoveryJournalEntry(data: {
     return { entryId };
   } catch (err) {
     console.error('Failed to auto-post recovery entry:', err);
-    return { error: 'Journal auto-post failed.' };
+    return {
+      error: `Journal auto-post failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
   }
 }
 
@@ -906,6 +914,7 @@ export async function postExpenseJournalEntry(data: {
   description?: string;
   sourceDocumentNumber?: string;
   divisionId: string;
+  tx?: any;
 }): Promise<{ error?: string; entryId?: string }> {
   try {
     const { expenseId, amount, date, category, description, divisionId } = data;
@@ -913,10 +922,10 @@ export async function postExpenseJournalEntry(data: {
     if (amount <= 0) return { error: 'Expense amount must be positive.' };
 
     const period = date.slice(0, 7);
-    const p = await ensureOpenPeriod(period);
+    const p = await ensureOpenPeriod(period, data.tx);
     if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
-    const db = getDb();
+    const db = data.tx || getDb();
     const expenseCode = findExpenseAccountCode(category);
     const accountMap = await getAccountsByCode([BANK_ACCOUNT_CODE, expenseCode], db);
 
@@ -932,8 +941,7 @@ export async function postExpenseJournalEntry(data: {
     const entryId = randomUUID();
     const desc = description || category;
 
-    // Atomic transaction: entry + 2 lines
-    await db.transaction(async (tx) => {
+    const runInsideTx = async (tx: any) => {
       const entryNumber = await getNextJournalEntryNumber(tx, date);
       await tx.insert(journalEntries).values({
         id: entryId,
@@ -967,12 +975,20 @@ export async function postExpenseJournalEntry(data: {
         credit: String(amount),
         description: desc,
       });
-    });
+    };
+
+    if (data.tx) {
+      await runInsideTx(data.tx);
+    } else {
+      await db.transaction(runInsideTx);
+    }
 
     return { entryId };
   } catch (err) {
     console.error('Failed to auto-post expense journal entry:', err);
-    return { error: 'Journal auto-post failed. Please post manually in Accounting → Journals.' };
+    return {
+      error: `Journal auto-post failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
   }
 }
 

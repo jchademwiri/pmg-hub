@@ -17,6 +17,7 @@ function chain(value: any): any {
     from: () => chain(value),
     where: () => chain(value),
     innerJoin: () => chain(value),
+    leftJoin: () => chain(value),
     orderBy: () => chain(value),
     limit: () => chain(value),
     for: () => chain(value),
