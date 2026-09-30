@@ -490,7 +490,8 @@ export async function getNextJournalEntryNumber(
     RETURNING last_sequence
   `);
 
-  const sequence = (result.rows[0] as { last_sequence: number }).last_sequence;
+  const rows = (result as any)?.rows ?? (Array.isArray(result) ? result : []);
+  const sequence = (rows[0] as { last_sequence: number } | undefined)?.last_sequence ?? 1;
   return `${prefix}${String(sequence).padStart(4, '0')}`;
 }
 
@@ -1402,8 +1403,9 @@ export async function getAccountingOverview(): Promise<AccountingOverview> {
 /**
  * Creates a new open period or returns the existing one.
  */
-export async function ensureOpenPeriod(period: string) {
-  const [existing] = await db
+export async function ensureOpenPeriod(period: string, tx?: any) {
+  const client = tx || db;
+  const [existing] = await client
     .select()
     .from(accountingPeriods)
     .where(eq(accountingPeriods.period, period))
@@ -1411,10 +1413,20 @@ export async function ensureOpenPeriod(period: string) {
 
   if (existing) return existing;
 
-  const [created] = await db
+  const [created] = await client
     .insert(accountingPeriods)
     .values({ period, status: 'open' })
+    .onConflictDoNothing()
     .returning();
+
+  if (!created) {
+    const [fallback] = await client
+      .select()
+      .from(accountingPeriods)
+      .where(eq(accountingPeriods.period, period))
+      .limit(1);
+    return fallback;
+  }
 
   return created;
 }
@@ -1422,9 +1434,10 @@ export async function ensureOpenPeriod(period: string) {
 /**
  * Closes a period (prevents new journal entries).
  */
-export async function closePeriod(period: string, closedBy: string) {
-  await ensureOpenPeriod(period);
-  await db
+export async function closePeriod(period: string, closedBy: string, tx?: any) {
+  const client = tx || db;
+  await ensureOpenPeriod(period, client);
+  await client
     .update(accountingPeriods)
     .set({
       status: 'closed',
@@ -1438,8 +1451,9 @@ export async function closePeriod(period: string, closedBy: string) {
 /**
  * Locks a period permanently (cannot be reopened).
  */
-export async function lockPeriod(period: string, lockedBy: string) {
-  await db
+export async function lockPeriod(period: string, lockedBy: string, tx?: any) {
+  const client = tx || db;
+  await client
     .update(accountingPeriods)
     .set({
       status: 'locked',
@@ -1453,8 +1467,9 @@ export async function lockPeriod(period: string, lockedBy: string) {
 /**
  * Reopens a closed period (not locked).
  */
-export async function reopenPeriod(period: string) {
-  await db
+export async function reopenPeriod(period: string, tx?: any) {
+  const client = tx || db;
+  await client
     .update(accountingPeriods)
     .set({
       status: 'open',

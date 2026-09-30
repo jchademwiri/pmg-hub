@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { formatZAR, getEndOfMonth } from '@/lib/format';
-import { getClientCreditBalance } from '@/app/actions/billing-payments';
+import { getClientCreditBalanceV2 } from '@/app/actions/credit-management';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldLabel } from '@/components/ui/field';
@@ -187,7 +187,7 @@ export function InvoiceFormClient({
     if (!val) {
       setCreditBalance(0);
     } else {
-      getClientCreditBalance(val)
+      getClientCreditBalanceV2(val)
         .then(setCreditBalance)
         .catch((err) => console.error('Failed to load client credit balance:', err));
     }
@@ -196,7 +196,7 @@ export function InvoiceFormClient({
   // Load initial client credit balance in edit mode
   useEffect(() => {
     if (initialData?.clientId) {
-      getClientCreditBalance(initialData.clientId)
+      getClientCreditBalanceV2(initialData.clientId)
         .then(setCreditBalance)
         .catch((err) => console.error('Failed to load client credit balance:', err));
     }

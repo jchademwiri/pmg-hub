@@ -21,11 +21,11 @@ export function getDb() {
 
     const pool = new Pool({
       connectionString: env.DATABASE_URL,
-      // In serverless runtimes (Vercel), constrain connections to 1 and reduce
-      // idle timeout so the function instance can freeze promptly without lingering.
-      max: isServerless ? 1 : 10,
+      // In serverless runtimes (Vercel), allow up to 5 concurrent connections to prevent
+      // pool starvation/deadlocks when concurrent operations occur during transactions.
+      max: isServerless ? 5 : 10,
       idleTimeoutMillis: isServerless ? 3_000 : 30_000,
-      connectionTimeoutMillis: 5_000,
+      connectionTimeoutMillis: 10_000,
     });
     _db = drizzle({ client: pool, schema });
   }
