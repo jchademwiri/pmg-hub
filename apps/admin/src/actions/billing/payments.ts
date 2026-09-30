@@ -1358,19 +1358,90 @@ async function enrichIncomeWithAllocations(incomeData: any[]) {
   });
 }
 
+export async function getCreditApplicationsForPeriod(params: {
+  month?: string; // YYYY-MM
+  year?: number;
+  divisionId?: string;
+}) {
+  const { getDb, creditApplications, creditNotes, invoices, clients, divisions, eq, sql, and } =
+    await import('@pmg/db');
+  const db = getDb();
+
+  const conditions = [sql`${creditNotes.status} != 'void'`];
+  if (params.month) {
+    conditions.push(sql`TO_CHAR(${creditApplications.appliedAt}, 'YYYY-MM') = ${params.month}`);
+  }
+  if (params.year) {
+    conditions.push(sql`EXTRACT(YEAR FROM ${creditApplications.appliedAt}) = ${params.year}`);
+  }
+  if (params.divisionId) {
+    conditions.push(eq(invoices.divisionId, params.divisionId));
+  }
+
+  const rows = await db
+    .select({
+      id: creditApplications.id,
+      amount: creditApplications.amount,
+      appliedAt: creditApplications.appliedAt,
+      creditNoteId: creditNotes.id,
+      creditNoteNumber: creditNotes.documentNumber,
+      originalPaymentId: creditNotes.originalPaymentId,
+      invoiceId: invoices.id,
+      invoiceNumber: invoices.documentNumber,
+      clientId: clients.id,
+      clientName: clients.name,
+      divisionId: divisions.id,
+      divisionName: divisions.name,
+    })
+    .from(creditApplications)
+    .innerJoin(creditNotes, eq(creditNotes.id, creditApplications.creditNoteId))
+    .innerJoin(invoices, eq(invoices.id, creditApplications.invoiceId))
+    .leftJoin(clients, eq(clients.id, invoices.clientId))
+    .innerJoin(divisions, eq(divisions.id, invoices.divisionId))
+    .where(and(...conditions))
+    .orderBy(sql`${creditApplications.appliedAt} DESC`);
+
+  return rows.map((ca) => ({
+    id: ca.id,
+    date: new Date(ca.appliedAt).toISOString().split('T')[0]!,
+    divisionId: ca.divisionId,
+    divisionName: ca.divisionName,
+    clientName: ca.clientName ?? 'General / Non-Client',
+    clientId: ca.clientId,
+    description: `Credit Note ${ca.creditNoteNumber} applied to ${ca.invoiceNumber}`,
+    amount: parseFloat(ca.amount),
+    allocated: parseFloat(ca.amount),
+    credit: 0,
+    type: 'credit_application' as const,
+    method: 'Credit Note',
+    invoiceId: ca.invoiceId,
+    creditNoteId: ca.creditNoteId,
+    originalPaymentId: ca.originalPaymentId,
+    allocations: [
+      {
+        invoiceNumber: ca.invoiceNumber,
+        creditNoteNumber: ca.creditNoteNumber,
+      },
+    ],
+  }));
+}
+
 export async function fetchPaymentsByMonth(year: number, month: number, divisionId?: string) {
   const { getAllIncome } = await import('@pmg/db');
   const { getClosedPeriodsFromDates } = await import('@/lib/date-rules');
 
+  const monthStr = `${year}-${month.toString().padStart(2, '0')}`;
   const incomeResult = await getAllIncome(
-    { year, month: `${year}-${month.toString().padStart(2, '0')}`, divisionId },
+    { year, month: monthStr, divisionId },
     { page: 1, pageSize: 1000 },
   );
 
   const payments = await enrichIncomeWithAllocations(incomeResult.data);
-  const closedPeriods = await getClosedPeriodsFromDates(payments.map((p) => p.date));
+  const creditEntries = await getCreditApplicationsForPeriod({ month: monthStr, divisionId });
+  const allPayments = [...payments, ...creditEntries].sort((a, b) => b.date.localeCompare(a.date));
+  const closedPeriods = await getClosedPeriodsFromDates(allPayments.map((p) => p.date));
 
-  return { data: payments, closedPeriods };
+  return { data: allPayments, closedPeriods };
 }
 
 export async function fetchPaymentsByYear(year: number, divisionId?: string) {
@@ -1380,7 +1451,9 @@ export async function fetchPaymentsByYear(year: number, divisionId?: string) {
   const incomeResult = await getAllIncome({ year, divisionId }, { page: 1, pageSize: 5000 });
 
   const payments = await enrichIncomeWithAllocations(incomeResult.data);
-  const closedPeriods = await getClosedPeriodsFromDates(payments.map((p) => p.date));
+  const creditEntries = await getCreditApplicationsForPeriod({ year, divisionId });
+  const allPayments = [...payments, ...creditEntries].sort((a, b) => b.date.localeCompare(a.date));
+  const closedPeriods = await getClosedPeriodsFromDates(allPayments.map((p) => p.date));
 
-  return { data: payments, closedPeriods };
+  return { data: allPayments, closedPeriods };
 }

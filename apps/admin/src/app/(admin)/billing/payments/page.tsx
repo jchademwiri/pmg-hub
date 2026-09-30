@@ -20,7 +20,11 @@ import {
 import { formatZAR } from '@/lib/format';
 import { FilterBar } from '@/components/billing/filter-bar';
 import { getClosedPeriodsFromDates } from '@/lib/date-rules';
-import { updateClientPayment, deleteClientPayment } from '@/app/actions/billing-payments';
+import {
+  updateClientPayment,
+  deleteClientPayment,
+  getCreditApplicationsForPeriod,
+} from '@/app/actions/billing-payments';
 import { PaymentsTable } from './payments-table';
 import { LazyPaymentsTable } from './lazy-payments-table';
 import {
@@ -85,6 +89,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
     creditAllocs,
     divisions,
     clients,
+    creditEntries,
   ] = await Promise.all([
     getAllIncome({ divisionId, month: currentMonthGroup.value }, { page: 1, pageSize: 5000 }),
     db
@@ -122,6 +127,10 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
       .where(sql`${creditNotes.originalPaymentId} IS NOT NULL AND ${creditNotes.status} != 'void'`),
     getAllDivisions(),
     getAllClients(),
+    getCreditApplicationsForPeriod({
+      month: currentMonthGroup.value,
+      divisionId,
+    }),
   ]);
 
   // 3. Map allocations for fast lookup
@@ -170,11 +179,13 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
       amount,
       allocated,
       credit,
+      type: 'payment' as const,
       allocations: invoiceAllocMap.get(r.id) ?? [],
     };
   });
 
-  const closedPeriods = await getClosedPeriodsFromDates(payments.map((p) => p.date));
+  const allPayments = [...payments, ...creditEntries].sort((a, b) => b.date.localeCompare(a.date));
+  const closedPeriods = await getClosedPeriodsFromDates(allPayments.map((p) => p.date));
 
   // Calculate totals for stats
   const totalReceived = incomeResult.sum;
@@ -342,7 +353,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
               <AccordionContent className="pt-2">
                 {isCurrent ? (
                   <PaymentsTable
-                    entries={payments}
+                    entries={allPayments}
                     closedPeriods={closedPeriods}
                     deleteAction={deleteClientPayment}
                   />
