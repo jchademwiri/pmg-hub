@@ -28,6 +28,10 @@ export interface PaymentEntry {
   amount: number;
   allocated: number;
   credit: number;
+  allocations?: {
+    invoiceNumber: string;
+    creditNoteNumber?: string;
+  }[];
 }
 
 interface PaymentsTableProps {
@@ -97,8 +101,25 @@ function PaymentRow({
           {entry.divisionName}
         </span>
       </TableCell>
-      <TableCell className="truncate text-xs py-3 px-3 overflow-hidden" title={entry.description}>
-        <span className="truncate block text-muted-foreground">{entry.description || '-'}</span>
+      <TableCell className="text-xs py-3 px-3 overflow-hidden">
+        <div className="flex flex-col gap-1 min-w-0">
+          <span className="truncate block text-muted-foreground" title={entry.description}>
+            {entry.description || '-'}
+          </span>
+          {entry.allocations && entry.allocations.length > 0 && (
+            <div className="flex flex-wrap gap-1 items-center">
+              {entry.allocations.map((a, i) => (
+                <span
+                  key={i}
+                  className="inline-flex items-center text-[10px] font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded"
+                >
+                  {a.invoiceNumber}
+                  {a.creditNoteNumber ? ` (via ${a.creditNoteNumber})` : ''}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </TableCell>
       <TableCell className="text-right tabular-nums font-semibold text-xs py-3 px-3 text-emerald-600 whitespace-nowrap overflow-hidden">
         {formatZAR(entry.amount)}
@@ -211,6 +232,20 @@ function MobilePaymentCard({
       {entry.description && (
         <div className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded border border-border/40 line-clamp-2">
           {entry.description}
+        </div>
+      )}
+
+      {entry.allocations && entry.allocations.length > 0 && (
+        <div className="flex flex-wrap gap-1 items-center">
+          {entry.allocations.map((a, i) => (
+            <span
+              key={i}
+              className="inline-flex items-center text-[10px] font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded"
+            >
+              {a.invoiceNumber}
+              {a.creditNoteNumber ? ` (via ${a.creditNoteNumber})` : ''}
+            </span>
+          ))}
         </div>
       )}
 

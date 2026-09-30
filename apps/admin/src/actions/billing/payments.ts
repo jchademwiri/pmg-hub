@@ -1248,16 +1248,20 @@ export async function getClientCreditBalanceForEdit(
 }
 
 async function enrichIncomeWithAllocations(incomeData: any[]) {
-  const { getDb, paymentAllocations, creditApplications, creditNotes, sql } =
+  const { getDb, paymentAllocations, creditApplications, creditNotes, invoices, sql } =
     await import('@pmg/db');
   const db = getDb();
   const incomeIds = incomeData.map((i) => i.id);
 
   let allocationSums: { incomeId: string; sum: string }[] = [];
   let creditAppSums: { incomeId: string | null; sum: string }[] = [];
+  let directAllocs: { incomeId: string; invoiceNumber: string }[] = [];
+  let creditAllocs: { incomeId: string | null; invoiceNumber: string; creditNoteNumber: string }[] =
+    [];
+
   if (incomeIds.length > 0) {
     const { inArray, and, eq } = await import('drizzle-orm');
-    [allocationSums, creditAppSums] = await Promise.all([
+    [allocationSums, creditAppSums, directAllocs, creditAllocs] = await Promise.all([
       db
         .select({
           incomeId: paymentAllocations.incomeId,
@@ -1280,6 +1284,29 @@ async function enrichIncomeWithAllocations(incomeData: any[]) {
           ),
         )
         .groupBy(creditNotes.originalPaymentId),
+      db
+        .select({
+          incomeId: paymentAllocations.incomeId,
+          invoiceNumber: invoices.documentNumber,
+        })
+        .from(paymentAllocations)
+        .innerJoin(invoices, eq(invoices.id, paymentAllocations.invoiceId))
+        .where(inArray(paymentAllocations.incomeId, incomeIds)),
+      db
+        .select({
+          incomeId: creditNotes.originalPaymentId,
+          invoiceNumber: invoices.documentNumber,
+          creditNoteNumber: creditNotes.documentNumber,
+        })
+        .from(creditApplications)
+        .innerJoin(creditNotes, eq(creditNotes.id, creditApplications.creditNoteId))
+        .innerJoin(invoices, eq(invoices.id, creditApplications.invoiceId))
+        .where(
+          and(
+            inArray(creditNotes.originalPaymentId, incomeIds),
+            sql`${creditNotes.status} != 'void'`,
+          ),
+        ),
     ]);
   }
 
@@ -1290,6 +1317,25 @@ async function enrichIncomeWithAllocations(incomeData: any[]) {
   for (const row of creditAppSums) {
     if (row.incomeId) {
       allocMap.set(row.incomeId, (allocMap.get(row.incomeId) ?? 0) + parseFloat(row.sum));
+    }
+  }
+
+  const invoiceAllocMap = new Map<string, { invoiceNumber: string; creditNoteNumber?: string }[]>();
+  for (const row of directAllocs) {
+    if (!invoiceAllocMap.has(row.incomeId)) {
+      invoiceAllocMap.set(row.incomeId, []);
+    }
+    invoiceAllocMap.get(row.incomeId)!.push({ invoiceNumber: row.invoiceNumber });
+  }
+  for (const row of creditAllocs) {
+    if (row.incomeId) {
+      if (!invoiceAllocMap.has(row.incomeId)) {
+        invoiceAllocMap.set(row.incomeId, []);
+      }
+      invoiceAllocMap.get(row.incomeId)!.push({
+        invoiceNumber: row.invoiceNumber,
+        creditNoteNumber: row.creditNoteNumber,
+      });
     }
   }
 
@@ -1307,6 +1353,7 @@ async function enrichIncomeWithAllocations(incomeData: any[]) {
       amount,
       allocated,
       credit: Math.max(0, amount - allocated),
+      allocations: invoiceAllocMap.get(r.id) ?? [],
     };
   });
 }
