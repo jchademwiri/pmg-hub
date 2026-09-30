@@ -28,6 +28,11 @@ export interface PaymentEntry {
   amount: number;
   allocated: number;
   credit: number;
+  type?: 'payment' | 'credit_application';
+  method?: string;
+  invoiceId?: string;
+  creditNoteId?: string;
+  originalPaymentId?: string | null;
   allocations?: {
     invoiceNumber: string;
     creditNoteNumber?: string;
@@ -58,6 +63,11 @@ function PaymentRow({
     e.stopPropagation();
     if (isDeleting) return;
 
+    if (entry.type === 'credit_application') {
+      toast.info('Credit applications can be managed directly on the Invoice or Credit Note.');
+      return;
+    }
+
     const confirmed = await confirm({
       title: 'Delete payment record?',
       description: 'This action cannot be undone and will revert all allocations to invoices.',
@@ -82,7 +92,13 @@ function PaymentRow({
   return (
     <TableRow
       className="cursor-pointer hover:bg-muted/40 transition-colors border-b border-border"
-      onClick={() => router.push(`/billing/payments/${entry.id}`)}
+      onClick={() => {
+        if (entry.type === 'credit_application' && entry.invoiceId) {
+          router.push(`/billing/invoices/${entry.invoiceId}`);
+        } else {
+          router.push(`/billing/payments/${entry.id}`);
+        }
+      }}
     >
       <TableCell className="font-medium text-xs py-3 px-3 whitespace-nowrap overflow-hidden">
         <div className="flex items-center gap-1.5 min-w-0">
@@ -103,9 +119,16 @@ function PaymentRow({
       </TableCell>
       <TableCell className="text-xs py-3 px-3 overflow-hidden">
         <div className="flex flex-col gap-1 min-w-0">
-          <span className="truncate block text-muted-foreground" title={entry.description}>
-            {entry.description || '-'}
-          </span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {entry.type === 'credit_application' && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-300/40 shrink-0">
+                Credit Applied
+              </span>
+            )}
+            <span className="truncate text-muted-foreground" title={entry.description}>
+              {entry.description || '-'}
+            </span>
+          </div>
           {entry.allocations && entry.allocations.length > 0 && (
             <div className="flex flex-wrap gap-1 items-center">
               {entry.allocations.map((a, i) => (
@@ -135,7 +158,14 @@ function PaymentRow({
       </TableCell>
       <TableCell className="py-3 px-3 w-14 overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-1 justify-end">
-          {isLocked ? (
+          {entry.type === 'credit_application' ? (
+            <span
+              className="text-[10px] text-muted-foreground/60 select-none"
+              title="Applied via Credit Note"
+            >
+              Credit
+            </span>
+          ) : isLocked ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon-sm" disabled>
@@ -204,11 +234,24 @@ function MobilePaymentCard({
   return (
     <div
       className="bg-card border rounded-lg p-4 flex flex-col gap-3 cursor-pointer hover:border-primary/50 transition-colors shadow-sm"
-      onClick={() => router.push(`/billing/payments/${entry.id}`)}
+      onClick={() => {
+        if (entry.type === 'credit_application' && entry.invoiceId) {
+          router.push(`/billing/invoices/${entry.invoiceId}`);
+        } else {
+          router.push(`/billing/payments/${entry.id}`);
+        }
+      }}
     >
       <div className="flex justify-between items-start gap-3">
         <div className="flex flex-col gap-1 min-w-0">
-          <div className="font-semibold text-sm truncate">{entry.clientName}</div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="font-semibold text-sm truncate">{entry.clientName}</span>
+            {entry.type === 'credit_application' && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-300/40 shrink-0">
+                Credit Applied
+              </span>
+            )}
+          </div>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
             <span className="flex items-center gap-1 whitespace-nowrap">
               <Calendar className="size-3" /> {fmtDate(entry.date)}
@@ -253,7 +296,14 @@ function MobilePaymentCard({
         className="flex justify-end pt-2 border-t border-border/40 mt-1"
         onClick={(e) => e.stopPropagation()}
       >
-        {isLocked ? (
+        {entry.type === 'credit_application' ? (
+          <span
+            className="text-xs text-muted-foreground/60 select-none py-1"
+            title="Applied via Credit Note"
+          >
+            Credit Application
+          </span>
+        ) : isLocked ? (
           <Button
             variant="ghost"
             size="sm"

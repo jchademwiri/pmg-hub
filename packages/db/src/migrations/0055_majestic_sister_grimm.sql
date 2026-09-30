@@ -1,0 +1,1 @@
+ALTER TABLE "public_documents" ADD COLUMN "last_downloaded_at" timestamp;
