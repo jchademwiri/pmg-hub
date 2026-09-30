@@ -33,10 +33,10 @@ import { toast } from 'sonner';
 import {
   updateClientPayment,
   getClientOutstandingInvoices,
-  getClientCreditBalance,
   getClientOutstandingInvoicesForEdit,
   getClientCreditBalanceForEdit,
 } from '@/app/actions/billing-payments';
+import { getClientCreditBalanceV2 } from '@/app/actions/credit-management';
 
 interface PaymentDetailClientProps {
   payment: any;
@@ -120,7 +120,7 @@ export function PaymentDetailClient({
 
     const fetchCredit = isSameClient
       ? getClientCreditBalanceForEdit(clientId, payment.id)
-      : getClientCreditBalance(clientId);
+      : getClientCreditBalanceV2(clientId);
 
     Promise.all([fetchInvoices, fetchCredit])
       .then(([invoicesList, credit]) => {

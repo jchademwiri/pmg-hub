@@ -117,7 +117,7 @@ export async function getClientCreditBalanceV2(clientId: string): Promise<number
     await getSessionOrRedirect();
     const db = getDb();
 
-    // Sum all active credit notes for this client
+    // 1. Sum all active credit notes for this client
     const [creditAgg] = await db
       .select({
         total: sql<string>`coalesce(sum(${creditNotes.amountRemaining}), 0)`,
@@ -127,30 +127,32 @@ export async function getClientCreditBalanceV2(clientId: string): Promise<number
         and(
           eq(creditNotes.clientId, clientId),
           sql`${creditNotes.status} IN ('active', 'partially_applied')`,
+          sql`${creditNotes.amountRemaining} > 0`,
         ),
       );
 
     const creditNoteBalance = parseFloat(creditAgg?.total ?? '0');
 
-    // Also check legacy implicit balance (for any credits before credit_notes table)
+    // 2. Legacy income: sum only payments that did NOT spawn an explicit credit note
     const [incomeAgg] = await db
       .select({ totalPaid: sql<string>`coalesce(sum(${income.amount}), 0)` })
       .from(income)
-      .where(eq(income.clientId, clientId));
+      .leftJoin(creditNotes, eq(creditNotes.originalPaymentId, income.id))
+      .where(and(eq(income.clientId, clientId), sql`${creditNotes.id} IS NULL`));
 
+    // 3. Sum allocations for those legacy payments (excluding payments with credit notes)
     const [allocationAgg] = await db
       .select({ totalAllocated: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
       .from(paymentAllocations)
       .innerJoin(invoices, eq(invoices.id, paymentAllocations.invoiceId))
-      .where(eq(invoices.clientId, clientId));
+      .leftJoin(creditNotes, eq(creditNotes.originalPaymentId, paymentAllocations.incomeId))
+      .where(and(eq(invoices.clientId, clientId), sql`${creditNotes.id} IS NULL`));
 
     const totalPaid = parseFloat(incomeAgg?.totalPaid ?? '0');
     const totalAllocated = parseFloat(allocationAgg?.totalAllocated ?? '0');
     const legacyBalance = Math.max(0, totalPaid - totalAllocated);
 
-    // Use the maximum of both to ensure we don't double-count
-    // During migration, credit_notes may not cover all historical overpayments yet
-    return Math.max(creditNoteBalance, legacyBalance);
+    return Number((creditNoteBalance + legacyBalance).toFixed(2));
   } catch (err) {
     console.error('Failed to calculate client credit balance v2:', err);
     return 0;
