@@ -38,6 +38,27 @@ export default defineConfig({
         access: 'secret',
         optional: true,
       }),
+      CLOUDFLARE_R2_ACCOUNT_ID: envField.string({
+        context: 'server',
+        access: 'secret',
+        optional: true,
+      }),
+      CLOUDFLARE_R2_ACCESS_KEY_ID: envField.string({
+        context: 'server',
+        access: 'secret',
+        optional: true,
+      }),
+      CLOUDFLARE_R2_SECRET_ACCESS_KEY: envField.string({
+        context: 'server',
+        access: 'secret',
+        optional: true,
+      }),
+      CLOUDFLARE_R2_BUCKET: envField.string({
+        context: 'server',
+        access: 'secret',
+        optional: true,
+        default: 'pmg-hub',
+      }),
     },
   },
 

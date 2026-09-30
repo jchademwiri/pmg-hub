@@ -43,4 +43,5 @@ yarn-error.log*
 .env*.local
 .freebuff/
 *.pdf
+!apps/tes/public/documents/*.pdf
 split-pdf.js

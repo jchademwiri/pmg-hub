@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { UploadDocumentButton } from './UploadDocumentButton';
 
-function formatDate(d: Date | string): string {
+function formatDate(d: Date | string | null | undefined): string {
+  if (!d) return 'Never';
   return new Date(d).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'long',
@@ -52,13 +53,14 @@ export default async function DocumentsAdminPage() {
                 <TableHead>Slug</TableHead>
                 <TableHead>Website URL</TableHead>
                 <TableHead className="text-right">Total Downloads</TableHead>
+                <TableHead className="text-right">Last Downloaded</TableHead>
                 <TableHead className="text-right">Last Updated</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {documents.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
                     No documents found. Start by uploading one!
                   </TableCell>
                 </TableRow>
@@ -83,6 +85,9 @@ export default async function DocumentsAdminPage() {
                     </TableCell>
                     <TableCell className="text-right font-bold text-foreground">
                       {doc.downloadCount}
+                    </TableCell>
+                    <TableCell className="text-right text-xs text-muted-foreground">
+                      {formatDate(doc.lastDownloadedAt)}
                     </TableCell>
                     <TableCell className="text-right text-xs text-muted-foreground">
                       {formatDate(doc.updatedAt)}
