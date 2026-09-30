@@ -4,6 +4,7 @@ import {
   getDb,
   invoices,
   paymentAllocations,
+  creditApplications,
   divisions,
   divisionBillingSettings,
   income,
@@ -89,20 +90,30 @@ export default async function StatementsPage({ searchParams }: PageProps) {
     }
   }
 
-  // Fetch payment allocations for these invoices to calculate remaining balances
+  // Fetch payment allocations and credit applications for these invoices to calculate remaining balances
   const invoiceIds = allInvoices.map((inv) => inv.id);
-  const allocations =
+  const [allocations, creditApps] =
     invoiceIds.length > 0
-      ? await db
-          .select()
-          .from(paymentAllocations)
-          .where(inArray(paymentAllocations.invoiceId, invoiceIds))
-      : [];
+      ? await Promise.all([
+          db
+            .select()
+            .from(paymentAllocations)
+            .where(inArray(paymentAllocations.invoiceId, invoiceIds)),
+          db
+            .select()
+            .from(creditApplications)
+            .where(inArray(creditApplications.invoiceId, invoiceIds)),
+        ])
+      : [[], []];
 
   const allocationMap = new Map<string, number>();
   allocations.forEach((alloc) => {
     const current = allocationMap.get(alloc.invoiceId) || 0;
     allocationMap.set(alloc.invoiceId, current + parseFloat(alloc.amount));
+  });
+  creditApps.forEach((c) => {
+    const current = allocationMap.get(c.invoiceId) || 0;
+    allocationMap.set(c.invoiceId, current + parseFloat(c.amount));
   });
 
   const getInvoiceBalance = (inv: typeof invoices.$inferSelect) => {

@@ -10,6 +10,7 @@ interface Allocation {
   invoiceDate?: string;
   amount: string;
   createdAt: Date | string;
+  creditNoteNumber?: string;
 }
 
 interface PaymentReceiptPreviewProps {
@@ -182,7 +183,14 @@ export function PaymentReceiptPreview({
                   key={alloc.id}
                   className="border-b border-zinc-100 print:break-inside-avoid [break-inside:avoid]"
                 >
-                  <td className="py-3 pr-4 text-zinc-900 font-medium">{alloc.invoiceNumber}</td>
+                  <td className="py-3 pr-4 text-zinc-900 font-medium">
+                    {alloc.invoiceNumber}
+                    {alloc.creditNoteNumber ? (
+                      <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        via {alloc.creditNoteNumber}
+                      </span>
+                    ) : null}
+                  </td>
                   <td className="py-3 px-4 text-zinc-500 text-xs">
                     {fmtDateLong(
                       alloc.invoiceDate ||

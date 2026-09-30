@@ -7,6 +7,8 @@ import {
   getAllIncome,
   getDb,
   paymentAllocations,
+  creditNotes,
+  creditApplications,
   sql,
   invoices,
   and,
@@ -75,7 +77,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
   const currentMonthGroup = currentMonths[0];
   const previousMonths = currentMonths.slice(1);
 
-  const [incomeResult, allocationSums, divisions, clients] = await Promise.all([
+  const [incomeResult, allocationSums, creditAppSums, divisions, clients] = await Promise.all([
     getAllIncome({ divisionId, month: currentMonthGroup.value }, { page: 1, pageSize: 5000 }),
     db
       .select({
@@ -84,6 +86,15 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
       })
       .from(paymentAllocations)
       .groupBy(paymentAllocations.incomeId),
+    db
+      .select({
+        incomeId: creditNotes.originalPaymentId,
+        sum: sql<string>`coalesce(sum(${creditApplications.amount}), 0)`,
+      })
+      .from(creditApplications)
+      .innerJoin(creditNotes, eq(creditNotes.id, creditApplications.creditNoteId))
+      .where(sql`${creditNotes.originalPaymentId} IS NOT NULL AND ${creditNotes.status} != 'void'`)
+      .groupBy(creditNotes.originalPaymentId),
     getAllDivisions(),
     getAllClients(),
   ]);
@@ -92,6 +103,11 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
   const allocMap = new Map<string, number>();
   for (const row of allocationSums) {
     allocMap.set(row.incomeId, parseFloat(row.sum));
+  }
+  for (const row of creditAppSums) {
+    if (row.incomeId) {
+      allocMap.set(row.incomeId, (allocMap.get(row.incomeId) ?? 0) + parseFloat(row.sum));
+    }
   }
 
   // 4. Construct rich payment details

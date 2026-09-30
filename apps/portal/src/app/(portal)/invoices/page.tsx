@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { getPortalSessionOrRedirect } from '@/lib/portal-session';
-import { getDb, invoices, paymentAllocations } from '@pmg/db';
+import { getDb, invoices, paymentAllocations, creditApplications } from '@pmg/db';
 import { eq, and, ne, desc, inArray } from 'drizzle-orm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, Eye } from 'lucide-react';
@@ -41,20 +41,30 @@ export default async function InvoicesPage({ searchParams }: PageProps) {
     )
     .orderBy(desc(invoices.invoiceDate));
 
-  // Fetch payment allocations for these invoices to calculate remaining balances
+  // Fetch payment allocations and credit applications for these invoices to calculate remaining balances
   const invoiceIds = allInvoices.map((inv) => inv.id);
-  const allocations =
+  const [allocations, creditApps] =
     invoiceIds.length > 0
-      ? await db
-          .select()
-          .from(paymentAllocations)
-          .where(inArray(paymentAllocations.invoiceId, invoiceIds))
-      : [];
+      ? await Promise.all([
+          db
+            .select()
+            .from(paymentAllocations)
+            .where(inArray(paymentAllocations.invoiceId, invoiceIds)),
+          db
+            .select()
+            .from(creditApplications)
+            .where(inArray(creditApplications.invoiceId, invoiceIds)),
+        ])
+      : [[], []];
 
   const allocationMap = new Map<string, number>();
   allocations.forEach((alloc) => {
     const current = allocationMap.get(alloc.invoiceId) || 0;
     allocationMap.set(alloc.invoiceId, current + parseFloat(alloc.amount));
+  });
+  creditApps.forEach((c) => {
+    const current = allocationMap.get(c.invoiceId) || 0;
+    allocationMap.set(c.invoiceId, current + parseFloat(c.amount));
   });
 
   const getInvoiceBalance = (inv: typeof invoices.$inferSelect) => {

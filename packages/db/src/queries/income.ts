@@ -1,5 +1,13 @@
 import { db } from '../client';
-import { income, divisions, clients, paymentAllocations, invoices } from '../schema/index';
+import {
+  income,
+  divisions,
+  clients,
+  paymentAllocations,
+  invoices,
+  creditNotes,
+  creditApplications,
+} from '../schema/index';
 import { sql, eq, desc, and } from 'drizzle-orm';
 import { getMonthPeriodDates } from './billing';
 
@@ -202,9 +210,10 @@ export async function getIncomeAllocations(incomeId: string): Promise<
     invoiceDate?: string;
     amount: string;
     createdAt: Date;
+    creditNoteNumber?: string;
   }[]
 > {
-  return await db
+  const directAllocations = await db
     .select({
       id: paymentAllocations.id,
       invoiceId: paymentAllocations.invoiceId,
@@ -212,8 +221,26 @@ export async function getIncomeAllocations(incomeId: string): Promise<
       invoiceDate: sql<string>`${invoices.invoiceDate}::text`,
       amount: paymentAllocations.amount,
       createdAt: paymentAllocations.createdAt,
+      creditNoteNumber: sql<string | undefined>`NULL`,
     })
     .from(paymentAllocations)
     .innerJoin(invoices, eq(invoices.id, paymentAllocations.invoiceId))
     .where(eq(paymentAllocations.incomeId, incomeId));
+
+  const creditNoteAllocations = await db
+    .select({
+      id: creditApplications.id,
+      invoiceId: creditApplications.invoiceId,
+      invoiceNumber: invoices.documentNumber,
+      invoiceDate: sql<string>`${invoices.invoiceDate}::text`,
+      amount: creditApplications.amount,
+      createdAt: creditApplications.appliedAt,
+      creditNoteNumber: creditNotes.documentNumber,
+    })
+    .from(creditApplications)
+    .innerJoin(creditNotes, eq(creditNotes.id, creditApplications.creditNoteId))
+    .innerJoin(invoices, eq(invoices.id, creditApplications.invoiceId))
+    .where(eq(creditNotes.originalPaymentId, incomeId));
+
+  return [...directAllocations, ...creditNoteAllocations];
 }

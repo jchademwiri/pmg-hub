@@ -66,7 +66,11 @@ export async function getClientOutstandingInvoices(clientId: string) {
         dueDate: invoices.dueDate,
         total: invoices.total,
         divisionId: invoices.divisionId,
-        allocatedAmount: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)`,
+        allocatedAmount: sql<string>`(
+          COALESCE(SUM(${paymentAllocations.amount}), 0)
+          +
+          COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = ${invoices.id}), 0)
+        )::text`,
       })
       .from(invoices)
       .leftJoin(paymentAllocations, eq(paymentAllocations.invoiceId, invoices.id))
@@ -298,12 +302,19 @@ export async function recordClientPayment(
         }
 
         // Verify balance before allocation
-        const [sumAggBefore] = await tx
-          .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
-          .from(paymentAllocations)
-          .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
+        const [[sumAggBefore], [creditAggBefore]] = await Promise.all([
+          tx
+            .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+            .from(paymentAllocations)
+            .where(eq(paymentAllocations.invoiceId, alloc.invoiceId)),
+          tx
+            .select({ sum: sql<string>`coalesce(sum(${creditApplications.amount}), 0)` })
+            .from(creditApplications)
+            .where(eq(creditApplications.invoiceId, alloc.invoiceId)),
+        ]);
 
-        const totalAllocatedBefore = parseFloat(sumAggBefore?.sum ?? '0');
+        const totalAllocatedBefore =
+          parseFloat(sumAggBefore?.sum ?? '0') + parseFloat(creditAggBefore?.sum ?? '0');
         const invoiceTotalBefore = parseFloat(invoiceRow.total);
         const outstandingBefore = Math.max(0, invoiceTotalBefore - totalAllocatedBefore);
 
@@ -649,35 +660,8 @@ export async function adjustClientPayment(
 
           reductionNeeded -= allocAmount;
 
-          // Recalculate other remaining allocations for this invoice
-          const [sumAgg] = await db
-            .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
-            .from(paymentAllocations)
-            .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
-
-          const totalRemaining = parseFloat(sumAgg?.sum ?? '0');
-
-          if (totalRemaining === 0) {
-            await db
-              .update(invoices)
-              .set({
-                status: 'issued', // or check if past due and set to overdue
-                paidAt: null,
-                incomeId: null,
-                updatedAt: new Date(),
-              })
-              .where(eq(invoices.id, alloc.invoiceId));
-          } else {
-            await db
-              .update(invoices)
-              .set({
-                status: 'partially_paid',
-                paidAt: null,
-                incomeId: null,
-                updatedAt: new Date(),
-              })
-              .where(eq(invoices.id, alloc.invoiceId));
-          }
+          // Recalculate invoice status using combined allocation totals
+          await recalculateInvoiceStatus(alloc.invoiceId);
         } else {
           // Deduct partially
           const newAllocAmount = allocAmount - reductionNeeded;
@@ -741,35 +725,8 @@ export async function adjustClientPayment(
           });
         }
 
-        // Check if invoice is now fully paid
-        const [sumAgg] = await db
-          .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
-          .from(paymentAllocations)
-          .where(eq(paymentAllocations.invoiceId, inv.id));
-
-        const totalAllocated = parseFloat(sumAgg?.sum ?? '0');
-
-        if (totalAllocated >= inv.total) {
-          await db
-            .update(invoices)
-            .set({
-              status: 'paid',
-              paidAt: new Date(),
-              incomeId,
-              updatedAt: new Date(),
-            })
-            .where(eq(invoices.id, inv.id));
-        } else {
-          await db
-            .update(invoices)
-            .set({
-              status: 'partially_paid',
-              paidAt: null,
-              incomeId: null,
-              updatedAt: new Date(),
-            })
-            .where(eq(invoices.id, inv.id));
-        }
+        // Check and update invoice status using combined allocation totals
+        await recalculateInvoiceStatus(inv.id, incomeId);
       }
     }
 
@@ -818,7 +775,11 @@ async function getClientOutstandingInvoicesInternal(clientId: string) {
       documentNumber: invoices.documentNumber,
       invoiceDate: invoices.invoiceDate,
       total: invoices.total,
-      allocatedAmount: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)`,
+      allocatedAmount: sql<string>`(
+        COALESCE(SUM(${paymentAllocations.amount}), 0)
+        +
+        COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = ${invoices.id}), 0)
+      )::text`,
     })
     .from(invoices)
     .leftJoin(paymentAllocations, eq(paymentAllocations.invoiceId, invoices.id))
@@ -1287,26 +1248,49 @@ export async function getClientCreditBalanceForEdit(
 }
 
 async function enrichIncomeWithAllocations(incomeData: any[]) {
-  const { getDb, paymentAllocations, sql } = await import('@pmg/db');
+  const { getDb, paymentAllocations, creditApplications, creditNotes, sql } =
+    await import('@pmg/db');
   const db = getDb();
   const incomeIds = incomeData.map((i) => i.id);
 
   let allocationSums: { incomeId: string; sum: string }[] = [];
+  let creditAppSums: { incomeId: string | null; sum: string }[] = [];
   if (incomeIds.length > 0) {
-    const { inArray } = await import('drizzle-orm');
-    allocationSums = await db
-      .select({
-        incomeId: paymentAllocations.incomeId,
-        sum: sql<string>`sum(${paymentAllocations.amount})`,
-      })
-      .from(paymentAllocations)
-      .where(inArray(paymentAllocations.incomeId, incomeIds))
-      .groupBy(paymentAllocations.incomeId);
+    const { inArray, and, eq } = await import('drizzle-orm');
+    [allocationSums, creditAppSums] = await Promise.all([
+      db
+        .select({
+          incomeId: paymentAllocations.incomeId,
+          sum: sql<string>`sum(${paymentAllocations.amount})`,
+        })
+        .from(paymentAllocations)
+        .where(inArray(paymentAllocations.incomeId, incomeIds))
+        .groupBy(paymentAllocations.incomeId),
+      db
+        .select({
+          incomeId: creditNotes.originalPaymentId,
+          sum: sql<string>`sum(${creditApplications.amount})`,
+        })
+        .from(creditApplications)
+        .innerJoin(creditNotes, eq(creditNotes.id, creditApplications.creditNoteId))
+        .where(
+          and(
+            inArray(creditNotes.originalPaymentId, incomeIds),
+            sql`${creditNotes.status} != 'void'`,
+          ),
+        )
+        .groupBy(creditNotes.originalPaymentId),
+    ]);
   }
 
   const allocMap = new Map<string, number>();
   for (const row of allocationSums) {
     allocMap.set(row.incomeId, parseFloat(row.sum));
+  }
+  for (const row of creditAppSums) {
+    if (row.incomeId) {
+      allocMap.set(row.incomeId, (allocMap.get(row.incomeId) ?? 0) + parseFloat(row.sum));
+    }
   }
 
   return incomeData.map((r) => {

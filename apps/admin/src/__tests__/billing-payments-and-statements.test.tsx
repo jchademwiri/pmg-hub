@@ -238,9 +238,10 @@ describe('Billing Payments and Statements Module', () => {
                   },
                 ]);
               }
-              if (selectCount === 4) return selectResult([{ sum: '0.00' }]); // before this allocation
-              if (selectCount === 5) return selectResult([{ sum: '1000.00' }]); // after this allocation — fully paid
-              return selectResult([{ sum: '0.00' }]); // credit applications
+              if (selectCount === 4) return selectResult([{ sum: '0.00' }]); // payment allocations before
+              if (selectCount === 5) return selectResult([{ sum: '0.00' }]); // credit applications before
+              if (selectCount === 6) return selectResult([{ sum: '1000.00' }]); // payment allocations after — fully paid
+              return selectResult([{ sum: '0.00' }]); // credit applications after
             },
             limit: () => selectResult([{ id: 'div-1' }]), // fallback divisionId (unused — divisionId provided)
           }),
@@ -312,9 +313,10 @@ describe('Billing Payments and Statements Module', () => {
                   },
                 ]);
               }
-              if (selectCount === 4) return selectResult([{ sum: '0.00' }]);
-              if (selectCount === 5) return selectResult([{ sum: '5000.00' }]);
-              return selectResult([{ sum: '0.00' }]);
+              if (selectCount === 4) return selectResult([{ sum: '0.00' }]); // payment allocations before
+              if (selectCount === 5) return selectResult([{ sum: '0.00' }]); // credit applications before
+              if (selectCount === 6) return selectResult([{ sum: '5000.00' }]); // payment allocations after — fully paid
+              return selectResult([{ sum: '0.00' }]); // credit applications after
             },
             limit: () => selectResult([{ id: 'div-1' }]),
           }),
