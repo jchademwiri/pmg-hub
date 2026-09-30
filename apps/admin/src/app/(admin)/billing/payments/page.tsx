@@ -77,7 +77,15 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
   const currentMonthGroup = currentMonths[0];
   const previousMonths = currentMonths.slice(1);
 
-  const [incomeResult, allocationSums, creditAppSums, divisions, clients] = await Promise.all([
+  const [
+    incomeResult,
+    allocationSums,
+    creditAppSums,
+    directAllocs,
+    creditAllocs,
+    divisions,
+    clients,
+  ] = await Promise.all([
     getAllIncome({ divisionId, month: currentMonthGroup.value }, { page: 1, pageSize: 5000 }),
     db
       .select({
@@ -95,6 +103,23 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
       .innerJoin(creditNotes, eq(creditNotes.id, creditApplications.creditNoteId))
       .where(sql`${creditNotes.originalPaymentId} IS NOT NULL AND ${creditNotes.status} != 'void'`)
       .groupBy(creditNotes.originalPaymentId),
+    db
+      .select({
+        incomeId: paymentAllocations.incomeId,
+        invoiceNumber: invoices.documentNumber,
+      })
+      .from(paymentAllocations)
+      .innerJoin(invoices, eq(invoices.id, paymentAllocations.invoiceId)),
+    db
+      .select({
+        incomeId: creditNotes.originalPaymentId,
+        invoiceNumber: invoices.documentNumber,
+        creditNoteNumber: creditNotes.documentNumber,
+      })
+      .from(creditApplications)
+      .innerJoin(creditNotes, eq(creditNotes.id, creditApplications.creditNoteId))
+      .innerJoin(invoices, eq(invoices.id, creditApplications.invoiceId))
+      .where(sql`${creditNotes.originalPaymentId} IS NOT NULL AND ${creditNotes.status} != 'void'`),
     getAllDivisions(),
     getAllClients(),
   ]);
@@ -107,6 +132,25 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
   for (const row of creditAppSums) {
     if (row.incomeId) {
       allocMap.set(row.incomeId, (allocMap.get(row.incomeId) ?? 0) + parseFloat(row.sum));
+    }
+  }
+
+  const invoiceAllocMap = new Map<string, { invoiceNumber: string; creditNoteNumber?: string }[]>();
+  for (const row of directAllocs) {
+    if (!invoiceAllocMap.has(row.incomeId)) {
+      invoiceAllocMap.set(row.incomeId, []);
+    }
+    invoiceAllocMap.get(row.incomeId)!.push({ invoiceNumber: row.invoiceNumber });
+  }
+  for (const row of creditAllocs) {
+    if (row.incomeId) {
+      if (!invoiceAllocMap.has(row.incomeId)) {
+        invoiceAllocMap.set(row.incomeId, []);
+      }
+      invoiceAllocMap.get(row.incomeId)!.push({
+        invoiceNumber: row.invoiceNumber,
+        creditNoteNumber: row.creditNoteNumber,
+      });
     }
   }
 
@@ -126,6 +170,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
       amount,
       allocated,
       credit,
+      allocations: invoiceAllocMap.get(r.id) ?? [],
     };
   });
 

@@ -148,9 +148,31 @@ export async function getIncomeMonthlySummaries(
     .where(and(...conditions))
     .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`);
 
-  const [incomeResults, allocResults] = await Promise.all([incomeQuery, allocQuery]);
+  // 3. Get credit note application sums tied to original payments
+  const creditAppQuery = db
+    .select({
+      month: sql<string>`TO_CHAR(${income.date}, 'YYYY-MM')`,
+      totalAllocated: sql<number>`COALESCE(SUM(${creditApplications.amount}), 0)::numeric`,
+    })
+    .from(creditApplications)
+    .innerJoin(creditNotes, eq(creditNotes.id, creditApplications.creditNoteId))
+    .innerJoin(income, eq(creditNotes.originalPaymentId, income.id))
+    .where(and(...conditions, sql`${creditNotes.status} != 'void'`))
+    .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`);
 
-  const allocMap = new Map(allocResults.map((r) => [r.month, Number(r.totalAllocated)]));
+  const [incomeResults, allocResults, creditAppResults] = await Promise.all([
+    incomeQuery,
+    allocQuery,
+    creditAppQuery,
+  ]);
+
+  const allocMap = new Map<string, number>();
+  for (const r of allocResults) {
+    allocMap.set(r.month, Number(r.totalAllocated));
+  }
+  for (const r of creditAppResults) {
+    allocMap.set(r.month, (allocMap.get(r.month) || 0) + Number(r.totalAllocated));
+  }
 
   return incomeResults.map((r) => ({
     month: r.month,
