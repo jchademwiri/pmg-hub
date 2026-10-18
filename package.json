@@ -68,7 +68,8 @@
     "browserslist": "^4.28.7",
     "smol-toml": "^1.8.0",
     "takumi-pdf": "0.14.3",
-    "tinypool": "2.2.0"
+    "tinypool": "2.2.0",
+    "braces": "npm:@franciscosolis/braces@^3.1.1"
   },
   "trustedDependencies": [
     "@tailwindcss/oxide"
