@@ -73,9 +73,7 @@ export async function withClientContext<T>(
  * Executes a callback within a database transaction with admin privileges (bypassing RLS).
  * Uses `is_local = true` in set_config to prevent session variable leakage across pooled connections.
  */
-export async function withAdminContext<T>(
-  callback: (tx: DbTransaction) => Promise<T>,
-): Promise<T> {
+export async function withAdminContext<T>(callback: (tx: DbTransaction) => Promise<T>): Promise<T> {
   const db = getDb();
   return await db.transaction(async (tx) => {
     await tx.execute(sql`SELECT set_config('app.is_admin', 'true', true)`);

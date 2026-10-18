@@ -113,9 +113,7 @@ describe('Row-Level Security (RLS) helpers and configuration', () => {
     let observedAdminInside: string | null = null;
 
     await withAdminContext(async (tx) => {
-      const res = await tx.execute(
-        sql`SELECT current_setting('app.is_admin', true) AS is_admin`,
-      );
+      const res = await tx.execute(sql`SELECT current_setting('app.is_admin', true) AS is_admin`);
       observedAdminInside = (res.rows[0] as any)?.is_admin;
     });
 
