@@ -393,6 +393,13 @@
       "when": 1790745622716,
       "tag": "0055_majestic_sister_grimm",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1791972622000,
+      "tag": "0056_add_row_level_security",
+      "breakpoints": true
     }
   ]
 }

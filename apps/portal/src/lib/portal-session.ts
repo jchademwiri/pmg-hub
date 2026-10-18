@@ -1,6 +1,6 @@
 import { headers, cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getDb, clients, user, eq, and, sql } from '@pmg/db';
+import { getDb, clients, user, eq, and, sql, withClientContext, type DbTransaction } from '@pmg/db';
 import { portalAuth } from './auth';
 
 export async function getPortalSession() {
@@ -128,4 +128,18 @@ export async function getPortalSessionOrRedirect() {
     redirect('/login');
   }
   return result;
+}
+
+/**
+ * Resolves the authenticated portal session and returns a tenant-scoped database executor.
+ * Queries executed via `scopedDb.run((tx) => ...)` run within a transaction with `app.current_client_id`
+ * set to the authenticated client, activating PostgreSQL Row-Level Security (RLS).
+ */
+export async function getScopedPortalDb() {
+  const sessionResult = await getPortalSessionOrRedirect();
+  return {
+    ...sessionResult,
+    run: <T>(callback: (tx: DbTransaction) => Promise<T>) =>
+      withClientContext(sessionResult.client.id, callback),
+  };
 }
