@@ -3,6 +3,7 @@ import { defineConfig, envField } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import vercel from '@astrojs/vercel';
 import react from '@astrojs/react';
+import partytown from '@astrojs/partytown';
 import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
@@ -59,6 +60,12 @@ export default defineConfig({
         optional: true,
         default: 'pmg-hub',
       }),
+      PUBLIC_GA_MEASUREMENT_ID: envField.string({
+        context: 'client',
+        access: 'public',
+        optional: true,
+        default: 'G-2D8CDLY3DV',
+      }),
     },
   },
 
@@ -74,6 +81,7 @@ export default defineConfig({
 
   integrations: [
     react(),
+    partytown({ config: { forward: ['dataLayer.push'] } }),
     sitemap({
       // index.astro is SSR so it won't be auto-discovered - add it manually
       customPages: ['https://www.tenderedgesolutions.co.za/'],

@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig, envField } from 'astro/config';
+import partytown from '@astrojs/partytown';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
@@ -25,10 +26,17 @@ export default defineConfig({
         access: 'secret',
         optional: true,
       }),
+      PUBLIC_GA_MEASUREMENT_ID: envField.string({
+        context: 'client',
+        access: 'public',
+        optional: true,
+        default: 'G-05TZ7T8ZGY',
+      }),
     },
   },
 
   integrations: [
+    partytown({ config: { forward: ['dataLayer.push'] } }),
     sitemap({
       customPages: ['https://playhousemedia.co.za/'],
     }),

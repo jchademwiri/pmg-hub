@@ -14,11 +14,10 @@
   },
   "devDependencies": {
     "@pmg/typescript-config": "workspace:*",
-    "@react-email/preview-server": "5.2.10",
-    "@react-email/ui": "6.11.0",
+    "@react-email/ui": "6.11.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "esbuild": "0.28.1",
+    "esbuild": "0.28.2",
     "react-email": "latest",
     "typescript": "5.9.2"
   },
