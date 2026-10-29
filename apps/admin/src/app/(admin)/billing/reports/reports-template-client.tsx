@@ -491,19 +491,8 @@ export function ReportsTemplateClient({
         <div className="lg:col-span-2 overflow-x-auto">
           <div
             id="printable-area"
-            className="print-document relative w-full max-w-[794px] min-h-[1123px] mx-auto flex flex-col bg-white text-zinc-900 shadow-md print:shadow-none ring-1 ring-zinc-200 print:ring-0 border-t-[4px] border-t-blue-700 overflow-hidden"
+            className="print-document w-full max-w-[794px] min-h-[1123px] mx-auto flex flex-col bg-white text-zinc-900 shadow-md print:shadow-none ring-1 ring-zinc-200 print:ring-0 border-t-[4px] border-t-blue-700"
           >
-            {/* Top Loading Progress Bar */}
-            {loading && (
-              <div
-                aria-label="Loading report data"
-                role="progressbar"
-                className="absolute top-0 left-0 right-0 h-1 bg-blue-100 overflow-hidden z-30 print:hidden"
-              >
-                <div className="h-full bg-blue-600 animate-indeterminate w-full origin-left" />
-              </div>
-            )}
-
             <div
               className={cn(
                 'flex flex-col flex-1 transition-opacity duration-200',
