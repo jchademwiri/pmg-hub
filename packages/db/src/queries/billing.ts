@@ -568,6 +568,7 @@ export async function getAllInvoices(
     clientId?: string;
     month?: string;
     year?: number;
+    invoiceDateFrom?: string;
     invoiceDateTo?: string;
     monthPeriod?: 'current' | 'previous' | 'past3' | 'past6';
     // Explicitly exclude draft/void invoices from BOTH the returned rows and
@@ -590,7 +591,17 @@ export async function getAllInvoices(
     conditions.push(eq(invoices.divisionId, filters.divisionId));
   }
   if (filters?.status) {
-    conditions.push(eq(invoices.status, filters.status as any));
+    if (filters.status === 'only_outstanding' || filters.status === 'unpaid_and_not_fully_paid') {
+      conditions.push(sql`${invoices.status} IN ('issued', 'overdue', 'partially_paid')`);
+    } else if (filters.status === 'unpaid') {
+      conditions.push(sql`${invoices.status} IN ('issued', 'overdue')`);
+    } else if (filters.status === 'not_fully_paid') {
+      conditions.push(eq(invoices.status, 'partially_paid'));
+    } else if (filters.status === 'all_active') {
+      conditions.push(sql`${invoices.status} NOT IN ('draft', 'void')`);
+    } else {
+      conditions.push(eq(invoices.status, filters.status as any));
+    }
   }
   if (filters?.clientId) {
     conditions.push(eq(invoices.clientId, filters.clientId));
@@ -602,6 +613,9 @@ export async function getAllInvoices(
     const start = `${filters.year}-03-01`;
     const end = `${filters.year + 1}-03-01`;
     conditions.push(sql`${invoices.invoiceDate} >= ${start} AND ${invoices.invoiceDate} < ${end}`);
+  }
+  if (filters?.invoiceDateFrom) {
+    conditions.push(sql`${invoices.invoiceDate} >= ${filters.invoiceDateFrom}`);
   }
   if (filters?.invoiceDateTo) {
     conditions.push(sql`${invoices.invoiceDate} <= ${filters.invoiceDateTo}`);
@@ -711,7 +725,17 @@ export async function getInvoiceMonthlySummaries(
   }
 
   if (status) {
-    conditions.push(eq(invoices.status, status as any));
+    if (status === 'only_outstanding' || status === 'unpaid_and_not_fully_paid') {
+      conditions.push(sql`${invoices.status} IN ('issued', 'overdue', 'partially_paid')`);
+    } else if (status === 'unpaid') {
+      conditions.push(sql`${invoices.status} IN ('issued', 'overdue')`);
+    } else if (status === 'not_fully_paid') {
+      conditions.push(eq(invoices.status, 'partially_paid'));
+    } else if (status === 'all_active') {
+      conditions.push(sql`${invoices.status} NOT IN ('draft', 'void')`);
+    } else {
+      conditions.push(eq(invoices.status, status as any));
+    }
   } else {
     // Exclude drafts and void by default unless specifically asking for them
     conditions.push(sql`${invoices.status} NOT IN ('draft', 'void')`);

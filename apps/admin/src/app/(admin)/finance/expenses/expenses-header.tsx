@@ -11,13 +11,17 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { ExpenseAddForm } from '@/components/expenses/expense-add-form';
+import { DownloadReportDialog } from '@/components/reports/download-report-dialog';
 
 interface ExpensesHeaderProps {
   divisions: { id: string; name: string }[];
   categories: string[];
-  clients: { id: string; name: string }[];
+  clients: { id: string; name: string; businessName?: string | null }[];
   createAction: (formData: FormData) => Promise<{ error?: string }>;
   minDate: string;
+  initialDivisionId?: string;
+  initialCategory?: string;
+  initialClientId?: string;
 }
 
 export function ExpensesHeader({
@@ -26,6 +30,9 @@ export function ExpensesHeader({
   clients,
   createAction,
   minDate,
+  initialDivisionId,
+  initialCategory,
+  initialClientId,
 }: ExpensesHeaderProps) {
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -38,6 +45,15 @@ export function ExpensesHeader({
         </p>
       </div>
       <div className="flex items-center gap-2">
+        <DownloadReportDialog
+          defaultReportType="expenses"
+          clients={clients}
+          divisions={divisions}
+          categories={categories}
+          initialDivisionId={initialDivisionId}
+          initialCategory={initialCategory}
+          initialClientId={initialClientId}
+        />
         <Button onClick={() => setIsOpen(true)} size="sm">
           <Plus className="h-4 w-4 mr-2" /> Add Expense
         </Button>

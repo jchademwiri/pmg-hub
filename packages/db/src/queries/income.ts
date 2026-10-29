@@ -32,6 +32,8 @@ export async function getAllIncome(
     month?: string;
     year?: number;
     clientId?: string;
+    startDate?: string;
+    endDate?: string;
     monthPeriod?: 'current' | 'previous' | 'past3' | 'past6';
   },
   pageObj?: { page: number; pageSize: number },
@@ -52,6 +54,12 @@ export async function getAllIncome(
       sql`${income.date} < ${`${filters.year + 1}-03-01`}`,
     );
   }
+  if (filters?.startDate) {
+    conditions.push(sql`${income.date} >= ${filters.startDate}`);
+  }
+  if (filters?.endDate) {
+    conditions.push(sql`${income.date} <= ${filters.endDate}`);
+  }
   if (filters?.monthPeriod) {
     const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
     conditions.push(sql`${income.date} >= ${startDate}`, sql`${income.date} <= ${endDate}`);
@@ -64,7 +72,9 @@ export async function getAllIncome(
       divisionId: income.divisionId,
       divisionName: divisions.name,
       clientId: income.clientId,
-      clientName: clients.name,
+      clientName: sql<
+        string | null
+      >`COALESCE(NULLIF(${clients.businessName}, ''), ${clients.name})`,
       description: income.description,
       amount: income.amount,
     })
@@ -194,7 +204,9 @@ export async function getIncomeById(id: string): Promise<IncomeRow | null> {
       divisionId: income.divisionId,
       divisionName: divisions.name,
       clientId: income.clientId,
-      clientName: clients.name,
+      clientName: sql<
+        string | null
+      >`COALESCE(NULLIF(${clients.businessName}, ''), ${clients.name})`,
       description: income.description,
       amount: income.amount,
     })

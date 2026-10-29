@@ -19,6 +19,7 @@ import {
 } from '@pmg/db';
 import { formatZAR } from '@/lib/format';
 import { FilterBar } from '@/components/billing/filter-bar';
+import { DownloadReportDialog } from '@/components/reports/download-report-dialog';
 import { getClosedPeriodsFromDates } from '@/lib/date-rules';
 import {
   updateClientPayment,
@@ -211,6 +212,12 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <DownloadReportDialog
+            defaultReportType="payments"
+            clients={clients}
+            divisions={divisions}
+            initialDivisionId={divisionId}
+          />
           <Button asChild size="sm" className="hidden md:flex">
             <Link href="/billing/payments/add">
               <Plus className="size-4 mr-2" />

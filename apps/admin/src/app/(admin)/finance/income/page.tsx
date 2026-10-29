@@ -19,6 +19,7 @@ import { getMinAllowedDate } from '@/lib/date-rules';
 import { IncomeTable } from './income-table';
 import { LazyIncomeTable } from './lazy-income-table';
 import { IncomeFilterBar } from './income-filter-bar';
+import { DownloadReportDialog } from '@/components/reports/download-report-dialog';
 import { generateFinancialYearGroups, getCurrentMonthString } from '@/lib/billing-groups';
 import {
   Accordion,
@@ -125,11 +126,20 @@ export default async function FinanceIncomePage({ searchParams }: IncomePageProp
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-lg font-semibold">Income</h2>
-        <p className="text-sm text-muted-foreground">
-          All money received and cash receipts with allocation details
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Income</h2>
+          <p className="text-sm text-muted-foreground">
+            All money received and cash receipts with allocation details
+          </p>
+        </div>
+        <DownloadReportDialog
+          defaultReportType="payments"
+          clients={clients}
+          divisions={divisions}
+          initialDivisionId={filters.divisionId}
+          initialClientId={filters.clientId}
+        />
       </div>
 
       {/* Metrics Overview */}

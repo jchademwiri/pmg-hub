@@ -1763,3 +1763,16 @@ export async function generateAccountingPdf(
       return null;
   }
 }
+
+
+export {
+  renderDeclarativeInvoicesReport,
+  renderDeclarativePaymentsReport,
+  renderDeclarativeExpensesReport,
+  renderDeclarativeClientSummaryReport,
+  type InvoiceReportRow,
+  type PaymentReportRow,
+  type ExpenseReportRow,
+  type ClientSummaryRow,
+  type ClientSummaryValueColumn,
+} from './pdf';
