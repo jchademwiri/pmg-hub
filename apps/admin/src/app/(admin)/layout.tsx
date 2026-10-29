@@ -25,7 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <PageHeaderProvider>
           <TopNav />
           <main className="flex-1 min-w-0 px-4 py-6 sm:px-6 bg-background pb-24 md:pb-6">
-            <div className="mx-auto w-full max-w-7xl">
+            <div className="w-full">
               <ConfirmProvider>{children}</ConfirmProvider>
             </div>
           </main>

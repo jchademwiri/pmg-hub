@@ -82,7 +82,7 @@ export async function generateAndSendBillingDigest(
       }
     }
 
-    // 2. Fetch all email audit logs for today in SAST timezone (excluding billing_digest itself)
+    // 2. Fetch all email audit logs for today or prior day in SAST timezone (excluding billing_digest itself)
     const todayAuditRows = await db
       .select({
         id: emailAuditLog.id,
@@ -105,14 +105,14 @@ export async function generateAndSendBillingDigest(
       .leftJoin(divisions, eq(emailAuditLog.divisionId, divisions.id))
       .where(
         and(
-          sql`timezone('Africa/Johannesburg', ${emailAuditLog.createdAt})::date = ${todayStr}::date`,
+          sql`timezone('Africa/Johannesburg', ${emailAuditLog.createdAt}) >= (${todayStr}::date - interval '1 day')`,
           sql`coalesce(${emailAuditLog.customizationDetails}->>'subType', '') != 'billing_digest'`,
           sql`${emailAuditLog.idempotencyKey} NOT LIKE 'billing-digest/%'`,
         ),
       )
       .orderBy(desc(emailAuditLog.createdAt));
 
-    // 3. Fetch all invoices generated today in SAST timezone
+    // 3. Fetch all invoices generated today or prior day in SAST timezone
     const todayInvoices = await db
       .select({
         id: invoices.id,
@@ -128,7 +128,9 @@ export async function generateAndSendBillingDigest(
       .from(invoices)
       .leftJoin(clients, eq(invoices.clientId, clients.id))
       .leftJoin(divisions, eq(invoices.divisionId, divisions.id))
-      .where(sql`timezone('Africa/Johannesburg', ${invoices.createdAt})::date = ${todayStr}::date`);
+      .where(
+        sql`timezone('Africa/Johannesburg', ${invoices.createdAt}) >= (${todayStr}::date - interval '1 day')`,
+      );
 
     // 4. Map today's dispatches for the digest report
     const dispatches: BillingDigestDispatchItem[] = [];
@@ -207,79 +209,131 @@ export async function generateAndSendBillingDigest(
       });
     }
 
-    // 5. Gather evaluated & skipped clients (zero balance or auto-statements excluded)
+    // If no emails were sent out today or the prior day and no errors occurred, omit sending digest
+    if (!options?.force && dispatches.length === 0 && errorsCount === 0) {
+      return {
+        success: true,
+        message: `No billing emails dispatched or errors logged on ${todayStr} or prior day. Digest notification skipped to avoid inbox clutter.`,
+        dispatchesCount: 0,
+        skippedCount: 0,
+        errorsCount: 0,
+        resendEmailId: null,
+      };
+    }
+
+    // 5. Gather evaluated & skipped clients ONLY if an automated statement sweep ran today
     const skippedClients: BillingDigestSkippedItem[] = [];
-    const allActiveClients = await db
-      .select({
-        id: clients.id,
-        name: clients.name,
-        businessName: clients.businessName,
-        email: clients.email,
-        isRetainer: clients.isRetainer,
-        excludeFromAutoStatements: clients.excludeFromAutoStatements,
-        divisionName: divisions.name,
-      })
-      .from(clients)
-      .leftJoin(divisions, eq(clients.divisionId, divisions.id))
-      .where(eq(clients.isActive, true));
+    const todayDayNum = parseInt(todayStr.slice(8, 10), 10);
+    const isEndOfMonthToday = todayStr === getEndOfMonth(todayStr);
+    const isSweepDay = todayDayNum === 26 || isEndOfMonthToday || todayDayNum === 8;
 
-    // Clients already dispatched today don't need to be in the skipped list
-    const dispatchedClientEmails = new Set(
-      todayAuditRows.map((r) => r.recipientEmail?.toLowerCase()),
-    );
+    const hasAutomatedSweepToday =
+      isSweepDay ||
+      todayAuditRows.some(
+        (r) =>
+          r.emailType === 'custom' ||
+          (r.customizationDetails as any)?.runType ||
+          r.subject?.toLowerCase().includes('statement'),
+      );
 
-    for (const c of allActiveClients) {
-      if (c.email && dispatchedClientEmails.has(c.email.toLowerCase())) {
-        continue;
-      }
+    if (hasAutomatedSweepToday) {
+      const allActiveClients = await db
+        .select({
+          id: clients.id,
+          name: clients.name,
+          businessName: clients.businessName,
+          email: clients.email,
+          isRetainer: clients.isRetainer,
+          excludeFromAutoStatements: clients.excludeFromAutoStatements,
+          divisionName: divisions.name,
+        })
+        .from(clients)
+        .leftJoin(divisions, eq(clients.divisionId, divisions.id))
+        .where(eq(clients.isActive, true));
 
-      if (c.excludeFromAutoStatements) {
-        skippedClients.push({
-          divisionName: c.divisionName || 'Playhouse Media Group',
-          clientName: c.businessName || c.name,
-          recipientEmail: c.email || undefined,
-          reason: 'Excluded: excludeFromAutoStatements is enabled',
-        });
-      } else if (c.isRetainer) {
-        skippedClients.push({
-          divisionName: c.divisionName || 'Playhouse Media Group',
-          clientName: c.businessName || c.name,
-          recipientEmail: c.email || undefined,
-          reason: 'Skipped: Account balance is R 0.00',
-        });
+      const dispatchedClientEmails = new Set(
+        todayAuditRows.map((r) => r.recipientEmail?.toLowerCase()).filter(Boolean),
+      );
+
+      for (const c of allActiveClients) {
+        if (c.email && dispatchedClientEmails.has(c.email.toLowerCase())) {
+          continue;
+        }
+
+        if (c.excludeFromAutoStatements) {
+          skippedClients.push({
+            divisionName: c.divisionName || 'Playhouse Media Group',
+            clientName: c.businessName || c.name,
+            recipientEmail: c.email || undefined,
+            reason: 'Excluded: excludeFromAutoStatements is enabled',
+          });
+          continue;
+        }
+
+        // On 26th retainer sweep, only retainer clients are evaluated
+        if (todayDayNum === 26 && !c.isRetainer) {
+          continue;
+        }
+
+        // Calculate verified outstanding balance before claiming zero balance
+        const clientInvoices = await db
+          .select({
+            total: invoices.total,
+            writeOffAmount: invoices.writeOffAmount,
+            allocatedAmount: sql<string>`(
+              COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0)
+              +
+              COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)
+            )::text`,
+          })
+          .from(invoices)
+          .where(
+            and(
+              eq(invoices.clientId, c.id),
+              sql`${invoices.status} IN ('issued', 'partially_paid', 'overdue')`,
+            ),
+          );
+
+        const totalOutstanding = clientInvoices.reduce((sum, inv) => {
+          const tot = parseFloat(inv.total || '0');
+          const alloc = parseFloat(inv.allocatedAmount || '0');
+          const wo = parseFloat(inv.writeOffAmount || '0');
+          return sum + Math.max(0, tot - alloc - wo);
+        }, 0);
+
+        if (totalOutstanding <= 0) {
+          skippedClients.push({
+            divisionName: c.divisionName || 'Playhouse Media Group',
+            clientName: c.businessName || c.name,
+            recipientEmail: c.email || undefined,
+            reason: 'Skipped: Account balance is R 0.00',
+          });
+        }
       }
     }
 
-    // 6. Gather upcoming billing milestones
+    // 6. Gather upcoming billing milestones (focused on near-term events in the next 14 days)
     const upcomingEvents: BillingDigestUpcomingItem[] = [];
 
-    // Next month-end
-    const monthEndStr = getEndOfMonth(todayStr);
-    if (monthEndStr >= todayStr) {
+    // Next scheduled automated sweep milestone
+    if (todayDayNum < 26) {
+      const [yearStr, monthStr] = todayStr.split('-');
       upcomingEvents.push({
-        date: fmtDate(monthEndStr),
-        description: 'Month-End Payment Due Courtesy Notice (all accounts with balance > R 0)',
+        date: fmtDate(`${yearStr}-${monthStr}-26`),
+        description: 'Retainer Monthly Statement Sweep (all active retainer accounts)',
+      });
+    } else if (!isEndOfMonthToday) {
+      upcomingEvents.push({
+        date: fmtDate(getEndOfMonth(todayStr)),
+        description: 'Month-End Payment Due Courtesy Notice (accounts with balance > R 0)',
       });
     }
 
-    // Next 8th overdue cycle
-    const [yStr, mStr] = todayStr.split('-');
-    const currentYear = Number(yStr);
-    const currentMonth = Number(mStr);
-    const eighthThisMonth = `${yStr}-${mStr}-08`;
-    const nextEighth =
-      todayStr <= eighthThisMonth
-        ? eighthThisMonth
-        : currentMonth === 12
-          ? `${currentYear + 1}-01-08`
-          : `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-08`;
+    // Next active recurring invoice schedules in the next 14 days
+    const next14DaysDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
 
-    upcomingEvents.push({
-      date: fmtDate(nextEighth),
-      description: 'Post-Grace Overdue-Only Follow-Up Notice (prior month unpaid balance)',
-    });
-
-    // Next active recurring invoice schedules
     const upcomingRecurringSchedules = await db
       .select({
         id: recurringInvoices.id,
@@ -294,6 +348,7 @@ export async function generateAndSendBillingDigest(
         and(
           eq(recurringInvoices.status, 'active'),
           sql`${recurringInvoices.nextRunDate} >= ${todayStr}::date`,
+          sql`${recurringInvoices.nextRunDate} <= ${next14DaysDate}::date`,
         ),
       )
       .orderBy(asc(recurringInvoices.nextRunDate))

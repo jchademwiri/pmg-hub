@@ -56,6 +56,12 @@ export default defineConfig({
         access: "secret",
         optional: true,
       }),
+      PUBLIC_GA_MEASUREMENT_ID: envField.string({
+        context: "client",
+        access: "public",
+        optional: true,
+        default: "G-5W2V8SDSDL",
+      }),
     },
   },
 

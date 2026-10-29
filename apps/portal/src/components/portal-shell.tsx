@@ -327,7 +327,7 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
         )}
 
         {/* Content Body */}
-        <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto pb-24 md:pb-8">{children}</main>
+        <main className="flex-1 p-6 md:p-8 w-full pb-24 md:pb-8">{children}</main>
       </div>
 
       {/* Mobile Bottom Navigation */}

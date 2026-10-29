@@ -11,6 +11,7 @@ import { PaymentReceiptPreview } from '@/components/billing/payment-receipt-prev
 import { UniversalEmailDialog } from '@/components/billing/universal-email-dialog';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
+import { SearchableClientSelect } from '@/components/billing/searchable-client-select';
 import { fmtDate, formatZAR } from '@/lib/format';
 import { Input } from '@/components/ui/input';
 import {
@@ -280,18 +281,12 @@ export function PaymentDetailClient({
               <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Client
               </FieldLabel>
-              <Select value={clientId} onValueChange={setClientId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.businessName ?? c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableClientSelect
+                clients={clients}
+                value={clientId}
+                onValueChange={setClientId}
+                placeholder="Select Client"
+              />
               {clientId && !isLoadingClientData && (
                 <div className="mt-1 text-xs text-muted-foreground">
                   Current Retainer Credit:{' '}

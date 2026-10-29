@@ -1,0 +1,29 @@
+---
+interface Props {
+  measurementId?: string;
+}
+
+const {
+  measurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID ?? 'G-2D8CDLY3DV',
+} = Astro.props;
+---
+
+{
+  measurementId && (
+    <>
+      <script
+        type="text/partytown"
+        src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
+      />
+      <script
+        type="text/partytown"
+        set:html={`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', '${measurementId}');
+        `}
+      />
+    </>
+  )
+}
