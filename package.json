@@ -22,7 +22,7 @@
     "@tailwindcss/node": "4.3.3",
     "@tailwindcss/oxide": "4.3.3",
     "typescript": "5.9.2",
-    "zod": "^4.6.5"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "prettier": "^3.9.9",
@@ -69,7 +69,8 @@
     "smol-toml": "^1.8.0",
     "takumi-pdf": "0.14.3",
     "tinypool": "2.2.0",
-    "braces": "npm:@franciscosolis/braces@^3.1.1"
+    "braces": "npm:@franciscosolis/braces@^3.1.1",
+    "zod": "^4.6.6"
   },
   "trustedDependencies": [
     "@tailwindcss/oxide"
