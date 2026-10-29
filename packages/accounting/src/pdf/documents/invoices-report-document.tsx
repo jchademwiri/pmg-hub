@@ -192,7 +192,7 @@ export function InvoicesReportDocument({
                         items={[
                           { key: 'Period', value: periodLabel },
                           { key: 'Generated', value: generatedAt },
-                          { key: 'Invoices', value: String(rows.length) },
+                          { key: 'Total Invoiced', value: formatZAR(totalInvoiced) },
                           {
                             key: 'Balance Due',
                             value: formatZAR(totalOutstanding),

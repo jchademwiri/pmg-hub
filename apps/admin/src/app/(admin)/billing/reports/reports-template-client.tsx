@@ -588,12 +588,21 @@ export function ReportsTemplateClient({
                     <span className="text-zinc-500">Generated</span>
                     <span className="font-semibold text-zinc-900">{fmtDateLong(new Date())}</span>
                   </div>
-                  <div className="flex justify-between text-xs py-0.5">
-                    <span className="text-zinc-500">Records</span>
-                    <span className="font-semibold text-zinc-900 tabular-nums">
-                      {reportData?.summary.count ?? 0}
-                    </span>
-                  </div>
+                  {reportData?.type === 'invoices' ? (
+                    <div className="flex justify-between text-xs py-0.5">
+                      <span className="text-zinc-500">Total Invoiced</span>
+                      <span className="font-semibold text-zinc-900 tabular-nums">
+                        {formatZAR(reportData.summary.totalInvoiced)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between text-xs py-0.5">
+                      <span className="text-zinc-500">Records</span>
+                      <span className="font-semibold text-zinc-900 tabular-nums">
+                        {reportData?.summary.count ?? 0}
+                      </span>
+                    </div>
+                  )}
                   {reportData?.type === 'invoices' && (
                     <div className="flex justify-between text-xs py-0.5 pt-1 border-t border-zinc-100">
                       <span className="font-bold text-zinc-900">Balance Due</span>

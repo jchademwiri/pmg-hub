@@ -197,7 +197,14 @@ export function ClientSummaryReportDocument({
                         items={[
                           { key: 'Period', value: periodLabel },
                           { key: 'Generated', value: generatedAt },
-                          { key: 'Clients', value: String(rows.length) },
+                          ...(valueColumns.length > 1
+                            ? [
+                                {
+                                  key: `Total ${valueColumns[0]?.label || 'Amount'}`,
+                                  value: formatZAR(totals[0] ?? 0),
+                                },
+                              ]
+                            : [{ key: 'Clients', value: String(rows.length) }]),
                           ...(headline
                             ? [
                                 {
