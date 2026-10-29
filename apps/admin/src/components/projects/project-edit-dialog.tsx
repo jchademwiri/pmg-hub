@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { SearchableClientSelect } from '@/components/billing/searchable-client-select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { ProjectScheduleEntry } from '@pmg/db';
 import {
@@ -591,22 +592,13 @@ export function ProjectEditDialog({
                   <FieldLabel htmlFor="edit-client">
                     Client <span className="text-destructive">*</span>
                   </FieldLabel>
-                  <Select
-                    required
-                    defaultValue={editClientId}
+                  <SearchableClientSelect
+                    id="edit-client"
+                    clients={clients}
+                    value={editClientId}
                     onValueChange={(value) => setEditClientId(value)}
-                  >
-                    <SelectTrigger id="edit-client" className="text-sm h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clients.map((c) => (
-                        <SelectItem key={c.id} value={c.id} className="text-xs">
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder="Select a client"
+                  />
                   <input
                     id="edit-client-hidden"
                     type="hidden"

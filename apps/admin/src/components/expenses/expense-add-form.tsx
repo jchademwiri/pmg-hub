@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 
 import { UploadCloud, FileText, Image as ImageIcon, X } from 'lucide-react';
+import { SearchableClientSelect } from '@/components/billing/searchable-client-select';
 
 const today = new Date().toISOString().split('T')[0];
 
@@ -41,6 +42,7 @@ export function ExpenseAddForm({
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
+  const [clientId, setClientId] = React.useState<string>('none');
 
   const MAX_SIZE = 10 * 1024 * 1024; // 10MB
   const ALLOWED_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
@@ -126,6 +128,7 @@ export function ExpenseAddForm({
         toast.success('Expense added with receipt!');
         formRef.current?.reset();
         setSelectedFile(null);
+        setClientId('none');
       }
     });
   }
@@ -169,19 +172,16 @@ export function ExpenseAddForm({
 
         <Field>
           <FieldLabel htmlFor="expense-client">Client (Optional)</FieldLabel>
-          <Select name="clientId" disabled={isPending}>
-            <SelectTrigger id="expense-client">
-              <SelectValue placeholder="No client" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">No client</SelectItem>
-              {clients.map((client) => (
-                <SelectItem key={client.id} value={client.id}>
-                  {client.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SearchableClientSelect
+            id="expense-client"
+            name="clientId"
+            clients={clients}
+            value={clientId}
+            onValueChange={setClientId}
+            emptyOption={{ value: 'none', label: 'No client' }}
+            placeholder="No client"
+            disabled={isPending}
+          />
         </Field>
 
         <Field>

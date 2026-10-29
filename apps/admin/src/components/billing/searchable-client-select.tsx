@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 export interface ClientOption {
   id: string;
   name: string;
-  businessName: string | null;
+  businessName?: string | null;
   email?: string | null;
   isActive?: boolean;
 }
@@ -24,6 +24,7 @@ interface SearchableClientSelectProps {
   className?: string;
   id?: string;
   name?: string;
+  emptyOption?: { value: string; label: string };
 }
 
 export function SearchableClientSelect({
@@ -35,6 +36,7 @@ export function SearchableClientSelect({
   className,
   id,
   name,
+  emptyOption,
 }: SearchableClientSelectProps) {
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -45,6 +47,8 @@ export function SearchableClientSelect({
   const selectedClient = React.useMemo(() => {
     return clients.find((c) => c.id === value);
   }, [clients, value]);
+
+  const isEmptyOptionSelected = Boolean(emptyOption && value === emptyOption.value);
 
   // Sort and filter clients
   const filteredClients = React.useMemo(() => {
@@ -63,6 +67,13 @@ export function SearchableClientSelect({
       return nameA.localeCompare(nameB);
     });
   }, [clients, searchQuery]);
+
+  const showEmptyOption = React.useMemo(() => {
+    if (!emptyOption) return false;
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    return emptyOption.label.toLowerCase().includes(q);
+  }, [emptyOption, searchQuery]);
 
   function handleOpenChange(newOpen: boolean) {
     setOpen(newOpen);
@@ -90,7 +101,7 @@ export function SearchableClientSelect({
 
   function handleClear(e: React.MouseEvent | React.KeyboardEvent) {
     e.stopPropagation();
-    onValueChange('');
+    onValueChange(emptyOption ? emptyOption.value : '');
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -145,7 +156,7 @@ export function SearchableClientSelect({
             onKeyDown={handleKeyDown}
             className={cn(
               'w-full justify-between font-normal text-left h-9 px-3 border-input bg-transparent shadow-xs transition-colors hover:bg-muted/20 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none',
-              !selectedClient && 'text-muted-foreground',
+              !selectedClient && !isEmptyOptionSelected && 'text-muted-foreground',
               className,
             )}
           >
@@ -171,6 +182,8 @@ export function SearchableClientSelect({
                     </Badge>
                   )}
                 </>
+              ) : isEmptyOptionSelected && emptyOption ? (
+                <span className="truncate">{emptyOption.label}</span>
               ) : (
                 placeholder
               )}
@@ -234,7 +247,22 @@ export function SearchableClientSelect({
               className="max-h-64 overflow-y-auto p-1 divide-y divide-border/20"
               role="listbox"
             >
-              {filteredClients.length === 0 ? (
+              {showEmptyOption && emptyOption && (
+                <div
+                  role="option"
+                  aria-selected={isEmptyOptionSelected}
+                  onClick={() => handleSelect(emptyOption.value)}
+                  className={cn(
+                    'flex items-center justify-between p-2.5 rounded-md text-sm cursor-pointer transition-colors select-none hover:bg-accent hover:text-accent-foreground',
+                    isEmptyOptionSelected && 'bg-accent/70 font-medium',
+                  )}
+                >
+                  <span className="text-muted-foreground">{emptyOption.label}</span>
+                  {isEmptyOptionSelected && <Check className="size-4 shrink-0 text-primary ml-2" />}
+                </div>
+              )}
+
+              {filteredClients.length === 0 && !showEmptyOption ? (
                 <div className="py-6 text-center text-sm text-muted-foreground">
                   {searchQuery ? (
                     <p>No clients found matching &ldquo;{searchQuery}&rdquo;</p>

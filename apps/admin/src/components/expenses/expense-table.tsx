@@ -24,6 +24,7 @@ import {
 import { formatZAR, fmtDate, formatDivisionAbbr, stripExpenseDescription } from '@/lib/format';
 import { confirm } from '@/components/ui/confirm-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { SearchableClientSelect } from '@/components/billing/searchable-client-select';
 
 const today = new Date().toISOString().split('T')[0]!;
 
@@ -138,23 +139,15 @@ function ExpenseTableRow({
             </Select>
           </TableCell>
           <TableCell className="px-1.5 py-2">
-            <Select
+            <SearchableClientSelect
+              clients={clients}
               value={editClientId || 'none'}
               onValueChange={(val) => setEditClientId(val === 'none' ? '' : val)}
+              emptyOption={{ value: 'none', label: 'No client' }}
+              placeholder="No client"
               disabled={isSaving}
-            >
-              <SelectTrigger className="w-full h-8 px-2 text-xs truncate">
-                <SelectValue placeholder="No client" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No client</SelectItem>
-                {clients.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              className="w-full h-8 px-2 text-xs"
+            />
           </TableCell>
           <TableCell className="px-1.5 py-2">
             <Select value={editCategory} onValueChange={setEditCategory} disabled={isSaving}>
