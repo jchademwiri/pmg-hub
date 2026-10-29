@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select';
 import { formatZAR } from '@/lib/format';
 import { createCreditNote } from '@/app/actions/credit-management';
+import { SearchableClientSelect } from '@/components/billing/searchable-client-select';
 
 interface IssueCreditNoteDialogProps {
   open: boolean;
@@ -106,18 +107,12 @@ export function IssueCreditNoteDialog({
             <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Client <span className="text-destructive">*</span>
             </FieldLabel>
-            <Select value={clientId} onValueChange={setClientId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Client" />
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.businessName ?? c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchableClientSelect
+              clients={clients}
+              value={clientId}
+              onValueChange={setClientId}
+              placeholder="Select Client"
+            />
           </Field>
 
           {/* Division Selector */}

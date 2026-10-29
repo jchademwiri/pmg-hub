@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
-import { Loader2, Mail, KeyRound, ArrowRight, ShieldCheck, UserCheck } from 'lucide-react';
+import { Loader2, Mail, KeyRound, ArrowRight, ShieldCheck, UserCheck, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { getDevClientsAction, loginAsDevClientAction } from '@/app/actions/dev-auth';
 
@@ -19,7 +19,19 @@ export default function LoginPage() {
     Array<{ id: string; name: string; businessName: string | null; email: string | null }>
   >([]);
   const [selectedDevClient, setSelectedDevClient] = React.useState<string>('');
+  const [devClientSearch, setDevClientSearch] = React.useState<string>('');
   const [isDevLoading, setIsDevLoading] = React.useState(false);
+
+  const filteredDevClients = React.useMemo(() => {
+    const q = devClientSearch.toLowerCase().trim();
+    if (!q) return devClients;
+    return devClients.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.businessName || '').toLowerCase().includes(q) ||
+        (c.email || '').toLowerCase().includes(q),
+    );
+  }, [devClients, devClientSearch]);
 
   React.useEffect(() => {
     // Clear any lingering impersonation cookies when accessing the login page
@@ -238,18 +250,50 @@ export default function LoginPage() {
               Select any active client from your local database to switch login in 1 click:
             </p>
             <form onSubmit={handleDevLogin} className="space-y-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={devClientSearch}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setDevClientSearch(val);
+                    const q = val.toLowerCase().trim();
+                    const matches = q
+                      ? devClients.filter(
+                          (c) =>
+                            c.name.toLowerCase().includes(q) ||
+                            (c.businessName || '').toLowerCase().includes(q) ||
+                            (c.email || '').toLowerCase().includes(q),
+                        )
+                      : devClients;
+                    if (matches.length > 0 && !matches.some((c) => c.id === selectedDevClient)) {
+                      setSelectedDevClient(matches[0].id);
+                    }
+                  }}
+                  placeholder="Search client by company, contact, or email…"
+                  disabled={isDevLoading}
+                  className="h-9 w-full rounded-lg border border-white/15 bg-[#0f172a] pl-8 pr-3 text-xs text-white placeholder:text-slate-500 outline-none focus:border-amber-500/50"
+                />
+              </div>
               <select
                 value={selectedDevClient}
                 onChange={(e) => setSelectedDevClient(e.target.value)}
-                disabled={isDevLoading}
+                disabled={isDevLoading || filteredDevClients.length === 0}
                 className="h-9 w-full rounded-lg border border-white/15 bg-[#0f172a] px-3 text-xs text-white outline-none focus:border-amber-500/50"
               >
-                {devClients.map((c) => (
-                  <option key={c.id} value={c.id} className="bg-[#0f172a] text-white">
-                    {c.name} {c.businessName ? `(${c.businessName})` : ''}{' '}
-                    {c.email ? `• ${c.email}` : ''}
+                {filteredDevClients.length === 0 ? (
+                  <option value="" className="bg-[#0f172a] text-slate-400">
+                    No matching clients found
                   </option>
-                ))}
+                ) : (
+                  filteredDevClients.map((c) => (
+                    <option key={c.id} value={c.id} className="bg-[#0f172a] text-white">
+                      {c.name} {c.businessName ? `(${c.businessName})` : ''}{' '}
+                      {c.email ? `• ${c.email}` : ''}
+                    </option>
+                  ))
+                )}
               </select>
               <button
                 type="submit"

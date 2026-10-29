@@ -24,6 +24,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { SearchableClientSelect } from '@/components/billing/searchable-client-select';
 import {
   CalendarClock,
   ArrowDownLeft,
@@ -1407,7 +1408,9 @@ export function RecurringClient({
                   <Label htmlFor="inv-client" className="text-xs font-semibold">
                     Client
                   </Label>
-                  <Select
+                  <SearchableClientSelect
+                    id="inv-client"
+                    clients={clients}
                     value={newInvClientId}
                     onValueChange={(val) => {
                       setNewInvClientId(val);
@@ -1416,18 +1419,8 @@ export function RecurringClient({
                         setNewInvDivisionId(matched.divisionId);
                       }
                     }}
-                  >
-                    <SelectTrigger id="inv-client">
-                      <SelectValue placeholder="Select Client" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clients.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.businessName || c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder="Select Client"
+                  />
                 </div>
               </div>
 
@@ -1676,19 +1669,14 @@ export function RecurringClient({
                   <Label htmlFor="exp-client" className="text-xs font-semibold">
                     Project Cost Attribution
                   </Label>
-                  <Select value={newExpClientId} onValueChange={setNewExpClientId}>
-                    <SelectTrigger id="exp-client">
-                      <SelectValue placeholder="None (General Overhead)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None (General Business Overhead)</SelectItem>
-                      {clients.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.businessName || c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <SearchableClientSelect
+                    id="exp-client"
+                    clients={clients}
+                    value={newExpClientId}
+                    onValueChange={setNewExpClientId}
+                    emptyOption={{ value: 'none', label: 'None (General Business Overhead)' }}
+                    placeholder="None (General Overhead)"
+                  />
                   <span className="text-[11px] text-muted-foreground">
                     Deducted when calculating client net profit
                   </span>

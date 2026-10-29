@@ -126,6 +126,27 @@ describe('SearchableClientSelect', () => {
     await user.click(screen.getByText('Jane Smith'));
     expect(handleValueChange).toHaveBeenCalledWith('client-2');
   });
+
+  it('supports emptyOption for optional or filter client dropdowns', async () => {
+    const user = userEvent.setup();
+    const handleValueChange = vi.fn();
+
+    render(
+      <SearchableClientSelect
+        clients={mockClients}
+        value="all"
+        onValueChange={handleValueChange}
+        emptyOption={{ value: 'all', label: 'All clients' }}
+        placeholder="All clients"
+      />,
+    );
+
+    expect(screen.getByRole('combobox')).toHaveTextContent('All clients');
+
+    await user.click(screen.getByRole('combobox'));
+    await user.click(screen.getByText('Acme Corporation'));
+    expect(handleValueChange).toHaveBeenCalledWith('client-1');
+  });
 });
 
 describe('SearchableItemSelect', () => {

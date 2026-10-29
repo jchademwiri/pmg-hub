@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { SearchableClientSelect } from '@/components/billing/searchable-client-select';
 interface IncomeFilterBarProps {
   divisions: { id: string; name: string }[];
   clients: { id: string; name: string; businessName: string | null }[];
@@ -55,19 +56,15 @@ export function IncomeFilterBar({
         </SelectContent>
       </Select>
 
-      <Select value={currentClientId ?? 'all'} onValueChange={handleClientChange}>
-        <SelectTrigger className="w-64">
-          <SelectValue placeholder="All clients" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All clients</SelectItem>
-          {clients.map((client) => (
-            <SelectItem key={client.id} value={client.id}>
-              {client.businessName ?? client.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="w-64">
+        <SearchableClientSelect
+          clients={clients}
+          value={currentClientId ?? 'all'}
+          onValueChange={(val) => handleClientChange(val || 'all')}
+          emptyOption={{ value: 'all', label: 'All clients' }}
+          placeholder="All clients"
+        />
+      </div>
     </div>
   );
 }

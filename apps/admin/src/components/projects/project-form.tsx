@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { SearchableClientSelect } from '@/components/billing/searchable-client-select';
 import {
   createProjectScheduleEntry,
   updateProjectScheduleEntry,
@@ -140,18 +141,13 @@ export function ProjectForm({ clients, divisions, project }: ProjectFormProps) {
               <FieldLabel htmlFor="tender-client">
                 Client <span className="text-destructive">*</span>
               </FieldLabel>
-              <Select required value={selectedClientId} onValueChange={setSelectedClientId}>
-                <SelectTrigger id="tender-client" className="text-sm h-9">
-                  <SelectValue placeholder="Select a client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((c) => (
-                    <SelectItem key={c.id} value={c.id} className="text-xs">
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableClientSelect
+                id="tender-client"
+                clients={clients}
+                value={selectedClientId}
+                onValueChange={setSelectedClientId}
+                placeholder="Select a client"
+              />
               <input
                 id="tender-client-hidden"
                 type="hidden"

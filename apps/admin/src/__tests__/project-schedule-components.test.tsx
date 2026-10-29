@@ -72,6 +72,49 @@ vi.mock('@/components/ui/select', () => {
   };
 });
 
+vi.mock('@/components/billing/searchable-client-select', () => {
+  const React = require('react');
+  return {
+    SearchableClientSelect: ({
+      clients,
+      value,
+      onValueChange,
+      disabled,
+      id,
+      name,
+      emptyOption,
+    }: any) => {
+      const [v, setV] = React.useState(value ?? '');
+      React.useEffect(() => {
+        if (value !== undefined) setV(value);
+      }, [value]);
+      return (
+        <select
+          data-testid="searchable-client-select"
+          id={id}
+          name={name}
+          value={v}
+          disabled={disabled}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+            setV(e.target.value);
+            onValueChange?.(e.target.value);
+          }}
+        >
+          <option value="" disabled>
+            Select client...
+          </option>
+          {emptyOption && <option value={emptyOption.value}>{emptyOption.label}</option>}
+          {clients.map((c: any) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      );
+    },
+  };
+});
+
 // ─── Action mock refs (single shared mock) ────────────────────────────────────
 
 const mockFormCreate = vi.fn();
