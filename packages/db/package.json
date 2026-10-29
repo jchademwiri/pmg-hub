@@ -22,7 +22,7 @@
     "@neondatabase/serverless": "^1.1.0",
     "@pmg/utils": "workspace:*",
     "drizzle-orm": "^0.45.3",
-    "zod": "^3.22.4"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@pmg/typescript-config": "workspace:*",
