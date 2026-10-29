@@ -266,7 +266,7 @@
         "@types/react": "^19.3.0",
         "@types/react-dom": "^19.3.0",
         "esbuild": "0.28.2",
-        "react-email": "latest",
+        "react-email": "6.11.3",
         "typescript": "5.9.2",
       },
       "peerDependencies": {
