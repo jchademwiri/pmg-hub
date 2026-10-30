@@ -37,8 +37,6 @@ import {
   PieChart,
   Calculator,
   BookMarked,
-  NotebookPen,
-  Scale,
   Calendar,
   LayoutGrid,
   CalendarClock,
@@ -148,11 +146,9 @@ export const GROUPS: NavGroup[] = [
     icon: Calculator,
     items: [
       { title: 'Overview', url: '/accounting', icon: LayoutGrid },
-      { title: 'Chart of Accounts', url: '/accounting/chart-of-accounts', icon: BookOpen },
-      { title: 'General Ledger', url: '/accounting/general-ledger', icon: BookMarked },
-      { title: 'Journals', url: '/accounting/journals', icon: NotebookPen },
-      { title: 'Trial Balance', url: '/accounting/trial-balance', icon: Scale },
       { title: 'Profit & Loss', url: '/accounting/profit-and-loss', icon: LineChart },
+      { title: 'General Ledger', url: '/accounting/general-ledger', icon: BookMarked },
+      { title: 'Chart of Accounts', url: '/accounting/chart-of-accounts', icon: BookOpen },
     ],
   },
 
@@ -195,6 +191,9 @@ const EXTRA_LABELS: Record<string, string> = {
   '/insights/reports': 'Performance Reports',
   '/insights/snapshots': 'Snapshots',
   '/accounting/periods': 'Accounting Periods',
+  '/accounting/journals': 'Journals',
+  '/accounting/journals/new': 'New Journal Entry',
+  '/accounting/trial-balance': 'Trial Balance',
 
   '/settings/users/invite': 'Invite User',
   '/billing/payments/add': 'Record Payment',
