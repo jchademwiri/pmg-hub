@@ -9,6 +9,10 @@ export type DivisionBreakdownRow = {
   divisionName: string;
   metrics: DivisionMetric[];
   pct: number;
+  /** Label after the percentage, e.g. "of total profit". Defaults to "of total". */
+  pctLabel?: string;
+  /** Optional highlighted figure rendered on the same row as the percentage. */
+  footerMetric?: DivisionMetric;
 };
 
 type DivisionBreakdownCardProps = {
@@ -90,7 +94,27 @@ export function DivisionBreakdownCard({
                     </div>
                   ))}
                 </div>
-                <p className="text-muted-foreground/60 text-[10px] mt-1.5">{row.pct}% of total</p>
+                {row.footerMetric ? (
+                  <div className="flex items-baseline justify-between gap-2 mt-2 pt-1.5 border-t border-border/50">
+                    <span className="text-muted-foreground/60 text-[10px]">
+                      {row.pct}% {row.pctLabel ?? 'of total'}
+                    </span>
+                    <span className="flex items-baseline gap-1.5">
+                      <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wide">
+                        {row.footerMetric.label}
+                      </span>
+                      <span
+                        className={`text-sm font-bold tabular-nums ${row.footerMetric.colorClass}`}
+                      >
+                        {formatZAR(row.footerMetric.value)}
+                      </span>
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground/60 text-[10px] mt-1.5">
+                    {row.pct}% {row.pctLabel ?? 'of total'}
+                  </p>
+                )}
               </div>
             );
 

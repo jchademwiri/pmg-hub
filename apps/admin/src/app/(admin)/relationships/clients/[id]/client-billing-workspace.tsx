@@ -39,6 +39,7 @@ import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
 import { ClientMetricStrip } from './client-metric-strip';
 import { ComplianceTable } from './_components/compliance/compliance-table';
+import { DownloadReportDialog } from '@/components/reports/download-report-dialog';
 import {
   calculateClientHealth,
   calculateAverageDaysToPay,
@@ -880,6 +881,18 @@ export function ClientBillingWorkspace({
         </Button>
         <PortalInviteButton client={client} />
         <PortalImpersonateButton client={client} />
+        <DownloadReportDialog
+          defaultReportType={activeTab === 'payments' ? 'payments' : 'invoices'}
+          clients={[
+            {
+              id: client.id,
+              name: client.name,
+              businessName: client.businessName,
+            },
+          ]}
+          divisions={divisions}
+          initialClientId={client.id}
+        />
       </div>
 
       {metricFilter !== 'all' && (activeTab === 'invoices' || activeTab === 'quotes') && (

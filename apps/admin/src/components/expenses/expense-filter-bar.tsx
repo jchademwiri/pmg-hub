@@ -8,20 +8,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { SearchableClientSelect } from '@/components/billing/searchable-client-select';
 import { fmtMonthYear } from '@/lib/format';
 
 interface ExpenseFilterBarProps {
   divisions: { id: string; name: string }[];
   categories: string[];
+  clients?: { id: string; name: string; businessName?: string | null }[];
   currentDivisionId?: string;
   currentCategory?: string;
+  currentClientId?: string;
 }
 
 export function ExpenseFilterBar({
   divisions,
   categories,
+  clients = [],
   currentDivisionId,
   currentCategory,
+  currentClientId,
 }: ExpenseFilterBarProps) {
   const router = useRouter();
   const basePath = '/finance/expenses';
@@ -30,6 +35,7 @@ export function ExpenseFilterBar({
     const params = new URLSearchParams();
     if (value !== 'all') params.set('divisionId', value);
     if (currentCategory) params.set('category', currentCategory);
+    if (currentClientId) params.set('clientId', currentClientId);
     router.push(`${basePath}?` + params.toString());
   }
 
@@ -37,6 +43,15 @@ export function ExpenseFilterBar({
     const params = new URLSearchParams();
     if (currentDivisionId) params.set('divisionId', currentDivisionId);
     if (value !== 'all') params.set('category', value);
+    if (currentClientId) params.set('clientId', currentClientId);
+    router.push(`${basePath}?` + params.toString());
+  }
+
+  function handleClientChange(value: string) {
+    const params = new URLSearchParams();
+    if (currentDivisionId) params.set('divisionId', currentDivisionId);
+    if (currentCategory) params.set('category', currentCategory);
+    if (value !== 'all') params.set('clientId', value);
     router.push(`${basePath}?` + params.toString());
   }
 
@@ -69,6 +84,21 @@ export function ExpenseFilterBar({
           ))}
         </SelectContent>
       </Select>
+
+      {clients.length > 0 && (
+        <div className="w-64">
+          <SearchableClientSelect
+            clients={[
+              { id: 'unassigned', name: 'General (No Client)', businessName: 'General (No Client)' },
+              ...clients,
+            ]}
+            value={currentClientId ?? 'all'}
+            onValueChange={(val) => handleClientChange(val || 'all')}
+            emptyOption={{ value: 'all', label: 'All clients' }}
+            placeholder="All clients"
+          />
+        </div>
+      )}
     </div>
   );
 }

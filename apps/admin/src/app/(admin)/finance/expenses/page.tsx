@@ -29,15 +29,22 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Expenses' };
 
 interface ExpensePageProps {
-  searchParams: Promise<{ divisionId?: string; category?: string; month?: string; page?: string }>;
+  searchParams: Promise<{
+    divisionId?: string;
+    category?: string;
+    clientId?: string;
+    month?: string;
+    page?: string;
+  }>;
 }
 
 export default async function ExpensePage({ searchParams }: ExpensePageProps) {
-  const { divisionId, category } = await searchParams;
+  const { divisionId, category, clientId } = await searchParams;
 
   const filters = {
     divisionId: divisionId || undefined,
     category: category || undefined,
+    clientId: clientId || undefined,
   };
 
   const currentMonthStr = getCurrentMonthString();
@@ -75,8 +82,10 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
       <ExpenseFilterBar
         divisions={divisions}
         categories={categories}
+        clients={clients}
         currentDivisionId={filters.divisionId}
         currentCategory={filters.category}
+        currentClientId={filters.clientId}
       />
       <ExpensesHeader
         divisions={divisions}
@@ -84,6 +93,9 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
         clients={clients}
         createAction={createExpense}
         minDate={minDate}
+        initialDivisionId={filters.divisionId}
+        initialCategory={filters.category}
+        initialClientId={filters.clientId}
       />
 
       {/* Metrics Overview */}

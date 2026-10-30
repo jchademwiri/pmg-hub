@@ -3,7 +3,13 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusFilter } from '@/components/ui/status-filter';
-import { getAllInvoices, getInvoiceMonthlySummaries } from '@pmg/db';
+import {
+  getAllInvoices,
+  getInvoiceMonthlySummaries,
+  getAllClients,
+  getAllDivisions,
+} from '@pmg/db';
+import { DownloadReportDialog } from '@/components/reports/download-report-dialog';
 import { formatZAR } from '@/lib/format';
 import { issueInvoice, voidInvoice } from '@/app/actions/billing-invoices';
 import { InvoicesTable } from './invoices-table';
@@ -57,7 +63,11 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
   const currentCalendarYear = now.getFullYear();
   const fyStartYear = currentMonthIdx < 2 ? currentCalendarYear - 1 : currentCalendarYear;
 
-  const monthlySummaries = await getInvoiceMonthlySummaries(fyStartYear, divisionId, status);
+  const [monthlySummaries, clients, divisions] = await Promise.all([
+    getInvoiceMonthlySummaries(fyStartYear, divisionId, status),
+    getAllClients(),
+    getAllDivisions(),
+  ]);
   const totalInvoiced = monthlySummaries.reduce((sum, m) => sum + m.total, 0);
   const totalOutstanding = monthlySummaries.reduce((sum, m) => sum + m.outstanding, 0);
   const totalPaid = totalInvoiced - totalOutstanding;
@@ -77,16 +87,25 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               basePath="/billing/invoices"
               preserveParams={{ divisionId }}
               options={[
-                { value: 'draft', label: 'Draft' },
+                { value: 'only_outstanding', label: 'Unpaid & Not Fully Paid' },
+                { value: 'unpaid', label: 'Unpaid Only' },
+                { value: 'partially_paid', label: 'Not Fully Paid (Partially Paid)' },
                 { value: 'issued', label: 'Issued' },
-                { value: 'partially_paid', label: 'Partially Paid' },
                 { value: 'overdue', label: 'Overdue' },
                 { value: 'paid', label: 'Paid' },
+                { value: 'draft', label: 'Draft' },
                 { value: 'void', label: 'Void' },
                 { value: 'written_off', label: 'Written Off' },
               ]}
             />
           </div>
+          <DownloadReportDialog
+            defaultReportType="invoices"
+            clients={clients}
+            divisions={divisions}
+            initialDivisionId={divisionId}
+            initialStatus={status}
+          />
           <Button asChild size="sm" className="hidden md:flex">
             <Link href="/billing/invoices/new">
               <Plus className="size-4 mr-2" />

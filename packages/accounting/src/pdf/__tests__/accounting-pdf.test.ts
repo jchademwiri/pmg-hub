@@ -327,6 +327,167 @@ describe('Declarative Accounting PDF Documents', () => {
 
     expect(buffer).toBeInstanceOf(Buffer);
     expect(buffer.length).toBeGreaterThan(4000);
+  });
+
+  it('renders Invoices Report into a valid PDF', async () => {
+    const { renderDeclarativeInvoicesReport } = await import('../render-accounting-pdf');
+    const buffer = await renderDeclarativeInvoicesReport(
+      [
+        {
+          documentNumber: 'TES-INV-2026-001',
+          invoiceDate: '2026-03-01',
+          dueDate: '2026-03-31',
+          clientName: 'Acme Corp',
+          divisionName: 'TenderEdge Solutions',
+          status: 'issued',
+          subtotal: 10000,
+          vatAmount: 1500,
+          total: 11500,
+          paidAmount: 5000,
+          outstandingAmount: 6500,
+        },
+      ],
+      sampleOrg,
+      '01 Mar 2026 – 31 Mar 2026',
+      'Acme Corp',
+      'TenderEdge Solutions',
+      'Active (Excl. Draft & Void)',
+      '31 March 2026',
+    );
+
+    expect(buffer).toBeInstanceOf(Buffer);
+    expect(buffer.length).toBeGreaterThan(2000);
+    expect(buffer.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+  });
+
+  it('renders Payments Report into a valid PDF', async () => {
+    const { renderDeclarativePaymentsReport } = await import('../render-accounting-pdf');
+    const buffer = await renderDeclarativePaymentsReport(
+      [
+        {
+          date: '2026-03-15',
+          clientName: 'Acme Corp',
+          divisionName: 'TenderEdge Solutions',
+          description: 'Payment for TES-INV-2026-001',
+          allocatedInvoices: 'TES-INV-2026-001',
+          amount: 5000,
+        },
+      ],
+      sampleOrg,
+      '01 Mar 2026 – 31 Mar 2026',
+      'Acme Corp',
+      'TenderEdge Solutions',
+      '31 March 2026',
+    );
+
+    expect(buffer).toBeInstanceOf(Buffer);
+    expect(buffer.length).toBeGreaterThan(2000);
+    expect(buffer.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+  });
+
+  it('renders Expenses Report into a valid PDF', async () => {
+    const { renderDeclarativeExpensesReport } = await import('../render-accounting-pdf');
+    const buffer = await renderDeclarativeExpensesReport(
+      [
+        {
+          date: '2026-03-10',
+          category: 'Software & Subscriptions',
+          clientId: 'cli-1',
+          clientName: 'Acme Corp',
+          divisionName: 'Apex Web Solutions',
+          description: 'Vercel Pro Hosting',
+          hasReceipt: true,
+          amount: 2400,
+        },
+        {
+          date: '2026-03-12',
+          category: 'Office Supplies',
+          clientId: null,
+          clientName: 'General (No Client)',
+          divisionName: 'Playhouse Media Group',
+          description: 'Printer paper',
+          hasReceipt: false,
+          amount: 450,
+        },
+      ],
+      sampleOrg,
+      '01 Mar 2026 – 31 Mar 2026',
+      'All Clients',
+      undefined,
+      undefined,
+      '31 March 2026',
+    );
+
+    expect(buffer).toBeInstanceOf(Buffer);
+    expect(buffer.length).toBeGreaterThan(2000);
+    // Final assertion follows below:
+    expect(buffer.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+  });
+  it('renders a multi-page Client Summary (grouped by client) Report into a valid PDF', async () => {
+    const { renderDeclarativeClientSummaryReport } = await import('../render-accounting-pdf');
+    const rows = Array.from({ length: 45 }, (_, i) => ({
+      clientName: `Client ${i + 1}`,
+      count: (i % 4) + 1,
+      values: [10000 + i * 100, 4000, 6000 + i * 100],
+    }));
+    const buffer = await renderDeclarativeClientSummaryReport({
+      title: 'Client Balances Report',
+      reportNumber: 'INV-CLT-2026',
+      countLabel: 'Invoices',
+      valueColumns: [
+        { label: 'Invoiced' },
+        { label: 'Paid', tone: 'success' },
+        { label: 'Balance Due', tone: 'danger' },
+      ],
+      headlineIndex: 2,
+      rows,
+      org: sampleOrg,
+      periodLabel: '01 Mar 2026 - 31 Mar 2026',
+      clientScopeLabel: 'All Clients',
+      filterLabel: 'Unpaid & Not Fully Paid',
+      generatedAt: '31 March 2026',
+    });
+
+    expect(buffer).toBeInstanceOf(Buffer);
+    expect(buffer.length).toBeGreaterThan(2000);
+    expect(buffer.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+  });
+  it('renders an AR Aging Report into a valid PDF', async () => {
+    const { renderDeclarativeAgingReport } = await import('../render-accounting-pdf');
+    const rows = [
+      {
+        clientId: 'c1',
+        clientName: 'Basadipele',
+        current: 10000,
+        bucket_1_14: 2500,
+        bucket_15_30: 0,
+        bucket_31_60: 0,
+        bucket_61_plus: 5000,
+        totalOutstanding: 17500,
+      },
+      {
+        clientId: 'c2',
+        clientName: 'Phehlelwana Group',
+        current: 2000,
+        bucket_1_14: 0,
+        bucket_15_30: 0,
+        bucket_31_60: 0,
+        bucket_61_plus: 0,
+        totalOutstanding: 2000,
+      },
+    ];
+    const buffer = await renderDeclarativeAgingReport({
+      title: 'Accounts Receivable Aging Report',
+      reportNumber: 'AG-2026-10',
+      rows,
+      org: sampleOrg,
+      asOfDateLabel: '30 October 2026',
+      clientScopeLabel: 'All Clients',
+      generatedAt: '30 October 2026',
+    });
+
+    expect(buffer).toBeInstanceOf(Buffer);
+    expect(buffer.length).toBeGreaterThan(2000);
     expect(buffer.subarray(0, 5).toString('ascii')).toBe('%PDF-');
   });
 });

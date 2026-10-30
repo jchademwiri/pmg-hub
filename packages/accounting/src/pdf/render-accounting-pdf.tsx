@@ -34,6 +34,17 @@ import {
   ClientPerformanceDocument,
   type ClientPerformanceRow,
   AnnualFinancialStatementsDocument,
+  InvoicesReportDocument,
+  type InvoiceReportRow,
+  PaymentsReportDocument,
+  type PaymentReportRow,
+  ExpensesReportDocument,
+  type ExpenseReportRow,
+  ClientSummaryReportDocument,
+  type ClientSummaryReportDocumentProps,
+  AgingReportDocument,
+  type AgingReportDocumentProps,
+  type AgingReportRow,
 } from './index';
 
 export async function renderDeclarativeProfitAndLoss(
@@ -230,6 +241,104 @@ export async function renderDeclarativeAnnualFinancialStatements(
       org={resolveOrg(org)}
       periodLabel={periodLabel}
       generatedAt={generatedAt || new Date().toLocaleDateString('en-ZA')}
+    />
+  );
+  const uint8 = await renderDocumentToPdf(element, { theme: pmgTheme });
+  return Buffer.from(uint8);
+}
+
+export async function renderDeclarativeInvoicesReport(
+  rows: InvoiceReportRow[],
+  org: PdfOrgHeader,
+  periodLabel: string,
+  clientScopeLabel: string,
+  divisionLabel?: string,
+  statusFilterLabel?: string,
+  generatedAt?: string,
+): Promise<Buffer> {
+  const element = (
+    <InvoicesReportDocument
+      rows={rows}
+      org={resolveOrg(org)}
+      periodLabel={periodLabel}
+      clientScopeLabel={clientScopeLabel}
+      divisionLabel={divisionLabel}
+      statusFilterLabel={statusFilterLabel}
+      generatedAt={generatedAt || new Date().toLocaleDateString('en-ZA')}
+    />
+  );
+  const uint8 = await renderDocumentToPdf(element, { theme: pmgTheme });
+  return Buffer.from(uint8);
+}
+
+export async function renderDeclarativePaymentsReport(
+  rows: PaymentReportRow[],
+  org: PdfOrgHeader,
+  periodLabel: string,
+  clientScopeLabel: string,
+  divisionLabel?: string,
+  generatedAt?: string,
+): Promise<Buffer> {
+  const element = (
+    <PaymentsReportDocument
+      rows={rows}
+      org={resolveOrg(org)}
+      periodLabel={periodLabel}
+      clientScopeLabel={clientScopeLabel}
+      divisionLabel={divisionLabel}
+      generatedAt={generatedAt || new Date().toLocaleDateString('en-ZA')}
+    />
+  );
+  const uint8 = await renderDocumentToPdf(element, { theme: pmgTheme });
+  return Buffer.from(uint8);
+}
+
+export async function renderDeclarativeExpensesReport(
+  rows: ExpenseReportRow[],
+  org: PdfOrgHeader,
+  periodLabel: string,
+  clientScopeLabel: string,
+  divisionLabel?: string,
+  categoryFilterLabel?: string,
+  generatedAt?: string,
+): Promise<Buffer> {
+  const element = (
+    <ExpensesReportDocument
+      rows={rows}
+      org={resolveOrg(org)}
+      periodLabel={periodLabel}
+      clientScopeLabel={clientScopeLabel}
+      divisionLabel={divisionLabel}
+      categoryFilterLabel={categoryFilterLabel}
+      generatedAt={generatedAt || new Date().toLocaleDateString('en-ZA')}
+    />
+  );
+  const uint8 = await renderDocumentToPdf(element, { theme: pmgTheme });
+  return Buffer.from(uint8);
+}
+
+export async function renderDeclarativeClientSummaryReport(
+  props: Omit<ClientSummaryReportDocumentProps, 'generatedAt'> & { generatedAt?: string },
+): Promise<Buffer> {
+  const element = (
+    <ClientSummaryReportDocument
+      {...props}
+      org={resolveOrg(props.org)}
+      generatedAt={props.generatedAt || new Date().toLocaleDateString('en-ZA')}
+    />
+  );
+  const uint8 = await renderDocumentToPdf(element, { theme: pmgTheme });
+  return Buffer.from(uint8);
+}
+
+export async function renderDeclarativeAgingReport(
+  props: Omit<AgingReportDocumentProps, 'generatedAt'> & { generatedAt?: string },
+): Promise<Buffer> {
+  const element = (
+    <AgingReportDocument
+      {...props}
+      org={resolveOrg(props.org)}
+      generatedAt={props.generatedAt || new Date().toLocaleDateString('en-ZA')}
     />
   );
   const uint8 = await renderDocumentToPdf(element, { theme: pmgTheme });

@@ -10,10 +10,11 @@ import { ExpenseSnapshot } from '@/components/dashboard/expense-snapshot';
 const divisionArb = fc.record({
   divisionName: fc.string({ minLength: 1, maxLength: 20 }),
   total: fc.integer({ min: 1, max: 1_000_000 }),
+  revenue: fc.integer({ min: 0, max: 2_000_000 }),
 });
 
 describe('ExpenseSnapshot percentage invariant', () => {
-  it('percentages always sum to ~100% and never exceed 100%, regardless of totals', () => {
+  it('profit-share percentages sum to ~100% and never exceed 100%, regardless of totals', () => {
     fc.assert(
       fc.property(
         fc.array(divisionArb, { minLength: 1, maxLength: 6 }).map((rows) => {
@@ -26,11 +27,21 @@ describe('ExpenseSnapshot percentage invariant', () => {
             }))
             .filter((r) => (seen.has(r.divisionName) ? false : (seen.add(r.divisionName), true)));
         }),
-        (expensesByDivision) => {
+        (generated) => {
+          const expensesByDivision = generated.map((r) => ({
+            divisionName: r.divisionName,
+            total: r.total,
+          }));
+          const invoicedByDivision = generated.map((r) => ({
+            divisionName: r.divisionName,
+            total: r.revenue,
+          }));
+          const profitableCount = generated.filter((r) => r.revenue - r.total > 0).length;
+
           const { container, unmount } = render(
             <ExpenseSnapshot
               divisions={[]}
-              invoicedByDivision={[]}
+              invoicedByDivision={invoicedByDivision as never}
               expensesByDivision={expensesByDivision}
               arByDivision={[]}
               pmgShareRate={0.25}
@@ -45,10 +56,14 @@ describe('ExpenseSnapshot percentage invariant', () => {
           for (const pct of pctMatches) {
             expect(pct).toBeLessThanOrEqual(100);
           }
-          // Rounding each row independently can drift the sum by up to ~1% per row.
           const sum = pctMatches.reduce((a, b) => a + b, 0);
-          expect(sum).toBeGreaterThanOrEqual(100 - expensesByDivision.length);
-          expect(sum).toBeLessThanOrEqual(100 + expensesByDivision.length);
+          if (profitableCount === 0) {
+            expect(sum).toBe(0);
+          } else {
+            // Rounding each row independently can drift the sum by up to ~1% per row.
+            expect(sum).toBeGreaterThanOrEqual(100 - expensesByDivision.length);
+            expect(sum).toBeLessThanOrEqual(100 + expensesByDivision.length);
+          }
 
           unmount();
         },
