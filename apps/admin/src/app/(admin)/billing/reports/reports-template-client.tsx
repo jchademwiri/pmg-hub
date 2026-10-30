@@ -673,7 +673,11 @@ export function ReportsTemplateClient({
                   {reportData?.type === 'aging' && (
                     <>
                       <div className="flex justify-between text-xs py-0.5">
-                        <span className="text-zinc-500">{reportData.isClientDrilldown ? 'Invoices with Balance' : 'Clients with Balance'}</span>
+                        <span className="text-zinc-500">
+                          {reportData.isClientDrilldown
+                            ? 'Invoices with Balance'
+                            : 'Clients with Balance'}
+                        </span>
                         <span className="font-semibold text-zinc-900 tabular-nums">
                           {reportData.summary.clientCount}
                         </span>
@@ -1034,7 +1038,9 @@ export function ReportsTemplateClient({
                     <table className="w-full text-xs border-collapse">
                       <thead>
                         <tr className="border-b border-zinc-200 bg-zinc-50 text-zinc-500 uppercase text-[10px] font-bold">
-                          <th className="py-2 px-2 text-left">{reportData.isClientDrilldown ? 'Invoice' : 'Client'}</th>
+                          <th className="py-2 px-2 text-left">
+                            {reportData.isClientDrilldown ? 'Invoice' : 'Client'}
+                          </th>
                           <th className="py-2 px-2 text-right">Current</th>
                           <th className="py-2 px-2 text-right">1–14 Days</th>
                           <th className="py-2 px-2 text-right">15–30 Days</th>
@@ -1058,19 +1064,22 @@ export function ReportsTemplateClient({
                                 <td className="py-2 px-2 text-zinc-900">
                                   <div className="flex flex-col">
                                     <span className="font-semibold">{row.clientName}</span>
-                                    {reportData.isClientDrilldown && (row.dueDate || row.reference) && (
-                                      <span className="text-[10px] text-zinc-500 font-normal">
-                                        {row.dueDate ? `Due ${fmtDateLong(row.dueDate)}` : ''}
-                                        {row.dueDate && row.reference ? ' · ' : ''}
-                                        {row.reference || ''}
-                                      </span>
-                                    )}
+                                    {reportData.isClientDrilldown &&
+                                      (row.dueDate || row.reference) && (
+                                        <span className="text-[10px] text-zinc-500 font-normal">
+                                          {row.dueDate ? `Due ${fmtDateLong(row.dueDate)}` : ''}
+                                          {row.dueDate && row.reference ? ' · ' : ''}
+                                          {row.reference || ''}
+                                        </span>
+                                      )}
                                   </div>
                                 </td>
                                 <td
                                   className={cn(
                                     'py-2 px-2 text-right tabular-nums',
-                                    row.current > 0 ? 'text-emerald-600 font-medium' : 'text-zinc-400',
+                                    row.current > 0
+                                      ? 'text-emerald-600 font-medium'
+                                      : 'text-zinc-400',
                                   )}
                                 >
                                   {formatZAR(row.current)}
@@ -1078,7 +1087,9 @@ export function ReportsTemplateClient({
                                 <td
                                   className={cn(
                                     'py-2 px-2 text-right tabular-nums',
-                                    row.bucket_1_14 > 0 ? 'text-amber-600 font-medium' : 'text-zinc-400',
+                                    row.bucket_1_14 > 0
+                                      ? 'text-amber-600 font-medium'
+                                      : 'text-zinc-400',
                                   )}
                                 >
                                   {formatZAR(row.bucket_1_14)}
@@ -1086,7 +1097,9 @@ export function ReportsTemplateClient({
                                 <td
                                   className={cn(
                                     'py-2 px-2 text-right tabular-nums',
-                                    row.bucket_15_30 > 0 ? 'text-orange-600 font-medium' : 'text-zinc-400',
+                                    row.bucket_15_30 > 0
+                                      ? 'text-orange-600 font-medium'
+                                      : 'text-zinc-400',
                                   )}
                                 >
                                   {formatZAR(row.bucket_15_30)}
@@ -1094,7 +1107,9 @@ export function ReportsTemplateClient({
                                 <td
                                   className={cn(
                                     'py-2 px-2 text-right tabular-nums',
-                                    row.bucket_31_60 > 0 ? 'text-rose-600 font-medium' : 'text-zinc-400',
+                                    row.bucket_31_60 > 0
+                                      ? 'text-rose-600 font-medium'
+                                      : 'text-zinc-400',
                                   )}
                                 >
                                   {formatZAR(row.bucket_31_60)}
@@ -1102,7 +1117,9 @@ export function ReportsTemplateClient({
                                 <td
                                   className={cn(
                                     'py-2 px-2 text-right tabular-nums',
-                                    row.bucket_61_plus > 0 ? 'text-red-600 font-bold' : 'text-zinc-400',
+                                    row.bucket_61_plus > 0
+                                      ? 'text-red-600 font-bold'
+                                      : 'text-zinc-400',
                                   )}
                                 >
                                   {formatZAR(row.bucket_61_plus)}
@@ -1130,8 +1147,12 @@ export function ReportsTemplateClient({
                         </p>
                         <div className="text-xs text-zinc-500">
                           <span className="text-zinc-500 mr-3">
-                            {reportData.isClientDrilldown ? 'Invoices with Balance:' : 'Clients with Balance:'}{' '}
-                            <span className="font-semibold text-zinc-800">{reportData.summary.count}</span>
+                            {reportData.isClientDrilldown
+                              ? 'Invoices with Balance:'
+                              : 'Clients with Balance:'}{' '}
+                            <span className="font-semibold text-zinc-800">
+                              {reportData.summary.count}
+                            </span>
                           </span>
                           <span className="text-zinc-500">Total Outstanding (AR): </span>
                           <span
@@ -1174,7 +1195,9 @@ export function ReportsTemplateClient({
                             <td
                               className={cn(
                                 'py-3 tabular-nums font-bold',
-                                reportData.summary.total61Plus > 0 ? 'text-red-600' : 'text-zinc-400',
+                                reportData.summary.total61Plus > 0
+                                  ? 'text-red-600'
+                                  : 'text-zinc-400',
                               )}
                             >
                               {formatZAR(reportData.summary.total61Plus)}
@@ -1182,7 +1205,9 @@ export function ReportsTemplateClient({
                             <td
                               className={cn(
                                 'py-3 tabular-nums font-semibold border-l border-zinc-200',
-                                reportData.summary.total31_60 > 0 ? 'text-rose-600' : 'text-zinc-400',
+                                reportData.summary.total31_60 > 0
+                                  ? 'text-rose-600'
+                                  : 'text-zinc-400',
                               )}
                             >
                               {formatZAR(reportData.summary.total31_60)}
@@ -1190,7 +1215,9 @@ export function ReportsTemplateClient({
                             <td
                               className={cn(
                                 'py-3 tabular-nums font-semibold border-l border-zinc-200',
-                                reportData.summary.total15_30 > 0 ? 'text-orange-600' : 'text-zinc-400',
+                                reportData.summary.total15_30 > 0
+                                  ? 'text-orange-600'
+                                  : 'text-zinc-400',
                               )}
                             >
                               {formatZAR(reportData.summary.total15_30)}
@@ -1198,7 +1225,9 @@ export function ReportsTemplateClient({
                             <td
                               className={cn(
                                 'py-3 tabular-nums font-semibold border-l border-zinc-200',
-                                reportData.summary.total1_14 > 0 ? 'text-amber-600' : 'text-zinc-400',
+                                reportData.summary.total1_14 > 0
+                                  ? 'text-amber-600'
+                                  : 'text-zinc-400',
                               )}
                             >
                               {formatZAR(reportData.summary.total1_14)}
@@ -1206,7 +1235,9 @@ export function ReportsTemplateClient({
                             <td
                               className={cn(
                                 'py-3 tabular-nums font-semibold border-l border-zinc-200',
-                                reportData.summary.totalCurrent > 0 ? 'text-emerald-600' : 'text-zinc-400',
+                                reportData.summary.totalCurrent > 0
+                                  ? 'text-emerald-600'
+                                  : 'text-zinc-400',
                               )}
                             >
                               {formatZAR(reportData.summary.totalCurrent)}
@@ -1214,7 +1245,9 @@ export function ReportsTemplateClient({
                             <td
                               className={cn(
                                 'py-3 tabular-nums font-bold border-l border-zinc-200',
-                                reportData.summary.totalOverdue > 0 ? 'text-red-600' : 'text-zinc-700',
+                                reportData.summary.totalOverdue > 0
+                                  ? 'text-red-600'
+                                  : 'text-zinc-700',
                               )}
                             >
                               {formatZAR(reportData.summary.totalOverdue)}

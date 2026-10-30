@@ -144,7 +144,8 @@ export function AgingReportDocument({
                           marginBottom: 2,
                         }}
                       >
-                        {clientScopeLabel} — {isClientDrilldown ? 'Invoice Aging' : 'Aging Breakdown'}
+                        {clientScopeLabel} —{' '}
+                        {isClientDrilldown ? 'Invoice Aging' : 'Aging Breakdown'}
                       </span>
                       {divisionLabel && (
                         <span style={{ fontSize: 8.5, color: theme.colors.mutedForeground }}>
@@ -170,7 +171,10 @@ export function AgingReportDocument({
                             },
                             valueStyle: {
                               fontWeight: 700,
-                              color: totalOutstanding <= 0.005 ? theme.colors.success : theme.colors.primary,
+                              color:
+                                totalOutstanding <= 0.005
+                                  ? theme.colors.success
+                                  : theme.colors.primary,
                               fontSize: 10,
                             },
                           },
@@ -554,8 +558,7 @@ export function AgingReportDocument({
                               fontSize: 8,
                               textAlign: 'center',
                               fontWeight: 700,
-                              color:
-                                totalOverdue > 0 ? '#dc2626' : theme.colors.foreground,
+                              color: totalOverdue > 0 ? '#dc2626' : theme.colors.foreground,
                               fontVariantNumeric: 'tabular-nums',
                             }}
                           >
