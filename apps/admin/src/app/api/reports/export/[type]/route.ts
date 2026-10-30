@@ -4,6 +4,7 @@ import {
   getAllIncome,
   getAllExpenses,
   getAllDivisions,
+  getClientAgingReport,
   getClientById,
   getOrganisationSettings,
   getDb,
@@ -20,6 +21,8 @@ import {
   renderDeclarativePaymentsReport,
   renderDeclarativeExpensesReport,
   renderDeclarativeClientSummaryReport,
+  renderDeclarativeAgingReport,
+  type AgingReportRow,
   type InvoiceReportRow,
   type PaymentReportRow,
   type ExpenseReportRow,
@@ -32,10 +35,10 @@ import { getSessionOrRedirect, requireRole } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-type ReportExportType = 'invoices' | 'payments' | 'expenses';
+type ReportExportType = 'invoices' | 'payments' | 'expenses' | 'aging';
 
 function isReportExportType(val: string): val is ReportExportType {
-  return val === 'invoices' || val === 'payments' || val === 'expenses';
+  return val === 'invoices' || val === 'payments' || val === 'expenses' || val === 'aging';
 }
 
 function csvEscape(value: unknown): string {
@@ -700,6 +703,116 @@ export async function GET(req: Request, { params }: { params: Promise<{ type: st
       generatedAt,
     );
     const fileName = `payments-report-${clientSlug}-${dateSuffix}.pdf`;
+    return new NextResponse(new Uint8Array(pdfBuffer), {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `${disposition}; filename="${fileName}"`,
+        'Cache-Control': 'no-store',
+      },
+    });
+  }
+
+  // ── 4. AGING REPORT ────────────────────────────────────────────────────────
+  if (type === 'aging') {
+    const agingRows = await getClientAgingReport();
+    const filtered =
+      rawClientId !== 'all' ? agingRows.filter((r) => r.clientId === rawClientId) : agingRows;
+
+    const rows: AgingReportRow[] = filtered.map((r) => ({
+      clientId: r.clientId,
+      clientName: r.businessName || r.clientName,
+      current: r.current,
+      bucket_1_14: r.bucket_1_14,
+      bucket_15_30: r.bucket_15_30,
+      bucket_31_60: r.bucket_31_60,
+      bucket_61_plus: r.bucket_61_plus,
+      totalOutstanding: r.totalOutstanding,
+    }));
+
+    const totalOutstanding = rows.reduce((s, r) => s + r.totalOutstanding, 0);
+    const totalCurrent = rows.reduce((s, r) => s + r.current, 0);
+    const total1_14 = rows.reduce((s, r) => s + r.bucket_1_14, 0);
+    const total15_30 = rows.reduce((s, r) => s + r.bucket_15_30, 0);
+    const total31_60 = rows.reduce((s, r) => s + r.bucket_31_60, 0);
+    const total61Plus = rows.reduce((s, r) => s + r.bucket_61_plus, 0);
+    const totalOverdue = total1_14 + total15_30 + total31_60 + total61Plus;
+
+    const summary = {
+      count: rows.length,
+      clientCount: rows.length,
+      totalOutstanding,
+      totalCurrent,
+      total1_14,
+      total15_30,
+      total31_60,
+      total61Plus,
+      totalOverdue,
+    };
+
+    const asOfDateLabel = fmtDateLong(new Date());
+
+    if (format === 'json') {
+      return NextResponse.json({
+        type: 'aging',
+        asOfDateLabel,
+        periodLabel: `As of ${asOfDateLabel}`,
+        clientScopeLabel,
+        divisionLabel: divisionLabel || 'All Divisions',
+        summary,
+        rows,
+      });
+    }
+
+    if (format === 'csv') {
+      const headers = [
+        'Client',
+        'Current (ZAR)',
+        '1-14 Days (ZAR)',
+        '15-30 Days (ZAR)',
+        '31-60 Days (ZAR)',
+        '61+ Days (ZAR)',
+        'Total Due (ZAR)',
+      ];
+      const csvRows: (string | number)[][] = rows.map((r) => [
+        r.clientName,
+        r.current.toFixed(2),
+        r.bucket_1_14.toFixed(2),
+        r.bucket_15_30.toFixed(2),
+        r.bucket_31_60.toFixed(2),
+        r.bucket_61_plus.toFixed(2),
+        r.totalOutstanding.toFixed(2),
+      ]);
+      csvRows.push([
+        `TOTAL (${rows.length} clients)`,
+        totalCurrent.toFixed(2),
+        total1_14.toFixed(2),
+        total15_30.toFixed(2),
+        total31_60.toFixed(2),
+        total61Plus.toFixed(2),
+        totalOutstanding.toFixed(2),
+      ]);
+      const fileName = `ar-aging-report-${clientSlug}-${dateSuffix}.csv`;
+      return new NextResponse(toCsv(headers, csvRows), {
+        headers: {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': `attachment; filename="${fileName}"`,
+          'Cache-Control': 'no-store',
+        },
+      });
+    }
+
+    const pdfBuffer = await renderDeclarativeAgingReport({
+      title: 'Accounts Receivable Aging Report',
+      reportNumber: `AG-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
+      rows,
+      org,
+      asOfDateLabel,
+      clientScopeLabel,
+      divisionLabel,
+      generatedAt,
+    });
+
+    const fileName = `ar-aging-report-${clientSlug}-${dateSuffix}.pdf`;
     return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         'Content-Type': 'application/pdf',

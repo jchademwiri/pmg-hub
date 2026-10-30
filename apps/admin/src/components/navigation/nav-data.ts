@@ -101,7 +101,7 @@ export const GROUPS: NavGroup[] = [
       { title: 'Payments', url: '/billing/payments', icon: Banknote },
       { title: 'Credits', url: '/billing/credits', icon: Wallet },
       { title: 'Statements', url: '/billing/statements', icon: ScrollText },
-      { title: 'Aging Report', url: '/billing/aging', icon: Calendar },
+      { title: 'Reports', url: '/billing/reports', icon: BarChart3 },
       { title: 'Billing Items', url: '/billing/items', icon: Package },
     ],
   },
@@ -115,6 +115,7 @@ export const GROUPS: NavGroup[] = [
       { title: 'Leads', url: '/relationships/leads', icon: UserPlus },
       { title: 'Onboarding', url: '/relationships/onboarding', icon: UserCheck },
       { title: 'Divisions', url: '/relationships/divisions', icon: Building2 },
+      { title: 'Compliance Radar', url: '/insights/compliance-radar', icon: Shield },
     ],
   },
   {
@@ -152,22 +153,9 @@ export const GROUPS: NavGroup[] = [
       { title: 'Journals', url: '/accounting/journals', icon: NotebookPen },
       { title: 'Trial Balance', url: '/accounting/trial-balance', icon: Scale },
       { title: 'Profit & Loss', url: '/accounting/profit-and-loss', icon: LineChart },
-      { title: 'Accounting Periods', url: '/accounting/periods', icon: Calendar },
     ],
   },
-  {
-    key: 'insights',
-    label: 'Reports',
-    icon: BarChart3,
-    items: [
-      { title: 'Overview', url: '/insights', icon: LayoutGrid },
-      { title: 'Financial Reports', url: '/insights/financial-reports', icon: PieChart },
-      { title: 'Business Analysis', url: '/insights/analysis', icon: TrendingUp },
-      { title: 'Performance Reports', url: '/insights/reports', icon: BarChart3 },
-      { title: 'Snapshots', url: '/insights/snapshots', icon: Camera },
-      { title: 'Compliance Radar', url: '/insights/compliance-radar', icon: Shield },
-    ],
-  },
+
   {
     key: 'system',
     label: 'System',
@@ -200,6 +188,14 @@ for (const group of GROUPS) {
 
 // Extra routes that exist in the app but are not sidebar items
 const EXTRA_LABELS: Record<string, string> = {
+  '/billing/aging': 'AR Aging',
+  '/insights': 'Reports & Insights',
+  '/insights/financial-reports': 'Financial Reports',
+  '/insights/analysis': 'Business Analysis',
+  '/insights/reports': 'Performance Reports',
+  '/insights/snapshots': 'Snapshots',
+  '/accounting/periods': 'Accounting Periods',
+
   '/settings/users/invite': 'Invite User',
   '/billing/payments/add': 'Record Payment',
   '/projects/list': 'Schedule List',

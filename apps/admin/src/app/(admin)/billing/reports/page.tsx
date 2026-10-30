@@ -29,7 +29,7 @@ export default async function ReportsTemplatePage({ searchParams }: ReportsPageP
     await searchParams;
 
   const initialType: ReportModuleType =
-    type === 'payments' || type === 'expenses' ? type : 'invoices';
+    type === 'payments' || type === 'expenses' || type === 'aging' ? type : 'invoices';
 
   const [clients, divisions, categoryObjects, orgSettings] = await Promise.all([
     getAllClients(),

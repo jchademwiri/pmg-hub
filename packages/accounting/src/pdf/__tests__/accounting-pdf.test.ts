@@ -452,4 +452,42 @@ describe('Declarative Accounting PDF Documents', () => {
     expect(buffer.length).toBeGreaterThan(2000);
     expect(buffer.subarray(0, 5).toString('ascii')).toBe('%PDF-');
   });
+  it('renders an AR Aging Report into a valid PDF', async () => {
+    const { renderDeclarativeAgingReport } = await import('../render-accounting-pdf');
+    const rows = [
+      {
+        clientId: 'c1',
+        clientName: 'Basadipele',
+        current: 10000,
+        bucket_1_14: 2500,
+        bucket_15_30: 0,
+        bucket_31_60: 0,
+        bucket_61_plus: 5000,
+        totalOutstanding: 17500,
+      },
+      {
+        clientId: 'c2',
+        clientName: 'Phehlelwana Group',
+        current: 2000,
+        bucket_1_14: 0,
+        bucket_15_30: 0,
+        bucket_31_60: 0,
+        bucket_61_plus: 0,
+        totalOutstanding: 2000,
+      },
+    ];
+    const buffer = await renderDeclarativeAgingReport({
+      title: 'Accounts Receivable Aging Report',
+      reportNumber: 'AG-2026-10',
+      rows,
+      org: sampleOrg,
+      asOfDateLabel: '30 October 2026',
+      clientScopeLabel: 'All Clients',
+      generatedAt: '30 October 2026',
+    });
+
+    expect(buffer).toBeInstanceOf(Buffer);
+    expect(buffer.length).toBeGreaterThan(2000);
+    expect(buffer.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+  });
 });

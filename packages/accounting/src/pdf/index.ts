@@ -12,4 +12,5 @@ export * from './documents/invoices-report-document';
 export * from './documents/payments-report-document';
 export * from './documents/expenses-report-document';
 export * from './documents/client-summary-report-document';
+export * from './documents/aging-report-document';
 export * from './render-accounting-pdf';

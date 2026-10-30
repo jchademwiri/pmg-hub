@@ -1764,12 +1764,14 @@ export async function generateAccountingPdf(
   }
 }
 
-
 export {
   renderDeclarativeInvoicesReport,
   renderDeclarativePaymentsReport,
   renderDeclarativeExpensesReport,
   renderDeclarativeClientSummaryReport,
+  renderDeclarativeAgingReport,
+  type AgingReportRow,
+  type AgingReportDocumentProps,
   type InvoiceReportRow,
   type PaymentReportRow,
   type ExpenseReportRow,

@@ -23,7 +23,7 @@ import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { cn } from '@/lib/utils';
 import type { DocumentOrg } from '@/components/billing/document-preview';
 
-export type ReportModuleType = 'invoices' | 'payments' | 'expenses';
+export type ReportModuleType = 'invoices' | 'payments' | 'expenses' | 'aging';
 
 type DatePreset =
   | 'this_month'
@@ -69,6 +69,17 @@ interface PaymentRow {
   amount: number;
 }
 
+interface AgingRow {
+  clientId: string;
+  clientName: string;
+  current: number;
+  bucket_1_14: number;
+  bucket_15_30: number;
+  bucket_31_60: number;
+  bucket_61_plus: number;
+  totalOutstanding: number;
+}
+
 interface ExpenseRow {
   date: string;
   category: string;
@@ -104,6 +115,25 @@ type ReportPayload = (
         totalReceived: number;
       };
       rows: PaymentRow[];
+    }
+  | {
+      type: 'aging';
+      asOfDateLabel: string;
+      periodLabel: string;
+      clientScopeLabel: string;
+      divisionLabel: string;
+      summary: {
+        count: number;
+        clientCount: number;
+        totalOutstanding: number;
+        totalCurrent: number;
+        total1_14: number;
+        total15_30: number;
+        total31_60: number;
+        total61Plus: number;
+        totalOverdue: number;
+      };
+      rows: AgingRow[];
     }
   | {
       type: 'expenses';
@@ -403,20 +433,29 @@ export function ReportsTemplateClient({
 
   const pdfUrl = `/api/reports/export/${reportType}?${buildExportQuery('pdf')}`;
 
-  const reportTitle = isGrouped
-    ? reportType === 'invoices'
-      ? 'Client Balances Report'
-      : reportType === 'payments'
-        ? 'Payments by Client'
-        : 'Expenses by Client'
-    : reportType === 'invoices'
-      ? 'Invoice Report'
-      : reportType === 'payments'
-        ? 'Payment Report'
-        : 'Expense Report';
+  const reportTitle =
+    reportType === 'aging'
+      ? 'AR Aging Report'
+      : isGrouped
+        ? reportType === 'invoices'
+          ? 'Client Balances Report'
+          : reportType === 'payments'
+            ? 'Payments by Client'
+            : 'Expenses by Client'
+        : reportType === 'invoices'
+          ? 'Invoice Report'
+          : reportType === 'payments'
+            ? 'Payment Report'
+            : 'Expense Report';
 
   const reportNumber = `${
-    reportType === 'invoices' ? 'INV' : reportType === 'payments' ? 'PAY' : 'EXP'
+    reportType === 'invoices'
+      ? 'INV'
+      : reportType === 'payments'
+        ? 'PAY'
+        : reportType === 'expenses'
+          ? 'EXP'
+          : 'AG'
   }-${isGrouped ? 'CLT' : 'RPT'}-${new Date().getFullYear()}`;
 
   const groupedView =
@@ -626,6 +665,29 @@ export function ReportsTemplateClient({
                         {formatZAR(reportData.summary.totalReceived)}
                       </span>
                     </div>
+                  )}
+                  {reportData?.type === 'aging' && (
+                    <>
+                      <div className="flex justify-between text-xs py-0.5">
+                        <span className="text-zinc-500">Clients with Balance</span>
+                        <span className="font-semibold text-zinc-900 tabular-nums">
+                          {reportData.summary.clientCount}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-xs py-0.5 pt-1 border-t border-zinc-100">
+                        <span className="font-bold text-zinc-900">Total Outstanding</span>
+                        <span
+                          className={cn(
+                            'font-bold tabular-nums',
+                            reportData.summary.totalOutstanding > 0
+                              ? 'text-blue-700'
+                              : 'text-emerald-600',
+                          )}
+                        >
+                          {formatZAR(reportData.summary.totalOutstanding)}
+                        </span>
+                      </div>
+                    </>
                   )}
                   {reportData?.type === 'expenses' && (
                     <div className="flex justify-between text-xs py-0.5 pt-1 border-t border-zinc-100">
@@ -965,6 +1027,138 @@ export function ReportsTemplateClient({
                       </div>
                     </div>
                   </>
+                ) : reportData?.type === 'aging' ? (
+                  <>
+                    <table className="w-full text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-zinc-200 bg-zinc-50 text-zinc-500 uppercase text-[10px] font-bold">
+                          <th className="py-2 px-2 text-left">Client</th>
+                          <th className="py-2 px-2 text-right">Current</th>
+                          <th className="py-2 px-2 text-right">1–14 Days</th>
+                          <th className="py-2 px-2 text-right">15–30 Days</th>
+                          <th className="py-2 px-2 text-right">31–60 Days</th>
+                          <th className="py-2 px-2 text-right">61+ Days</th>
+                          <th className="py-2 px-2 text-right">Total Due</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-100">
+                        {reportData.rows.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} className="py-8 text-center text-zinc-400">
+                              No outstanding accounts receivable found.
+                            </td>
+                          </tr>
+                        ) : (
+                          reportData.rows.map((row, idx) => {
+                            const isZero = row.totalOutstanding <= 0.005;
+                            return (
+                              <tr key={`${row.clientName}-${idx}`}>
+                                <td className="py-2 px-2 font-semibold text-zinc-900">
+                                  {row.clientName}
+                                </td>
+                                <td className="py-2 px-2 text-right tabular-nums text-zinc-600">
+                                  {formatZAR(row.current)}
+                                </td>
+                                <td className="py-2 px-2 text-right tabular-nums text-zinc-600">
+                                  {formatZAR(row.bucket_1_14)}
+                                </td>
+                                <td className="py-2 px-2 text-right tabular-nums text-zinc-600">
+                                  {formatZAR(row.bucket_15_30)}
+                                </td>
+                                <td className="py-2 px-2 text-right tabular-nums text-zinc-600">
+                                  {formatZAR(row.bucket_31_60)}
+                                </td>
+                                <td
+                                  className={cn(
+                                    'py-2 px-2 text-right tabular-nums font-medium',
+                                    row.bucket_61_plus > 0 ? 'text-rose-600' : 'text-zinc-600',
+                                  )}
+                                >
+                                  {formatZAR(row.bucket_61_plus)}
+                                </td>
+                                <td
+                                  className={cn(
+                                    'py-2 px-2 text-right tabular-nums font-bold',
+                                    isZero ? 'text-emerald-600' : 'text-zinc-900',
+                                  )}
+                                >
+                                  {formatZAR(row.totalOutstanding)}
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+
+                    {/* Bottom-Right Aging Totals */}
+                    <div className="mt-6 flex justify-end">
+                      <div className="w-72 flex flex-col divide-y divide-zinc-200 text-xs">
+                        <div className="flex justify-between py-1.5 text-zinc-600">
+                          <span>Clients with Balance</span>
+                          <span className="tabular-nums font-semibold text-zinc-900">
+                            {reportData.summary.clientCount}
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-1.5 text-zinc-600">
+                          <span>Current (Not Due)</span>
+                          <span className="tabular-nums font-medium text-zinc-900">
+                            {formatZAR(reportData.summary.totalCurrent)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-1.5 text-zinc-600">
+                          <span>1–14 Days Overdue</span>
+                          <span className="tabular-nums font-medium text-zinc-900">
+                            {formatZAR(reportData.summary.total1_14)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-1.5 text-zinc-600">
+                          <span>15–30 Days Overdue</span>
+                          <span className="tabular-nums font-medium text-zinc-900">
+                            {formatZAR(reportData.summary.total15_30)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-1.5 text-zinc-600">
+                          <span>31–60 Days Overdue</span>
+                          <span className="tabular-nums font-medium text-zinc-900">
+                            {formatZAR(reportData.summary.total31_60)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-1.5 text-zinc-600">
+                          <span>61+ Days Overdue</span>
+                          <span
+                            className={cn(
+                              'tabular-nums font-medium',
+                              reportData.summary.total61Plus > 0
+                                ? 'text-rose-600'
+                                : 'text-zinc-900',
+                            )}
+                          >
+                            {formatZAR(reportData.summary.total61Plus)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-1.5 text-zinc-600">
+                          <span>Total Overdue</span>
+                          <span className="tabular-nums font-semibold text-rose-600">
+                            {formatZAR(reportData.summary.totalOverdue)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-2 text-sm font-bold text-zinc-900">
+                          <span>Total Outstanding (AR)</span>
+                          <span
+                            className={cn(
+                              'tabular-nums',
+                              reportData.summary.totalOutstanding > 0
+                                ? 'text-blue-700'
+                                : 'text-emerald-600',
+                            )}
+                          >
+                            {formatZAR(reportData.summary.totalOutstanding)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
                 ) : null}
               </div>
 
@@ -1000,12 +1194,13 @@ export function ReportsTemplateClient({
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Report Type
                   </span>
-                  <div className="grid grid-cols-3 gap-1.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                     {(
                       [
                         { value: 'invoices', label: 'Invoices' },
                         { value: 'payments', label: 'Payments' },
                         { value: 'expenses', label: 'Expenses' },
+                        { value: 'aging', label: 'AR Aging' },
                       ] as const
                     ).map((t) => (
                       <button
@@ -1047,7 +1242,7 @@ export function ReportsTemplateClient({
                     emptyOption={{ value: 'all', label: 'All Clients' }}
                     placeholder="All Clients"
                   />
-                  {clientId === 'all' && (
+                  {clientId === 'all' && reportType !== 'aging' && (
                     <div className="flex flex-col gap-1.5 pt-2">
                       <span className="text-[11px] text-muted-foreground">Group records</span>
                       <div className="grid grid-cols-2 gap-1.5">
@@ -1089,81 +1284,85 @@ export function ReportsTemplateClient({
                   )}
                 </div>
 
-                {/* 3. Rolling Period Presets */}
-                <div className="flex flex-col gap-1.5 pb-3 border-b border-border/40">
-                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                    Quick Periods
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(
-                      [
-                        { id: 'this_month', label: 'Current Month' },
-                        { id: 'last_month', label: 'Previous Month' },
-                        { id: 'past_3_months', label: 'Past 3 Months' },
-                        { id: 'current_fy', label: 'Current FY' },
-                        { id: 'previous_fy', label: 'Previous FY' },
-                        { id: 'all_time', label: 'All Time' },
-                      ] as const
-                    ).map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => {
-                          setPreset(p.id);
-                          const { startDate: s, endDate: e } = computePresetDates(p.id);
-                          setStartDate(s);
-                          setEndDate(e);
-                          syncUrl({ startDate: s, endDate: e });
-                        }}
-                        className={cn(
-                          'rounded-full border px-2.5 py-1 text-xs transition-all',
-                          preset === p.id
-                            ? 'border-primary bg-primary/10 font-semibold text-primary'
-                            : 'border-border text-muted-foreground hover:bg-muted',
-                        )}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                {/* 3. Rolling Period Presets (hidden for point-in-time Aging) */}
+                {reportType !== 'aging' && (
+                  <>
+                    <div className="flex flex-col gap-1.5 pb-3 border-b border-border/40">
+                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        Quick Periods
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(
+                          [
+                            { id: 'this_month', label: 'Current Month' },
+                            { id: 'last_month', label: 'Previous Month' },
+                            { id: 'past_3_months', label: 'Past 3 Months' },
+                            { id: 'current_fy', label: 'Current FY' },
+                            { id: 'previous_fy', label: 'Previous FY' },
+                            { id: 'all_time', label: 'All Time' },
+                          ] as const
+                        ).map((p) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => {
+                              setPreset(p.id);
+                              const { startDate: s, endDate: e } = computePresetDates(p.id);
+                              setStartDate(s);
+                              setEndDate(e);
+                              syncUrl({ startDate: s, endDate: e });
+                            }}
+                            className={cn(
+                              'rounded-full border px-2.5 py-1 text-xs transition-all',
+                              preset === p.id
+                                ? 'border-primary bg-primary/10 font-semibold text-primary'
+                                : 'border-border text-muted-foreground hover:bg-muted',
+                            )}
+                          >
+                            {p.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                {/* 4. Custom Date Range */}
-                <div className="flex flex-col gap-2 pb-3 border-b border-border/40">
-                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                    Date Range
-                  </span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] text-muted-foreground">From</label>
-                      <Input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => {
-                          const s = e.target.value;
-                          setStartDate(s);
-                          setPreset('custom');
-                          syncUrl({ startDate: s });
-                        }}
-                        className="h-8 text-xs"
-                      />
+                    {/* 4. Custom Date Range */}
+                    <div className="flex flex-col gap-2 pb-3 border-b border-border/40">
+                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        Date Range
+                      </span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] text-muted-foreground">From</label>
+                          <Input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => {
+                              const s = e.target.value;
+                              setStartDate(s);
+                              setPreset('custom');
+                              syncUrl({ startDate: s });
+                            }}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] text-muted-foreground">To</label>
+                          <Input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => {
+                              const eVal = e.target.value;
+                              setEndDate(eVal);
+                              setPreset('custom');
+                              syncUrl({ endDate: eVal });
+                            }}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] text-muted-foreground">To</label>
-                      <Input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => {
-                          const eVal = e.target.value;
-                          setEndDate(eVal);
-                          setPreset('custom');
-                          syncUrl({ endDate: eVal });
-                        }}
-                        className="h-8 text-xs"
-                      />
-                    </div>
-                  </div>
-                </div>
+                  </>
+                )}
 
                 {/* 5. Division Filter */}
                 <div className="flex flex-col gap-1.5">

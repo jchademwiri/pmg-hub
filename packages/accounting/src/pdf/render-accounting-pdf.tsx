@@ -42,6 +42,9 @@ import {
   type ExpenseReportRow,
   ClientSummaryReportDocument,
   type ClientSummaryReportDocumentProps,
+  AgingReportDocument,
+  type AgingReportDocumentProps,
+  type AgingReportRow,
 } from './index';
 
 export async function renderDeclarativeProfitAndLoss(
@@ -319,6 +322,20 @@ export async function renderDeclarativeClientSummaryReport(
 ): Promise<Buffer> {
   const element = (
     <ClientSummaryReportDocument
+      {...props}
+      org={resolveOrg(props.org)}
+      generatedAt={props.generatedAt || new Date().toLocaleDateString('en-ZA')}
+    />
+  );
+  const uint8 = await renderDocumentToPdf(element, { theme: pmgTheme });
+  return Buffer.from(uint8);
+}
+
+export async function renderDeclarativeAgingReport(
+  props: Omit<AgingReportDocumentProps, 'generatedAt'> & { generatedAt?: string },
+): Promise<Buffer> {
+  const element = (
+    <AgingReportDocument
       {...props}
       org={resolveOrg(props.org)}
       generatedAt={props.generatedAt || new Date().toLocaleDateString('en-ZA')}
