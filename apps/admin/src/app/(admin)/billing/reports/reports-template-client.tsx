@@ -40,6 +40,7 @@ export interface ReportClientOption {
   businessName?: string | null;
   email?: string | null;
   phone?: string | null;
+  isActive?: boolean;
 }
 
 export interface ReportDivisionOption {
@@ -677,19 +678,27 @@ export function ReportsTemplateClient({
                               <td className="py-2 px-2 text-right tabular-nums text-zinc-600">
                                 {row.count}
                               </td>
-                              {groupedView.columns.map((col, i) => (
-                                <td
-                                  key={col.label}
-                                  className={cn(
-                                    'py-2 px-2 text-right tabular-nums',
-                                    i === groupedView.headlineIndex
-                                      ? cn('font-semibold', TONE_CLASS[col.tone ?? 'default'])
-                                      : 'text-zinc-800',
-                                  )}
-                                >
-                                  {formatZAR(row.values[i] ?? 0)}
-                                </td>
-                              ))}
+                              {groupedView.columns.map((col, i) => {
+                                const val = row.values[i] ?? 0;
+                                const isHeadline = i === groupedView.headlineIndex;
+                                const isZeroBalance = isHeadline && val <= 0.005;
+
+                                return (
+                                  <td
+                                    key={col.label}
+                                    className={cn(
+                                      'py-2 px-2 text-right tabular-nums',
+                                      isHeadline
+                                        ? isZeroBalance
+                                          ? 'font-semibold text-emerald-600'
+                                          : cn('font-semibold', TONE_CLASS[col.tone ?? 'default'])
+                                        : 'text-zinc-800',
+                                    )}
+                                  >
+                                    {formatZAR(val)}
+                                  </td>
+                                );
+                              })}
                             </tr>
                           ))
                         )}
@@ -732,7 +741,9 @@ export function ReportsTemplateClient({
                                 className={cn(
                                   'tabular-nums',
                                   isHeadline
-                                    ? TONE_CLASS[col.tone ?? 'default']
+                                    ? total <= 0.005
+                                      ? 'text-emerald-600 font-bold'
+                                      : TONE_CLASS[col.tone ?? 'default']
                                     : 'font-semibold text-zinc-900',
                                 )}
                               >
@@ -785,8 +796,17 @@ export function ReportsTemplateClient({
                               <td className="py-2 px-2 text-right tabular-nums text-zinc-800">
                                 {formatZAR(row.total)}
                               </td>
-                              <td className="py-2 px-2 text-right tabular-nums font-semibold text-zinc-900">
-                                {row.outstandingAmount > 0 ? formatZAR(row.outstandingAmount) : '-'}
+                              <td
+                                className={cn(
+                                  'py-2 px-2 text-right tabular-nums font-semibold',
+                                  row.outstandingAmount > 0
+                                    ? 'text-zinc-900'
+                                    : 'text-emerald-600',
+                                )}
+                              >
+                                {row.outstandingAmount > 0
+                                  ? formatZAR(row.outstandingAmount)
+                                  : formatZAR(0)}
                               </td>
                             </tr>
                           ))

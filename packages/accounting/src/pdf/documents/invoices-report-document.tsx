@@ -293,10 +293,12 @@ export function InvoicesReportDocument({
                               color:
                                 row.outstandingAmount > 0
                                   ? theme.colors.foreground
-                                  : theme.colors.mutedForeground,
+                                  : theme.colors.success,
                             }}
                           >
-                            {row.outstandingAmount > 0 ? formatZAR(row.outstandingAmount) : '-'}
+                            {row.outstandingAmount > 0
+                              ? formatZAR(row.outstandingAmount)
+                              : formatZAR(0)}
                           </TableCell>
                         </TableRow>
                       ))

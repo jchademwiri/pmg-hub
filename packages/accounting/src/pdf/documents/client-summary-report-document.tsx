@@ -282,20 +282,32 @@ export function ClientSummaryReportDocument({
                           <TableCell width={`${countWidth}%`} align="right" tabular>
                             {String(row.count)}
                           </TableCell>
-                          {valueColumns.map((col, i) => (
-                            <TableCell
-                              key={col.label}
-                              width={valueWidth}
-                              align="right"
-                              tabular
-                              bold={i === headlineIndex}
-                              style={
-                                i === headlineIndex ? { color: toneColor(col.tone) } : undefined
-                              }
-                            >
-                              {formatZAR(row.values[i] ?? 0)}
-                            </TableCell>
-                          ))}
+                          {valueColumns.map((col, i) => {
+                            const val = row.values[i] ?? 0;
+                            const isHeadline = i === headlineIndex;
+                            const isZeroBalance = isHeadline && val <= 0.005;
+
+                            return (
+                              <TableCell
+                                key={col.label}
+                                width={valueWidth}
+                                align="right"
+                                tabular
+                                bold={isHeadline}
+                                style={
+                                  isHeadline
+                                    ? {
+                                        color: isZeroBalance
+                                          ? theme.colors.success
+                                          : toneColor(col.tone),
+                                      }
+                                    : undefined
+                                }
+                              >
+                                {formatZAR(val)}
+                              </TableCell>
+                            );
+                          })}
                         </TableRow>
                       ))
                     )}
@@ -321,11 +333,15 @@ export function ClientSummaryReportDocument({
                         items={[
                           { key: 'Clients', value: String(rows.length) },
                           { key: `Total ${countLabel}`, value: String(totalCount) },
-                          ...valueColumns.map((col, i) =>
-                            i === headlineIndex
+                          ...valueColumns.map((col, i) => {
+                            const totalVal = totals[i] ?? 0;
+                            const isHeadline = i === headlineIndex;
+                            const isZeroBalance = isHeadline && totalVal <= 0.005;
+
+                            return isHeadline
                               ? {
                                   key: col.label,
-                                  value: formatZAR(totals[i] ?? 0),
+                                  value: formatZAR(totalVal),
                                   keyStyle: {
                                     fontWeight: 700,
                                     fontSize: 10,
@@ -334,11 +350,13 @@ export function ClientSummaryReportDocument({
                                   valueStyle: {
                                     fontWeight: 700,
                                     fontSize: 11,
-                                    color: toneColor(col.tone),
+                                    color: isZeroBalance
+                                      ? theme.colors.success
+                                      : toneColor(col.tone),
                                   },
                                 }
-                              : { key: col.label, value: formatZAR(totals[i] ?? 0) },
-                          ),
+                              : { key: col.label, value: formatZAR(totalVal) };
+                          }),
                         ]}
                       />
                     </div>
