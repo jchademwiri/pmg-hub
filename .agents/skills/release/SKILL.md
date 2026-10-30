@@ -35,14 +35,25 @@ git checkout dev && git pull origin dev
 git log --oneline origin/master..origin/dev
 ```
 
-### 3. Pre-Flight
+### 3. Pre-Flight & Version Sync
 
-```bash
-bun run check-types
-echo 'No linter configured'
-bun run test
-bun run build
-```
+1. Run quality gates:
+   ```bash
+   bun run check-types
+   echo 'No linter configured'
+   bun run test
+   bun run build
+   ```
+
+2. Determine next release version (`vX.Y.Z`) and sync `packages/utils/src/document-helpers.ts`:
+   - Set `APP_VERSION = 'vX.Y.Z'`
+   - Set `APP_RELEASE_NAME = 'Release vX.Y.Z'`
+   - Commit & push directly on `dev` before creating Release PR:
+     ```bash
+     git add packages/utils/src/document-helpers.ts
+     git commit -m "chore(release): bump APP_VERSION to vX.Y.Z"
+     git push origin dev
+     ```
 
 ### 4. Create Release PR
 
