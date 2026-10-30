@@ -26,7 +26,15 @@ export type ExpenseRow = {
  * sorted by date DESC.
  */
 export async function getAllExpenses(
-  filters?: { divisionId?: string; category?: string; month?: string; year?: number },
+  filters?: {
+    divisionId?: string;
+    category?: string;
+    clientId?: string;
+    month?: string;
+    year?: number;
+    startDate?: string;
+    endDate?: string;
+  },
   pageObj?: { page: number; pageSize: number },
 ): Promise<{ data: ExpenseRow[]; total: number; sum: number }> {
   const conditions = [];
@@ -35,6 +43,13 @@ export async function getAllExpenses(
   }
   if (filters?.category) {
     conditions.push(eq(expenses.category, filters.category));
+  }
+  if (filters?.clientId) {
+    if (filters.clientId === 'unassigned') {
+      conditions.push(sql`${expenses.clientId} IS NULL`);
+    } else {
+      conditions.push(eq(expenses.clientId, filters.clientId));
+    }
   }
   if (filters?.month) {
     conditions.push(sql`TO_CHAR(${expenses.date}, 'YYYY-MM') = ${filters.month}`);
@@ -45,6 +60,12 @@ export async function getAllExpenses(
       sql`${expenses.date} < ${`${filters.year + 1}-03-01`}`,
     );
   }
+  if (filters?.startDate) {
+    conditions.push(sql`${expenses.date} >= ${filters.startDate}`);
+  }
+  if (filters?.endDate) {
+    conditions.push(sql`${expenses.date} <= ${filters.endDate}`);
+  }
 
   const query = db
     .select({
@@ -53,7 +74,9 @@ export async function getAllExpenses(
       divisionId: expenses.divisionId,
       divisionName: divisions.name,
       clientId: expenses.clientId,
-      clientName: clients.name,
+      clientName: sql<
+        string | null
+      >`COALESCE(NULLIF(${clients.businessName}, ''), ${clients.name})`,
       category: expenses.category,
       description: expenses.description,
       amount: expenses.amount,

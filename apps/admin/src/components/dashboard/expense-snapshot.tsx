@@ -70,6 +70,14 @@ export function ExpenseSnapshot({
   const totalNet = totalCashReceipts - totalExpenses;
   const totalPmgShare = Math.max(0, totalNet) * pmgShareRate;
   const totalAR = names.reduce((sum, name) => sum + (arByName.get(name)?.total ?? 0), 0);
+  // Profit is revenue-based (accrual): invoiced revenue − expenses. The cash-based
+  // equivalent is already shown as "Net" (cash receipts − expenses).
+  const totalProfit = totalRevenue - totalExpenses;
+  const profitFor = (name: string) =>
+    (invoicedByName.get(name)?.total ?? 0) - (expenseByName.get(name)?.total ?? 0);
+  // Share of profit is measured against the sum of profitable divisions only, so a
+  // loss-making division shows 0% and percentages never exceed 100%.
+  const positiveProfitTotal = names.reduce((sum, name) => sum + Math.max(0, profitFor(name)), 0);
 
   const rows: DivisionBreakdownRow[] = names
     .map((name) => {
@@ -83,13 +91,21 @@ export function ExpenseSnapshot({
       const arTotal = ar?.total ?? 0;
       const net = cashReceiptsTotal - expenseTotal;
       const pmgShare = Math.max(0, net) * pmgShareRate;
-      const pct = Math.round((expenseTotal / totalExpenses) * 100);
+      const profit = revenueTotal - expenseTotal;
+      const pct =
+        positiveProfitTotal > 0 ? Math.round((Math.max(0, profit) / positiveProfitTotal) * 100) : 0;
 
       return {
         divisionId:
           receipts?.divisionId ?? invoiced?.divisionId ?? expense?.divisionId ?? ar?.divisionId,
         divisionName: name,
         pct,
+        pctLabel: 'of total profit',
+        footerMetric: {
+          label: 'Profit',
+          value: profit,
+          colorClass: profit >= 0 ? 'text-emerald-600' : 'text-red-600',
+        },
         metrics: [
           { label: 'Revenue', value: revenueTotal, colorClass: 'text-sky-600' },
           { label: 'Cash Receipts', value: cashReceiptsTotal, colorClass: 'text-emerald-600' },
@@ -100,11 +116,7 @@ export function ExpenseSnapshot({
         ],
       };
     })
-    .sort(
-      (a, b) =>
-        (expenseByName.get(b.divisionName)?.total ?? 0) -
-        (expenseByName.get(a.divisionName)?.total ?? 0),
-    );
+    .sort((a, b) => profitFor(b.divisionName) - profitFor(a.divisionName));
 
   return (
     <DivisionBreakdownCard
@@ -119,6 +131,11 @@ export function ExpenseSnapshot({
           label: 'Net',
           value: totalNet,
           colorClass: totalNet >= 0 ? 'text-emerald-600' : 'text-red-600',
+        },
+        {
+          label: 'Profit',
+          value: totalProfit,
+          colorClass: totalProfit >= 0 ? 'text-emerald-600' : 'text-red-600',
         },
       ]}
       rows={rows}

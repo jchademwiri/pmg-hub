@@ -11,6 +11,7 @@ interface ExportPdfButtonProps {
   label?: string;
   elementId?: string;
   pdfUrl?: string;
+  disabled?: boolean;
 }
 
 export function ExportPdfButton({
@@ -18,6 +19,7 @@ export function ExportPdfButton({
   label = 'Export PDF',
   elementId = 'printable-area',
   pdfUrl,
+  disabled = false,
 }: ExportPdfButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
 
@@ -45,7 +47,7 @@ export function ExportPdfButton({
       variant="outline"
       size="sm"
       onClick={handleExport}
-      disabled={isExporting}
+      disabled={isExporting || disabled}
       className="print:hidden border-amber-200 hover:border-amber-300 dark:border-amber-900/50 hover:bg-amber-50/50 dark:hover:bg-amber-950/20"
     >
       {isExporting ? (

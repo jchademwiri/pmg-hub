@@ -69,6 +69,8 @@ vi.mock('@pmg/db', () => ({
   inArray: vi.fn(),
   sql: Object.assign(vi.fn(), { raw: vi.fn() }),
   getAllInvoices: vi.fn(),
+  getAllClients: vi.fn().mockResolvedValue([]),
+  getAllDivisions: vi.fn().mockResolvedValue([]),
   getNextDocumentNumber: vi.fn().mockResolvedValue('INV-2026-0001'),
   getInvoiceMonthlySummaries: vi.fn().mockResolvedValue([]),
   getOrganisationSettings: vi.fn().mockResolvedValue({ vatNumber: '4123456789' }),
