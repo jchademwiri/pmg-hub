@@ -799,9 +799,7 @@ export function ReportsTemplateClient({
                               <td
                                 className={cn(
                                   'py-2 px-2 text-right tabular-nums font-semibold',
-                                  row.outstandingAmount > 0
-                                    ? 'text-zinc-900'
-                                    : 'text-emerald-600',
+                                  row.outstandingAmount > 0 ? 'text-zinc-900' : 'text-emerald-600',
                                 )}
                               >
                                 {row.outstandingAmount > 0
