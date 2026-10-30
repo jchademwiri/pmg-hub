@@ -76,7 +76,7 @@ export function AgingReportGrid({ data = [] }: AgingReportGridProps) {
           const hasTotal = r.total > 0;
 
           return (
-            <Link href={`/billing/aging?filter=${r.bucket}`} key={r.bucket} className="block group">
+            <Link href="/billing/reports?type=aging" key={r.bucket} className="block group">
               <Card
                 size="sm"
                 className={`rounded-xl border transition-all duration-200 group-hover:scale-[1.01] group-hover:border-primary/20 group-hover:shadow-sm ${theme.borderClass} ${theme.bgClass} shadow-none cursor-pointer`}

@@ -18,6 +18,7 @@ import {
   Banknote,
   ScrollText,
   Package,
+  BarChart3,
 } from 'lucide-react';
 import type { AgingRow } from '@pmg/db';
 import { STATUS_STYLES, STATUS_TEXT_COLORS, formatStatusLabel } from '@/lib/billing-status';
@@ -168,7 +169,7 @@ export function BillingOverviewClient({
           <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
             <h3 className="text-sm font-semibold">Aging Report</h3>
             <Link
-              href="/billing/aging"
+              href="/billing/reports?type=aging"
               className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
             >
               View all <ArrowUpRight className="h-3 w-3" />
@@ -322,11 +323,11 @@ export function BillingOverviewClient({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             {
-              href: '/billing/aging',
-              label: 'Aging Report',
-              description: 'AR aging analysis',
+              href: '/billing/reports',
+              label: 'Reports',
+              description: 'Invoices, payments, AR aging',
               color: 'bg-indigo-500/10 text-indigo-600',
-              icon: Calendar,
+              icon: BarChart3,
             },
             {
               href: '/billing/quotes',
