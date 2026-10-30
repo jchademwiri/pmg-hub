@@ -264,23 +264,63 @@ export function AgingReportDocument({
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell width="12%" align="right" tabular>
+                            <TableCell
+                              width="12%"
+                              align="right"
+                              tabular
+                              style={
+                                row.current > 0
+                                  ? { color: '#059669', fontWeight: 600 }
+                                  : { color: theme.colors.mutedForeground }
+                              }
+                            >
                               {formatZAR(row.current)}
                             </TableCell>
-                            <TableCell width="12%" align="right" tabular>
+                            <TableCell
+                              width="12%"
+                              align="right"
+                              tabular
+                              style={
+                                row.bucket_1_14 > 0
+                                  ? { color: '#d97706', fontWeight: 600 }
+                                  : { color: theme.colors.mutedForeground }
+                              }
+                            >
                               {formatZAR(row.bucket_1_14)}
                             </TableCell>
-                            <TableCell width="12%" align="right" tabular>
+                            <TableCell
+                              width="12%"
+                              align="right"
+                              tabular
+                              style={
+                                row.bucket_15_30 > 0
+                                  ? { color: '#ea580c', fontWeight: 600 }
+                                  : { color: theme.colors.mutedForeground }
+                              }
+                            >
                               {formatZAR(row.bucket_15_30)}
                             </TableCell>
-                            <TableCell width="12%" align="right" tabular>
+                            <TableCell
+                              width="12%"
+                              align="right"
+                              tabular
+                              style={
+                                row.bucket_31_60 > 0
+                                  ? { color: '#e11d48', fontWeight: 600 }
+                                  : { color: theme.colors.mutedForeground }
+                              }
+                            >
                               {formatZAR(row.bucket_31_60)}
                             </TableCell>
                             <TableCell
                               width="12%"
                               align="right"
                               tabular
-                              style={row.bucket_61_plus > 0 ? { color: theme.colors.destructive } : undefined}
+                              style={
+                                row.bucket_61_plus > 0
+                                  ? { color: '#dc2626', fontWeight: 700 }
+                                  : { color: theme.colors.mutedForeground }
+                              }
                             >
                               {formatZAR(row.bucket_61_plus)}
                             </TableCell>
@@ -349,14 +389,17 @@ export function AgingReportDocument({
                       }}
                     >
                       <thead>
-                        <tr style={{ backgroundColor: '#f9fafb' }}>
+                        <tr>
                           <th
                             style={{
                               padding: '4px 6px',
                               fontSize: 7,
                               fontWeight: 700,
                               textAlign: 'center',
+                              backgroundColor: '#fef2f2',
+                              color: '#b91c1c',
                               borderRight: `1px solid ${theme.colors.border}`,
+                              borderBottom: `1px solid ${theme.colors.border}`,
                               width: '16.66%',
                             }}
                           >
@@ -368,7 +411,10 @@ export function AgingReportDocument({
                               fontSize: 7,
                               fontWeight: 700,
                               textAlign: 'center',
+                              backgroundColor: '#fff1f2',
+                              color: '#be123c',
                               borderRight: `1px solid ${theme.colors.border}`,
+                              borderBottom: `1px solid ${theme.colors.border}`,
                               width: '16.66%',
                             }}
                           >
@@ -380,7 +426,10 @@ export function AgingReportDocument({
                               fontSize: 7,
                               fontWeight: 700,
                               textAlign: 'center',
+                              backgroundColor: '#fff7ed',
+                              color: '#c2410c',
                               borderRight: `1px solid ${theme.colors.border}`,
+                              borderBottom: `1px solid ${theme.colors.border}`,
                               width: '16.66%',
                             }}
                           >
@@ -392,7 +441,10 @@ export function AgingReportDocument({
                               fontSize: 7,
                               fontWeight: 700,
                               textAlign: 'center',
+                              backgroundColor: '#fffbeb',
+                              color: '#b45309',
                               borderRight: `1px solid ${theme.colors.border}`,
+                              borderBottom: `1px solid ${theme.colors.border}`,
                               width: '16.66%',
                             }}
                           >
@@ -404,7 +456,10 @@ export function AgingReportDocument({
                               fontSize: 7,
                               fontWeight: 700,
                               textAlign: 'center',
+                              backgroundColor: '#f0fdf4',
+                              color: '#15803d',
                               borderRight: `1px solid ${theme.colors.border}`,
+                              borderBottom: `1px solid ${theme.colors.border}`,
                               width: '16.66%',
                             }}
                           >
@@ -416,6 +471,9 @@ export function AgingReportDocument({
                               fontSize: 7,
                               fontWeight: 700,
                               textAlign: 'center',
+                              backgroundColor: '#f4f4f5',
+                              color: '#18181b',
+                              borderBottom: `1px solid ${theme.colors.border}`,
                               width: '16.7%',
                             }}
                           >
@@ -430,8 +488,8 @@ export function AgingReportDocument({
                               padding: '6px',
                               fontSize: 8,
                               textAlign: 'center',
-                              fontWeight: total61Plus > 0 ? 700 : 400,
-                              color: total61Plus > 0 ? theme.colors.destructive : 'inherit',
+                              fontWeight: 700,
+                              color: total61Plus > 0 ? '#dc2626' : theme.colors.mutedForeground,
                               fontVariantNumeric: 'tabular-nums',
                               borderRight: `1px solid ${theme.colors.border}`,
                             }}
@@ -443,8 +501,8 @@ export function AgingReportDocument({
                               padding: '6px',
                               fontSize: 8,
                               textAlign: 'center',
-                              fontWeight: total31_60 > 0 ? 700 : 400,
-                              color: total31_60 > 0 ? theme.colors.destructive : 'inherit',
+                              fontWeight: 600,
+                              color: total31_60 > 0 ? '#e11d48' : theme.colors.mutedForeground,
                               fontVariantNumeric: 'tabular-nums',
                               borderRight: `1px solid ${theme.colors.border}`,
                             }}
@@ -456,8 +514,8 @@ export function AgingReportDocument({
                               padding: '6px',
                               fontSize: 8,
                               textAlign: 'center',
-                              fontWeight: total15_30 > 0 ? 700 : 400,
-                              color: total15_30 > 0 ? '#d97706' : 'inherit',
+                              fontWeight: 600,
+                              color: total15_30 > 0 ? '#ea580c' : theme.colors.mutedForeground,
                               fontVariantNumeric: 'tabular-nums',
                               borderRight: `1px solid ${theme.colors.border}`,
                             }}
@@ -469,8 +527,8 @@ export function AgingReportDocument({
                               padding: '6px',
                               fontSize: 8,
                               textAlign: 'center',
-                              fontWeight: total1_14 > 0 ? 700 : 400,
-                              color: total1_14 > 0 ? '#d97706' : 'inherit',
+                              fontWeight: 600,
+                              color: total1_14 > 0 ? '#d97706' : theme.colors.mutedForeground,
                               fontVariantNumeric: 'tabular-nums',
                               borderRight: `1px solid ${theme.colors.border}`,
                             }}
@@ -483,7 +541,7 @@ export function AgingReportDocument({
                               fontSize: 8,
                               textAlign: 'center',
                               fontWeight: 600,
-                              color: theme.colors.foreground,
+                              color: totalCurrent > 0 ? '#059669' : theme.colors.mutedForeground,
                               fontVariantNumeric: 'tabular-nums',
                               borderRight: `1px solid ${theme.colors.border}`,
                             }}
@@ -497,7 +555,7 @@ export function AgingReportDocument({
                               textAlign: 'center',
                               fontWeight: 700,
                               color:
-                                totalOverdue > 0 ? theme.colors.destructive : theme.colors.foreground,
+                                totalOverdue > 0 ? '#dc2626' : theme.colors.foreground,
                               fontVariantNumeric: 'tabular-nums',
                             }}
                           >

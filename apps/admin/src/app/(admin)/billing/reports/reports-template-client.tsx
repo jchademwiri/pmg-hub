@@ -1067,22 +1067,42 @@ export function ReportsTemplateClient({
                                     )}
                                   </div>
                                 </td>
-                                <td className="py-2 px-2 text-right tabular-nums text-zinc-600">
+                                <td
+                                  className={cn(
+                                    'py-2 px-2 text-right tabular-nums',
+                                    row.current > 0 ? 'text-emerald-600 font-medium' : 'text-zinc-400',
+                                  )}
+                                >
                                   {formatZAR(row.current)}
                                 </td>
-                                <td className="py-2 px-2 text-right tabular-nums text-zinc-600">
+                                <td
+                                  className={cn(
+                                    'py-2 px-2 text-right tabular-nums',
+                                    row.bucket_1_14 > 0 ? 'text-amber-600 font-medium' : 'text-zinc-400',
+                                  )}
+                                >
                                   {formatZAR(row.bucket_1_14)}
                                 </td>
-                                <td className="py-2 px-2 text-right tabular-nums text-zinc-600">
+                                <td
+                                  className={cn(
+                                    'py-2 px-2 text-right tabular-nums',
+                                    row.bucket_15_30 > 0 ? 'text-orange-600 font-medium' : 'text-zinc-400',
+                                  )}
+                                >
                                   {formatZAR(row.bucket_15_30)}
                                 </td>
-                                <td className="py-2 px-2 text-right tabular-nums text-zinc-600">
+                                <td
+                                  className={cn(
+                                    'py-2 px-2 text-right tabular-nums',
+                                    row.bucket_31_60 > 0 ? 'text-rose-600 font-medium' : 'text-zinc-400',
+                                  )}
+                                >
                                   {formatZAR(row.bucket_31_60)}
                                 </td>
                                 <td
                                   className={cn(
-                                    'py-2 px-2 text-right tabular-nums font-medium',
-                                    row.bucket_61_plus > 0 ? 'text-rose-600' : 'text-zinc-600',
+                                    'py-2 px-2 text-right tabular-nums',
+                                    row.bucket_61_plus > 0 ? 'text-red-600 font-bold' : 'text-zinc-400',
                                   )}
                                 >
                                   {formatZAR(row.bucket_61_plus)}
@@ -1128,23 +1148,23 @@ export function ReportsTemplateClient({
                       </div>
                       <table className="w-full text-xs text-center border border-zinc-200">
                         <thead>
-                          <tr className="bg-zinc-50 border-b border-zinc-200">
-                            <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide">
+                          <tr className="border-b border-zinc-200">
+                            <th className="py-2 font-semibold uppercase tracking-wider text-[10px] bg-red-50 text-red-700">
                               61+ Days
                             </th>
-                            <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">
+                            <th className="py-2 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-rose-50 text-rose-700">
                               31–60 Days
                             </th>
-                            <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">
+                            <th className="py-2 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-orange-50 text-orange-700">
                               15–30 Days
                             </th>
-                            <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">
+                            <th className="py-2 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-amber-50 text-amber-700">
                               1–14 Days
                             </th>
-                            <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">
+                            <th className="py-2 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-emerald-50 text-emerald-700">
                               Current
                             </th>
-                            <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">
+                            <th className="py-2 font-bold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-zinc-100 text-zinc-900">
                               Total Overdue
                             </th>
                           </tr>
@@ -1153,8 +1173,8 @@ export function ReportsTemplateClient({
                           <tr>
                             <td
                               className={cn(
-                                'py-3 tabular-nums font-semibold',
-                                reportData.summary.total61Plus > 0 ? 'text-rose-600' : 'text-zinc-500',
+                                'py-3 tabular-nums font-bold',
+                                reportData.summary.total61Plus > 0 ? 'text-red-600' : 'text-zinc-400',
                               )}
                             >
                               {formatZAR(reportData.summary.total61Plus)}
@@ -1162,7 +1182,7 @@ export function ReportsTemplateClient({
                             <td
                               className={cn(
                                 'py-3 tabular-nums font-semibold border-l border-zinc-200',
-                                reportData.summary.total31_60 > 0 ? 'text-rose-500' : 'text-zinc-500',
+                                reportData.summary.total31_60 > 0 ? 'text-rose-600' : 'text-zinc-400',
                               )}
                             >
                               {formatZAR(reportData.summary.total31_60)}
@@ -1170,7 +1190,7 @@ export function ReportsTemplateClient({
                             <td
                               className={cn(
                                 'py-3 tabular-nums font-semibold border-l border-zinc-200',
-                                reportData.summary.total15_30 > 0 ? 'text-amber-500' : 'text-zinc-500',
+                                reportData.summary.total15_30 > 0 ? 'text-orange-600' : 'text-zinc-400',
                               )}
                             >
                               {formatZAR(reportData.summary.total15_30)}
@@ -1178,18 +1198,23 @@ export function ReportsTemplateClient({
                             <td
                               className={cn(
                                 'py-3 tabular-nums font-semibold border-l border-zinc-200',
-                                reportData.summary.total1_14 > 0 ? 'text-amber-500' : 'text-zinc-500',
+                                reportData.summary.total1_14 > 0 ? 'text-amber-600' : 'text-zinc-400',
                               )}
                             >
                               {formatZAR(reportData.summary.total1_14)}
                             </td>
-                            <td className="py-3 tabular-nums font-semibold border-l border-zinc-200 text-zinc-700">
+                            <td
+                              className={cn(
+                                'py-3 tabular-nums font-semibold border-l border-zinc-200',
+                                reportData.summary.totalCurrent > 0 ? 'text-emerald-600' : 'text-zinc-400',
+                              )}
+                            >
                               {formatZAR(reportData.summary.totalCurrent)}
                             </td>
                             <td
                               className={cn(
                                 'py-3 tabular-nums font-bold border-l border-zinc-200',
-                                reportData.summary.totalOverdue > 0 ? 'text-rose-600' : 'text-zinc-700',
+                                reportData.summary.totalOverdue > 0 ? 'text-red-600' : 'text-zinc-700',
                               )}
                             >
                               {formatZAR(reportData.summary.totalOverdue)}
