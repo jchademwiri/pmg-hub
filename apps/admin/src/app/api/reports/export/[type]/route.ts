@@ -348,6 +348,98 @@ export async function GET(req: Request, { params }: { params: Promise<{ type: st
     const statusFilterLabel = formatInvoiceStatusLabel(statusParam);
 
     if (groupByClient) {
+      // Option B: For grouped Client Balances, calculate each client's full
+      // activity for the selected period (all invoiced and paid), while filtering
+      // which clients are included according to the selected status filter.
+      const allPeriodResult = await getAllInvoices(
+        {
+          divisionId,
+          clientId: clientIdFilter,
+          invoiceDateFrom: startDate,
+          invoiceDateTo: endDate,
+          excludeDraftVoid: true,
+        },
+        { page: 1, pageSize: 10000 },
+      );
+
+      type ClientAgg = {
+        clientName: string;
+        invoices: typeof allPeriodResult.data;
+        count: number;
+        totalInvoiced: number;
+        totalPaid: number;
+        totalOutstanding: number;
+      };
+
+      const clientMap = new Map<string, ClientAgg>();
+
+      for (const inv of allPeriodResult.data) {
+        const cName = inv.clientName || 'Unknown Client';
+        let entry = clientMap.get(cName);
+        if (!entry) {
+          entry = {
+            clientName: cName,
+            invoices: [],
+            count: 0,
+            totalInvoiced: 0,
+            totalPaid: 0,
+            totalOutstanding: 0,
+          };
+          clientMap.set(cName, entry);
+        }
+
+        const total = Number(inv.total ?? 0);
+        const allocated = Number(inv.allocatedAmount ?? 0);
+        const writeOff = Number(inv.writeOffAmount ?? 0);
+        const isPayable =
+          inv.status === 'issued' || inv.status === 'overdue' || inv.status === 'partially_paid';
+        const outstanding = isPayable ? Math.max(0, total - allocated - writeOff) : 0;
+
+        entry.invoices.push(inv);
+        entry.count += 1;
+        entry.totalInvoiced += total;
+        entry.totalPaid += allocated;
+        entry.totalOutstanding += outstanding;
+      }
+
+      let clientList = Array.from(clientMap.values());
+
+      if (statusParam === 'only_outstanding' || statusParam === 'unpaid_and_not_fully_paid') {
+        clientList = clientList.filter((c) => c.totalOutstanding > 0.005);
+      } else if (statusParam === 'unpaid') {
+        clientList = clientList.filter((c) =>
+          c.invoices.some((i) => i.status === 'issued' || i.status === 'overdue'),
+        );
+      } else if (statusParam === 'partially_paid' || statusParam === 'not_fully_paid') {
+        clientList = clientList.filter((c) =>
+          c.invoices.some((i) => i.status === 'partially_paid'),
+        );
+      } else if (statusParam === 'paid') {
+        clientList = clientList.filter((c) => c.totalOutstanding <= 0.005 && c.totalPaid > 0);
+      } else if (statusParam === 'overdue') {
+        clientList = clientList.filter((c) => c.invoices.some((i) => i.status === 'overdue'));
+      } else if (statusParam === 'issued') {
+        clientList = clientList.filter((c) => c.invoices.some((i) => i.status === 'issued'));
+      }
+
+      clientList.sort(
+        (a, b) =>
+          b.totalOutstanding - a.totalOutstanding ||
+          b.totalInvoiced - a.totalInvoiced ||
+          a.clientName.localeCompare(b.clientName),
+      );
+
+      const groupedRows: ClientSummaryRow[] = clientList.map((c) => ({
+        clientName: c.clientName,
+        count: c.count,
+        values: [c.totalInvoiced, c.totalPaid, c.totalOutstanding],
+      }));
+
+      const sumInvoiced = clientList.reduce((acc, c) => acc + c.totalInvoiced, 0);
+      const sumPaid = clientList.reduce((acc, c) => acc + c.totalPaid, 0);
+      const sumOutstanding = clientList.reduce((acc, c) => acc + c.totalOutstanding, 0);
+      const sumCount = clientList.reduce((acc, c) => acc + c.count, 0);
+
       return respondClientSummary(
         {
           type: 'invoices',
@@ -360,12 +452,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ type: st
             { label: 'Balance Due', tone: 'danger' },
           ],
           headlineIndex: 2,
-          groupedRows: groupRowsByClient(
-            rows,
-            [(r) => r.total, (r) => r.paidAmount, (r) => r.outstandingAmount],
-            2,
-          ),
-          summary: { count: rows.length, totalInvoiced, totalPaid, totalOutstanding },
+          groupedRows,
+          summary: {
+            count: sumCount,
+            totalInvoiced: sumInvoiced,
+            totalPaid: sumPaid,
+            totalOutstanding: sumOutstanding,
+          },
           filterLabel: statusFilterLabel,
         },
         ctx,
