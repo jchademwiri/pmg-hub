@@ -1102,63 +1102,21 @@ export function ReportsTemplateClient({
                       </tbody>
                     </table>
 
-                    {/* Bottom-Right Aging Totals */}
-                    <div className="mt-6 flex justify-end">
-                      <div className="w-72 flex flex-col divide-y divide-zinc-200 text-xs">
-                        <div className="flex justify-between py-1.5 text-zinc-600">
-                          <span>{reportData.isClientDrilldown ? 'Invoices with Balance' : 'Clients with Balance'}</span>
-                          <span className="tabular-nums font-semibold text-zinc-900">
-                            {reportData.summary.count}
+                    {/* Bottom Horizontal Aging Summary Boxes (matches Statement Ageing Summary) */}
+                    <div className="mt-8 pt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                          Aging Summary
+                        </p>
+                        <div className="text-xs text-zinc-500">
+                          <span className="text-zinc-500 mr-3">
+                            {reportData.isClientDrilldown ? 'Invoices with Balance:' : 'Clients with Balance:'}{' '}
+                            <span className="font-semibold text-zinc-800">{reportData.summary.count}</span>
                           </span>
-                        </div>
-                        <div className="flex justify-between py-1.5 text-zinc-600">
-                          <span>Current (Not Due)</span>
-                          <span className="tabular-nums font-medium text-zinc-900">
-                            {formatZAR(reportData.summary.totalCurrent)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between py-1.5 text-zinc-600">
-                          <span>1–14 Days Overdue</span>
-                          <span className="tabular-nums font-medium text-zinc-900">
-                            {formatZAR(reportData.summary.total1_14)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between py-1.5 text-zinc-600">
-                          <span>15–30 Days Overdue</span>
-                          <span className="tabular-nums font-medium text-zinc-900">
-                            {formatZAR(reportData.summary.total15_30)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between py-1.5 text-zinc-600">
-                          <span>31–60 Days Overdue</span>
-                          <span className="tabular-nums font-medium text-zinc-900">
-                            {formatZAR(reportData.summary.total31_60)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between py-1.5 text-zinc-600">
-                          <span>61+ Days Overdue</span>
+                          <span className="text-zinc-500">Total Outstanding (AR): </span>
                           <span
                             className={cn(
-                              'tabular-nums font-medium',
-                              reportData.summary.total61Plus > 0
-                                ? 'text-rose-600'
-                                : 'text-zinc-900',
-                            )}
-                          >
-                            {formatZAR(reportData.summary.total61Plus)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between py-1.5 text-zinc-600">
-                          <span>Total Overdue</span>
-                          <span className="tabular-nums font-semibold text-rose-600">
-                            {formatZAR(reportData.summary.totalOverdue)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between py-2 text-sm font-bold text-zinc-900">
-                          <span>Total Outstanding (AR)</span>
-                          <span
-                            className={cn(
-                              'tabular-nums',
+                              'font-bold tabular-nums',
                               reportData.summary.totalOutstanding > 0
                                 ? 'text-blue-700'
                                 : 'text-emerald-600',
@@ -1168,6 +1126,77 @@ export function ReportsTemplateClient({
                           </span>
                         </div>
                       </div>
+                      <table className="w-full text-xs text-center border border-zinc-200">
+                        <thead>
+                          <tr className="bg-zinc-50 border-b border-zinc-200">
+                            <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide">
+                              61+ Days
+                            </th>
+                            <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">
+                              31–60 Days
+                            </th>
+                            <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">
+                              15–30 Days
+                            </th>
+                            <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">
+                              1–14 Days
+                            </th>
+                            <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">
+                              Current
+                            </th>
+                            <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">
+                              Total Overdue
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td
+                              className={cn(
+                                'py-3 tabular-nums font-semibold',
+                                reportData.summary.total61Plus > 0 ? 'text-rose-600' : 'text-zinc-500',
+                              )}
+                            >
+                              {formatZAR(reportData.summary.total61Plus)}
+                            </td>
+                            <td
+                              className={cn(
+                                'py-3 tabular-nums font-semibold border-l border-zinc-200',
+                                reportData.summary.total31_60 > 0 ? 'text-rose-500' : 'text-zinc-500',
+                              )}
+                            >
+                              {formatZAR(reportData.summary.total31_60)}
+                            </td>
+                            <td
+                              className={cn(
+                                'py-3 tabular-nums font-semibold border-l border-zinc-200',
+                                reportData.summary.total15_30 > 0 ? 'text-amber-500' : 'text-zinc-500',
+                              )}
+                            >
+                              {formatZAR(reportData.summary.total15_30)}
+                            </td>
+                            <td
+                              className={cn(
+                                'py-3 tabular-nums font-semibold border-l border-zinc-200',
+                                reportData.summary.total1_14 > 0 ? 'text-amber-500' : 'text-zinc-500',
+                              )}
+                            >
+                              {formatZAR(reportData.summary.total1_14)}
+                            </td>
+                            <td className="py-3 tabular-nums font-semibold border-l border-zinc-200 text-zinc-700">
+                              {formatZAR(reportData.summary.totalCurrent)}
+                            </td>
+                            <td
+                              className={cn(
+                                'py-3 tabular-nums font-bold border-l border-zinc-200',
+                                reportData.summary.totalOverdue > 0 ? 'text-rose-600' : 'text-zinc-700',
+                              )}
+                            >
+                              {formatZAR(reportData.summary.totalOverdue)}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
                   </>
                 ) : null}
