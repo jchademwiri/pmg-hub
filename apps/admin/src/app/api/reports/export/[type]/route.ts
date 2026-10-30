@@ -714,20 +714,84 @@ export async function GET(req: Request, { params }: { params: Promise<{ type: st
 
   // ── 4. AGING REPORT ────────────────────────────────────────────────────────
   if (type === 'aging') {
-    const agingRows = await getClientAgingReport();
-    const filtered =
-      rawClientId !== 'all' ? agingRows.filter((r) => r.clientId === rawClientId) : agingRows;
+    const isClientDrilldown = rawClientId !== 'all';
+    let rows: AgingReportRow[] = [];
 
-    const rows: AgingReportRow[] = filtered.map((r) => ({
-      clientId: r.clientId,
-      clientName: r.businessName || r.clientName,
-      current: r.current,
-      bucket_1_14: r.bucket_1_14,
-      bucket_15_30: r.bucket_15_30,
-      bucket_31_60: r.bucket_31_60,
-      bucket_61_plus: r.bucket_61_plus,
-      totalOutstanding: r.totalOutstanding,
-    }));
+    if (isClientDrilldown) {
+      const invResult = await getAllInvoices(
+        {
+          clientId: rawClientId,
+          divisionId,
+          excludeDraftVoid: true,
+        },
+        { page: 1, pageSize: 1000 },
+      );
+
+      let invs = invResult.data;
+      if (statusParam === 'all') {
+        // Show all
+      } else if (statusParam === 'paid') {
+        invs = invs.filter((i) => i.status === 'paid');
+      } else {
+        invs = invs.filter(
+          (i) =>
+            i.status === 'issued' ||
+            i.status === 'overdue' ||
+            i.status === 'partially_paid' ||
+            Number(i.total) - Number(i.allocatedAmount ?? 0) > 0.005,
+        );
+      }
+
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      rows = invs.map((inv) => {
+        const total = Number(inv.total ?? 0);
+        const allocated = Number(inv.allocatedAmount ?? 0);
+        const writeOff = Number(inv.writeOffAmount ?? 0);
+        const outstanding = Math.max(0, total - allocated - writeOff);
+
+        let bucket: 'current' | '1_14' | '15_30' | '31_60' | '61_plus' = 'current';
+        let daysPastDue = 0;
+        if (inv.dueDate && outstanding > 0.005) {
+          const parts = inv.dueDate.split('-').map(Number);
+          const due = new Date(parts[0], parts[1] - 1, parts[2]);
+          const diffTime = today.getTime() - due.getTime();
+          daysPastDue = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
+          if (daysPastDue === 0) bucket = 'current';
+          else if (daysPastDue <= 14) bucket = '1_14';
+          else if (daysPastDue <= 30) bucket = '15_30';
+          else if (daysPastDue <= 60) bucket = '31_60';
+          else bucket = '61_plus';
+        }
+
+        return {
+          clientId: inv.id,
+          clientName: inv.documentNumber,
+          reference: inv.reference,
+          invoiceDate: inv.invoiceDate,
+          dueDate: inv.dueDate,
+          current: bucket === 'current' ? outstanding : 0,
+          bucket_1_14: bucket === '1_14' ? outstanding : 0,
+          bucket_15_30: bucket === '15_30' ? outstanding : 0,
+          bucket_31_60: bucket === '31_60' ? outstanding : 0,
+          bucket_61_plus: bucket === '61_plus' ? outstanding : 0,
+          totalOutstanding: outstanding,
+        };
+      });
+    } else {
+      const agingRows = await getClientAgingReport();
+      rows = agingRows.map((r) => ({
+        clientId: r.clientId,
+        clientName: r.businessName || r.clientName,
+        current: r.current,
+        bucket_1_14: r.bucket_1_14,
+        bucket_15_30: r.bucket_15_30,
+        bucket_31_60: r.bucket_31_60,
+        bucket_61_plus: r.bucket_61_plus,
+        totalOutstanding: r.totalOutstanding,
+      }));
+    }
 
     const totalOutstanding = rows.reduce((s, r) => s + r.totalOutstanding, 0);
     const totalCurrent = rows.reduce((s, r) => s + r.current, 0);
@@ -739,7 +803,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ type: st
 
     const summary = {
       count: rows.length,
-      clientCount: rows.length,
+      clientCount: isClientDrilldown ? 1 : rows.length,
+      invoiceCount: rows.length,
       totalOutstanding,
       totalCurrent,
       total1_14,
@@ -754,6 +819,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ type: st
     if (format === 'json') {
       return NextResponse.json({
         type: 'aging',
+        isClientDrilldown,
         asOfDateLabel,
         periodLabel: `As of ${asOfDateLabel}`,
         clientScopeLabel,
@@ -764,33 +830,79 @@ export async function GET(req: Request, { params }: { params: Promise<{ type: st
     }
 
     if (format === 'csv') {
-      const headers = [
-        'Client',
-        'Current (ZAR)',
-        '1-14 Days (ZAR)',
-        '15-30 Days (ZAR)',
-        '31-60 Days (ZAR)',
-        '61+ Days (ZAR)',
-        'Total Due (ZAR)',
-      ];
-      const csvRows: (string | number)[][] = rows.map((r) => [
-        r.clientName,
-        r.current.toFixed(2),
-        r.bucket_1_14.toFixed(2),
-        r.bucket_15_30.toFixed(2),
-        r.bucket_31_60.toFixed(2),
-        r.bucket_61_plus.toFixed(2),
-        r.totalOutstanding.toFixed(2),
-      ]);
-      csvRows.push([
-        `TOTAL (${rows.length} clients)`,
-        totalCurrent.toFixed(2),
-        total1_14.toFixed(2),
-        total15_30.toFixed(2),
-        total31_60.toFixed(2),
-        total61Plus.toFixed(2),
-        totalOutstanding.toFixed(2),
-      ]);
+      const headers = isClientDrilldown
+        ? [
+            'Invoice #',
+            'Date',
+            'Due Date',
+            'Reference',
+            'Current (ZAR)',
+            '1-14 Days (ZAR)',
+            '15-30 Days (ZAR)',
+            '31-60 Days (ZAR)',
+            '61+ Days (ZAR)',
+            'Total Due (ZAR)',
+          ]
+        : [
+            'Client',
+            'Current (ZAR)',
+            '1-14 Days (ZAR)',
+            '15-30 Days (ZAR)',
+            '31-60 Days (ZAR)',
+            '61+ Days (ZAR)',
+            'Total Due (ZAR)',
+          ];
+
+      const csvRows: (string | number)[][] = rows.map((r) =>
+        isClientDrilldown
+          ? [
+              r.clientName,
+              r.invoiceDate || '',
+              r.dueDate || '',
+              r.reference || '',
+              r.current.toFixed(2),
+              r.bucket_1_14.toFixed(2),
+              r.bucket_15_30.toFixed(2),
+              r.bucket_31_60.toFixed(2),
+              r.bucket_61_plus.toFixed(2),
+              r.totalOutstanding.toFixed(2),
+            ]
+          : [
+              r.clientName,
+              r.current.toFixed(2),
+              r.bucket_1_14.toFixed(2),
+              r.bucket_15_30.toFixed(2),
+              r.bucket_31_60.toFixed(2),
+              r.bucket_61_plus.toFixed(2),
+              r.totalOutstanding.toFixed(2),
+            ],
+      );
+
+      csvRows.push(
+        isClientDrilldown
+          ? [
+              `TOTAL (${rows.length} invoices)`,
+              '',
+              '',
+              '',
+              totalCurrent.toFixed(2),
+              total1_14.toFixed(2),
+              total15_30.toFixed(2),
+              total31_60.toFixed(2),
+              total61Plus.toFixed(2),
+              totalOutstanding.toFixed(2),
+            ]
+          : [
+              `TOTAL (${rows.length} clients)`,
+              totalCurrent.toFixed(2),
+              total1_14.toFixed(2),
+              total15_30.toFixed(2),
+              total31_60.toFixed(2),
+              total61Plus.toFixed(2),
+              totalOutstanding.toFixed(2),
+            ],
+      );
+
       const fileName = `ar-aging-report-${clientSlug}-${dateSuffix}.csv`;
       return new NextResponse(toCsv(headers, csvRows), {
         headers: {
@@ -802,13 +914,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ type: st
     }
 
     const pdfBuffer = await renderDeclarativeAgingReport({
-      title: 'Accounts Receivable Aging Report',
+      title: isClientDrilldown
+        ? `${clientScopeLabel} — Aging Report`
+        : 'Accounts Receivable Aging Report',
       reportNumber: `AG-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
       rows,
       org,
       asOfDateLabel,
       clientScopeLabel,
       divisionLabel,
+      isClientDrilldown,
       generatedAt,
     });
 

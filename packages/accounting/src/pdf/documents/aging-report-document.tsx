@@ -14,12 +14,15 @@ import {
   TableCell,
   usePdfTheme,
 } from '@pmg/billing/pdf';
-import { formatZAR } from '@pmg/billing/format';
+import { formatZAR, fmtDate } from '@pmg/billing/format';
 import { type PdfOrgHeader } from '@pmg/billing/pdf-shell';
 
 export interface AgingReportRow {
   clientId: string;
   clientName: string;
+  reference?: string | null;
+  invoiceDate?: string | null;
+  dueDate?: string | null;
   current: number;
   bucket_1_14: number;
   bucket_15_30: number;
@@ -36,6 +39,7 @@ export interface AgingReportDocumentProps {
   asOfDateLabel: string;
   clientScopeLabel: string;
   divisionLabel?: string;
+  isClientDrilldown?: boolean;
   generatedAt: string;
 }
 
@@ -77,6 +81,7 @@ export function AgingReportDocument({
   asOfDateLabel,
   clientScopeLabel,
   divisionLabel,
+  isClientDrilldown = false,
   generatedAt,
 }: AgingReportDocumentProps) {
   const theme = usePdfTheme();
@@ -91,6 +96,9 @@ export function AgingReportDocument({
 
   const pages = paginateRows(rows);
   const totalPages = pages.length;
+
+  const firstColHeader = isClientDrilldown ? 'Invoice' : 'Client';
+  const countLabel = isClientDrilldown ? 'Outstanding Invoices' : 'Clients with Balance';
 
   return (
     <Document title={`${title} - ${clientScopeLabel}`}>
@@ -136,7 +144,7 @@ export function AgingReportDocument({
                           marginBottom: 2,
                         }}
                       >
-                        {clientScopeLabel} — Aging Breakdown
+                        {clientScopeLabel} — {isClientDrilldown ? 'Invoice Aging' : 'Aging Breakdown'}
                       </span>
                       {divisionLabel && (
                         <span style={{ fontSize: 8.5, color: theme.colors.mutedForeground }}>
@@ -151,7 +159,7 @@ export function AgingReportDocument({
                         items={[
                           { key: 'As Of', value: asOfDateLabel },
                           { key: 'Generated', value: generatedAt },
-                          { key: 'Clients with Balance', value: String(rows.length) },
+                          { key: countLabel, value: String(rows.length) },
                           {
                             key: 'Total Outstanding',
                             value: formatZAR(totalOutstanding),
@@ -162,10 +170,7 @@ export function AgingReportDocument({
                             },
                             valueStyle: {
                               fontWeight: 700,
-                              color:
-                                totalOutstanding <= 0.005
-                                  ? theme.colors.success
-                                  : theme.colors.primary,
+                              color: totalOutstanding <= 0.005 ? theme.colors.success : theme.colors.primary,
                               fontSize: 10,
                             },
                           },
@@ -187,7 +192,7 @@ export function AgingReportDocument({
                   }}
                 >
                   <span style={{ fontSize: 9, fontWeight: 700, color: theme.colors.foreground }}>
-                    {org.name} — {title}
+                    {org.name} — {title} ({clientScopeLabel})
                   </span>
                   <span style={{ fontSize: 8, color: theme.colors.mutedForeground }}>
                     As of {asOfDateLabel}
@@ -200,7 +205,7 @@ export function AgingReportDocument({
                   <TableHeader>
                     <TableRow header>
                       <TableCell header width="26%">
-                        Client
+                        {firstColHeader}
                       </TableCell>
                       <TableCell header align="right" width="12%">
                         Current
@@ -230,7 +235,9 @@ export function AgingReportDocument({
                           align="center"
                           style={{ color: theme.colors.mutedForeground }}
                         >
-                          No outstanding accounts receivable found.
+                          {isClientDrilldown
+                            ? 'No outstanding invoices found for this client.'
+                            : 'No outstanding accounts receivable found.'}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -239,7 +246,23 @@ export function AgingReportDocument({
                         return (
                           <TableRow key={`${row.clientName}-${idx}`} striped={idx % 2 === 1}>
                             <TableCell width="26%" bold>
-                              {row.clientName}
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span>{row.clientName}</span>
+                                {isClientDrilldown && (row.dueDate || row.reference) && (
+                                  <span
+                                    style={{
+                                      fontSize: 7,
+                                      color: theme.colors.mutedForeground,
+                                      fontWeight: 'normal',
+                                      marginTop: 1,
+                                    }}
+                                  >
+                                    {row.dueDate ? `Due ${fmtDate(row.dueDate)}` : ''}
+                                    {row.dueDate && row.reference ? ' · ' : ''}
+                                    {row.reference || ''}
+                                  </span>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell width="12%" align="right" tabular>
                               {formatZAR(row.current)}
@@ -257,11 +280,7 @@ export function AgingReportDocument({
                               width="12%"
                               align="right"
                               tabular
-                              style={
-                                row.bucket_61_plus > 0
-                                  ? { color: theme.colors.destructive }
-                                  : undefined
-                              }
+                              style={row.bucket_61_plus > 0 ? { color: theme.colors.destructive } : undefined}
                             >
                               {formatZAR(row.bucket_61_plus)}
                             </TableCell>
@@ -300,7 +319,7 @@ export function AgingReportDocument({
                         size="sm"
                         divided
                         items={[
-                          { key: 'Clients with Balance', value: String(rows.length) },
+                          { key: countLabel, value: String(rows.length) },
                           { key: 'Current (Not Due)', value: formatZAR(totalCurrent) },
                           { key: '1–14 Days Overdue', value: formatZAR(total1_14) },
                           { key: '15–30 Days Overdue', value: formatZAR(total15_30) },
@@ -308,8 +327,7 @@ export function AgingReportDocument({
                           {
                             key: '61+ Days Overdue',
                             value: formatZAR(total61Plus),
-                            valueStyle:
-                              total61Plus > 0 ? { color: theme.colors.destructive } : undefined,
+                            valueStyle: total61Plus > 0 ? { color: theme.colors.destructive } : undefined,
                           },
                           { key: 'Total Overdue', value: formatZAR(totalOverdue) },
                           {
@@ -323,10 +341,7 @@ export function AgingReportDocument({
                             valueStyle: {
                               fontWeight: 700,
                               fontSize: 11,
-                              color:
-                                totalOutstanding <= 0.005
-                                  ? theme.colors.success
-                                  : theme.colors.primary,
+                              color: totalOutstanding <= 0.005 ? theme.colors.success : theme.colors.primary,
                             },
                           },
                         ]}

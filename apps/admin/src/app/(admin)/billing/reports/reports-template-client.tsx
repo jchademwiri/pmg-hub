@@ -72,6 +72,9 @@ interface PaymentRow {
 interface AgingRow {
   clientId: string;
   clientName: string;
+  reference?: string | null;
+  invoiceDate?: string | null;
+  dueDate?: string | null;
   current: number;
   bucket_1_14: number;
   bucket_15_30: number;
@@ -118,6 +121,7 @@ type ReportPayload = (
     }
   | {
       type: 'aging';
+      isClientDrilldown?: boolean;
       asOfDateLabel: string;
       periodLabel: string;
       clientScopeLabel: string;
@@ -669,7 +673,7 @@ export function ReportsTemplateClient({
                   {reportData?.type === 'aging' && (
                     <>
                       <div className="flex justify-between text-xs py-0.5">
-                        <span className="text-zinc-500">Clients with Balance</span>
+                        <span className="text-zinc-500">{reportData.isClientDrilldown ? 'Invoices with Balance' : 'Clients with Balance'}</span>
                         <span className="font-semibold text-zinc-900 tabular-nums">
                           {reportData.summary.clientCount}
                         </span>
@@ -933,9 +937,7 @@ export function ReportsTemplateClient({
                             <tr key={idx}>
                               <td className="py-2 px-2 text-zinc-600">{fmtDateLong(row.date)}</td>
                               {showClientColumn && (
-                                <td className="py-2 px-2 font-semibold text-zinc-900">
-                                  {row.clientName}
-                                </td>
+                                <td className="py-2 px-2 text-zinc-900">{row.clientName}</td>
                               )}
                               <td className="py-2 px-2 text-zinc-700">
                                 {row.allocatedInvoices || row.description || '-'}
@@ -1032,7 +1034,7 @@ export function ReportsTemplateClient({
                     <table className="w-full text-xs border-collapse">
                       <thead>
                         <tr className="border-b border-zinc-200 bg-zinc-50 text-zinc-500 uppercase text-[10px] font-bold">
-                          <th className="py-2 px-2 text-left">Client</th>
+                          <th className="py-2 px-2 text-left">{reportData.isClientDrilldown ? 'Invoice' : 'Client'}</th>
                           <th className="py-2 px-2 text-right">Current</th>
                           <th className="py-2 px-2 text-right">1–14 Days</th>
                           <th className="py-2 px-2 text-right">15–30 Days</th>
@@ -1053,8 +1055,17 @@ export function ReportsTemplateClient({
                             const isZero = row.totalOutstanding <= 0.005;
                             return (
                               <tr key={`${row.clientName}-${idx}`}>
-                                <td className="py-2 px-2 font-semibold text-zinc-900">
-                                  {row.clientName}
+                                <td className="py-2 px-2 text-zinc-900">
+                                  <div className="flex flex-col">
+                                    <span className="font-semibold">{row.clientName}</span>
+                                    {reportData.isClientDrilldown && (row.dueDate || row.reference) && (
+                                      <span className="text-[10px] text-zinc-500 font-normal">
+                                        {row.dueDate ? `Due ${fmtDateLong(row.dueDate)}` : ''}
+                                        {row.dueDate && row.reference ? ' · ' : ''}
+                                        {row.reference || ''}
+                                      </span>
+                                    )}
+                                  </div>
                                 </td>
                                 <td className="py-2 px-2 text-right tabular-nums text-zinc-600">
                                   {formatZAR(row.current)}
@@ -1095,9 +1106,9 @@ export function ReportsTemplateClient({
                     <div className="mt-6 flex justify-end">
                       <div className="w-72 flex flex-col divide-y divide-zinc-200 text-xs">
                         <div className="flex justify-between py-1.5 text-zinc-600">
-                          <span>Clients with Balance</span>
+                          <span>{reportData.isClientDrilldown ? 'Invoices with Balance' : 'Clients with Balance'}</span>
                           <span className="tabular-nums font-semibold text-zinc-900">
-                            {reportData.summary.clientCount}
+                            {reportData.summary.count}
                           </span>
                         </div>
                         <div className="flex justify-between py-1.5 text-zinc-600">
@@ -1391,7 +1402,7 @@ export function ReportsTemplateClient({
                 </div>
 
                 {/* 6. Status (Invoices) or Category (Expenses) */}
-                {reportType === 'invoices' && (
+                {(reportType === 'invoices' || (reportType === 'aging' && clientId !== 'all')) && (
                   <div className="flex flex-col gap-2 pt-2 border-t border-border/40">
                     <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                       Invoice Status
