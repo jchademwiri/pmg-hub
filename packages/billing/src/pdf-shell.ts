@@ -36,8 +36,22 @@ export function getLogoPath(orgName: string): string | null {
       ? 'aws-logo.png'
       : 'pmg-logo.png';
 
-  const fullPath = join(process.cwd(), 'public', 'logo', fileName);
-  return existsSync(fullPath) ? fullPath : null;
+  const lambdaRoot = process.env.LAMBDA_TASK_ROOT || '/var/task';
+  const candidates = [
+    join(process.cwd(), 'public', 'logo', fileName),
+    join(process.cwd(), 'apps', 'admin', 'public', 'logo', fileName),
+    join(process.cwd(), 'apps', 'portal', 'public', 'logo', fileName),
+    join(lambdaRoot, 'public', 'logo', fileName),
+    join(lambdaRoot, 'apps', 'admin', 'public', 'logo', fileName),
+    join(lambdaRoot, 'apps', 'portal', 'public', 'logo', fileName),
+    join(process.cwd(), '..', '..', 'apps', 'admin', 'public', 'logo', fileName),
+    join(process.cwd(), '..', 'apps', 'admin', 'public', 'logo', fileName),
+  ];
+
+  for (const p of candidates) {
+    if (existsSync(p)) return p;
+  }
+  return null;
 }
 
 export function drawCenteredLogo(doc: jsPDF, orgName: string): void {

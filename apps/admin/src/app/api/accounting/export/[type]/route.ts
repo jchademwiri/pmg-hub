@@ -19,24 +19,35 @@ export async function GET(req: Request, { params }: { params: Promise<{ type: st
     return NextResponse.json({ error: 'Unknown export type.' }, { status: 404 });
   }
 
-  const url = new URL(req.url);
-  const period = url.searchParams.get('period') ?? undefined;
-  const accountId = url.searchParams.get('accountId') ?? undefined;
-  const divisionId = url.searchParams.get('divisionId') ?? undefined;
+  try {
+    const url = new URL(req.url);
+    const period = url.searchParams.get('period') ?? undefined;
+    const accountId = url.searchParams.get('accountId') ?? undefined;
+    const divisionId = url.searchParams.get('divisionId') ?? undefined;
 
-  const result = await generateAccountingPdf(type, { period, accountId, divisionId });
-  if (!result) {
-    return NextResponse.json({ error: 'Report not available.' }, { status: 404 });
-  }
-  if ('error' in result) {
-    return NextResponse.json({ error: result.error }, { status: 400 });
-  }
+    const result = await generateAccountingPdf(type, { period, accountId, divisionId });
+    if (!result) {
+      return NextResponse.json({ error: 'Report not available.' }, { status: 404 });
+    }
+    if ('error' in result) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
 
-  return new NextResponse(new Uint8Array(result.buffer), {
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="${result.fileName}"`,
-      'Cache-Control': 'no-store',
-    },
-  });
+    return new NextResponse(new Uint8Array(result.buffer), {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${result.fileName}"`,
+        'Cache-Control': 'no-store',
+      },
+    });
+  } catch (error) {
+    console.error(`[accounting/export/${type}] Error generating accounting PDF:`, error);
+    return NextResponse.json(
+      {
+        error: 'Failed to generate accounting report export',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 },
+    );
+  }
 }
