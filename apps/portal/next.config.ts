@@ -6,7 +6,18 @@ const appDir = dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = resolve(appDir, '../..');
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['takumi-pdf', '@takumi-rs/helpers', '@takumi-rs/core'],
   outputFileTracingRoot: monorepoRoot,
+  outputFileTracingIncludes: {
+    '/**': [
+      './public/logo/**/*',
+      './node_modules/takumi-pdf/pkg/takumi_pdf_wasm_bg.wasm',
+      '../../node_modules/takumi-pdf/pkg/takumi_pdf_wasm_bg.wasm',
+      '../../node_modules/.bun/takumi-pdf@*/node_modules/takumi-pdf/pkg/takumi_pdf_wasm_bg.wasm',
+      '../../packages/billing/src/pdf/takumi_pdf_wasm_bg.wasm',
+      '../../packages/billing/node_modules/takumi-pdf/pkg/takumi_pdf_wasm_bg.wasm',
+    ],
+  },
   outputFileTracingExcludes: {
     '*': [
       'node_modules/@swc/core-linux-x64-gnu/**',

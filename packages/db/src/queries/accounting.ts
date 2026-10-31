@@ -618,6 +618,42 @@ export function resolvePeriodDateRange(period?: string): { startDate?: string; e
 }
 
 /**
+ * Returns the list of available fiscal years based on actual transaction dates
+ * recorded in the database, ordered from newest to oldest.
+ */
+export async function getAvailableFiscalYears(): Promise<string[]> {
+  const result = await db.execute(sql<{ earliest_date: string | null }>`
+    SELECT MIN(min_date) as earliest_date FROM (
+      SELECT MIN(entry_date) as min_date FROM journal_entries WHERE status = 'posted'
+      UNION ALL
+      SELECT MIN(invoice_date) as min_date FROM invoices
+    ) sub
+  `);
+
+  const row = result.rows[0] as { earliest_date?: string | null } | undefined;
+  const earliestDateStr = row?.earliest_date;
+  const now = new Date();
+  const sastMonth = now.getUTCMonth();
+  const sastYear = now.getUTCFullYear();
+  const currentFyYear = sastMonth < 2 ? sastYear : sastYear + 1;
+
+  if (!earliestDateStr || typeof earliestDateStr !== 'string') {
+    return [`${currentFyYear}-FY`];
+  }
+
+  const earliest = new Date(earliestDateStr);
+  const earliestMonth = earliest.getUTCMonth();
+  const earliestYear = earliest.getUTCFullYear();
+  const earliestFyYear = earliestMonth < 2 ? earliestYear : earliestYear + 1;
+
+  const years: string[] = [];
+  for (let y = currentFyYear; y >= earliestFyYear; y--) {
+    years.push(`${y}-FY`);
+  }
+  return years;
+}
+
+/**
  * Returns trial balance data: for each posting account, the sum of debits and
  * credits across only posted journal lines, optionally filtered by period.
  * Uses a subquery to ensure only journal lines belonging to posted entries

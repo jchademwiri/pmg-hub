@@ -109,6 +109,7 @@ export {
   ensureOpenPeriod,
   closePeriod,
   lockPeriod,
+  getAvailableFiscalYears,
   reopenPeriod,
   getJournalMonthlySummaries,
   getLedgerMonthlySummaries,

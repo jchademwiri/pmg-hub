@@ -15,37 +15,23 @@ import {
   LineChart,
   Cog,
   LayoutDashboard,
-  TrendingUp,
   TrendingDown,
-  Tags,
-  BookOpen,
   FileText,
   Receipt,
+  Building2,
+  Package,
   ScrollText,
   Users,
   UserPlus,
-  Building2,
-  Camera,
   BarChart3,
   Settings,
-  UserCog,
-  Package,
   Shield,
-  Database,
   Wallet,
-  ArrowDownLeft,
-  PieChart,
   Calculator,
   BookMarked,
-  NotebookPen,
-  Scale,
-  Calendar,
   LayoutGrid,
   CalendarClock,
-  ListTodo,
   CalendarRange,
-  Landmark,
-  PiggyBank,
   UserCheck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -107,7 +93,7 @@ export const GROUPS: NavGroup[] = [
   },
   {
     key: 'relationships',
-    label: 'Clients',
+    label: 'Relationships',
     icon: Network,
     items: [
       { title: 'Overview', url: '/relationships', icon: LayoutGrid },
@@ -116,6 +102,7 @@ export const GROUPS: NavGroup[] = [
       { title: 'Onboarding', url: '/relationships/onboarding', icon: UserCheck },
       { title: 'Divisions', url: '/relationships/divisions', icon: Building2 },
       { title: 'Compliance Radar', url: '/insights/compliance-radar', icon: Shield },
+      { title: 'Public Documents', url: '/documents', icon: FileText },
     ],
   },
   {
@@ -124,7 +111,6 @@ export const GROUPS: NavGroup[] = [
     icon: CalendarClock,
     items: [
       { title: 'Overview', url: '/projects', icon: LayoutGrid },
-      { title: 'Schedule List', url: '/projects/list', icon: ListTodo },
       { title: 'Timeline', url: '/projects/timeline', icon: CalendarRange },
     ],
   },
@@ -134,12 +120,8 @@ export const GROUPS: NavGroup[] = [
     icon: Banknote,
     items: [
       { title: 'Overview', url: '/finance', icon: LayoutGrid },
-      { title: 'Income', url: '/finance/income', icon: ArrowDownLeft },
       { title: 'Expenses', url: '/finance/expenses', icon: TrendingDown },
       { title: 'Recurring', url: '/finance/recurring', icon: CalendarClock },
-      { title: 'Finance Categories', url: '/finance/categories', icon: Tags },
-      { title: 'Assets Register', url: '/assets', icon: Landmark },
-      { title: 'Savings Goals', url: '/savings', icon: PiggyBank },
     ],
   },
   {
@@ -148,27 +130,15 @@ export const GROUPS: NavGroup[] = [
     icon: Calculator,
     items: [
       { title: 'Overview', url: '/accounting', icon: LayoutGrid },
-      { title: 'Chart of Accounts', url: '/accounting/chart-of-accounts', icon: BookOpen },
-      { title: 'General Ledger', url: '/accounting/general-ledger', icon: BookMarked },
-      { title: 'Journals', url: '/accounting/journals', icon: NotebookPen },
-      { title: 'Trial Balance', url: '/accounting/trial-balance', icon: Scale },
       { title: 'Profit & Loss', url: '/accounting/profit-and-loss', icon: LineChart },
+      { title: 'General Ledger', url: '/accounting/general-ledger', icon: BookMarked },
     ],
   },
-
   {
     key: 'system',
     label: 'System',
     icon: Cog,
-    items: [
-      { title: 'Overview', url: '/settings', icon: Settings },
-      { title: 'Organisation', url: '/settings/organisation', icon: Building2 },
-      { title: 'Billing', url: '/settings/billing', icon: Receipt },
-      { title: 'Public Documents', url: '/documents', icon: FileText },
-      { title: 'Users', url: '/settings/users', icon: UserCog, minRole: 'super_admin' },
-      { title: 'Security', url: '/settings/security', icon: Shield },
-      { title: 'Data & Exports', url: '/settings/data', icon: Database },
-    ],
+    items: [{ title: 'Settings', url: '/settings', icon: Settings }],
   },
 ];
 
@@ -188,18 +158,43 @@ for (const group of GROUPS) {
 
 // Extra routes that exist in the app but are not sidebar items
 const EXTRA_LABELS: Record<string, string> = {
+  // Billing
   '/billing/aging': 'AR Aging',
+  '/billing/payments/add': 'Record Payment',
+
+  // Relationships
+
+  // Projects
+  '/projects/list': 'Schedule List',
+  '/projects/timeline': 'Timeline',
+
+  // Finance
+  '/finance/income': 'Income',
+  '/finance/categories': 'Finance Categories',
+  '/assets': 'Assets Register',
+  '/savings': 'Savings Goals',
+
+  // Accounting
+  '/accounting/chart-of-accounts': 'Chart of Accounts',
+  '/accounting/periods': 'Accounting Periods',
+  '/accounting/journals': 'Journals',
+  '/accounting/journals/new': 'New Journal Entry',
+  '/accounting/trial-balance': 'Trial Balance',
+
+  // Insights (deferred)
   '/insights': 'Reports & Insights',
   '/insights/financial-reports': 'Financial Reports',
   '/insights/analysis': 'Business Analysis',
   '/insights/reports': 'Performance Reports',
   '/insights/snapshots': 'Snapshots',
-  '/accounting/periods': 'Accounting Periods',
 
+  // Settings
+  '/settings/organisation': 'Organisation',
+  '/settings/billing': 'Billing Settings',
+  '/settings/users': 'Users',
   '/settings/users/invite': 'Invite User',
-  '/billing/payments/add': 'Record Payment',
-  '/projects/list': 'Schedule List',
-  '/projects/timeline': 'Timeline',
+  '/settings/security': 'Security',
+  '/settings/data': 'Data & Exports',
 };
 
 export const ROUTE_LABELS: Record<string, string> = {
