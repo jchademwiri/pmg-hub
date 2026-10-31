@@ -100,6 +100,28 @@ const CollapsibleGroup = React.memo(function CollapsibleGroup({
   onToggle,
   onNavigate,
 }: CollapsibleGroupProps) {
+  // If a group has only 1 item (e.g. System -> Settings), render a direct button
+  if (group.items.length === 1) {
+    const item = group.items[0];
+    const isActive = pathname.startsWith(item.url);
+    return (
+      <SidebarGroup className="p-0">
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={isActive}>
+                <Link href={item.url} onClick={onNavigate} className="flex items-center gap-2">
+                  <item.icon className="size-4 shrink-0" />
+                  <span>{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    );
+  }
+
   return (
     <Collapsible
       open={isOpen}
