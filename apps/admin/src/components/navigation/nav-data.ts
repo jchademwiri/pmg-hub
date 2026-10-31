@@ -18,6 +18,8 @@ import {
   TrendingDown,
   FileText,
   Receipt,
+  Building2,
+  Package,
   ScrollText,
   Users,
   UserPlus,
@@ -86,6 +88,7 @@ export const GROUPS: NavGroup[] = [
       { title: 'Credits', url: '/billing/credits', icon: Wallet },
       { title: 'Statements', url: '/billing/statements', icon: ScrollText },
       { title: 'Reports', url: '/billing/reports', icon: BarChart3 },
+      { title: 'Billing Items', url: '/billing/items', icon: Package },
     ],
   },
   {
@@ -97,6 +100,7 @@ export const GROUPS: NavGroup[] = [
       { title: 'Clients', url: '/relationships/clients', icon: Users },
       { title: 'Leads', url: '/relationships/leads', icon: UserPlus },
       { title: 'Onboarding', url: '/relationships/onboarding', icon: UserCheck },
+      { title: 'Divisions', url: '/relationships/divisions', icon: Building2 },
       { title: 'Compliance Radar', url: '/insights/compliance-radar', icon: Shield },
       { title: 'Public Documents', url: '/documents', icon: FileText },
     ],
@@ -156,11 +160,9 @@ for (const group of GROUPS) {
 const EXTRA_LABELS: Record<string, string> = {
   // Billing
   '/billing/aging': 'AR Aging',
-  '/billing/items': 'Billing Items',
   '/billing/payments/add': 'Record Payment',
 
   // Relationships
-  '/relationships/divisions': 'Divisions',
 
   // Projects
   '/projects/list': 'Schedule List',

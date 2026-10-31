@@ -26,8 +26,6 @@ All pages, API routes, and components remain fully functional in the codebase an
 | Route | Former Title | Category | Current Status | Why It Was Hidden / Relocated |
 | :--- | :--- | :--- | :--- | :--- |
 | `/finance/income` | **Income** | Finance | Hidden from sidebar | 100% duplicate of `Billing > Payments`. Both query `getAllIncome` and payment allocations. Billing is authoritative for revenue cash-in. |
-| `/billing/items` | **Billing Items** | Billing | Hidden from sidebar | Static service rate and item catalog. Configured infrequently; reachable via invoice creation or deep link. |
-| `/relationships/divisions` | **Divisions** | Clients | Hidden from sidebar | Company brand units (PMG, TES, AWS). Static company structure; belongs in Organisation settings. |
 | `/documents` | **Public Documents** | System | Relocated to Relationships | SBD tender bidding documents downloaded by prospective leads. Sits naturally alongside Compliance Radar. |
 | `/projects/list` | **Schedule List** | Projects | Hidden from sidebar | Redundant with the Projects overview and Timeline view. |
 | `/finance/categories` | **Finance Categories** | Finance | Hidden from sidebar | Expense category taxonomy. Configured once; managed via Expenses or settings. |
@@ -141,13 +139,15 @@ PMG Hub Admin (Active Navigation)
 │   ├── Payments (/billing/payments) ─── [Authoritative cash-in records]
 │   ├── Credits (/billing/credits)
 │   ├── Statements (/billing/statements)
-│   └── Reports (/billing/reports) ─── [Invoices | Payments | Expenses | AR Aging]
+│   ├── Reports (/billing/reports) ─── [Invoices | Payments | Expenses | AR Aging]
+│   └── Billing Items (/billing/items)
 │
 ├── Relationships
 │   ├── Overview (/relationships)
 │   ├── Clients (/relationships/clients)
 │   ├── Leads (/relationships/leads)
 │   ├── Onboarding (/relationships/onboarding)
+│   ├── Divisions (/relationships/divisions)
 │   ├── Compliance Radar (/insights/compliance-radar)
 │   └── Public Documents (/documents)
 │
