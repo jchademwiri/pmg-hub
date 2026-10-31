@@ -1,5 +1,9 @@
 import type { Metadata } from 'next';
-import { getDivisionsWithStats, getProfitAndLossByDivision } from '@pmg/db';
+import {
+  getDivisionsWithStats,
+  getProfitAndLossByDivision,
+  getAvailableFiscalYears,
+} from '@pmg/db';
 import {
   createDivision,
   updateDivision,
@@ -18,15 +22,17 @@ interface DivisionsPageProps {
 
 export default async function DivisionsPage({ searchParams }: DivisionsPageProps) {
   const { period: periodParam } = await searchParams;
+  const fyYears = await getAvailableFiscalYears();
   const { year, month } = getSASTParts();
   const currentFyYear = month < 2 ? year : year + 1;
-  const defaultPeriod = `${currentFyYear}-FY`;
+  const defaultPeriod = fyYears[0] ?? `${currentFyYear}-FY`;
   const period = periodParam || defaultPeriod;
 
   const availablePeriods = [
-    { value: `${currentFyYear}-FY`, label: `${currentFyYear}-FY (Current)` },
-    { value: `${currentFyYear - 1}-FY`, label: `${currentFyYear - 1}-FY (Prior Year)` },
-    { value: `${currentFyYear - 2}-FY`, label: `${currentFyYear - 2}-FY` },
+    ...fyYears.map((fy, idx) => ({
+      value: fy,
+      label: idx === 0 ? `${fy} (Current)` : idx === 1 ? `${fy} (Prior Year)` : fy,
+    })),
     { value: 'all', label: 'All Time' },
   ];
 
