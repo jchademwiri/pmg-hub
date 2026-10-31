@@ -32,40 +32,51 @@ export async function GET(
     return NextResponse.json({ error: 'Unsupported PDF type.' }, { status: 400 });
   }
 
-  const url = new URL(req.url);
-  const year = url.searchParams.get('year');
-  const monthPeriod = url.searchParams.get('monthPeriod');
-  const statementType = url.searchParams.get('statementType');
-  const includeDraftInvoiceId = url.searchParams.get('includeDraftInvoiceId') ?? undefined;
-  const yearNum = year == null ? undefined : Number(year);
-  if (
-    year != null &&
-    (year.trim() === '' || !Number.isFinite(yearNum) || !Number.isInteger(yearNum))
-  ) {
-    return NextResponse.json({ error: 'Invalid year parameter.' }, { status: 400 });
+  try {
+    const url = new URL(req.url);
+    const year = url.searchParams.get('year');
+    const monthPeriod = url.searchParams.get('monthPeriod');
+    const statementType = url.searchParams.get('statementType');
+    const includeDraftInvoiceId = url.searchParams.get('includeDraftInvoiceId') ?? undefined;
+    const yearNum = year == null ? undefined : Number(year);
+    if (
+      year != null &&
+      (year.trim() === '' || !Number.isFinite(yearNum) || !Number.isInteger(yearNum))
+    ) {
+      return NextResponse.json({ error: 'Invalid year parameter.' }, { status: 400 });
+    }
+
+    const filters = {
+      ...(yearNum != null ? { year: yearNum } : {}),
+      ...(monthPeriod && PERIODS.has(monthPeriod)
+        ? { monthPeriod: monthPeriod as 'current' | 'previous' | 'past3' | 'past6' }
+        : {}),
+      ...(statementType === 'outstanding' || statementType === 'activity'
+        ? { statementType: statementType as 'outstanding' | 'activity' }
+        : {}),
+      ...(includeDraftInvoiceId ? { includeDraftInvoiceId } : {}),
+    };
+
+    const result = await generateBillingPdf(type as PdfType, id, filters);
+    if (!result) {
+      return NextResponse.json({ error: 'Document not found.' }, { status: 404 });
+    }
+
+    return new NextResponse(new Uint8Array(result.buffer), {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${result.fileName}"`,
+        'Cache-Control': 'no-store',
+      },
+    });
+  } catch (error) {
+    console.error(`[billing/pdf/${type}/${id}] Error generating billing PDF:`, error);
+    return NextResponse.json(
+      {
+        error: 'Failed to generate billing PDF',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 },
+    );
   }
-
-  const filters = {
-    ...(yearNum != null ? { year: yearNum } : {}),
-    ...(monthPeriod && PERIODS.has(monthPeriod)
-      ? { monthPeriod: monthPeriod as 'current' | 'previous' | 'past3' | 'past6' }
-      : {}),
-    ...(statementType === 'outstanding' || statementType === 'activity'
-      ? { statementType: statementType as 'outstanding' | 'activity' }
-      : {}),
-    ...(includeDraftInvoiceId ? { includeDraftInvoiceId } : {}),
-  };
-
-  const result = await generateBillingPdf(type as PdfType, id, filters);
-  if (!result) {
-    return NextResponse.json({ error: 'Document not found.' }, { status: 404 });
-  }
-
-  return new NextResponse(new Uint8Array(result.buffer), {
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="${result.fileName}"`,
-      'Cache-Control': 'no-store',
-    },
-  });
 }

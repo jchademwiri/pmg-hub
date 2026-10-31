@@ -55,39 +55,50 @@ export async function GET(
     }
   }
 
-  // Read the monthPeriod search parameter for statements
-  const url = new URL(req.url);
-  const monthPeriodParam = url.searchParams.get('monthPeriod');
+  try {
+    // Read the monthPeriod search parameter for statements
+    const url = new URL(req.url);
+    const monthPeriodParam = url.searchParams.get('monthPeriod');
 
-  // If no parameter is provided, default to 'current' to match the admin panel.
-  // Otherwise, only apply if it's one of the valid period buckets.
-  let monthPeriod: 'current' | 'previous' | 'past3' | 'past6' | undefined = undefined;
-  if (monthPeriodParam === null) {
-    monthPeriod = 'current';
-  } else if (
-    monthPeriodParam === 'current' ||
-    monthPeriodParam === 'previous' ||
-    monthPeriodParam === 'past3' ||
-    monthPeriodParam === 'past6'
-  ) {
-    monthPeriod = monthPeriodParam;
+    // If no parameter is provided, default to 'current' to match the admin panel.
+    // Otherwise, only apply if it's one of the valid period buckets.
+    let monthPeriod: 'current' | 'previous' | 'past3' | 'past6' | undefined = undefined;
+    if (monthPeriodParam === null) {
+      monthPeriod = 'current';
+    } else if (
+      monthPeriodParam === 'current' ||
+      monthPeriodParam === 'previous' ||
+      monthPeriodParam === 'past3' ||
+      monthPeriodParam === 'past6'
+    ) {
+      monthPeriod = monthPeriodParam;
+    }
+
+    const filters = {
+      ...(monthPeriod ? { monthPeriod } : {}),
+    };
+
+    // Generate the PDF
+    const result = await generateBillingPdf(type as PdfType, id, filters);
+    if (!result) {
+      return NextResponse.json({ error: 'Document not found.' }, { status: 404 });
+    }
+
+    return new NextResponse(new Uint8Array(result.buffer), {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${result.fileName}"`,
+        'Cache-Control': 'no-store',
+      },
+    });
+  } catch (error) {
+    console.error(`[portal/billing/pdf/${type}/${id}] Error generating billing PDF:`, error);
+    return NextResponse.json(
+      {
+        error: 'Failed to generate billing PDF',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 },
+    );
   }
-
-  const filters = {
-    ...(monthPeriod ? { monthPeriod } : {}),
-  };
-
-  // Generate the PDF
-  const result = await generateBillingPdf(type as PdfType, id, filters);
-  if (!result) {
-    return NextResponse.json({ error: 'Document not found.' }, { status: 404 });
-  }
-
-  return new NextResponse(new Uint8Array(result.buffer), {
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="${result.fileName}"`,
-      'Cache-Control': 'no-store',
-    },
-  });
 }

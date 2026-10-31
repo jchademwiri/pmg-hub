@@ -6,7 +6,7 @@ const LOGO_CACHE = new Map<string, string>();
 
 /**
  * Resolves a division or organisation name to an embedded PNG base64 Data URI.
- * Works across monorepo packages, Next.js Server Components / Actions, and tests.
+ * Works across monorepo packages, Next.js Server Components / Actions, Vercel Serverless, and tests.
  */
 export function getLogoDataUri(orgName?: string | null): string | null {
   const normalized = (orgName || '').toLowerCase();
@@ -20,10 +20,15 @@ export function getLogoDataUri(orgName?: string | null): string | null {
     return LOGO_CACHE.get(fileName)!;
   }
 
+  const lambdaRoot = process.env.LAMBDA_TASK_ROOT || '/var/task';
+
   const candidates = [
     join(process.cwd(), 'public', 'logo', fileName),
     join(process.cwd(), 'apps', 'admin', 'public', 'logo', fileName),
     join(process.cwd(), 'apps', 'portal', 'public', 'logo', fileName),
+    join(lambdaRoot, 'public', 'logo', fileName),
+    join(lambdaRoot, 'apps', 'admin', 'public', 'logo', fileName),
+    join(lambdaRoot, 'apps', 'portal', 'public', 'logo', fileName),
     join(process.cwd(), '..', '..', 'apps', 'admin', 'public', 'logo', fileName),
     join(process.cwd(), '..', 'apps', 'admin', 'public', 'logo', fileName),
     join(__dirname, '../../../../apps/admin/public/logo', fileName),

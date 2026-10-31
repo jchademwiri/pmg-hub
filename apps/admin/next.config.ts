@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: monorepoRoot,
   outputFileTracingIncludes: {
     '/**': [
+      './public/logo/**/*',
       './node_modules/takumi-pdf/pkg/takumi_pdf_wasm_bg.wasm',
       '../../node_modules/takumi-pdf/pkg/takumi_pdf_wasm_bg.wasm',
       '../../node_modules/.bun/takumi-pdf@*/node_modules/takumi-pdf/pkg/takumi_pdf_wasm_bg.wasm',
