@@ -78,30 +78,52 @@ export default function DivisionsPageClient({
 
       {/* Combined totals */}
       {divisions.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
-            { label: 'Revenue', value: formatZAR(totals.revenue), cls: 'text-emerald-500' },
-            { label: 'Cash Receipts', value: formatZAR(totals.cashReceived), cls: 'text-blue-500' },
+            {
+              label: 'Revenue',
+              value: formatZAR(totals.revenue),
+              sub: null,
+              cls: 'text-emerald-500',
+            },
+            {
+              label: 'Cash Receipts',
+              value: formatZAR(totals.cashReceived),
+              sub: null,
+              cls: 'text-blue-500',
+            },
             {
               label: 'Outstanding AR',
               value: formatZAR(totals.outstandingAr),
+              sub: null,
               cls: 'text-amber-500',
             },
-            { label: 'Expenses', value: formatZAR(totals.expenses), cls: 'text-muted-foreground' },
+            {
+              label: 'Expenses',
+              value: formatZAR(totals.expenses),
+              sub: null,
+              cls: 'text-muted-foreground',
+            },
             {
               label: 'Net Profit',
               value: formatZAR(totals.netProfit),
+              sub: `${totals.marginPercent.toFixed(1)}% margin`,
               cls: totals.netProfit >= 0 ? 'text-emerald-500' : 'text-red-500',
             },
-            { label: 'Leads', value: String(totals.leads), cls: '' },
             {
               label: 'Bad Debt',
               value: formatZAR(totals.badDebt),
-              cls: totals.badDebt > 0 ? 'text-red-500' : '',
+              sub: null,
+              cls: totals.badDebt > 0 ? 'text-red-500' : 'text-muted-foreground',
             },
-          ].map(({ label, value, cls }) => (
-            <div key={label} className="rounded-lg border p-4 flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">{label}</span>
+          ].map(({ label, value, sub, cls }) => (
+            <div key={label} className="rounded-lg border bg-card p-4 flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">{label}</span>
+                {sub && (
+                  <span className="text-[10px] text-muted-foreground font-medium">{sub}</span>
+                )}
+              </div>
               <span className={`text-lg font-semibold tabular-nums ${cls}`}>{value}</span>
             </div>
           ))}
