@@ -330,7 +330,7 @@ export function DivisionsTable({
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/30">
-            <TableHead>Division</TableHead>
+            <TableHead aria-label="Name">Division</TableHead>
             <TableHead>Revenue</TableHead>
             <TableHead>Cash Receipts</TableHead>
             <TableHead>Outstanding AR</TableHead>
