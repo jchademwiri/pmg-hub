@@ -36,16 +36,16 @@ const sections = [
     icon: Shield,
     title: 'Security',
     description: 'Session management, two-factor authentication, and audit log',
-    status: 'Read-only preview',
-    badge: 'Soon',
+    status: 'Audit logs & session monitoring',
+    badge: null,
   },
   {
     id: 'data',
     icon: Database,
     title: 'Data & Exports',
     description: 'Export financial data, manage backups, and data retention policies',
-    status: 'Read-only preview',
-    badge: 'Soon',
+    status: 'Database backups & data exports',
+    badge: null,
   },
 ];
 
