@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
-import { Database, Download, CloudUpload, Clock, AlertTriangle, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Database, Download, CloudUpload, Clock } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -44,13 +43,6 @@ export default async function DataSettingsPage() {
           <TabsTrigger value="data-retention" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
             Data Retention
-          </TabsTrigger>
-          <TabsTrigger
-            value="danger-zone"
-            className="flex items-center gap-2 text-destructive data-[state=active]:text-destructive"
-          >
-            <AlertTriangle className="h-4 w-4" />
-            Danger Zone
           </TabsTrigger>
         </TabsList>
 
@@ -102,54 +94,6 @@ export default async function DataSettingsPage() {
                   30 days (soft delete)
                 </div>
               </Field>
-            </div>
-          </SettingsSection>
-        </TabsContent>
-
-        {/* Danger zone Tab */}
-        <TabsContent value="danger-zone" className="mt-4">
-          <SettingsSection
-            title="Danger Zone"
-            description="Irreversible actions. Proceed with caution."
-            className="border-destructive/30"
-          >
-            <div className="flex flex-col divide-y divide-border">
-              <div className="flex items-center justify-between gap-4 py-2">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-sm font-medium">Clear all snapshots</span>
-                  <span className="text-xs text-muted-foreground">
-                    Permanently delete all financial snapshots. This cannot be undone.
-                  </span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-destructive/50 text-destructive hover:bg-destructive/10"
-                  disabled
-                  title="Coming soon"
-                >
-                  <Trash2 data-icon="inline-start" />
-                  Clear
-                </Button>
-              </div>
-              <div className="flex items-center justify-between gap-4 py-2">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-sm font-medium">Reset all settings</span>
-                  <span className="text-xs text-muted-foreground">
-                    Restore all settings to their factory defaults.
-                  </span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-destructive/50 text-destructive hover:bg-destructive/10"
-                  disabled
-                  title="Coming soon"
-                >
-                  <Trash2 data-icon="inline-start" />
-                  Reset
-                </Button>
-              </div>
             </div>
           </SettingsSection>
         </TabsContent>

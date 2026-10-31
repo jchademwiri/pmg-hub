@@ -1,5 +1,9 @@
 import type { Metadata } from 'next';
-import { getDivisionsWithStats, getProfitAndLossByDivision } from '@pmg/db';
+import {
+  getDivisionsWithStats,
+  getProfitAndLossByDivision,
+  getAvailableFiscalYears,
+} from '@pmg/db';
 import {
   createDivision,
   updateDivision,
@@ -12,12 +16,25 @@ import DivisionsPageClient, { type DivisionWithPnl } from './divisions-client';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Divisions' };
 
-export default async function DivisionsPage() {
-  // Mirrors /insights/financial-reports?type=division-performance's fiscal-year
-  // labeling convention (label = the calendar year the FY ends in, e.g. the FY
-  // that runs March 2026–February 2027 is "2027-FY").
+interface DivisionsPageProps {
+  searchParams: Promise<{ period?: string }>;
+}
+
+export default async function DivisionsPage({ searchParams }: DivisionsPageProps) {
+  const { period: periodParam } = await searchParams;
+  const fyYears = await getAvailableFiscalYears();
   const { year, month } = getSASTParts();
-  const period = `${month < 2 ? year : year + 1}-FY`;
+  const currentFyYear = month < 2 ? year : year + 1;
+  const defaultPeriod = fyYears[0] ?? `${currentFyYear}-FY`;
+  const period = periodParam || defaultPeriod;
+
+  const availablePeriods = [
+    ...fyYears.map((fy, idx) => ({
+      value: fy,
+      label: idx === 0 ? `${fy} (Current)` : idx === 1 ? `${fy} (Prior Year)` : fy,
+    })),
+    { value: 'all', label: 'All Time' },
+  ];
 
   const [divisions, pnlRows] = await Promise.all([
     getDivisionsWithStats(),
@@ -28,10 +45,6 @@ export default async function DivisionsPage() {
 
   const divisionsWithPnl: DivisionWithPnl[] = divisions.map((division) => {
     const pnl = pnlByDivision.get(division.id);
-    // "Expenses" excludes Bad Debt Expense — that's an AR write-off, not an
-    // operating cost, and gets its own figure so it isn't buried in the total.
-    // Net Profit / Margin still subtract it (via pnl.netProfit), since it's a
-    // real expense for profitability purposes — only this display total omits it.
     const badDebt = pnl?.totalBadDebt ?? 0;
     return {
       ...division,
@@ -50,6 +63,7 @@ export default async function DivisionsPage() {
     <DivisionsPageClient
       divisions={divisionsWithPnl}
       period={period}
+      availablePeriods={availablePeriods}
       createAction={createDivision}
       updateAction={updateDivision}
       deleteAction={deleteDivision}
