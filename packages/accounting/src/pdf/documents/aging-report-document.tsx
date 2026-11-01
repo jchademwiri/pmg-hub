@@ -40,17 +40,19 @@ export interface AgingReportDocumentProps {
   clientScopeLabel: string;
   divisionLabel?: string;
   isClientDrilldown?: boolean;
+  orientation?: 'portrait' | 'landscape';
   generatedAt: string;
 }
 
-function paginateRows<T>(rows: T[]): T[][] {
+function paginateRows<T>(rows: T[], isLandscape = false): T[][] {
   if (rows.length === 0) return [[]];
-  if (rows.length <= 20) return [rows];
+  const maxSinglePage = isLandscape ? 14 : 20;
+  if (rows.length <= maxSinglePage) return [rows];
 
   const pages: T[][] = [];
-  const firstPageCount = 24;
-  const middlePageCount = 32;
-  const lastPageMaxWithTotals = 26;
+  const firstPageCount = isLandscape ? 16 : 24;
+  const middlePageCount = isLandscape ? 22 : 32;
+  const lastPageMaxWithTotals = isLandscape ? 18 : 26;
 
   pages.push(rows.slice(0, firstPageCount));
   let offset = firstPageCount;
