@@ -213,25 +213,55 @@ export function AgingReportDocument({
                 <Table variant="compact" style={{ marginBottom: theme.spacing.sectionGap }}>
                   <TableHeader>
                     <TableRow header>
-                      <TableCell header width="26%" style={{ whiteSpace: 'nowrap' }}>
+                      <TableCell header width={firstColWidth} style={{ whiteSpace: 'nowrap' }}>
                         {firstColHeader}
                       </TableCell>
-                      <TableCell header align="right" width="12%" style={{ whiteSpace: 'nowrap' }}>
+                      <TableCell
+                        header
+                        align="right"
+                        width={bucketColWidth}
+                        style={{ whiteSpace: 'nowrap' }}
+                      >
                         Current
                       </TableCell>
-                      <TableCell header align="right" width="12%" style={{ whiteSpace: 'nowrap' }}>
+                      <TableCell
+                        header
+                        align="right"
+                        width={bucketColWidth}
+                        style={{ whiteSpace: 'nowrap' }}
+                      >
                         1–14 Days
                       </TableCell>
-                      <TableCell header align="right" width="12%" style={{ whiteSpace: 'nowrap' }}>
+                      <TableCell
+                        header
+                        align="right"
+                        width={bucketColWidth}
+                        style={{ whiteSpace: 'nowrap' }}
+                      >
                         15–30 Days
                       </TableCell>
-                      <TableCell header align="right" width="12%" style={{ whiteSpace: 'nowrap' }}>
+                      <TableCell
+                        header
+                        align="right"
+                        width={bucketColWidth}
+                        style={{ whiteSpace: 'nowrap' }}
+                      >
                         31–60 Days
                       </TableCell>
-                      <TableCell header align="right" width="12%" style={{ whiteSpace: 'nowrap' }}>
+                      <TableCell
+                        header
+                        align="right"
+                        width={bucketColWidth}
+                        style={{ whiteSpace: 'nowrap' }}
+                      >
                         61+ Days
                       </TableCell>
-                      <TableCell header align="right" width="14%" style={{ whiteSpace: 'nowrap' }}>
+                      <TableCell
+                        header
+                        align="right"
+                        width={totalColWidth}
+                        style={{ whiteSpace: 'nowrap', paddingRight: 6 }}
+                      >
                         Total Due
                       </TableCell>
                     </TableRow>
@@ -274,7 +304,7 @@ export function AgingReportDocument({
                               </div>
                             </TableCell>
                             <TableCell
-                              width="12%"
+                              width={bucketColWidth}
                               align="right"
                               tabular
                               style={
@@ -286,7 +316,7 @@ export function AgingReportDocument({
                               {formatZAR(row.current)}
                             </TableCell>
                             <TableCell
-                              width="12%"
+                              width={bucketColWidth}
                               align="right"
                               tabular
                               style={
@@ -298,7 +328,7 @@ export function AgingReportDocument({
                               {formatZAR(row.bucket_1_14)}
                             </TableCell>
                             <TableCell
-                              width="12%"
+                              width={bucketColWidth}
                               align="right"
                               tabular
                               style={
@@ -310,7 +340,7 @@ export function AgingReportDocument({
                               {formatZAR(row.bucket_15_30)}
                             </TableCell>
                             <TableCell
-                              width="12%"
+                              width={bucketColWidth}
                               align="right"
                               tabular
                               style={
@@ -322,7 +352,7 @@ export function AgingReportDocument({
                               {formatZAR(row.bucket_31_60)}
                             </TableCell>
                             <TableCell
-                              width="12%"
+                              width={bucketColWidth}
                               align="right"
                               tabular
                               style={
@@ -334,12 +364,13 @@ export function AgingReportDocument({
                               {formatZAR(row.bucket_61_plus)}
                             </TableCell>
                             <TableCell
-                              width="14%"
+                              width={totalColWidth}
                               align="right"
                               tabular
                               bold
                               style={{
                                 color: isZero ? theme.colors.success : theme.colors.foreground,
+                                paddingRight: 6,
                               }}
                             >
                               {formatZAR(row.totalOutstanding)}
