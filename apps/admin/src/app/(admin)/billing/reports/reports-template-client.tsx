@@ -18,7 +18,7 @@ import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 import { SearchableClientSelect } from '@/components/billing/searchable-client-select';
 import { SetPageLabel } from '@/components/navigation/page-header-context';
-import { formatZAR, fmtDateLong } from '@/lib/format';
+import { formatZAR, fmtDateLong, cleanPdfText } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { cn } from '@/lib/utils';
 import type { DocumentOrg } from '@/components/billing/document-preview';
@@ -1069,7 +1069,7 @@ export function ReportsTemplateClient({
                                         <span className="text-[10px] text-zinc-500 font-normal">
                                           {row.dueDate ? `Due ${fmtDateLong(row.dueDate)}` : ''}
                                           {row.dueDate && row.reference ? ' · ' : ''}
-                                          {row.reference || ''}
+                                          {cleanPdfText(row.reference) || ''}
                                         </span>
                                       )}
                                   </div>
@@ -1145,8 +1145,8 @@ export function ReportsTemplateClient({
                         <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                           Aging Summary
                         </p>
-                        <div className="text-xs text-zinc-500">
-                          <span className="text-zinc-500 mr-3">
+                        <div className="flex items-center gap-2 text-xs text-zinc-500">
+                          <span>
                             {reportData.isClientDrilldown
                               ? 'Invoices with Balance:'
                               : 'Clients with Balance:'}{' '}
@@ -1154,38 +1154,41 @@ export function ReportsTemplateClient({
                               {reportData.summary.count}
                             </span>
                           </span>
-                          <span className="text-zinc-500">Total Outstanding (AR): </span>
-                          <span
-                            className={cn(
-                              'font-bold tabular-nums',
-                              reportData.summary.totalOutstanding > 0
-                                ? 'text-blue-700'
-                                : 'text-emerald-600',
-                            )}
-                          >
-                            {formatZAR(reportData.summary.totalOutstanding)}
+                          <span className="text-zinc-300">·</span>
+                          <span>
+                            Total Outstanding (AR):{' '}
+                            <span
+                              className={cn(
+                                'font-bold tabular-nums',
+                                reportData.summary.totalOutstanding > 0
+                                  ? 'text-blue-700'
+                                  : 'text-emerald-600',
+                              )}
+                            >
+                              {formatZAR(reportData.summary.totalOutstanding)}
+                            </span>
                           </span>
                         </div>
                       </div>
-                      <table className="w-full text-xs text-center border border-zinc-200">
+                      <table className="w-full text-xs text-center border border-zinc-200 table-fixed">
                         <thead>
                           <tr className="border-b border-zinc-200">
-                            <th className="py-2 font-semibold uppercase tracking-wider text-[10px] bg-red-50 text-red-700">
+                            <th className="py-2 px-1 font-semibold uppercase tracking-wider text-[10px] bg-red-100 text-red-800 whitespace-nowrap">
                               61+ Days
                             </th>
-                            <th className="py-2 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-rose-50 text-rose-700">
+                            <th className="py-2 px-1 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-rose-100 text-rose-800 whitespace-nowrap">
                               31–60 Days
                             </th>
-                            <th className="py-2 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-orange-50 text-orange-700">
+                            <th className="py-2 px-1 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-orange-100 text-orange-800 whitespace-nowrap">
                               15–30 Days
                             </th>
-                            <th className="py-2 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-amber-50 text-amber-700">
+                            <th className="py-2 px-1 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-amber-100 text-amber-800 whitespace-nowrap">
                               1–14 Days
                             </th>
-                            <th className="py-2 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-emerald-50 text-emerald-700">
+                            <th className="py-2 px-1 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-emerald-100 text-emerald-800 whitespace-nowrap">
                               Current
                             </th>
-                            <th className="py-2 font-bold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-zinc-100 text-zinc-900">
+                            <th className="py-2 px-1 font-bold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-zinc-100 text-zinc-950 whitespace-nowrap">
                               Total Overdue
                             </th>
                           </tr>
@@ -1194,7 +1197,7 @@ export function ReportsTemplateClient({
                           <tr>
                             <td
                               className={cn(
-                                'py-3 tabular-nums font-bold',
+                                'py-3 px-1 tabular-nums font-bold whitespace-nowrap',
                                 reportData.summary.total61Plus > 0
                                   ? 'text-red-600'
                                   : 'text-zinc-400',
@@ -1204,7 +1207,7 @@ export function ReportsTemplateClient({
                             </td>
                             <td
                               className={cn(
-                                'py-3 tabular-nums font-semibold border-l border-zinc-200',
+                                'py-3 px-1 tabular-nums font-semibold border-l border-zinc-200 whitespace-nowrap',
                                 reportData.summary.total31_60 > 0
                                   ? 'text-rose-600'
                                   : 'text-zinc-400',
@@ -1214,7 +1217,7 @@ export function ReportsTemplateClient({
                             </td>
                             <td
                               className={cn(
-                                'py-3 tabular-nums font-semibold border-l border-zinc-200',
+                                'py-3 px-1 tabular-nums font-semibold border-l border-zinc-200 whitespace-nowrap',
                                 reportData.summary.total15_30 > 0
                                   ? 'text-orange-600'
                                   : 'text-zinc-400',
@@ -1224,7 +1227,7 @@ export function ReportsTemplateClient({
                             </td>
                             <td
                               className={cn(
-                                'py-3 tabular-nums font-semibold border-l border-zinc-200',
+                                'py-3 px-1 tabular-nums font-semibold border-l border-zinc-200 whitespace-nowrap',
                                 reportData.summary.total1_14 > 0
                                   ? 'text-amber-600'
                                   : 'text-zinc-400',
@@ -1234,7 +1237,7 @@ export function ReportsTemplateClient({
                             </td>
                             <td
                               className={cn(
-                                'py-3 tabular-nums font-semibold border-l border-zinc-200',
+                                'py-3 px-1 tabular-nums font-semibold border-l border-zinc-200 whitespace-nowrap',
                                 reportData.summary.totalCurrent > 0
                                   ? 'text-emerald-600'
                                   : 'text-zinc-400',
@@ -1244,7 +1247,7 @@ export function ReportsTemplateClient({
                             </td>
                             <td
                               className={cn(
-                                'py-3 tabular-nums font-bold border-l border-zinc-200',
+                                'py-3 px-1 tabular-nums font-bold border-l border-zinc-200 whitespace-nowrap',
                                 reportData.summary.totalOverdue > 0
                                   ? 'text-red-600'
                                   : 'text-zinc-700',
