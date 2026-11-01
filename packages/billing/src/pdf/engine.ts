@@ -153,6 +153,19 @@ export function ensureWasmInitialized(): void {
 }
 
 /**
+ * Sanitizes an HTML string to prevent Takumi WASM font rasterization crashes
+ * (e.g. U+FFFD replacement characters, zero-width spaces, exotic unicode dashes/slashes).
+ */
+export function sanitizeHtmlForPdf(html: string): string {
+  if (!html) return '';
+  return html
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/[\uFFFD]/g, '-')
+    .replace(/[\u2010-\u2015]/g, '-')
+    .replace(/[\u2044\u2215\uFF0F]/g, '/');
+}
+
+/**
  * Renders an HTML string or JSX node tree into high-fidelity PDF bytes (Uint8Array).
  */
 export async function renderPdf(
@@ -160,7 +173,8 @@ export async function renderPdf(
   options?: RenderPdfOptions,
 ): Promise<Uint8Array> {
   ensureWasmInitialized();
-  return wasm.render(content as string, options);
+  const sanitized = typeof content === 'string' ? sanitizeHtmlForPdf(content) : content;
+  return wasm.render(sanitized as string, options);
 }
 
 export { wasm };

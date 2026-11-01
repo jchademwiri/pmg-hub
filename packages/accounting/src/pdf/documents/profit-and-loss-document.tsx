@@ -77,10 +77,18 @@ export function ProfitAndLossDocument({
               result.revenue.map((row, idx) => (
                 <TableRow key={`rev-${row.accountCode || idx}`}>
                   <TableCell style={{ width: '75%', fontSize: 8.5, color: '#18181b' }}>
-                    <span style={{ fontWeight: 600, color: '#0f172a', marginRight: 6 }}>
-                      {row.accountCode}
+                    <span
+                      style={{
+                        fontWeight: 600,
+                        color: '#0f172a',
+                        display: 'inline-block',
+                        minWidth: 32,
+                        marginRight: 8,
+                      }}
+                    >
+                      {row.accountCode}{' '}
                     </span>
-                    {row.accountName}
+                    <span>{row.accountName}</span>
                   </TableCell>
                   <TableCell
                     style={{
@@ -154,10 +162,18 @@ export function ProfitAndLossDocument({
               result.expenses.map((row, idx) => (
                 <TableRow key={`exp-${row.accountCode || idx}`}>
                   <TableCell style={{ width: '75%', fontSize: 8.5, color: '#18181b' }}>
-                    <span style={{ fontWeight: 600, color: '#0f172a', marginRight: 6 }}>
-                      {row.accountCode}
+                    <span
+                      style={{
+                        fontWeight: 600,
+                        color: '#0f172a',
+                        display: 'inline-block',
+                        minWidth: 32,
+                        marginRight: 8,
+                      }}
+                    >
+                      {row.accountCode}{' '}
                     </span>
-                    {row.accountName}
+                    <span>{row.accountName}</span>
                   </TableCell>
                   <TableCell
                     style={{
