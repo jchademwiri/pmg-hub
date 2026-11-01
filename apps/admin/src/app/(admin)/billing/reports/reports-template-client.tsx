@@ -1173,22 +1173,22 @@ export function ReportsTemplateClient({
                       <table className="w-full text-xs text-center border border-zinc-200 table-fixed">
                         <thead>
                           <tr className="border-b border-zinc-200">
-                            <th className="py-2 px-1 font-semibold uppercase tracking-wider text-[10px] bg-red-50 text-red-700 whitespace-nowrap">
+                            <th className="py-2 px-1 font-semibold uppercase tracking-wider text-[10px] bg-red-100 text-red-800 whitespace-nowrap">
                               61+ Days
                             </th>
-                            <th className="py-2 px-1 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-rose-50 text-rose-700 whitespace-nowrap">
+                            <th className="py-2 px-1 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-rose-100 text-rose-800 whitespace-nowrap">
                               31–60 Days
                             </th>
-                            <th className="py-2 px-1 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-orange-50 text-orange-700 whitespace-nowrap">
+                            <th className="py-2 px-1 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-orange-100 text-orange-800 whitespace-nowrap">
                               15–30 Days
                             </th>
-                            <th className="py-2 px-1 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-amber-50 text-amber-700 whitespace-nowrap">
+                            <th className="py-2 px-1 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-amber-100 text-amber-800 whitespace-nowrap">
                               1–14 Days
                             </th>
-                            <th className="py-2 px-1 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-emerald-50 text-emerald-700 whitespace-nowrap">
+                            <th className="py-2 px-1 font-semibold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-emerald-100 text-emerald-800 whitespace-nowrap">
                               Current
                             </th>
-                            <th className="py-2 px-1 font-bold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-zinc-100 text-zinc-900 whitespace-nowrap">
+                            <th className="py-2 px-1 font-bold uppercase tracking-wider text-[10px] border-l border-zinc-200 bg-zinc-100 text-zinc-950 whitespace-nowrap">
                               Total Overdue
                             </th>
                           </tr>

@@ -440,238 +440,232 @@ export function AgingReportDocument({
                     <div
                       style={{
                         display: 'flex',
-                        flexDirection: 'row',
+                        flexDirection: 'column',
                         width: '100%',
                         border: `1px solid ${theme.colors.border}`,
+                        boxSizing: 'border-box',
                       }}
                     >
-                      {/* 61+ Days */}
+                      {/* Top Header Row with Distinct Background Colors */}
                       <div
                         style={{
-                          flex: '1 1 0%',
-                          width: '16.66%',
                           display: 'flex',
-                          flexDirection: 'column',
-                          borderRight: `1px solid ${theme.colors.border}`,
+                          flexDirection: 'row',
+                          width: '100%',
+                          borderBottom: `1px solid ${theme.colors.border}`,
+                          boxSizing: 'border-box',
                         }}
                       >
                         <div
                           style={{
-                            padding: '4px 2px',
-                            fontSize: 7.2,
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '6px 4px',
+                            fontSize: 7.5,
                             fontWeight: 700,
                             textAlign: 'center',
                             whiteSpace: 'nowrap',
-                            backgroundColor: '#fef2f2',
-                            color: '#b91c1c',
-                            borderBottom: `1px solid ${theme.colors.border}`,
+                            backgroundColor: '#fee2e2',
+                            color: '#991b1b',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
                           }}
                         >
                           61+ Days
                         </div>
                         <div
                           style={{
-                            padding: '6px 2px',
-                            fontSize: 8,
-                            textAlign: 'center',
-                            fontWeight: 700,
-                            whiteSpace: 'nowrap',
-                            color: total61Plus > 0 ? '#dc2626' : theme.colors.mutedForeground,
-                            fontVariantNumeric: 'tabular-nums',
-                          }}
-                        >
-                          {formatZAR(total61Plus)}
-                        </div>
-                      </div>
-
-                      {/* 31–60 Days */}
-                      <div
-                        style={{
-                          flex: '1 1 0%',
-                          width: '16.66%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          borderRight: `1px solid ${theme.colors.border}`,
-                        }}
-                      >
-                        <div
-                          style={{
-                            padding: '4px 2px',
-                            fontSize: 7.2,
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '6px 4px',
+                            fontSize: 7.5,
                             fontWeight: 700,
                             textAlign: 'center',
                             whiteSpace: 'nowrap',
-                            backgroundColor: '#fff1f2',
-                            color: '#be123c',
-                            borderBottom: `1px solid ${theme.colors.border}`,
+                            backgroundColor: '#ffe4e6',
+                            color: '#9f1239',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
                           }}
                         >
                           31–60 Days
                         </div>
                         <div
                           style={{
-                            padding: '6px 2px',
-                            fontSize: 8,
-                            textAlign: 'center',
-                            fontWeight: 600,
-                            whiteSpace: 'nowrap',
-                            color: total31_60 > 0 ? '#e11d48' : theme.colors.mutedForeground,
-                            fontVariantNumeric: 'tabular-nums',
-                          }}
-                        >
-                          {formatZAR(total31_60)}
-                        </div>
-                      </div>
-
-                      {/* 15–30 Days */}
-                      <div
-                        style={{
-                          flex: '1 1 0%',
-                          width: '16.66%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          borderRight: `1px solid ${theme.colors.border}`,
-                        }}
-                      >
-                        <div
-                          style={{
-                            padding: '4px 2px',
-                            fontSize: 7.2,
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '6px 4px',
+                            fontSize: 7.5,
                             fontWeight: 700,
                             textAlign: 'center',
                             whiteSpace: 'nowrap',
-                            backgroundColor: '#fff7ed',
-                            color: '#c2410c',
-                            borderBottom: `1px solid ${theme.colors.border}`,
+                            backgroundColor: '#ffedd5',
+                            color: '#9a3412',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
                           }}
                         >
                           15–30 Days
                         </div>
                         <div
                           style={{
-                            padding: '6px 2px',
-                            fontSize: 8,
-                            textAlign: 'center',
-                            fontWeight: 600,
-                            whiteSpace: 'nowrap',
-                            color: total15_30 > 0 ? '#ea580c' : theme.colors.mutedForeground,
-                            fontVariantNumeric: 'tabular-nums',
-                          }}
-                        >
-                          {formatZAR(total15_30)}
-                        </div>
-                      </div>
-
-                      {/* 1–14 Days */}
-                      <div
-                        style={{
-                          flex: '1 1 0%',
-                          width: '16.66%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          borderRight: `1px solid ${theme.colors.border}`,
-                        }}
-                      >
-                        <div
-                          style={{
-                            padding: '4px 2px',
-                            fontSize: 7.2,
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '6px 4px',
+                            fontSize: 7.5,
                             fontWeight: 700,
                             textAlign: 'center',
                             whiteSpace: 'nowrap',
-                            backgroundColor: '#fffbeb',
-                            color: '#b45309',
-                            borderBottom: `1px solid ${theme.colors.border}`,
+                            backgroundColor: '#fef3c7',
+                            color: '#92400e',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
                           }}
                         >
                           1–14 Days
                         </div>
                         <div
                           style={{
-                            padding: '6px 2px',
-                            fontSize: 8,
-                            textAlign: 'center',
-                            fontWeight: 600,
-                            whiteSpace: 'nowrap',
-                            color: total1_14 > 0 ? '#d97706' : theme.colors.mutedForeground,
-                            fontVariantNumeric: 'tabular-nums',
-                          }}
-                        >
-                          {formatZAR(total1_14)}
-                        </div>
-                      </div>
-
-                      {/* Current */}
-                      <div
-                        style={{
-                          flex: '1 1 0%',
-                          width: '16.66%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          borderRight: `1px solid ${theme.colors.border}`,
-                        }}
-                      >
-                        <div
-                          style={{
-                            padding: '4px 2px',
-                            fontSize: 7.2,
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '6px 4px',
+                            fontSize: 7.5,
                             fontWeight: 700,
                             textAlign: 'center',
                             whiteSpace: 'nowrap',
-                            backgroundColor: '#f0fdf4',
-                            color: '#15803d',
-                            borderBottom: `1px solid ${theme.colors.border}`,
+                            backgroundColor: '#dcfce7',
+                            color: '#166534',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
                           }}
                         >
                           Current
                         </div>
                         <div
                           style={{
-                            padding: '6px 2px',
-                            fontSize: 8,
+                            flex: '1 1 0%',
+                            width: '16.7%',
+                            padding: '6px 4px',
+                            fontSize: 7.5,
+                            fontWeight: 700,
+                            textAlign: 'center',
+                            whiteSpace: 'nowrap',
+                            backgroundColor: '#f4f4f5',
+                            color: '#09090b',
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          Total Overdue
+                        </div>
+                      </div>
+
+                      {/* Values Row */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          width: '100%',
+                          backgroundColor: '#ffffff',
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        <div
+                          style={{
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '7px 4px',
+                            fontSize: 8.5,
+                            textAlign: 'center',
+                            fontWeight: 700,
+                            whiteSpace: 'nowrap',
+                            color: total61Plus > 0 ? '#dc2626' : theme.colors.mutedForeground,
+                            fontVariantNumeric: 'tabular-nums',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          {formatZAR(total61Plus)}
+                        </div>
+                        <div
+                          style={{
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '7px 4px',
+                            fontSize: 8.5,
+                            textAlign: 'center',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            color: total31_60 > 0 ? '#e11d48' : theme.colors.mutedForeground,
+                            fontVariantNumeric: 'tabular-nums',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          {formatZAR(total31_60)}
+                        </div>
+                        <div
+                          style={{
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '7px 4px',
+                            fontSize: 8.5,
+                            textAlign: 'center',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            color: total15_30 > 0 ? '#ea580c' : theme.colors.mutedForeground,
+                            fontVariantNumeric: 'tabular-nums',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          {formatZAR(total15_30)}
+                        </div>
+                        <div
+                          style={{
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '7px 4px',
+                            fontSize: 8.5,
+                            textAlign: 'center',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            color: total1_14 > 0 ? '#d97706' : theme.colors.mutedForeground,
+                            fontVariantNumeric: 'tabular-nums',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          {formatZAR(total1_14)}
+                        </div>
+                        <div
+                          style={{
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '7px 4px',
+                            fontSize: 8.5,
                             textAlign: 'center',
                             fontWeight: 600,
                             whiteSpace: 'nowrap',
                             color: totalCurrent > 0 ? '#059669' : theme.colors.mutedForeground,
                             fontVariantNumeric: 'tabular-nums',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
                           }}
                         >
                           {formatZAR(totalCurrent)}
                         </div>
-                      </div>
-
-                      {/* Total Overdue */}
-                      <div
-                        style={{
-                          flex: '1 1 0%',
-                          width: '16.7%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                        }}
-                      >
                         <div
                           style={{
-                            padding: '4px 2px',
-                            fontSize: 7.2,
-                            fontWeight: 700,
-                            textAlign: 'center',
-                            whiteSpace: 'nowrap',
-                            backgroundColor: '#f4f4f5',
-                            color: '#18181b',
-                            borderBottom: `1px solid ${theme.colors.border}`,
-                          }}
-                        >
-                          Total Overdue
-                        </div>
-                        <div
-                          style={{
-                            padding: '6px 2px',
-                            fontSize: 8,
+                            flex: '1 1 0%',
+                            width: '16.7%',
+                            padding: '7px 4px',
+                            fontSize: 8.5,
                             textAlign: 'center',
                             fontWeight: 700,
                             whiteSpace: 'nowrap',
                             color: totalOverdue > 0 ? '#dc2626' : theme.colors.foreground,
                             fontVariantNumeric: 'tabular-nums',
+                            boxSizing: 'border-box',
                           }}
                         >
                           {formatZAR(totalOverdue)}
