@@ -490,4 +490,47 @@ describe('Declarative Accounting PDF Documents', () => {
     expect(buffer.length).toBeGreaterThan(2000);
     expect(buffer.subarray(0, 5).toString('ascii')).toBe('%PDF-');
   });
+  it('renders an AR Aging Drilldown Report with sanitized text and zero/overdue buckets', async () => {
+    const { renderDeclarativeAgingReport } = await import('../render-accounting-pdf');
+    const rows = [
+      {
+        clientId: 'c1',
+        clientName: 'Mathange Tradings',
+        reference: 'RFQ - RRT-HDC-02-MBE\u200BRFQ-005\uFFFD TLB',
+        dueDate: '2026-09-30',
+        current: 0,
+        bucket_1_14: 0,
+        bucket_15_30: 2580,
+        bucket_31_60: 0,
+        bucket_61_plus: 0,
+        totalOutstanding: 2580,
+      },
+      {
+        clientId: 'c1',
+        clientName: 'Mathange Tradings',
+        reference: 'INV-2026-040 / Standard Quote',
+        dueDate: '2026-10-15',
+        current: 1200,
+        bucket_1_14: 0,
+        bucket_15_30: 0,
+        bucket_31_60: 0,
+        bucket_61_plus: 0,
+        totalOutstanding: 1200,
+      },
+    ];
+    const buffer = await renderDeclarativeAgingReport({
+      title: 'Accounts Receivable Aging Report',
+      reportNumber: 'AG-2026-11',
+      rows,
+      org: sampleOrg,
+      asOfDateLabel: '30 October 2026',
+      clientScopeLabel: 'Mathange Tradings',
+      isClientDrilldown: true,
+      generatedAt: '30 October 2026',
+    });
+
+    expect(buffer).toBeInstanceOf(Buffer);
+    expect(buffer.length).toBeGreaterThan(2000);
+    expect(buffer.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+  });
 });

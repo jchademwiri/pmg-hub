@@ -425,10 +425,11 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                   <tr style={{ backgroundColor: '#f9fafb' }}>
                     <th
                       style={{
-                        padding: '4px 6px',
+                        padding: '4px 2px',
                         fontSize: 7,
                         fontWeight: 700,
                         textAlign: 'center',
+                        whiteSpace: 'nowrap',
                         borderRight: `1px solid ${theme.colors.border}`,
                       }}
                     >
@@ -436,10 +437,11 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                     </th>
                     <th
                       style={{
-                        padding: '4px 6px',
+                        padding: '4px 2px',
                         fontSize: 7,
                         fontWeight: 700,
                         textAlign: 'center',
+                        whiteSpace: 'nowrap',
                         borderRight: `1px solid ${theme.colors.border}`,
                       }}
                     >
@@ -447,10 +449,11 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                     </th>
                     <th
                       style={{
-                        padding: '4px 6px',
+                        padding: '4px 2px',
                         fontSize: 7,
                         fontWeight: 700,
                         textAlign: 'center',
+                        whiteSpace: 'nowrap',
                         borderRight: `1px solid ${theme.colors.border}`,
                       }}
                     >
@@ -458,10 +461,11 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                     </th>
                     <th
                       style={{
-                        padding: '4px 6px',
+                        padding: '4px 2px',
                         fontSize: 7,
                         fontWeight: 700,
                         textAlign: 'center',
+                        whiteSpace: 'nowrap',
                         borderRight: `1px solid ${theme.colors.border}`,
                       }}
                     >
@@ -469,10 +473,11 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                     </th>
                     <th
                       style={{
-                        padding: '4px 6px',
+                        padding: '4px 2px',
                         fontSize: 7,
                         fontWeight: 700,
                         textAlign: 'center',
+                        whiteSpace: 'nowrap',
                         borderRight: `1px solid ${theme.colors.border}`,
                       }}
                     >
@@ -480,10 +485,11 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                     </th>
                     <th
                       style={{
-                        padding: '4px 6px',
+                        padding: '4px 2px',
                         fontSize: 7,
                         fontWeight: 700,
                         textAlign: 'center',
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       Total Due
@@ -494,9 +500,10 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                   <tr>
                     <td
                       style={{
-                        padding: '6px',
+                        padding: '6px 2px',
                         fontSize: 8,
                         textAlign: 'center',
+                        whiteSpace: 'nowrap',
                         fontWeight: data.ageing.days61plus > 0 ? 700 : 400,
                         color: data.ageing.days61plus > 0 ? '#dc2626' : 'inherit',
                         fontVariantNumeric: 'tabular-nums',
@@ -507,9 +514,10 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                     </td>
                     <td
                       style={{
-                        padding: '6px',
+                        padding: '6px 2px',
                         fontSize: 8,
                         textAlign: 'center',
+                        whiteSpace: 'nowrap',
                         fontWeight: data.ageing.days31_60 > 0 ? 700 : 400,
                         color: data.ageing.days31_60 > 0 ? '#dc2626' : 'inherit',
                         fontVariantNumeric: 'tabular-nums',
@@ -520,9 +528,10 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                     </td>
                     <td
                       style={{
-                        padding: '6px',
+                        padding: '6px 2px',
                         fontSize: 8,
                         textAlign: 'center',
+                        whiteSpace: 'nowrap',
                         fontWeight: data.ageing.days15_30 > 0 ? 700 : 400,
                         color: data.ageing.days15_30 > 0 ? '#d97706' : 'inherit',
                         fontVariantNumeric: 'tabular-nums',
@@ -533,9 +542,10 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                     </td>
                     <td
                       style={{
-                        padding: '6px',
+                        padding: '6px 2px',
                         fontSize: 8,
                         textAlign: 'center',
+                        whiteSpace: 'nowrap',
                         fontWeight: data.ageing.days1_14 > 0 ? 700 : 400,
                         color: data.ageing.days1_14 > 0 ? '#d97706' : 'inherit',
                         fontVariantNumeric: 'tabular-nums',
@@ -546,9 +556,10 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                     </td>
                     <td
                       style={{
-                        padding: '6px',
+                        padding: '6px 2px',
                         fontSize: 8,
                         textAlign: 'center',
+                        whiteSpace: 'nowrap',
                         fontWeight: 700,
                         color: theme.colors.foreground,
                         fontVariantNumeric: 'tabular-nums',

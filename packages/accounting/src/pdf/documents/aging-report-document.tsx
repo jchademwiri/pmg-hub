@@ -14,7 +14,7 @@ import {
   TableCell,
   usePdfTheme,
 } from '@pmg/billing/pdf';
-import { formatZAR, fmtDate } from '@pmg/billing/format';
+import { formatZAR, fmtDate, cleanPdfText } from '@pmg/billing/format';
 import { type PdfOrgHeader } from '@pmg/billing/pdf-shell';
 
 export interface AgingReportRow {
@@ -101,7 +101,7 @@ export function AgingReportDocument({
   const countLabel = isClientDrilldown ? 'Outstanding Invoices' : 'Clients with Balance';
 
   return (
-    <Document title={`${title} - ${clientScopeLabel}`}>
+    <Document title={`${title} - ${cleanPdfText(clientScopeLabel)}`}>
       {pages.map((pageRows, pageIdx) => {
         const isFirstPage = pageIdx === 0;
         const isLastPage = pageIdx === totalPages - 1;
@@ -144,12 +144,12 @@ export function AgingReportDocument({
                           marginBottom: 2,
                         }}
                       >
-                        {clientScopeLabel} —{' '}
+                        {cleanPdfText(clientScopeLabel)} —{' '}
                         {isClientDrilldown ? 'Invoice Aging' : 'Aging Breakdown'}
                       </span>
                       {divisionLabel && (
                         <span style={{ fontSize: 8.5, color: theme.colors.mutedForeground }}>
-                          Division: {divisionLabel}
+                          Division: {cleanPdfText(divisionLabel)}
                         </span>
                       )}
                     </div>
@@ -196,7 +196,7 @@ export function AgingReportDocument({
                   }}
                 >
                   <span style={{ fontSize: 9, fontWeight: 700, color: theme.colors.foreground }}>
-                    {org.name} — {title} ({clientScopeLabel})
+                    {org.name} — {title} ({cleanPdfText(clientScopeLabel)})
                   </span>
                   <span style={{ fontSize: 8, color: theme.colors.mutedForeground }}>
                     As of {asOfDateLabel}
@@ -208,25 +208,25 @@ export function AgingReportDocument({
                 <Table variant="compact" style={{ marginBottom: theme.spacing.sectionGap }}>
                   <TableHeader>
                     <TableRow header>
-                      <TableCell header width="26%">
+                      <TableCell header width="26%" style={{ whiteSpace: 'nowrap' }}>
                         {firstColHeader}
                       </TableCell>
-                      <TableCell header align="right" width="12%">
+                      <TableCell header align="right" width="12%" style={{ whiteSpace: 'nowrap' }}>
                         Current
                       </TableCell>
-                      <TableCell header align="right" width="12%">
+                      <TableCell header align="right" width="12%" style={{ whiteSpace: 'nowrap' }}>
                         1–14 Days
                       </TableCell>
-                      <TableCell header align="right" width="12%">
+                      <TableCell header align="right" width="12%" style={{ whiteSpace: 'nowrap' }}>
                         15–30 Days
                       </TableCell>
-                      <TableCell header align="right" width="12%">
+                      <TableCell header align="right" width="12%" style={{ whiteSpace: 'nowrap' }}>
                         31–60 Days
                       </TableCell>
-                      <TableCell header align="right" width="12%">
+                      <TableCell header align="right" width="12%" style={{ whiteSpace: 'nowrap' }}>
                         61+ Days
                       </TableCell>
-                      <TableCell header align="right" width="14%">
+                      <TableCell header align="right" width="14%" style={{ whiteSpace: 'nowrap' }}>
                         Total Due
                       </TableCell>
                     </TableRow>
@@ -251,7 +251,7 @@ export function AgingReportDocument({
                           <TableRow key={`${row.clientName}-${idx}`} striped={idx % 2 === 1}>
                             <TableCell width="26%" bold>
                               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span>{row.clientName}</span>
+                                <span>{cleanPdfText(row.clientName)}</span>
                                 {isClientDrilldown && (row.dueDate || row.reference) && (
                                   <span
                                     style={{
@@ -263,7 +263,7 @@ export function AgingReportDocument({
                                   >
                                     {row.dueDate ? `Due ${fmtDate(row.dueDate)}` : ''}
                                     {row.dueDate && row.reference ? ' · ' : ''}
-                                    {row.reference || ''}
+                                    {cleanPdfText(row.reference)}
                                   </span>
                                 )}
                               </div>
@@ -370,24 +370,41 @@ export function AgingReportDocument({
                       >
                         Aging Summary
                       </span>
-                      <span style={{ fontSize: 7.5, color: theme.colors.mutedForeground }}>
-                        <span style={{ marginRight: 10 }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 8,
+                          fontSize: 7.5,
+                          color: theme.colors.mutedForeground,
+                        }}
+                      >
+                        <span>
                           {countLabel}:{' '}
                           <span style={{ fontWeight: 600, color: theme.colors.foreground }}>
                             {rows.length}
                           </span>
                         </span>
+                        <span style={{ color: theme.colors.border }}>·</span>
                         <span>
                           Total Outstanding (AR):{' '}
-                          <span style={{ fontWeight: 700, color: theme.colors.foreground }}>
+                          <span
+                            style={{
+                              fontWeight: 700,
+                              color:
+                                totalOutstanding > 0 ? theme.colors.primary : theme.colors.success,
+                            }}
+                          >
                             {formatZAR(totalOutstanding)}
                           </span>
                         </span>
-                      </span>
+                      </div>
                     </div>
                     <table
                       style={{
                         width: '100%',
+                        tableLayout: 'fixed',
                         borderCollapse: 'collapse',
                         border: `1px solid ${theme.colors.border}`,
                       }}
@@ -396,10 +413,11 @@ export function AgingReportDocument({
                         <tr>
                           <th
                             style={{
-                              padding: '4px 6px',
-                              fontSize: 7,
+                              padding: '5px 2px',
+                              fontSize: 7.2,
                               fontWeight: 700,
                               textAlign: 'center',
+                              whiteSpace: 'nowrap',
                               backgroundColor: '#fef2f2',
                               color: '#b91c1c',
                               borderRight: `1px solid ${theme.colors.border}`,
@@ -411,10 +429,11 @@ export function AgingReportDocument({
                           </th>
                           <th
                             style={{
-                              padding: '4px 6px',
-                              fontSize: 7,
+                              padding: '5px 2px',
+                              fontSize: 7.2,
                               fontWeight: 700,
                               textAlign: 'center',
+                              whiteSpace: 'nowrap',
                               backgroundColor: '#fff1f2',
                               color: '#be123c',
                               borderRight: `1px solid ${theme.colors.border}`,
@@ -426,10 +445,11 @@ export function AgingReportDocument({
                           </th>
                           <th
                             style={{
-                              padding: '4px 6px',
-                              fontSize: 7,
+                              padding: '5px 2px',
+                              fontSize: 7.2,
                               fontWeight: 700,
                               textAlign: 'center',
+                              whiteSpace: 'nowrap',
                               backgroundColor: '#fff7ed',
                               color: '#c2410c',
                               borderRight: `1px solid ${theme.colors.border}`,
@@ -441,10 +461,11 @@ export function AgingReportDocument({
                           </th>
                           <th
                             style={{
-                              padding: '4px 6px',
-                              fontSize: 7,
+                              padding: '5px 2px',
+                              fontSize: 7.2,
                               fontWeight: 700,
                               textAlign: 'center',
+                              whiteSpace: 'nowrap',
                               backgroundColor: '#fffbeb',
                               color: '#b45309',
                               borderRight: `1px solid ${theme.colors.border}`,
@@ -456,10 +477,11 @@ export function AgingReportDocument({
                           </th>
                           <th
                             style={{
-                              padding: '4px 6px',
-                              fontSize: 7,
+                              padding: '5px 2px',
+                              fontSize: 7.2,
                               fontWeight: 700,
                               textAlign: 'center',
+                              whiteSpace: 'nowrap',
                               backgroundColor: '#f0fdf4',
                               color: '#15803d',
                               borderRight: `1px solid ${theme.colors.border}`,
@@ -471,10 +493,11 @@ export function AgingReportDocument({
                           </th>
                           <th
                             style={{
-                              padding: '4px 6px',
-                              fontSize: 7,
+                              padding: '5px 2px',
+                              fontSize: 7.2,
                               fontWeight: 700,
                               textAlign: 'center',
+                              whiteSpace: 'nowrap',
                               backgroundColor: '#f4f4f5',
                               color: '#18181b',
                               borderBottom: `1px solid ${theme.colors.border}`,
@@ -489,77 +512,89 @@ export function AgingReportDocument({
                         <tr>
                           <td
                             style={{
-                              padding: '6px',
+                              padding: '6px 2px',
                               fontSize: 8,
                               textAlign: 'center',
                               fontWeight: 700,
+                              whiteSpace: 'nowrap',
                               color: total61Plus > 0 ? '#dc2626' : theme.colors.mutedForeground,
                               fontVariantNumeric: 'tabular-nums',
                               borderRight: `1px solid ${theme.colors.border}`,
+                              width: '16.66%',
                             }}
                           >
                             {formatZAR(total61Plus)}
                           </td>
                           <td
                             style={{
-                              padding: '6px',
+                              padding: '6px 2px',
                               fontSize: 8,
                               textAlign: 'center',
                               fontWeight: 600,
+                              whiteSpace: 'nowrap',
                               color: total31_60 > 0 ? '#e11d48' : theme.colors.mutedForeground,
                               fontVariantNumeric: 'tabular-nums',
                               borderRight: `1px solid ${theme.colors.border}`,
+                              width: '16.66%',
                             }}
                           >
                             {formatZAR(total31_60)}
                           </td>
                           <td
                             style={{
-                              padding: '6px',
+                              padding: '6px 2px',
                               fontSize: 8,
                               textAlign: 'center',
                               fontWeight: 600,
+                              whiteSpace: 'nowrap',
                               color: total15_30 > 0 ? '#ea580c' : theme.colors.mutedForeground,
                               fontVariantNumeric: 'tabular-nums',
                               borderRight: `1px solid ${theme.colors.border}`,
+                              width: '16.66%',
                             }}
                           >
                             {formatZAR(total15_30)}
                           </td>
                           <td
                             style={{
-                              padding: '6px',
+                              padding: '6px 2px',
                               fontSize: 8,
                               textAlign: 'center',
                               fontWeight: 600,
+                              whiteSpace: 'nowrap',
                               color: total1_14 > 0 ? '#d97706' : theme.colors.mutedForeground,
                               fontVariantNumeric: 'tabular-nums',
                               borderRight: `1px solid ${theme.colors.border}`,
+                              width: '16.66%',
                             }}
                           >
                             {formatZAR(total1_14)}
                           </td>
                           <td
                             style={{
-                              padding: '6px',
+                              padding: '6px 2px',
                               fontSize: 8,
                               textAlign: 'center',
                               fontWeight: 600,
+                              whiteSpace: 'nowrap',
                               color: totalCurrent > 0 ? '#059669' : theme.colors.mutedForeground,
                               fontVariantNumeric: 'tabular-nums',
                               borderRight: `1px solid ${theme.colors.border}`,
+                              width: '16.66%',
                             }}
                           >
                             {formatZAR(totalCurrent)}
                           </td>
                           <td
                             style={{
-                              padding: '6px',
+                              padding: '6px 2px',
                               fontSize: 8,
                               textAlign: 'center',
                               fontWeight: 700,
+                              whiteSpace: 'nowrap',
                               color: totalOverdue > 0 ? '#dc2626' : theme.colors.foreground,
                               fontVariantNumeric: 'tabular-nums',
+                              width: '16.7%',
                             }}
                           >
                             {formatZAR(totalOverdue)}
