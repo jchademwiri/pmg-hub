@@ -915,6 +915,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ type: st
         });
       }
 
+      const orientation = (url.searchParams.get('orientation') || 'landscape') as
+        'portrait' | 'landscape';
+
       const pdfBuffer = await renderDeclarativeAgingReport({
         title: isClientDrilldown
           ? `${clientScopeLabel} — Aging Report`
@@ -926,6 +929,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ type: st
         clientScopeLabel,
         divisionLabel,
         isClientDrilldown,
+        orientation,
         generatedAt,
       });
 

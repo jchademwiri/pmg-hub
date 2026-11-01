@@ -82,6 +82,7 @@ export function AgingReportDocument({
   clientScopeLabel,
   divisionLabel,
   isClientDrilldown = false,
+  orientation = 'landscape',
   generatedAt,
 }: AgingReportDocumentProps) {
   const theme = usePdfTheme();
@@ -94,11 +95,15 @@ export function AgingReportDocument({
   const total61Plus = rows.reduce((s, r) => s + r.bucket_61_plus, 0);
   const totalOverdue = total1_14 + total15_30 + total31_60 + total61Plus;
 
-  const pages = paginateRows(rows);
+  const isLandscape = orientation === 'landscape';
+  const pages = paginateRows(rows, isLandscape);
   const totalPages = pages.length;
 
   const firstColHeader = isClientDrilldown ? 'Invoice' : 'Client';
   const countLabel = isClientDrilldown ? 'Outstanding Invoices' : 'Clients with Balance';
+  const firstColWidth = isLandscape ? '34%' : '26%';
+  const bucketColWidth = isLandscape ? '11%' : '12%';
+  const totalColWidth = isLandscape ? '11%' : '14%';
 
   return (
     <Document title={`${title} - ${cleanPdfText(clientScopeLabel)}`}>
@@ -109,7 +114,7 @@ export function AgingReportDocument({
         return (
           <React.Fragment key={pageIdx}>
             {pageIdx > 0 && <PageBreak />}
-            <Page size="a4" style={{ paddingBottom: 24 }}>
+            <Page size="a4" orientation={orientation} style={{ paddingBottom: 24 }}>
               {isFirstPage ? (
                 <>
                   <PageHeader org={org} title={title} number={reportNumber} />
@@ -249,7 +254,7 @@ export function AgingReportDocument({
                         const isZero = row.totalOutstanding <= 0.005;
                         return (
                           <TableRow key={`${row.clientName}-${idx}`} striped={idx % 2 === 1}>
-                            <TableCell width="26%" bold>
+                            <TableCell width={firstColWidth} bold>
                               <div style={{ display: 'flex', flexDirection: 'column' }}>
                                 <span>{cleanPdfText(row.clientName)}</span>
                                 {isClientDrilldown && (row.dueDate || row.reference) && (
