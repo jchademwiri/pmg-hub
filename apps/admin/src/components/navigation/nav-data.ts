@@ -122,14 +122,6 @@ export const GROUPS: NavGroup[] = [
       { title: 'Overview', url: '/finance', icon: LayoutGrid },
       { title: 'Expenses', url: '/finance/expenses', icon: TrendingDown },
       { title: 'Recurring', url: '/finance/recurring', icon: CalendarClock },
-    ],
-  },
-  {
-    key: 'accounting',
-    label: 'Accounting',
-    icon: Calculator,
-    items: [
-      { title: 'Overview', url: '/accounting', icon: LayoutGrid },
       { title: 'Profit & Loss', url: '/accounting/profit-and-loss', icon: LineChart },
       { title: 'General Ledger', url: '/accounting/general-ledger', icon: BookMarked },
     ],
@@ -175,6 +167,7 @@ const EXTRA_LABELS: Record<string, string> = {
   '/savings': 'Savings Goals',
 
   // Accounting
+  '/accounting': 'Accounting',
   '/accounting/chart-of-accounts': 'Chart of Accounts',
   '/accounting/periods': 'Accounting Periods',
   '/accounting/journals': 'Journals',

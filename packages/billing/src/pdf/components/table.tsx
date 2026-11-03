@@ -110,6 +110,7 @@ export function TableCell({
     fontWeight: header ? 700 : bold ? 600 : 400,
     color: header ? theme.colors.mutedForeground : theme.colors.foreground,
     textTransform: header ? 'uppercase' : 'none',
+    ...(header ? { whiteSpace: 'nowrap' } : {}),
     ...(tabular ? { fontVariantNumeric: 'tabular-nums' } : {}),
     overflow: 'hidden',
     ...style,

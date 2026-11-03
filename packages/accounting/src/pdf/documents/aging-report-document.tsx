@@ -14,7 +14,7 @@ import {
   TableCell,
   usePdfTheme,
 } from '@pmg/billing/pdf';
-import { formatZAR, fmtDate } from '@pmg/billing/format';
+import { formatZAR, fmtDate, cleanPdfText } from '@pmg/billing/format';
 import { type PdfOrgHeader } from '@pmg/billing/pdf-shell';
 
 export interface AgingReportRow {
@@ -40,17 +40,19 @@ export interface AgingReportDocumentProps {
   clientScopeLabel: string;
   divisionLabel?: string;
   isClientDrilldown?: boolean;
+  orientation?: 'portrait' | 'landscape';
   generatedAt: string;
 }
 
-function paginateRows<T>(rows: T[]): T[][] {
+function paginateRows<T>(rows: T[], isLandscape = false): T[][] {
   if (rows.length === 0) return [[]];
-  if (rows.length <= 20) return [rows];
+  const maxSinglePage = isLandscape ? 14 : 20;
+  if (rows.length <= maxSinglePage) return [rows];
 
   const pages: T[][] = [];
-  const firstPageCount = 24;
-  const middlePageCount = 32;
-  const lastPageMaxWithTotals = 26;
+  const firstPageCount = isLandscape ? 16 : 24;
+  const middlePageCount = isLandscape ? 22 : 32;
+  const lastPageMaxWithTotals = isLandscape ? 18 : 26;
 
   pages.push(rows.slice(0, firstPageCount));
   let offset = firstPageCount;
@@ -82,6 +84,7 @@ export function AgingReportDocument({
   clientScopeLabel,
   divisionLabel,
   isClientDrilldown = false,
+  orientation = 'landscape',
   generatedAt,
 }: AgingReportDocumentProps) {
   const theme = usePdfTheme();
@@ -94,14 +97,18 @@ export function AgingReportDocument({
   const total61Plus = rows.reduce((s, r) => s + r.bucket_61_plus, 0);
   const totalOverdue = total1_14 + total15_30 + total31_60 + total61Plus;
 
-  const pages = paginateRows(rows);
+  const isLandscape = orientation === 'landscape';
+  const pages = paginateRows(rows, isLandscape);
   const totalPages = pages.length;
 
   const firstColHeader = isClientDrilldown ? 'Invoice' : 'Client';
   const countLabel = isClientDrilldown ? 'Outstanding Invoices' : 'Clients with Balance';
+  const firstColWidth = isLandscape ? '34%' : '26%';
+  const bucketColWidth = isLandscape ? '11%' : '12%';
+  const totalColWidth = isLandscape ? '11%' : '14%';
 
   return (
-    <Document title={`${title} - ${clientScopeLabel}`}>
+    <Document title={`${title} - ${cleanPdfText(clientScopeLabel)}`}>
       {pages.map((pageRows, pageIdx) => {
         const isFirstPage = pageIdx === 0;
         const isLastPage = pageIdx === totalPages - 1;
@@ -109,7 +116,7 @@ export function AgingReportDocument({
         return (
           <React.Fragment key={pageIdx}>
             {pageIdx > 0 && <PageBreak />}
-            <Page size="a4" style={{ paddingBottom: 24 }}>
+            <Page size="a4" orientation={orientation} style={{ paddingBottom: 24 }}>
               {isFirstPage ? (
                 <>
                   <PageHeader org={org} title={title} number={reportNumber} />
@@ -144,12 +151,12 @@ export function AgingReportDocument({
                           marginBottom: 2,
                         }}
                       >
-                        {clientScopeLabel} —{' '}
+                        {cleanPdfText(clientScopeLabel)} —{' '}
                         {isClientDrilldown ? 'Invoice Aging' : 'Aging Breakdown'}
                       </span>
                       {divisionLabel && (
                         <span style={{ fontSize: 8.5, color: theme.colors.mutedForeground }}>
-                          Division: {divisionLabel}
+                          Division: {cleanPdfText(divisionLabel)}
                         </span>
                       )}
                     </div>
@@ -196,7 +203,7 @@ export function AgingReportDocument({
                   }}
                 >
                   <span style={{ fontSize: 9, fontWeight: 700, color: theme.colors.foreground }}>
-                    {org.name} — {title} ({clientScopeLabel})
+                    {org.name} — {title} ({cleanPdfText(clientScopeLabel)})
                   </span>
                   <span style={{ fontSize: 8, color: theme.colors.mutedForeground }}>
                     As of {asOfDateLabel}
@@ -208,25 +215,55 @@ export function AgingReportDocument({
                 <Table variant="compact" style={{ marginBottom: theme.spacing.sectionGap }}>
                   <TableHeader>
                     <TableRow header>
-                      <TableCell header width="26%">
+                      <TableCell header width={firstColWidth} style={{ whiteSpace: 'nowrap' }}>
                         {firstColHeader}
                       </TableCell>
-                      <TableCell header align="right" width="12%">
+                      <TableCell
+                        header
+                        align="right"
+                        width={bucketColWidth}
+                        style={{ whiteSpace: 'nowrap' }}
+                      >
                         Current
                       </TableCell>
-                      <TableCell header align="right" width="12%">
+                      <TableCell
+                        header
+                        align="right"
+                        width={bucketColWidth}
+                        style={{ whiteSpace: 'nowrap' }}
+                      >
                         1–14 Days
                       </TableCell>
-                      <TableCell header align="right" width="12%">
+                      <TableCell
+                        header
+                        align="right"
+                        width={bucketColWidth}
+                        style={{ whiteSpace: 'nowrap' }}
+                      >
                         15–30 Days
                       </TableCell>
-                      <TableCell header align="right" width="12%">
+                      <TableCell
+                        header
+                        align="right"
+                        width={bucketColWidth}
+                        style={{ whiteSpace: 'nowrap' }}
+                      >
                         31–60 Days
                       </TableCell>
-                      <TableCell header align="right" width="12%">
+                      <TableCell
+                        header
+                        align="right"
+                        width={bucketColWidth}
+                        style={{ whiteSpace: 'nowrap' }}
+                      >
                         61+ Days
                       </TableCell>
-                      <TableCell header align="right" width="14%">
+                      <TableCell
+                        header
+                        align="right"
+                        width={totalColWidth}
+                        style={{ whiteSpace: 'nowrap', paddingRight: 6 }}
+                      >
                         Total Due
                       </TableCell>
                     </TableRow>
@@ -249,9 +286,9 @@ export function AgingReportDocument({
                         const isZero = row.totalOutstanding <= 0.005;
                         return (
                           <TableRow key={`${row.clientName}-${idx}`} striped={idx % 2 === 1}>
-                            <TableCell width="26%" bold>
+                            <TableCell width={firstColWidth} bold>
                               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span>{row.clientName}</span>
+                                <span>{cleanPdfText(row.clientName)}</span>
                                 {isClientDrilldown && (row.dueDate || row.reference) && (
                                   <span
                                     style={{
@@ -263,13 +300,13 @@ export function AgingReportDocument({
                                   >
                                     {row.dueDate ? `Due ${fmtDate(row.dueDate)}` : ''}
                                     {row.dueDate && row.reference ? ' · ' : ''}
-                                    {row.reference || ''}
+                                    {cleanPdfText(row.reference)}
                                   </span>
                                 )}
                               </div>
                             </TableCell>
                             <TableCell
-                              width="12%"
+                              width={bucketColWidth}
                               align="right"
                               tabular
                               style={
@@ -281,7 +318,7 @@ export function AgingReportDocument({
                               {formatZAR(row.current)}
                             </TableCell>
                             <TableCell
-                              width="12%"
+                              width={bucketColWidth}
                               align="right"
                               tabular
                               style={
@@ -293,7 +330,7 @@ export function AgingReportDocument({
                               {formatZAR(row.bucket_1_14)}
                             </TableCell>
                             <TableCell
-                              width="12%"
+                              width={bucketColWidth}
                               align="right"
                               tabular
                               style={
@@ -305,7 +342,7 @@ export function AgingReportDocument({
                               {formatZAR(row.bucket_15_30)}
                             </TableCell>
                             <TableCell
-                              width="12%"
+                              width={bucketColWidth}
                               align="right"
                               tabular
                               style={
@@ -317,7 +354,7 @@ export function AgingReportDocument({
                               {formatZAR(row.bucket_31_60)}
                             </TableCell>
                             <TableCell
-                              width="12%"
+                              width={bucketColWidth}
                               align="right"
                               tabular
                               style={
@@ -329,12 +366,13 @@ export function AgingReportDocument({
                               {formatZAR(row.bucket_61_plus)}
                             </TableCell>
                             <TableCell
-                              width="14%"
+                              width={totalColWidth}
                               align="right"
                               tabular
                               bold
                               style={{
                                 color: isZero ? theme.colors.success : theme.colors.foreground,
+                                paddingRight: 6,
                               }}
                             >
                               {formatZAR(row.totalOutstanding)}
@@ -370,203 +408,272 @@ export function AgingReportDocument({
                       >
                         Aging Summary
                       </span>
-                      <span style={{ fontSize: 7.5, color: theme.colors.mutedForeground }}>
-                        <span style={{ marginRight: 10 }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 8,
+                          fontSize: 7.5,
+                          color: theme.colors.mutedForeground,
+                        }}
+                      >
+                        <span>
                           {countLabel}:{' '}
                           <span style={{ fontWeight: 600, color: theme.colors.foreground }}>
                             {rows.length}
                           </span>
                         </span>
+                        <span style={{ color: theme.colors.border }}>·</span>
                         <span>
                           Total Outstanding (AR):{' '}
-                          <span style={{ fontWeight: 700, color: theme.colors.foreground }}>
+                          <span
+                            style={{
+                              fontWeight: 700,
+                              color:
+                                totalOutstanding > 0 ? theme.colors.primary : theme.colors.success,
+                            }}
+                          >
                             {formatZAR(totalOutstanding)}
                           </span>
                         </span>
-                      </span>
+                      </div>
                     </div>
-                    <table
+                    <div
                       style={{
+                        display: 'flex',
+                        flexDirection: 'column',
                         width: '100%',
-                        borderCollapse: 'collapse',
                         border: `1px solid ${theme.colors.border}`,
+                        boxSizing: 'border-box',
                       }}
                     >
-                      <thead>
-                        <tr>
-                          <th
-                            style={{
-                              padding: '4px 6px',
-                              fontSize: 7,
-                              fontWeight: 700,
-                              textAlign: 'center',
-                              backgroundColor: '#fef2f2',
-                              color: '#b91c1c',
-                              borderRight: `1px solid ${theme.colors.border}`,
-                              borderBottom: `1px solid ${theme.colors.border}`,
-                              width: '16.66%',
-                            }}
-                          >
-                            61+ Days
-                          </th>
-                          <th
-                            style={{
-                              padding: '4px 6px',
-                              fontSize: 7,
-                              fontWeight: 700,
-                              textAlign: 'center',
-                              backgroundColor: '#fff1f2',
-                              color: '#be123c',
-                              borderRight: `1px solid ${theme.colors.border}`,
-                              borderBottom: `1px solid ${theme.colors.border}`,
-                              width: '16.66%',
-                            }}
-                          >
-                            31–60 Days
-                          </th>
-                          <th
-                            style={{
-                              padding: '4px 6px',
-                              fontSize: 7,
-                              fontWeight: 700,
-                              textAlign: 'center',
-                              backgroundColor: '#fff7ed',
-                              color: '#c2410c',
-                              borderRight: `1px solid ${theme.colors.border}`,
-                              borderBottom: `1px solid ${theme.colors.border}`,
-                              width: '16.66%',
-                            }}
-                          >
-                            15–30 Days
-                          </th>
-                          <th
-                            style={{
-                              padding: '4px 6px',
-                              fontSize: 7,
-                              fontWeight: 700,
-                              textAlign: 'center',
-                              backgroundColor: '#fffbeb',
-                              color: '#b45309',
-                              borderRight: `1px solid ${theme.colors.border}`,
-                              borderBottom: `1px solid ${theme.colors.border}`,
-                              width: '16.66%',
-                            }}
-                          >
-                            1–14 Days
-                          </th>
-                          <th
-                            style={{
-                              padding: '4px 6px',
-                              fontSize: 7,
-                              fontWeight: 700,
-                              textAlign: 'center',
-                              backgroundColor: '#f0fdf4',
-                              color: '#15803d',
-                              borderRight: `1px solid ${theme.colors.border}`,
-                              borderBottom: `1px solid ${theme.colors.border}`,
-                              width: '16.66%',
-                            }}
-                          >
-                            Current
-                          </th>
-                          <th
-                            style={{
-                              padding: '4px 6px',
-                              fontSize: 7,
-                              fontWeight: 700,
-                              textAlign: 'center',
-                              backgroundColor: '#f4f4f5',
-                              color: '#18181b',
-                              borderBottom: `1px solid ${theme.colors.border}`,
-                              width: '16.7%',
-                            }}
-                          >
-                            Total Overdue
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td
-                            style={{
-                              padding: '6px',
-                              fontSize: 8,
-                              textAlign: 'center',
-                              fontWeight: 700,
-                              color: total61Plus > 0 ? '#dc2626' : theme.colors.mutedForeground,
-                              fontVariantNumeric: 'tabular-nums',
-                              borderRight: `1px solid ${theme.colors.border}`,
-                            }}
-                          >
-                            {formatZAR(total61Plus)}
-                          </td>
-                          <td
-                            style={{
-                              padding: '6px',
-                              fontSize: 8,
-                              textAlign: 'center',
-                              fontWeight: 600,
-                              color: total31_60 > 0 ? '#e11d48' : theme.colors.mutedForeground,
-                              fontVariantNumeric: 'tabular-nums',
-                              borderRight: `1px solid ${theme.colors.border}`,
-                            }}
-                          >
-                            {formatZAR(total31_60)}
-                          </td>
-                          <td
-                            style={{
-                              padding: '6px',
-                              fontSize: 8,
-                              textAlign: 'center',
-                              fontWeight: 600,
-                              color: total15_30 > 0 ? '#ea580c' : theme.colors.mutedForeground,
-                              fontVariantNumeric: 'tabular-nums',
-                              borderRight: `1px solid ${theme.colors.border}`,
-                            }}
-                          >
-                            {formatZAR(total15_30)}
-                          </td>
-                          <td
-                            style={{
-                              padding: '6px',
-                              fontSize: 8,
-                              textAlign: 'center',
-                              fontWeight: 600,
-                              color: total1_14 > 0 ? '#d97706' : theme.colors.mutedForeground,
-                              fontVariantNumeric: 'tabular-nums',
-                              borderRight: `1px solid ${theme.colors.border}`,
-                            }}
-                          >
-                            {formatZAR(total1_14)}
-                          </td>
-                          <td
-                            style={{
-                              padding: '6px',
-                              fontSize: 8,
-                              textAlign: 'center',
-                              fontWeight: 600,
-                              color: totalCurrent > 0 ? '#059669' : theme.colors.mutedForeground,
-                              fontVariantNumeric: 'tabular-nums',
-                              borderRight: `1px solid ${theme.colors.border}`,
-                            }}
-                          >
-                            {formatZAR(totalCurrent)}
-                          </td>
-                          <td
-                            style={{
-                              padding: '6px',
-                              fontSize: 8,
-                              textAlign: 'center',
-                              fontWeight: 700,
-                              color: totalOverdue > 0 ? '#dc2626' : theme.colors.foreground,
-                              fontVariantNumeric: 'tabular-nums',
-                            }}
-                          >
-                            {formatZAR(totalOverdue)}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                      {/* Top Header Row with Distinct Background Colors */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          width: '100%',
+                          borderBottom: `1px solid ${theme.colors.border}`,
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        <div
+                          style={{
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '6px 4px',
+                            fontSize: 7.5,
+                            fontWeight: 700,
+                            textAlign: 'center',
+                            whiteSpace: 'nowrap',
+                            backgroundColor: '#fee2e2',
+                            color: '#991b1b',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          61+ Days
+                        </div>
+                        <div
+                          style={{
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '6px 4px',
+                            fontSize: 7.5,
+                            fontWeight: 700,
+                            textAlign: 'center',
+                            whiteSpace: 'nowrap',
+                            backgroundColor: '#ffe4e6',
+                            color: '#9f1239',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          31–60 Days
+                        </div>
+                        <div
+                          style={{
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '6px 4px',
+                            fontSize: 7.5,
+                            fontWeight: 700,
+                            textAlign: 'center',
+                            whiteSpace: 'nowrap',
+                            backgroundColor: '#ffedd5',
+                            color: '#9a3412',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          15–30 Days
+                        </div>
+                        <div
+                          style={{
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '6px 4px',
+                            fontSize: 7.5,
+                            fontWeight: 700,
+                            textAlign: 'center',
+                            whiteSpace: 'nowrap',
+                            backgroundColor: '#fef3c7',
+                            color: '#92400e',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          1–14 Days
+                        </div>
+                        <div
+                          style={{
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '6px 4px',
+                            fontSize: 7.5,
+                            fontWeight: 700,
+                            textAlign: 'center',
+                            whiteSpace: 'nowrap',
+                            backgroundColor: '#dcfce7',
+                            color: '#166534',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          Current
+                        </div>
+                        <div
+                          style={{
+                            flex: '1 1 0%',
+                            width: '16.7%',
+                            padding: '6px 4px',
+                            fontSize: 7.5,
+                            fontWeight: 700,
+                            textAlign: 'center',
+                            whiteSpace: 'nowrap',
+                            backgroundColor: '#f4f4f5',
+                            color: '#09090b',
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          Total Overdue
+                        </div>
+                      </div>
+
+                      {/* Values Row */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          width: '100%',
+                          backgroundColor: '#ffffff',
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        <div
+                          style={{
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '7px 4px',
+                            fontSize: 8.5,
+                            textAlign: 'center',
+                            fontWeight: 700,
+                            whiteSpace: 'nowrap',
+                            color: total61Plus > 0 ? '#dc2626' : theme.colors.mutedForeground,
+                            fontVariantNumeric: 'tabular-nums',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          {formatZAR(total61Plus)}
+                        </div>
+                        <div
+                          style={{
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '7px 4px',
+                            fontSize: 8.5,
+                            textAlign: 'center',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            color: total31_60 > 0 ? '#e11d48' : theme.colors.mutedForeground,
+                            fontVariantNumeric: 'tabular-nums',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          {formatZAR(total31_60)}
+                        </div>
+                        <div
+                          style={{
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '7px 4px',
+                            fontSize: 8.5,
+                            textAlign: 'center',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            color: total15_30 > 0 ? '#ea580c' : theme.colors.mutedForeground,
+                            fontVariantNumeric: 'tabular-nums',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          {formatZAR(total15_30)}
+                        </div>
+                        <div
+                          style={{
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '7px 4px',
+                            fontSize: 8.5,
+                            textAlign: 'center',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            color: total1_14 > 0 ? '#d97706' : theme.colors.mutedForeground,
+                            fontVariantNumeric: 'tabular-nums',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          {formatZAR(total1_14)}
+                        </div>
+                        <div
+                          style={{
+                            flex: '1 1 0%',
+                            width: '16.66%',
+                            padding: '7px 4px',
+                            fontSize: 8.5,
+                            textAlign: 'center',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            color: totalCurrent > 0 ? '#059669' : theme.colors.mutedForeground,
+                            fontVariantNumeric: 'tabular-nums',
+                            borderRight: `1px solid ${theme.colors.border}`,
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          {formatZAR(totalCurrent)}
+                        </div>
+                        <div
+                          style={{
+                            flex: '1 1 0%',
+                            width: '16.7%',
+                            padding: '7px 4px',
+                            fontSize: 8.5,
+                            textAlign: 'center',
+                            fontWeight: 700,
+                            whiteSpace: 'nowrap',
+                            color: totalOverdue > 0 ? '#dc2626' : theme.colors.foreground,
+                            fontVariantNumeric: 'tabular-nums',
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          {formatZAR(totalOverdue)}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </KeepTogether>
               )}

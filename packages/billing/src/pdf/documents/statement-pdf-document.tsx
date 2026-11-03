@@ -414,164 +414,247 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
               >
                 Ageing Summary
               </span>
-              <table
+              <div
                 style={{
+                  display: 'flex',
+                  flexDirection: 'row',
                   width: '100%',
-                  borderCollapse: 'collapse',
                   border: `1px solid ${theme.colors.border}`,
                 }}
               >
-                <thead>
-                  <tr style={{ backgroundColor: '#f9fafb' }}>
-                    <th
-                      style={{
-                        padding: '4px 6px',
-                        fontSize: 7,
-                        fontWeight: 700,
-                        textAlign: 'center',
-                        borderRight: `1px solid ${theme.colors.border}`,
-                      }}
-                    >
-                      61+ Days
-                    </th>
-                    <th
-                      style={{
-                        padding: '4px 6px',
-                        fontSize: 7,
-                        fontWeight: 700,
-                        textAlign: 'center',
-                        borderRight: `1px solid ${theme.colors.border}`,
-                      }}
-                    >
-                      31–60 Days
-                    </th>
-                    <th
-                      style={{
-                        padding: '4px 6px',
-                        fontSize: 7,
-                        fontWeight: 700,
-                        textAlign: 'center',
-                        borderRight: `1px solid ${theme.colors.border}`,
-                      }}
-                    >
-                      15–30 Days
-                    </th>
-                    <th
-                      style={{
-                        padding: '4px 6px',
-                        fontSize: 7,
-                        fontWeight: 700,
-                        textAlign: 'center',
-                        borderRight: `1px solid ${theme.colors.border}`,
-                      }}
-                    >
-                      1–14 Days
-                    </th>
-                    <th
-                      style={{
-                        padding: '4px 6px',
-                        fontSize: 7,
-                        fontWeight: 700,
-                        textAlign: 'center',
-                        borderRight: `1px solid ${theme.colors.border}`,
-                      }}
-                    >
-                      Current
-                    </th>
-                    <th
-                      style={{
-                        padding: '4px 6px',
-                        fontSize: 7,
-                        fontWeight: 700,
-                        textAlign: 'center',
-                      }}
-                    >
-                      Total Due
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td
-                      style={{
-                        padding: '6px',
-                        fontSize: 8,
-                        textAlign: 'center',
-                        fontWeight: data.ageing.days61plus > 0 ? 700 : 400,
-                        color: data.ageing.days61plus > 0 ? '#dc2626' : 'inherit',
-                        fontVariantNumeric: 'tabular-nums',
-                        borderRight: `1px solid ${theme.colors.border}`,
-                      }}
-                    >
-                      {formatZAR(data.ageing.days61plus)}
-                    </td>
-                    <td
-                      style={{
-                        padding: '6px',
-                        fontSize: 8,
-                        textAlign: 'center',
-                        fontWeight: data.ageing.days31_60 > 0 ? 700 : 400,
-                        color: data.ageing.days31_60 > 0 ? '#dc2626' : 'inherit',
-                        fontVariantNumeric: 'tabular-nums',
-                        borderRight: `1px solid ${theme.colors.border}`,
-                      }}
-                    >
-                      {formatZAR(data.ageing.days31_60)}
-                    </td>
-                    <td
-                      style={{
-                        padding: '6px',
-                        fontSize: 8,
-                        textAlign: 'center',
-                        fontWeight: data.ageing.days15_30 > 0 ? 700 : 400,
-                        color: data.ageing.days15_30 > 0 ? '#d97706' : 'inherit',
-                        fontVariantNumeric: 'tabular-nums',
-                        borderRight: `1px solid ${theme.colors.border}`,
-                      }}
-                    >
-                      {formatZAR(data.ageing.days15_30)}
-                    </td>
-                    <td
-                      style={{
-                        padding: '6px',
-                        fontSize: 8,
-                        textAlign: 'center',
-                        fontWeight: data.ageing.days1_14 > 0 ? 700 : 400,
-                        color: data.ageing.days1_14 > 0 ? '#d97706' : 'inherit',
-                        fontVariantNumeric: 'tabular-nums',
-                        borderRight: `1px solid ${theme.colors.border}`,
-                      }}
-                    >
-                      {formatZAR(data.ageing.days1_14)}
-                    </td>
-                    <td
-                      style={{
-                        padding: '6px',
-                        fontSize: 8,
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        color: theme.colors.foreground,
-                        fontVariantNumeric: 'tabular-nums',
-                        borderRight: `1px solid ${theme.colors.border}`,
-                      }}
-                    >
-                      {formatZAR(data.ageing.current)}
-                    </td>
-                    <td
-                      style={{
-                        padding: '6px',
-                        fontSize: 8.5,
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        color: totalDue > 0 ? theme.colors.foreground : theme.colors.success,
-                        fontVariantNumeric: 'tabular-nums',
-                      }}
-                    >
-                      {formatZARWithCR(totalDue)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                {/* 61+ Days */}
+                <div
+                  style={{
+                    flex: '1 1 0%',
+                    width: '16.66%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderRight: `1px solid ${theme.colors.border}`,
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: '4px 2px',
+                      fontSize: 7,
+                      fontWeight: 700,
+                      textAlign: 'center',
+                      whiteSpace: 'nowrap',
+                      backgroundColor: '#f9fafb',
+                      color: theme.colors.mutedForeground,
+                      borderBottom: `1px solid ${theme.colors.border}`,
+                    }}
+                  >
+                    61+ Days
+                  </div>
+                  <div
+                    style={{
+                      padding: '6px 2px',
+                      fontSize: 8,
+                      textAlign: 'center',
+                      fontWeight: data.ageing.days61plus > 0 ? 700 : 400,
+                      whiteSpace: 'nowrap',
+                      color: data.ageing.days61plus > 0 ? '#dc2626' : 'inherit',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {formatZAR(data.ageing.days61plus)}
+                  </div>
+                </div>
+
+                {/* 31–60 Days */}
+                <div
+                  style={{
+                    flex: '1 1 0%',
+                    width: '16.66%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderRight: `1px solid ${theme.colors.border}`,
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: '4px 2px',
+                      fontSize: 7,
+                      fontWeight: 700,
+                      textAlign: 'center',
+                      whiteSpace: 'nowrap',
+                      backgroundColor: '#f9fafb',
+                      color: theme.colors.mutedForeground,
+                      borderBottom: `1px solid ${theme.colors.border}`,
+                    }}
+                  >
+                    31–60 Days
+                  </div>
+                  <div
+                    style={{
+                      padding: '6px 2px',
+                      fontSize: 8,
+                      textAlign: 'center',
+                      fontWeight: data.ageing.days31_60 > 0 ? 700 : 400,
+                      whiteSpace: 'nowrap',
+                      color: data.ageing.days31_60 > 0 ? '#dc2626' : 'inherit',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {formatZAR(data.ageing.days31_60)}
+                  </div>
+                </div>
+
+                {/* 15–30 Days */}
+                <div
+                  style={{
+                    flex: '1 1 0%',
+                    width: '16.66%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderRight: `1px solid ${theme.colors.border}`,
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: '4px 2px',
+                      fontSize: 7,
+                      fontWeight: 700,
+                      textAlign: 'center',
+                      whiteSpace: 'nowrap',
+                      backgroundColor: '#f9fafb',
+                      color: theme.colors.mutedForeground,
+                      borderBottom: `1px solid ${theme.colors.border}`,
+                    }}
+                  >
+                    15–30 Days
+                  </div>
+                  <div
+                    style={{
+                      padding: '6px 2px',
+                      fontSize: 8,
+                      textAlign: 'center',
+                      fontWeight: data.ageing.days15_30 > 0 ? 700 : 400,
+                      whiteSpace: 'nowrap',
+                      color: data.ageing.days15_30 > 0 ? '#d97706' : 'inherit',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {formatZAR(data.ageing.days15_30)}
+                  </div>
+                </div>
+
+                {/* 1–14 Days */}
+                <div
+                  style={{
+                    flex: '1 1 0%',
+                    width: '16.66%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderRight: `1px solid ${theme.colors.border}`,
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: '4px 2px',
+                      fontSize: 7,
+                      fontWeight: 700,
+                      textAlign: 'center',
+                      whiteSpace: 'nowrap',
+                      backgroundColor: '#f9fafb',
+                      color: theme.colors.mutedForeground,
+                      borderBottom: `1px solid ${theme.colors.border}`,
+                    }}
+                  >
+                    1–14 Days
+                  </div>
+                  <div
+                    style={{
+                      padding: '6px 2px',
+                      fontSize: 8,
+                      textAlign: 'center',
+                      fontWeight: data.ageing.days1_14 > 0 ? 700 : 400,
+                      whiteSpace: 'nowrap',
+                      color: data.ageing.days1_14 > 0 ? '#d97706' : 'inherit',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {formatZAR(data.ageing.days1_14)}
+                  </div>
+                </div>
+
+                {/* Current */}
+                <div
+                  style={{
+                    flex: '1 1 0%',
+                    width: '16.66%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderRight: `1px solid ${theme.colors.border}`,
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: '4px 2px',
+                      fontSize: 7,
+                      fontWeight: 700,
+                      textAlign: 'center',
+                      whiteSpace: 'nowrap',
+                      backgroundColor: '#f9fafb',
+                      color: theme.colors.mutedForeground,
+                      borderBottom: `1px solid ${theme.colors.border}`,
+                    }}
+                  >
+                    Current
+                  </div>
+                  <div
+                    style={{
+                      padding: '6px 2px',
+                      fontSize: 8,
+                      textAlign: 'center',
+                      fontWeight: 700,
+                      whiteSpace: 'nowrap',
+                      color: theme.colors.foreground,
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {formatZAR(data.ageing.current)}
+                  </div>
+                </div>
+
+                {/* Total Due */}
+                <div
+                  style={{
+                    flex: '1 1 0%',
+                    width: '16.7%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: '4px 2px',
+                      fontSize: 7,
+                      fontWeight: 700,
+                      textAlign: 'center',
+                      whiteSpace: 'nowrap',
+                      backgroundColor: '#f9fafb',
+                      color: theme.colors.mutedForeground,
+                      borderBottom: `1px solid ${theme.colors.border}`,
+                    }}
+                  >
+                    Total Due
+                  </div>
+                  <div
+                    style={{
+                      padding: '6px 2px',
+                      fontSize: 8.5,
+                      textAlign: 'center',
+                      fontWeight: 700,
+                      whiteSpace: 'nowrap',
+                      color: totalDue > 0 ? theme.colors.foreground : theme.colors.success,
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {formatZAR(totalDue)}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

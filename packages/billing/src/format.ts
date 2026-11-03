@@ -281,3 +281,23 @@ export function stripExpenseDescription(description?: string | null): string {
 
   return cleaned || description.trim();
 }
+
+/**
+ * Sanitizes free-form text for PDF rendering in Takumi WASM.
+ * Replaces non-standard unicode dashes, slashes, replacement characters,
+ * zero-width spaces, and control characters with clean ASCII equivalents.
+ */
+export function cleanPdfText(text?: string | null): string {
+  if (!text) return '';
+  return text
+    .replace(/[\r\n\t\v\f]+/g, ' ')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/[\uFFFD]/g, '-')
+    .replace(/[\u2010-\u2015]/g, '-')
+    .replace(/[\u2044\u2215\uFF0F]/g, '/')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[^\x20-\x7E\u00A0-\u00FF]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}

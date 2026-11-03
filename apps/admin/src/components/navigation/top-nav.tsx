@@ -40,6 +40,15 @@ function getParentGroup(pathname: string): { label: string; href: string } | nul
       return { label: group.label, href: group.items[0].url };
     }
   }
+
+  // Fallback for sub-routes of combined accounting prefix (e.g. /accounting/* -> Finance)
+  if (segments[0] === 'accounting') {
+    const financeGroup = GROUPS.find((g) => g.key === 'finance');
+    if (financeGroup) {
+      return { label: financeGroup.label, href: financeGroup.items[0].url };
+    }
+  }
+
   return null;
 }
 
@@ -100,12 +109,13 @@ export function TopNav() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
+      </div>
+
+      <div className="flex items-center gap-2">
         {total && (
-          <span className={`text-base font-semibold tabular-nums ${totalColor}`}>{total}</span>
+          <span className={`text-sm font-semibold tabular-nums ${totalColor}`}>{total}</span>
         )}
-        <div className="ml-auto">
-          <ThemeToggle />
-        </div>
+        <ThemeToggle />
       </div>
     </header>
   );

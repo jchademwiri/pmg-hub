@@ -49,6 +49,9 @@ function getActiveGroup(pathname: string): GroupKey | null {
       }
     }
   }
+  if (!bestMatch && pathname.startsWith('/accounting')) {
+    return 'finance';
+  }
   return bestMatch ? bestMatch.key : null;
 }
 
