@@ -1772,7 +1772,7 @@ export async function getInvoicedByDivision(): Promise<
       COALESCE(SUM(invoices.total), 0) AS total
     FROM invoices
     JOIN divisions ON divisions.id = invoices.division_id
-    WHERE invoices.status IN ('issued', 'overdue', 'partially_paid', 'paid')
+    WHERE invoices.status IN ('issued', 'overdue', 'partially_paid', 'paid', 'written_off')
       AND invoices.invoice_date <= timezone('Africa/Johannesburg', now())::date
     GROUP BY divisions.id, divisions.name
     ORDER BY total DESC
