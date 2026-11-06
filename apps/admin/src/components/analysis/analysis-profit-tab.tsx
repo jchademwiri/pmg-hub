@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { SankeyDiagram } from '@/components/reports/sankey-diagram';
-import { ProfitPoolChart } from '@/components/reports/profit-pool-chart';
 import { FinancialDrilldownSheet } from '@/components/insights/financial-drilldown-sheet';
 import type { DrilldownType } from '@/app/actions/drilldown';
 import type { MonthlyFinancials, BucketBalances } from '@/lib/financial';
@@ -13,7 +12,7 @@ interface AnalysisProfitTabProps {
   pmgShare: number;
   profitPool: number;
   ledgerBalances?: BucketBalances;
-  monthlyFinancials: MonthlyFinancials[];
+  monthlyFinancials?: MonthlyFinancials[];
   currentPeriod: string;
 }
 
@@ -31,7 +30,6 @@ export function AnalysisProfitTab({
   pmgShare,
   profitPool,
   ledgerBalances,
-  monthlyFinancials,
   currentPeriod,
 }: AnalysisProfitTabProps) {
   const [drillOpen, setDrillOpen] = useState(false);
@@ -52,7 +50,7 @@ export function AnalysisProfitTab({
         period={drillPeriod}
         drillType={drillType}
       />
-      <div className="grid grid-cols-1 gap-6 min-h-[400px]">
+      <div className="min-h-[400px]">
         <SankeyDiagram
           revenue={revenue}
           expenses={expenses}
@@ -63,12 +61,6 @@ export function AnalysisProfitTab({
             const type = nodeToDrillType[nodeId];
             if (type) openDrill(type, currentPeriod);
           }}
-        />
-        <ProfitPoolChart
-          data={monthlyFinancials.map((m) => ({
-            period: m.month,
-            profit: m.revenue - m.expenses,
-          }))}
         />
       </div>
     </>

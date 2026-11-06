@@ -76,7 +76,7 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
     getLedgerBalances(),
     getActiveRates(),
     getAllSnapshots(),
-    getProfitAndLossByDivision(`${selectedYear}-FY`),
+    getProfitAndLossByDivision(undefined, `${selectedYear}-01-01`, `${selectedYear}-12-31`),
     getOrganisationSettings(),
   ]);
 
@@ -232,8 +232,8 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
             reportType="division-performance"
             reportTitle="Division Performance"
             divisionName="All Divisions"
-            periodLabel={`FY ${selectedYear}`}
-            dateRangeLabel={`Financial Year ${selectedYear}`}
+            periodLabel={`Year ${selectedYear}`}
+            dateRangeLabel={`01 Jan ${selectedYear} - 31 Dec ${selectedYear}`}
             orgSettings={orgSettings}
             data={{ divisions: divisionPnl }}
             loading={false}
