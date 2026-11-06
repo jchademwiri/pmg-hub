@@ -8,7 +8,6 @@ import {
 } from '@/components/ui/table';
 import { formatZAR } from '@/lib/format';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
-
 import { cn } from '@/lib/utils';
 
 interface YoYComparisonTableProps {
@@ -36,6 +35,12 @@ export function YoYComparisonTable({ data, className }: YoYComparisonTableProps)
 
   const rows = [
     {
+      label: 'Total Revenue',
+      key: 'totalInvoiced',
+      isCurrency: true,
+      colorClass: 'text-blue-600 dark:text-blue-400 font-medium',
+    },
+    {
       label: 'Total Income',
       key: 'totalIncome',
       isCurrency: true,
@@ -53,31 +58,6 @@ export function YoYComparisonTable({ data, className }: YoYComparisonTableProps)
       isCurrency: true,
       colorClass: 'text-emerald-600 dark:text-emerald-500 font-bold',
     },
-    {
-      label: 'Total Invoiced',
-      key: 'totalInvoiced',
-      isCurrency: true,
-      colorClass: 'text-emerald-600 dark:text-emerald-500 font-medium',
-    },
-    {
-      label: 'Average Invoice',
-      key: 'averageInvoice',
-      isCurrency: true,
-      colorClass: 'text-emerald-600 dark:text-emerald-500 font-medium',
-    },
-    {
-      label: 'Average Transaction',
-      key: 'averageTransaction',
-      isCurrency: true,
-      colorClass: 'text-emerald-600 dark:text-emerald-500 font-medium',
-    },
-    { label: 'Quotes Issued', key: 'quotesIssued', isCurrency: false },
-    {
-      label: 'Quote Conversion Rate',
-      key: 'quoteConversionRate',
-      isCurrency: false,
-      isPercent: true,
-    },
   ];
 
   const getTrendIcon = (currentVal: number, priorVal: number) => {
@@ -89,7 +69,6 @@ export function YoYComparisonTable({ data, className }: YoYComparisonTableProps)
   const renderCell = (row: (typeof rows)[number], record: (typeof data)[number]) => {
     const value = record[row.key as keyof typeof record];
     if (row.isCurrency) return formatZAR(value as number);
-    if (row.isPercent) return `${(value as number).toFixed(1)}%`;
     return value;
   };
 
@@ -116,38 +95,29 @@ export function YoYComparisonTable({ data, className }: YoYComparisonTableProps)
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row, index) => (
+          {rows.map((row) => (
             <TableRow
-              key={row.key}
+              key={row.label}
               className="transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
             >
-              <TableCell className="font-medium py-4">{row.label}</TableCell>
-
-              <TableCell className={`text-right ${row.colorClass || ''}`}>
+              <TableCell className="font-medium py-4 text-foreground">{row.label}</TableCell>
+              <TableCell className={cn('text-right py-4 tabular-nums', row.colorClass)}>
                 {renderCell(row, current)}
               </TableCell>
-
               {prior && (
-                <TableCell className="text-right text-muted-foreground">
+                <TableCell className="text-right py-4 text-muted-foreground tabular-nums">
                   {renderCell(row, prior)}
                 </TableCell>
               )}
-
               {prior2 && (
-                <TableCell className="text-right text-muted-foreground">
+                <TableCell className="text-right py-4 text-muted-foreground tabular-nums">
                   {renderCell(row, prior2)}
                 </TableCell>
               )}
-
-              <TableCell className="text-right flex justify-end items-center h-full py-4">
-                {prior ? (
-                  getTrendIcon(
-                    current[row.key as keyof typeof current] as number,
-                    prior[row.key as keyof typeof prior] as number,
-                  )
-                ) : (
-                  <Minus className="h-4 w-4 text-muted-foreground" />
-                )}
+              <TableCell className="py-4">
+                <div className="flex items-center justify-end">
+                  {prior ? getTrendIcon(Number(current[row.key as keyof typeof current]), Number(prior[row.key as keyof typeof prior])) : <span className="text-muted-foreground">—</span>}
+                </div>
               </TableCell>
             </TableRow>
           ))}
