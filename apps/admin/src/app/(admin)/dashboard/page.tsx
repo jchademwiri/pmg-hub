@@ -23,11 +23,8 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Dashboard' };
 
 export default async function DashboardPage() {
-  const { year, month, day: dayOfMonth } = getSASTParts();
+  const { year, month } = getSASTParts();
   const fiscalYear = month < 2 ? year - 1 : year;
-
-  // Close Month button is only shown between the 1st and 5th of the month
-  const showCloseMonthButton = dayOfMonth >= 1 && dayOfMonth <= 5;
 
   // The period to close is ALWAYS the previous month, not the current one
   const prevDate = new Date(year, month - 1, 1);
@@ -74,6 +71,7 @@ export default async function DashboardPage() {
   };
 
   const hasSnapshot = currentPeriodSnapshot !== null;
+  const showCloseMonthButton = !hasSnapshot;
 
   // Build MoM deltas (current vs previous month)
   const revenueSnap = momData.find((d) => d.metric === 'Revenue');

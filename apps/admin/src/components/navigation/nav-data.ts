@@ -16,6 +16,7 @@ import {
   Cog,
   LayoutDashboard,
   TrendingDown,
+  TrendingUp,
   FileText,
   Receipt,
   Building2,
@@ -33,6 +34,8 @@ import {
   CalendarClock,
   CalendarRange,
   UserCheck,
+  Clock,
+  Camera,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Role } from '@/lib/roles';
@@ -87,6 +90,7 @@ export const GROUPS: NavGroup[] = [
       { title: 'Payments', url: '/billing/payments', icon: Banknote },
       { title: 'Credits', url: '/billing/credits', icon: Wallet },
       { title: 'Statements', url: '/billing/statements', icon: ScrollText },
+      { title: 'AR Aging', url: '/billing/aging', icon: Clock },
       { title: 'Reports', url: '/billing/reports', icon: BarChart3 },
       { title: 'Billing Items', url: '/billing/items', icon: Package },
     ],
@@ -127,6 +131,17 @@ export const GROUPS: NavGroup[] = [
     ],
   },
   {
+    key: 'insights',
+    label: 'Insights',
+    icon: LineChart,
+    items: [
+      { title: 'Overview', url: '/insights', icon: LayoutGrid },
+      { title: 'Business Analysis', url: '/insights/analysis', icon: TrendingUp },
+      { title: 'Monthly Reports', url: '/insights/reports', icon: BarChart3 },
+      { title: 'Snapshots', url: '/insights/snapshots', icon: Camera },
+    ],
+  },
+  {
     key: 'system',
     label: 'System',
     icon: Cog,
@@ -151,7 +166,6 @@ for (const group of GROUPS) {
 // Extra routes that exist in the app but are not sidebar items
 const EXTRA_LABELS: Record<string, string> = {
   // Billing
-  '/billing/aging': 'AR Aging',
   '/billing/payments/add': 'Record Payment',
 
   // Relationships
@@ -174,12 +188,8 @@ const EXTRA_LABELS: Record<string, string> = {
   '/accounting/journals/new': 'New Journal Entry',
   '/accounting/trial-balance': 'Trial Balance',
 
-  // Insights (deferred)
-  '/insights': 'Reports & Insights',
+  // Insights
   '/insights/financial-reports': 'Financial Reports',
-  '/insights/analysis': 'Business Analysis',
-  '/insights/reports': 'Performance Reports',
-  '/insights/snapshots': 'Snapshots',
 
   // Settings
   '/settings/organisation': 'Organisation',
