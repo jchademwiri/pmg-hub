@@ -117,7 +117,7 @@ export async function getAnalysisOverview(year: number, currentDateStr: string) 
       and(
         gte(invoices.invoiceDate, currentFY.start),
         lt(invoices.invoiceDate, currentFY.end),
-        inArray(invoices.status, ['issued', 'partially_paid', 'paid', 'overdue']),
+        inArray(invoices.status, ['issued', 'partially_paid', 'paid', 'overdue', 'written_off']),
       ),
     );
 
@@ -132,7 +132,7 @@ export async function getAnalysisOverview(year: number, currentDateStr: string) 
       and(
         gte(invoices.invoiceDate, curMonthStart),
         lt(invoices.invoiceDate, curMonthEnd),
-        inArray(invoices.status, ['issued', 'partially_paid', 'paid', 'overdue']),
+        inArray(invoices.status, ['issued', 'partially_paid', 'paid', 'overdue', 'written_off']),
       ),
     );
 
@@ -147,7 +147,7 @@ export async function getAnalysisOverview(year: number, currentDateStr: string) 
       and(
         gte(invoices.invoiceDate, prevMonthStart),
         lt(invoices.invoiceDate, prevMonthEnd),
-        inArray(invoices.status, ['issued', 'partially_paid', 'paid', 'overdue']),
+        inArray(invoices.status, ['issued', 'partially_paid', 'paid', 'overdue', 'written_off']),
       ),
     );
 
@@ -374,7 +374,7 @@ export async function getThreeYearYoYComparison(currentYear: number) {
           and(
             gte(invoices.invoiceDate, fy.start),
             lt(invoices.invoiceDate, fy.end),
-            inArray(invoices.status, ['issued', 'partially_paid', 'paid', 'overdue']),
+            inArray(invoices.status, ['issued', 'partially_paid', 'paid', 'overdue', 'written_off']),
           ),
         );
 
@@ -493,7 +493,7 @@ export async function getClientConcentration(year: number) {
       and(
         gte(invoices.invoiceDate, start),
         lt(invoices.invoiceDate, end),
-        inArray(invoices.status, ['issued', 'partially_paid', 'paid', 'overdue']),
+        inArray(invoices.status, ['issued', 'partially_paid', 'paid', 'overdue', 'written_off']),
       ),
     )
     .groupBy(invoices.clientId);
@@ -586,7 +586,7 @@ export async function getMonthlyFinancialsBreakdownForYear(year: number) {
     SELECT TO_CHAR(invoice_date::date, 'YYYY-MM') AS month, COALESCE(SUM(total), 0) AS total
     FROM invoices
     WHERE EXTRACT(YEAR FROM (invoice_date::date - INTERVAL '2 months'))::int = ${Number(year)}
-      AND status IN ('issued', 'partially_paid', 'paid', 'overdue')
+      AND status IN ('issued', 'partially_paid', 'paid', 'overdue', 'written_off')
     GROUP BY TO_CHAR(invoice_date::date, 'YYYY-MM')
   `);
 
