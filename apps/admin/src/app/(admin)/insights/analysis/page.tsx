@@ -9,6 +9,8 @@ import {
   getMonthlyFinancialsBreakdownForYear,
   getAllSnapshots,
   getActiveRates,
+  getProfitAndLossByDivision,
+  getOrganisationSettings,
 } from '@pmg/db';
 import {
   getMonthlyFinancialsSeriesForYear,
@@ -26,8 +28,8 @@ import { MoMComparisonTable } from '@/components/analysis/mom-comparison-table';
 import { AnalysisTabs } from '@/components/analysis/analysis-tabs';
 import { AnalysisProfitTab } from '@/components/analysis/analysis-profit-tab';
 import { SnapshotsCockpit } from '@/components/insights/snapshots-cockpit';
-import { RevenueByDivisionChart } from '@/components/reports/revenue-by-division-chart';
-import { DollarSign, Camera, BarChart3 } from 'lucide-react';
+import { ReportDocumentCanvas } from '@/components/accounting/report-document-canvas';
+import { DollarSign, Camera, Building2 } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Business Analysis | PMG Hub',
@@ -61,6 +63,8 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
     ledgerBalancesResult,
     activeRatesResult,
     snapshotsResult,
+    divisionPnlResult,
+    orgSettingsResult,
   ] = await Promise.allSettled([
     getAnalysisOverview(selectedYear, currentDateStr),
     getThreeYearYoYComparison(selectedYear),
@@ -72,6 +76,8 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
     getLedgerBalances(),
     getActiveRates(),
     getAllSnapshots(),
+    getProfitAndLossByDivision(`${selectedYear}-FY`),
+    getOrganisationSettings(),
   ]);
 
   if (overviewResult.status === 'rejected') console.error('Overview error:', overviewResult.reason);
@@ -91,6 +97,10 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
     console.error('Ledger balances error:', ledgerBalancesResult.reason);
   if (snapshotsResult.status === 'rejected')
     console.error('Snapshots error:', snapshotsResult.reason);
+  if (divisionPnlResult.status === 'rejected')
+    console.error('Division PnL error:', divisionPnlResult.reason);
+  if (orgSettingsResult.status === 'rejected')
+    console.error('Org settings error:', orgSettingsResult.reason);
 
   const overview =
     overviewResult.status === 'fulfilled'
@@ -106,8 +116,6 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
   const clientConcentration =
     clientConcentrationResult.status === 'fulfilled' ? clientConcentrationResult.value : [];
   const momBreakdown = momBreakdownResult.status === 'fulfilled' ? momBreakdownResult.value : [];
-  const budgetChartSeries =
-    budgetChartResult.status === 'fulfilled' ? budgetChartResult.value : [];
 
   const monthlyFinancials =
     monthlyFinancialsResult.status === 'fulfilled' ? monthlyFinancialsResult.value : [];
@@ -120,6 +128,8 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
   const ledgerBalances =
     ledgerBalancesResult.status === 'fulfilled' ? ledgerBalancesResult.value : undefined;
   const snapshots = snapshotsResult.status === 'fulfilled' ? snapshotsResult.value : [];
+  const divisionPnl = divisionPnlResult.status === 'fulfilled' ? divisionPnlResult.value : [];
+  const orgSettings = orgSettingsResult.status === 'fulfilled' ? orgSettingsResult.value : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -162,7 +172,7 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
               <Camera className="h-3.5 w-3.5" /> Snapshots
             </TabsTrigger>
             <TabsTrigger value="divisions" className="shrink-0 min-w-[110px] gap-1.5">
-              <BarChart3 className="h-3.5 w-3.5" /> Divisions
+              <Building2 className="h-3.5 w-3.5" /> Divisions
             </TabsTrigger>
             <TabsTrigger value="clients" className="shrink-0 min-w-[100px]">
               Clients
@@ -216,9 +226,18 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
           <SnapshotsCockpit snapshots={snapshots} />
         </TabsContent>
 
-        {/* ── Divisions Tab (Income by Division) ─────────────────────────── */}
+        {/* ── Divisions Tab (Division Performance from Financial Reports) ── */}
         <TabsContent value="divisions" className="space-y-6">
-          <RevenueByDivisionChart data={budgetChartSeries} currentPeriod={currentPeriod} />
+          <ReportDocumentCanvas
+            reportType="division-performance"
+            reportTitle="Division Performance"
+            divisionName="All Divisions"
+            periodLabel={`FY ${selectedYear}`}
+            dateRangeLabel={`Financial Year ${selectedYear}`}
+            orgSettings={orgSettings}
+            data={{ divisions: divisionPnl }}
+            loading={false}
+          />
         </TabsContent>
 
         {/* ── Clients Tab ────────────────────────────────────────────────── */}
