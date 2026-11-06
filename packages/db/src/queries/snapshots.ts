@@ -1,12 +1,14 @@
 import { db } from '../client';
 import { snapshots } from '../schema/index';
 import { getFinancialSummaryForPeriod, type PeriodSummary } from './general';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 
 export type SnapshotRow = {
   id: string;
   period: string;
   revenue: string;
+  invoicedRevenue?: string;
+  income?: string;
   expenses: string;
   pmgShare: string;
   profitPool: string;
@@ -21,7 +23,24 @@ export type SnapshotRow = {
  * Returns all snapshot rows ordered by period descending.
  */
 export async function getAllSnapshots(): Promise<SnapshotRow[]> {
-  return db.select().from(snapshots).orderBy(desc(snapshots.period));
+  const rows = await db.select().from(snapshots).orderBy(desc(snapshots.period));
+  const invoicedResult = await db.execute(sql`
+    SELECT TO_CHAR(invoice_date::date, 'YYYY-MM') AS period, COALESCE(SUM(total), 0) AS invoiced
+    FROM invoices
+    WHERE status IN ('issued', 'partially_paid', 'paid', 'overdue', 'written_off')
+    GROUP BY TO_CHAR(invoice_date::date, 'YYYY-MM')
+  `);
+  const invoicedMap = new Map(
+    (invoicedResult.rows as { period: string; invoiced: string }[]).map((r) => [
+      r.period,
+      String(r.invoiced),
+    ]),
+  );
+  return rows.map((row) => ({
+    ...row,
+    invoicedRevenue: invoicedMap.get(row.period) ?? '0.00',
+    income: row.revenue,
+  }));
 }
 
 /**
@@ -38,32 +57,34 @@ export async function getAllSnapshotsWithOpenMonths(): Promise<SnapshotRow[]> {
   const closedPeriods = new Set(closedSnapshots.map((s) => s.period));
   const openPeriods: string[] = [];
 
+  // Determine fiscal year start period (March of current fiscal year)
+  const cYr = sastDate.getFullYear();
+  const cMo = sastDate.getMonth() + 1;
+  const fyStartYear = cMo < 3 ? cYr - 1 : cYr;
+  const fyStartPeriod = `${fyStartYear}-03`;
+
+  // Start from either fyStartPeriod or the earliest closed snapshot (whichever is earlier)
+  let earliestPeriod = fyStartPeriod;
   if (closedSnapshots.length > 0) {
-    const newestPeriod = closedSnapshots[0]!.period;
-    let [y, m] = newestPeriod.split('-').map(Number);
+    const oldestClosed = closedSnapshots[closedSnapshots.length - 1]!.period;
+    if (oldestClosed < earliestPeriod) {
+      earliestPeriod = oldestClosed;
+    }
+  }
+
+  // Iterate month by month from earliestPeriod to currentPeriod
+  let [y, m] = earliestPeriod.split('-').map(Number);
+  while (true) {
+    const p = `${y}-${String(m).padStart(2, '0')}`;
+    if (p > currentPeriod) break;
+    if (!closedPeriods.has(p)) {
+      openPeriods.push(p);
+    }
     m += 1;
     if (m > 12) {
       m = 1;
       y += 1;
     }
-    while (true) {
-      const p = `${y}-${String(m).padStart(2, '0')}`;
-      if (p > currentPeriod) break;
-      if (!closedPeriods.has(p)) {
-        openPeriods.push(p);
-      }
-      m += 1;
-      if (m > 12) {
-        m = 1;
-        y += 1;
-      }
-    }
-  } else {
-    openPeriods.push(currentPeriod);
-  }
-
-  if (!closedPeriods.has(currentPeriod) && !openPeriods.includes(currentPeriod)) {
-    openPeriods.push(currentPeriod);
   }
 
   const openRows: SnapshotRow[] = await Promise.all(
@@ -87,9 +108,26 @@ export async function getAllSnapshotsWithOpenMonths(): Promise<SnapshotRow[]> {
     }),
   );
 
+  const invoicedResult = await db.execute(sql`
+    SELECT TO_CHAR(invoice_date::date, 'YYYY-MM') AS period, COALESCE(SUM(total), 0) AS invoiced
+    FROM invoices
+    WHERE status IN ('issued', 'partially_paid', 'paid', 'overdue', 'written_off')
+    GROUP BY TO_CHAR(invoice_date::date, 'YYYY-MM')
+  `);
+  const invoicedMap = new Map(
+    (invoicedResult.rows as { period: string; invoiced: string }[]).map((r) => [
+      r.period,
+      String(r.invoiced),
+    ]),
+  );
+
   const all = [...openRows, ...closedSnapshots];
   all.sort((a, b) => b.period.localeCompare(a.period));
-  return all;
+  return all.map((row) => ({
+    ...row,
+    invoicedRevenue: invoicedMap.get(row.period) ?? '0.00',
+    income: row.revenue,
+  }));
 }
 
 /**
@@ -97,8 +135,20 @@ export async function getAllSnapshotsWithOpenMonths(): Promise<SnapshotRow[]> {
  */
 export async function getSnapshotByPeriod(period: string): Promise<SnapshotRow | null> {
   const result = await db.select().from(snapshots).where(eq(snapshots.period, period));
-
-  return result[0] ?? null;
+  if (!result[0]) return null;
+  const row = result[0];
+  const invoicedRes = await db.execute(sql`
+    SELECT COALESCE(SUM(total), 0) AS invoiced
+    FROM invoices
+    WHERE TO_CHAR(invoice_date::date, 'YYYY-MM') = ${period}
+      AND status IN ('issued', 'partially_paid', 'paid', 'overdue', 'written_off')
+  `);
+  const invoiced = String((invoicedRes.rows[0] as any)?.invoiced ?? '0.00');
+  return {
+    ...row,
+    invoicedRevenue: invoiced,
+    income: row.revenue,
+  };
 }
 
 /**

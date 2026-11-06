@@ -21,6 +21,7 @@ function makeRow(period: string, profitPool: number): SnapshotView {
     periodLabel: period,
     shortPeriodLabel: period,
     revenue: 0,
+    income: 0,
     expenses: 0,
     pmgShare: 0,
     profitPool,

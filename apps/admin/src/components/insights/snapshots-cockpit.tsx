@@ -25,6 +25,7 @@ export type SnapshotView = {
   periodLabel: string;
   shortPeriodLabel: string;
   revenue: number;
+  income: number;
   expenses: number;
   pmgShare: number;
   profitPool: number;
@@ -93,19 +94,26 @@ function amountToneClass(tone: AmountTone) {
 export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
   const rows = useMemo<SnapshotView[]>(
     () =>
-      snapshots.map((snapshot) => ({
-        id: snapshot.id,
-        period: snapshot.period,
-        periodLabel: fmtMonthYear(snapshot.period),
-        shortPeriodLabel: fmtMonthYear(snapshot.period, { short: true }),
-        revenue: toMoney(snapshot.revenue),
-        expenses: toMoney(snapshot.expenses),
-        pmgShare: toMoney(snapshot.pmgShare),
-        profitPool: toMoney(snapshot.profitPool),
-        status: snapshot.status,
-        notes: snapshot.notes,
-        closedAt: snapshot.closedAt,
-      })),
+      snapshots.map((snapshot) => {
+        const cashIncome = toMoney(snapshot.income ?? snapshot.revenue);
+        const invoicedRevenue = snapshot.invoicedRevenue
+          ? toMoney(snapshot.invoicedRevenue)
+          : cashIncome;
+        return {
+          id: snapshot.id,
+          period: snapshot.period,
+          periodLabel: fmtMonthYear(snapshot.period),
+          shortPeriodLabel: fmtMonthYear(snapshot.period, { short: true }),
+          revenue: invoicedRevenue,
+          income: cashIncome,
+          expenses: toMoney(snapshot.expenses),
+          pmgShare: toMoney(snapshot.pmgShare),
+          profitPool: toMoney(snapshot.profitPool),
+          status: snapshot.status,
+          notes: snapshot.notes,
+          closedAt: snapshot.closedAt,
+        };
+      }),
     [snapshots],
   );
 
@@ -180,17 +188,16 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
       fyRows.reduce(
         (acc, row) => ({
           revenue: acc.revenue + row.revenue,
+          income: acc.income + row.income,
           expenses: acc.expenses + row.expenses,
           pmgShare: acc.pmgShare + row.pmgShare,
           profitPool: acc.profitPool + row.profitPool,
         }),
-        { revenue: 0, expenses: 0, pmgShare: 0, profitPool: 0 },
+        { revenue: 0, income: 0, expenses: 0, pmgShare: 0, profitPool: 0 },
       ),
     [fyRows],
   );
-  const grossMarginPct =
-    totals.revenue > 0 ? ((totals.revenue - totals.expenses) / totals.revenue) * 100 : 0;
-  const netMarginPct = totals.revenue > 0 ? (totals.profitPool / totals.revenue) * 100 : 0;
+  const netMarginPct = totals.income > 0 ? (totals.profitPool / totals.income) * 100 : 0;
 
   if (rows.length === 0) {
     return (
@@ -217,38 +224,42 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             value={formatZAR(totals.revenue)}
             icon={TrendingUp}
             tone="revenue"
+            hint="Total invoiced gross revenue recognized in this financial year."
           />
           <SummaryMetric
-            label="PMG Share"
-            value={formatZAR(totals.pmgShare)}
+            label="Total income"
+            value={formatZAR(totals.income)}
             icon={TrendingUp}
-            tone="share"
+            tone="revenue"
+            hint="Total cash income received from clients during this financial year."
           />
           <SummaryMetric
             label="Total expenses"
             value={formatZAR(totals.expenses)}
             icon={TrendingDown}
             tone="expense"
+            hint="Total recorded operating expenses during this financial year."
           />
           <SummaryMetric
             label="Total profit/loss"
             value={formatZAR(totals.profitPool)}
             icon={totals.profitPool >= 0 ? TrendingUp : TrendingDown}
             tone={totals.profitPool >= 0 ? 'positive' : 'negative'}
+            hint="Total Actual Profit (Income − Expenses)."
           />
           <SummaryMetric
-            label="Profit percentage"
-            value={`${grossMarginPct.toFixed(1)}%`}
-            icon={Percent}
-            tone={grossMarginPct >= 0 ? 'positive' : 'negative'}
-            hint="Total profit retained in the business (Revenue − Expenses) ÷ Revenue — includes the PMG growth & investment reserve, since that stays within the organisation."
+            label="PMG Share"
+            value={formatZAR(totals.pmgShare)}
+            icon={TrendingUp}
+            tone="share"
+            hint="PMG cross-divisional growth & investment reserve."
           />
           <SummaryMetric
             label="Distributable margin"
             value={`${netMarginPct.toFixed(1)}%`}
             icon={Percent}
             tone={netMarginPct >= 0 ? 'positive' : 'negative'}
-            hint="Total Actual Profit (Revenue − Expenses) ÷ Revenue — actual net operating margin before PMG profit share distribution."
+            hint="Total Actual Profit (Income − Expenses) ÷ Income — actual net operating margin before PMG profit share distribution."
           />
         </div>
 
@@ -267,6 +278,9 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                     <TableHead className="font-semibold text-foreground py-4">Month</TableHead>
                     <TableHead className="text-right font-semibold text-foreground py-4">
                       Revenue
+                    </TableHead>
+                    <TableHead className="text-right font-semibold text-foreground py-4">
+                      Income
                     </TableHead>
                     <TableHead className="text-right font-semibold text-foreground py-4">
                       Expenses
@@ -324,6 +338,9 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                       </TableCell>
                       <TableCell className="text-right tabular-nums py-4 font-medium">
                         <span className={amountToneClass('revenue')}>{formatZAR(row.revenue)}</span>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums py-4 font-medium">
+                        <span className="text-emerald-700 dark:text-emerald-300 font-medium">{formatZAR(row.income)}</span>
                       </TableCell>
                       <TableCell className="text-right tabular-nums py-4 font-medium">
                         <span className={amountToneClass('expense')}>
@@ -386,7 +403,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                       )}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {row.status === 'locked' ? fmtDate(row.closedAt) : 'Open (Live figures)'}
+                      {row.status === 'locked' ? fmtDate(row.closedAt) : 'Open (Live figures)'} &middot; Rev {formatZAR(row.revenue)} &middot; Inc {formatZAR(row.income)}
                     </span>
                   </span>
                   <span
@@ -481,17 +498,17 @@ function SnapshotDetail({
   // internal growth/investment reserve, not an external cost, so it's still
   // counted as profit here.
   const grossMargin =
-    snapshot.revenue > 0 ? ((snapshot.revenue - snapshot.expenses) / snapshot.revenue) * 100 : 0;
+    snapshot.income > 0 ? ((snapshot.income - snapshot.expenses) / snapshot.income) * 100 : 0;
   const previousGrossMargin =
-    previous && previous.revenue > 0
-      ? ((previous.revenue - previous.expenses) / previous.revenue) * 100
+    previous && previous.income > 0
+      ? ((previous.income - previous.expenses) / previous.income) * 100
       : null;
 
   // Distributable margin: what's left for salary/reinvest/reserve/flex after
   // the PMG cross-divisional growth reserve is set aside.
-  const netMargin = snapshot.revenue > 0 ? (snapshot.profitPool / snapshot.revenue) * 100 : 0;
+  const netMargin = snapshot.income > 0 ? (snapshot.profitPool / snapshot.income) * 100 : 0;
   const previousNetMargin =
-    previous && previous.revenue > 0 ? (previous.profitPool / previous.revenue) * 100 : null;
+    previous && previous.income > 0 ? (previous.profitPool / previous.income) * 100 : null;
 
   return (
     <Card className="lg:sticky lg:top-[8.25rem] lg:self-start">
@@ -545,6 +562,10 @@ function SnapshotDetail({
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm">Revenue</span>
                 <DeltaBadge current={snapshot.revenue} previous={previous.revenue} label="" />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm">Income</span>
+                <DeltaBadge current={snapshot.income} previous={previous.income} label="" />
               </div>
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm">Expenses</span>
