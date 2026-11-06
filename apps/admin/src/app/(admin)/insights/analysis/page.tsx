@@ -7,7 +7,7 @@ import {
   getThreeYearMonthlyRevenue,
   getClientConcentration,
   getMonthlyFinancialsBreakdownForYear,
-  getAllSnapshots,
+  getAllSnapshotsWithOpenMonths,
   getActiveRates,
   getProfitAndLossByDivision,
   getOrganisationSettings,
@@ -75,7 +75,7 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
     getBudgetChartSeriesForYear(selectedYear),
     getLedgerBalances(),
     getActiveRates(),
-    getAllSnapshots(),
+    getAllSnapshotsWithOpenMonths(),
     getProfitAndLossByDivision(undefined, `${selectedYear}-01-01`, `${selectedYear}-12-31`),
     getOrganisationSettings(),
   ]);

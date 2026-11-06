@@ -254,8 +254,10 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
 
         <Card className="overflow-visible">
           <CardHeader className="px-4">
-            <CardTitle className="text-base">Closed months</CardTitle>
-            <CardDescription>Select a month to review the locked figures.</CardDescription>
+            <CardTitle className="text-base">Monthly Snapshots</CardTitle>
+            <CardDescription>
+              Select a month to review figures. Open months update with live data.
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <div className="hidden md:block">
@@ -276,7 +278,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                       Profit/Loss
                     </TableHead>
                     <TableHead className="text-right font-semibold text-foreground py-4">
-                      Closed
+                      Status / Closed
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -297,14 +299,27 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                       }}
                     >
                       <TableCell className="font-medium py-4">
-                        <span className="inline-flex items-center gap-1.5">
-                          {row.status === 'locked' && (
+                        <span className="inline-flex items-center gap-2">
+                          {row.status === 'locked' ? (
                             <LockKeyhole
-                              className="size-3 shrink-0 text-muted-foreground"
+                              className="size-3.5 shrink-0 text-muted-foreground"
                               aria-label="Locked"
                             />
+                          ) : (
+                            <span
+                              className="size-2 shrink-0 rounded-full bg-emerald-500 animate-pulse"
+                              aria-label="Open"
+                            />
                           )}
-                          {row.periodLabel}
+                          <span>{row.periodLabel}</span>
+                          {row.status === 'open' && (
+                            <Badge
+                              variant="outline"
+                              className="ml-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10 py-0 px-1.5"
+                            >
+                              Open
+                            </Badge>
+                          )}
                         </span>
                       </TableCell>
                       <TableCell className="text-right tabular-nums py-4 font-medium">
@@ -326,7 +341,16 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                         </span>
                       </TableCell>
                       <TableCell className="text-right tabular-nums py-4 text-muted-foreground">
-                        {fmtDate(row.closedAt)}
+                        {row.status === 'locked' ? (
+                          fmtDate(row.closedAt)
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10"
+                          >
+                            Open
+                          </Badge>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -345,8 +369,25 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                   onClick={() => setSelectedId(row.id)}
                 >
                   <span className="flex min-w-0 flex-col items-start gap-1">
-                    <span className="truncate font-medium">{row.periodLabel}</span>
-                    <span className="text-xs text-muted-foreground">{fmtDate(row.closedAt)}</span>
+                    <span className="truncate font-medium inline-flex items-center gap-1.5">
+                      {row.status === 'locked' ? (
+                        <LockKeyhole className="size-3 shrink-0 text-muted-foreground" />
+                      ) : (
+                        <span className="size-2 shrink-0 rounded-full bg-emerald-500 animate-pulse" />
+                      )}
+                      <span>{row.periodLabel}</span>
+                      {row.status === 'open' && (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10 py-0 px-1"
+                        >
+                          Open
+                        </Badge>
+                      )}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {row.status === 'locked' ? fmtDate(row.closedAt) : 'Open (Live figures)'}
+                    </span>
                   </span>
                   <span
                     className={cn(
@@ -458,14 +499,43 @@ function SnapshotDetail({
         <div className="flex items-center justify-between gap-3">
           <div>
             <CardTitle className="text-base">{snapshot.periodLabel}</CardTitle>
-            <CardDescription>Locked on {fmtDate(snapshot.closedAt)}</CardDescription>
+            <CardDescription>
+              {snapshot.status === 'open' ? (
+                <span className="inline-flex items-center gap-1.5 font-medium text-emerald-600 dark:text-emerald-400">
+                  <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Open &middot; Live figures
+                </span>
+              ) : (
+                `Locked on ${fmtDate(snapshot.closedAt)}`
+              )}
+            </CardDescription>
           </div>
-          <Badge variant={isProfitable ? 'success' : 'destructive'}>
-            {isProfitable ? 'Profit' : 'Loss'}
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            {snapshot.status === 'open' && (
+              <Badge
+                variant="outline"
+                className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs"
+              >
+                Open
+              </Badge>
+            )}
+            <Badge variant={isProfitable ? 'success' : 'destructive'}>
+              {isProfitable ? 'Profit' : 'Loss'}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
+        {snapshot.status === 'open' && (
+          <div className="flex items-center justify-between rounded-md border border-emerald-500/20 bg-emerald-500/5 p-3 text-xs text-emerald-700 dark:text-emerald-400">
+            <div className="flex items-center gap-2">
+              <span className="size-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span>
+                This month is currently <strong>open</strong> and updating in real-time.
+              </span>
+            </div>
+          </div>
+        )}
         {previous ? (
           <div className="flex flex-col gap-2 rounded-md border border-border p-3">
             <span className="text-xs font-medium text-muted-foreground">

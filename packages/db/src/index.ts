@@ -17,7 +17,13 @@ export {
   getLedgerByAllocation,
   getLedgerByAllocationYTD,
 } from './queries';
-export { getAllSnapshots, getSnapshotByPeriod, insertSnapshot, isPeriodLocked } from './queries';
+export {
+  getAllSnapshots,
+  getAllSnapshotsWithOpenMonths,
+  getSnapshotByPeriod,
+  insertSnapshot,
+  isPeriodLocked,
+} from './queries';
 export {
   getIncomeByPeriod,
   getExpensesByPeriod,
