@@ -8,7 +8,10 @@ import {
   getThreeYearMonthlyRevenue,
   getClientConcentration,
   getMonthlyFinancialsBreakdownForYear,
+  getAllSnapshots,
+  getActiveRates,
 } from '@pmg/db';
+import { getMonthlyFinancialsSeriesForYear, getLedgerBalances } from '@/lib/financial';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StickyPageHeader } from '@/components/ui/sticky-page-header';
@@ -21,7 +24,9 @@ import { MonthlyGrowthChart } from '@/components/analysis/monthly-growth-chart';
 import { MoMComparisonTable } from '@/components/analysis/mom-comparison-table';
 import { AnalysisTabs } from '@/components/analysis/analysis-tabs';
 import { AiGrowthCockpit } from '@/components/insights/ai-growth-cockpit';
-import { Sparkles } from 'lucide-react';
+import { AnalysisProfitTab } from '@/components/analysis/analysis-profit-tab';
+import { SnapshotsCockpit } from '@/components/insights/snapshots-cockpit';
+import { Sparkles, DollarSign, Camera } from 'lucide-react';
 import { formatZAR } from '@/lib/format';
 
 export const metadata: Metadata = {
@@ -42,6 +47,7 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
 
   // Use current date string for YTD calculations
   const currentDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  const currentPeriod = `${year}-${String(month + 1).padStart(2, '0')}`;
 
   // Parallel data fetching
   const [
@@ -51,6 +57,10 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
     monthlyRevenueResult,
     clientConcentrationResult,
     momBreakdownResult,
+    monthlyFinancialsResult,
+    ledgerBalancesResult,
+    activeRatesResult,
+    snapshotsResult,
   ] = await Promise.allSettled([
     getAnalysisOverview(selectedYear, currentDateStr),
     getDivisionQuotesMetrics(selectedYear),
@@ -58,6 +68,10 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
     getThreeYearMonthlyRevenue(selectedYear),
     getClientConcentration(selectedYear),
     getMonthlyFinancialsBreakdownForYear(selectedYear),
+    getMonthlyFinancialsSeriesForYear(selectedYear),
+    getLedgerBalances(),
+    getActiveRates(),
+    getAllSnapshots(),
   ]);
 
   if (overviewResult.status === 'rejected') console.error('Overview error:', overviewResult.reason);
@@ -71,6 +85,12 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
     console.error('Client concentration error:', clientConcentrationResult.reason);
   if (momBreakdownResult.status === 'rejected')
     console.error('MoM breakdown error:', momBreakdownResult.reason);
+  if (monthlyFinancialsResult.status === 'rejected')
+    console.error('Monthly financials error:', monthlyFinancialsResult.reason);
+  if (ledgerBalancesResult.status === 'rejected')
+    console.error('Ledger balances error:', ledgerBalancesResult.reason);
+  if (snapshotsResult.status === 'rejected')
+    console.error('Snapshots error:', snapshotsResult.reason);
 
   const overview =
     overviewResult.status === 'fulfilled'
@@ -93,6 +113,18 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
     received: r.received,
     invoiced: r.invoiced,
   }));
+
+  const monthlyFinancials =
+    monthlyFinancialsResult.status === 'fulfilled' ? monthlyFinancialsResult.value : [];
+  const totalRevenue = monthlyFinancials.reduce((sum, m) => sum + m.revenue, 0);
+  const totalExpenses = monthlyFinancials.reduce((sum, m) => sum + m.expenses, 0);
+  const pmgShareRate =
+    activeRatesResult.status === 'fulfilled' ? (activeRatesResult.value?.pmg_share ?? 0.25) : 0.25;
+  const totalProfitPool = totalRevenue - totalExpenses;
+  const totalPmgShare = Math.max(0, totalProfitPool) * pmgShareRate;
+  const ledgerBalances =
+    ledgerBalancesResult.status === 'fulfilled' ? ledgerBalancesResult.value : undefined;
+  const snapshots = snapshotsResult.status === 'fulfilled' ? snapshotsResult.value : [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -122,35 +154,57 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
       />
 
       <AnalysisTabs defaultTab="overview">
-        <TabsList className="mb-4 flex w-full justify-start overflow-x-auto overflow-y-hidden lg:grid lg:w-[1080px] lg:grid-cols-7 h-auto hide-scrollbar border border-border/50">
-          <TabsTrigger value="overview" className="flex-1 min-w-[110px]">
+        <TabsList className="mb-4 flex w-full justify-start overflow-x-auto overflow-y-hidden h-auto hide-scrollbar border border-border/50 p-1 gap-1">
+          <TabsTrigger value="overview" className="shrink-0 min-w-[100px]">
             Overview
           </TabsTrigger>
           <TabsTrigger
             value="ai-growth"
-            className="flex-1 min-w-[130px] gap-1.5 text-blue-600 dark:text-blue-400 font-semibold"
+            className="shrink-0 min-w-[120px] gap-1.5 text-blue-600 dark:text-blue-400 font-semibold"
           >
             <Sparkles className="h-3.5 w-3.5" /> AI Growth
           </TabsTrigger>
-          <TabsTrigger value="details" className="flex-1 min-w-[110px]">
+          <TabsTrigger value="profit" className="shrink-0 min-w-[110px] gap-1.5">
+            <DollarSign className="h-3.5 w-3.5" /> Net Profit
+          </TabsTrigger>
+          <TabsTrigger value="snapshots" className="shrink-0 min-w-[110px] gap-1.5">
+            <Camera className="h-3.5 w-3.5" /> Snapshots
+          </TabsTrigger>
+          <TabsTrigger value="details" className="shrink-0 min-w-[110px]">
             Growth Trend
           </TabsTrigger>
-          <TabsTrigger value="pipeline" className="flex-1 min-w-[140px]">
+          <TabsTrigger value="pipeline" className="shrink-0 min-w-[140px]">
             Divisions & Pipeline
           </TabsTrigger>
-          <TabsTrigger value="clients" className="flex-1 min-w-[100px]">
+          <TabsTrigger value="clients" className="shrink-0 min-w-[100px]">
             Clients
           </TabsTrigger>
-          <TabsTrigger value="mom" className="flex-1 min-w-[140px]">
+          <TabsTrigger value="mom" className="shrink-0 min-w-[140px]">
             Month-over-Month
           </TabsTrigger>
-          <TabsTrigger value="yoy" className="flex-1 min-w-[140px]">
+          <TabsTrigger value="yoy" className="shrink-0 min-w-[140px]">
             3-Year Comparison
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="ai-growth" className="space-y-6">
           <AiGrowthCockpit />
+        </TabsContent>
+
+        <TabsContent value="profit" className="space-y-6">
+          <AnalysisProfitTab
+            revenue={totalRevenue}
+            expenses={totalExpenses}
+            pmgShare={totalPmgShare}
+            profitPool={totalProfitPool}
+            ledgerBalances={ledgerBalances}
+            monthlyFinancials={monthlyFinancials}
+            currentPeriod={currentPeriod}
+          />
+        </TabsContent>
+
+        <TabsContent value="snapshots" className="space-y-6">
+          <SnapshotsCockpit snapshots={snapshots} />
         </TabsContent>
 
         <TabsContent value="overview" className="space-y-6">

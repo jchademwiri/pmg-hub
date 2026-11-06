@@ -137,7 +137,6 @@ export const GROUPS: NavGroup[] = [
     items: [
       { title: 'Overview', url: '/insights', icon: LayoutGrid },
       { title: 'Business Analysis', url: '/insights/analysis', icon: TrendingUp },
-      { title: 'Monthly Reports', url: '/insights/reports', icon: BarChart3 },
       { title: 'Snapshots', url: '/insights/snapshots', icon: Camera },
     ],
   },
@@ -189,6 +188,7 @@ const EXTRA_LABELS: Record<string, string> = {
   '/accounting/trial-balance': 'Trial Balance',
 
   // Insights
+  '/insights/reports': 'Performance Reports',
   '/insights/financial-reports': 'Financial Reports',
 
   // Settings
