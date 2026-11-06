@@ -365,6 +365,7 @@ export async function updateQuotationStatus(
     const allowed: Record<string, string[]> = {
       draft: ['sent', 'cancelled'],
       sent: ['accepted', 'declined', 'cancelled'],
+      expired: ['accepted', 'cancelled'],
     };
 
     if (!allowed[quote.status]?.includes(status)) {

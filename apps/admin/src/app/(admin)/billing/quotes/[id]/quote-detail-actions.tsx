@@ -159,7 +159,21 @@ export function QuoteDetailActions({
         </div>
       )}
 
-      {(status === 'declined' || status === 'cancelled' || status === 'expired') && (
+      {status === 'expired' && (
+        <div className="w-full flex flex-col gap-2">
+          <ConvertToInvoiceButton quotationId={quote.id} convertAction={convertQuoteToInvoice} />
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => handleStatus('accepted')}
+            disabled={isPending}
+          >
+            Mark Accepted
+          </Button>
+        </div>
+      )}
+
+      {(status === 'declined' || status === 'cancelled') && (
         <p className="text-xs text-muted-foreground">No further actions available.</p>
       )}
 
