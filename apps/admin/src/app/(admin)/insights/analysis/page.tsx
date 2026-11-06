@@ -47,6 +47,15 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
   const selectedYear =
     Number.isFinite(parsedYear) && !Number.isNaN(parsedYear) ? parsedYear : defaultYear;
 
+  // Official financial year runs from 1 March to end of February
+  const nextYear = selectedYear + 1;
+  const isLeap = (nextYear % 4 === 0 && nextYear % 100 !== 0) || nextYear % 400 === 0;
+  const febDays = isLeap ? 29 : 28;
+  const fyStartDate = `${selectedYear}-03-01`;
+  const fyEndDate = `${nextYear}-02-${febDays}`;
+  const fyPeriodLabel = `FY ${selectedYear}`;
+  const fyDateRangeLabel = `01 Mar ${selectedYear} - ${febDays} Feb ${nextYear}`;
+
   // Use current date string for YTD calculations
   const currentDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   const currentPeriod = `${year}-${String(month + 1).padStart(2, '0')}`;
@@ -76,7 +85,7 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
     getLedgerBalances(),
     getActiveRates(),
     getAllSnapshotsWithOpenMonths(),
-    getProfitAndLossByDivision(undefined, `${selectedYear}-01-01`, `${selectedYear}-12-31`),
+    getProfitAndLossByDivision(undefined, fyStartDate, fyEndDate),
     getOrganisationSettings(),
   ]);
 
@@ -135,7 +144,7 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
     <div className="flex flex-col gap-6">
       <StickyPageHeader
         title="Business Growth Analysis"
-        description={`Analyzing Financial Year ${selectedYear} (Mar 1 - Feb 28)`}
+        description={`Analyzing Financial Year ${selectedYear} (Mar 1 - Feb ${febDays})`}
         actions={
           <div className="flex items-center gap-2 flex-wrap">
             <div className="text-sm font-medium">Select Year:</div>
@@ -232,8 +241,8 @@ export default async function AnalysisPage(props: { searchParams: Promise<{ year
             reportType="division-performance"
             reportTitle="Division Performance"
             divisionName="All Divisions"
-            periodLabel={`Year ${selectedYear}`}
-            dateRangeLabel={`01 Jan ${selectedYear} - 31 Dec ${selectedYear}`}
+            periodLabel={fyPeriodLabel}
+            dateRangeLabel={fyDateRangeLabel}
             orgSettings={orgSettings}
             data={{ divisions: divisionPnl }}
             loading={false}
