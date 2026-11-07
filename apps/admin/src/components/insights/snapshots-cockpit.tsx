@@ -1,7 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { LockKeyhole, Percent, TrendingDown, TrendingUp } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import {
+  Lock,
+  LockKeyhole,
+  LockKeyholeOpen,
+  KeyRound,
+  Percent,
+  TrendingDown,
+  TrendingUp,
+} from 'lucide-react';
 import type { SnapshotRow } from '@pmg/db';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,6 +21,8 @@ import { cn } from '@/lib/utils';
 import { fmtDate, formatZAR, fmtMonthYear } from '@/lib/format';
 import { DeltaBadge, Sparkline } from '@/components/reports/report-kpi-strip';
 import { getSnapshotArSummary } from '@/app/actions/snapshots';
+import { CloseMonthWizard } from '@/components/dashboard/close-month-wizard';
+import { ReopenMonthDialog } from './reopen-month-dialog';
 
 type ArSummary = { invoiced: number; paid: number; arBalance: number };
 
@@ -117,8 +128,14 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
     [snapshots],
   );
 
+  const router = useRouter();
   const [selectedId, setSelectedId] = useState(rows[0]?.id ?? '');
   const selectedSnapshot = rows.find((row) => row.id === selectedId) ?? rows[0];
+  const [closingSnapshot, setClosingSnapshot] = useState<SnapshotView | null>(null);
+  const [reopeningSnapshot, setReopeningSnapshot] = useState<SnapshotView | null>(null);
+
+  const now = new Date();
+  const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
   const detail = useMemo(() => {
     if (!selectedSnapshot) return null;
@@ -368,14 +385,55 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                       </TableCell>
                       <TableCell className="text-right tabular-nums py-4 text-muted-foreground">
                         {row.status === 'locked' ? (
-                          fmtDate(row.closedAt)
+                          <div className="flex items-center justify-end gap-2">
+                            <span>{fmtDate(row.closedAt)}</span>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-xs px-2 gap-1 text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400"
+                              title="Reopen accounting period (Requires Admin Password)"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setReopeningSnapshot(row);
+                              }}
+                            >
+                              <LockKeyholeOpen className="size-3.5" />
+                              Reopen
+                            </Button>
+                          </div>
+                        ) : row.period < currentPeriod ? (
+                          <div className="flex items-center justify-end gap-2">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10"
+                            >
+                              Open
+                            </Badge>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs px-2.5 gap-1 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setClosingSnapshot(row);
+                              }}
+                            >
+                              <Lock className="size-3" />
+                              Close Month
+                            </Button>
+                          </div>
                         ) : (
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10"
-                          >
-                            Open
-                          </Badge>
+                          <div className="flex items-center justify-end">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 border-blue-500/30 bg-blue-500/10"
+                              title="Current month in progress. Cannot be closed until month end."
+                            >
+                              Current (Live)
+                            </Badge>
+                          </div>
                         )}
                       </TableCell>
                     </TableRow>
@@ -386,45 +444,80 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
 
             <div className="flex flex-col gap-2 px-4 md:hidden">
               {rows.map((row) => (
-                <Button
+                <div
                   key={row.id}
-                  type="button"
-                  variant={selectedSnapshot?.id === row.id ? 'secondary' : 'outline'}
-                  aria-pressed={selectedSnapshot?.id === row.id}
-                  className="h-auto justify-between gap-3 px-3 py-3"
+                  className={cn(
+                    'flex flex-col gap-2 rounded-lg border p-3 transition-colors',
+                    selectedSnapshot?.id === row.id ? 'bg-muted/50 border-primary/40' : 'bg-card',
+                  )}
                   onClick={() => setSelectedId(row.id)}
                 >
-                  <span className="flex min-w-0 flex-col items-start gap-1">
-                    <span className="truncate font-medium inline-flex items-center gap-1.5">
-                      {row.status === 'locked' ? (
-                        <LockKeyhole className="size-3 shrink-0 text-muted-foreground" />
-                      ) : (
-                        <span className="size-2 shrink-0 rounded-full bg-emerald-500 animate-pulse" />
-                      )}
-                      <span>{row.periodLabel}</span>
-                      {row.status === 'open' && (
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10 py-0 px-1"
-                        >
-                          Open
-                        </Badge>
-                      )}
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="flex min-w-0 flex-col items-start gap-1">
+                      <span className="truncate font-medium inline-flex items-center gap-1.5">
+                        {row.status === 'locked' ? (
+                          <LockKeyhole className="size-3 shrink-0 text-muted-foreground" />
+                        ) : (
+                          <span className="size-2 shrink-0 rounded-full bg-emerald-500 animate-pulse" />
+                        )}
+                        <span>{row.periodLabel}</span>
+                        {row.status === 'open' && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10 py-0 px-1"
+                          >
+                            Open
+                          </Badge>
+                        )}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {row.status === 'locked' ? fmtDate(row.closedAt) : 'Open (Live figures)'}{' '}
+                        &middot; Rev {formatZAR(row.revenue)} &middot; Inc {formatZAR(row.income)}
+                      </span>
                     </span>
-                    <span className="text-xs text-muted-foreground">
-                      {row.status === 'locked' ? fmtDate(row.closedAt) : 'Open (Live figures)'}{' '}
-                      &middot; Rev {formatZAR(row.revenue)} &middot; Inc {formatZAR(row.income)}
+                    <span
+                      className={cn(
+                        'text-right text-sm font-semibold tabular-nums',
+                        amountToneClass(row.profitPool >= 0 ? 'positive' : 'negative'),
+                      )}
+                    >
+                      {formatZAR(row.profitPool)}
                     </span>
-                  </span>
-                  <span
-                    className={cn(
-                      'text-right text-sm font-semibold tabular-nums',
-                      amountToneClass(row.profitPool >= 0 ? 'positive' : 'negative'),
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-border/50">
+                    {row.status === 'open' && row.period < currentPeriod && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs px-2.5 gap-1 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setClosingSnapshot(row);
+                        }}
+                      >
+                        <Lock className="size-3" />
+                        Close Month
+                      </Button>
                     )}
-                  >
-                    {formatZAR(row.profitPool)}
-                  </span>
-                </Button>
+                    {row.status === 'locked' && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs px-2 gap-1 text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setReopeningSnapshot(row);
+                        }}
+                      >
+                        <LockKeyholeOpen className="size-3.5" />
+                        Reopen
+                      </Button>
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
           </CardContent>
@@ -442,6 +535,41 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
           arPrevious={arSummary.previous}
           arLoading={arSummary.loading}
           arError={arSummary.error}
+          currentPeriod={currentPeriod}
+          onCloseMonth={(snap) => setClosingSnapshot(snap)}
+          onReopenMonth={(snap) => setReopeningSnapshot(snap)}
+        />
+      )}
+
+      {closingSnapshot && (
+        <CloseMonthWizard
+          open={Boolean(closingSnapshot)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setClosingSnapshot(null);
+              router.refresh();
+            }
+          }}
+          period={closingSnapshot.period}
+          summary={{
+            revenue: closingSnapshot.income ?? closingSnapshot.revenue,
+            expenses: closingSnapshot.expenses,
+            pmgShare: closingSnapshot.pmgShare,
+            profitPool: closingSnapshot.profitPool,
+          }}
+        />
+      )}
+
+      {reopeningSnapshot && (
+        <ReopenMonthDialog
+          open={Boolean(reopeningSnapshot)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setReopeningSnapshot(null);
+            }
+          }}
+          period={reopeningSnapshot.period}
+          periodLabel={reopeningSnapshot.periodLabel}
         />
       )}
     </div>
@@ -496,6 +624,9 @@ function SnapshotDetail({
   arPrevious,
   arLoading,
   arError,
+  currentPeriod,
+  onCloseMonth,
+  onReopenMonth,
 }: {
   snapshot: SnapshotView;
   previous: SnapshotView | undefined;
@@ -506,6 +637,9 @@ function SnapshotDetail({
   arPrevious: ArSummary | null;
   arLoading: boolean;
   arError: string | null;
+  currentPeriod: string;
+  onCloseMonth: (snapshot: SnapshotView) => void;
+  onReopenMonth: (snapshot: SnapshotView) => void;
 }) {
   const isProfitable = snapshot.profitPool >= 0;
 
@@ -727,6 +861,67 @@ function SnapshotDetail({
             {snapshot.notes || 'No notes were added for this closed month.'}
           </p>
         </div>
+
+        {snapshot.status === 'open' ? (
+          snapshot.period < currentPeriod ? (
+            <div className="flex flex-col gap-2.5 rounded-md border border-border p-3 bg-muted/20">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Period Lifecycle
+                </span>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10"
+                >
+                  Unclosed Past Month
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                This month has concluded and can now be locked. Closing it generates an official
+                snapshot and locks general ledger entries.
+              </p>
+              <Button
+                type="button"
+                className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white mt-1 shadow-sm"
+                onClick={() => onCloseMonth(snapshot)}
+              >
+                <Lock className="size-4" />
+                Close {snapshot.periodLabel}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2 rounded-md border border-blue-500/20 bg-blue-500/10 p-3">
+              <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300 font-medium text-xs">
+                <span className="size-2 rounded-full bg-blue-500 animate-pulse" />
+                Current Month in Progress
+              </div>
+              <p className="text-xs text-blue-700/90 dark:text-blue-300/90 leading-relaxed">
+                {snapshot.periodLabel} is currently active and accumulating transactions. It cannot
+                be closed until the month has concluded.
+              </p>
+            </div>
+          )
+        ) : (
+          <div className="flex flex-col gap-2.5 rounded-md border border-border p-3 bg-muted/20">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span className="font-semibold uppercase tracking-wider">Period Lifecycle</span>
+              <span>Closed on {fmtDate(snapshot.closedAt)}</span>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              This financial period is closed. If ledger entries or figures need modification, an
+              administrator can authorize reopening.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2 border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 mt-1"
+              onClick={() => onReopenMonth(snapshot)}
+            >
+              <KeyRound className="size-4" />
+              Reopen Period (Admin Password)
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -119,7 +119,7 @@ export function InvoicesClient({
               <TableHead className="w-[85px] px-2 text-xs">Issue Date</TableHead>
               <TableHead className="w-[85px] px-2 text-xs">Due Date</TableHead>
               <TableHead className="w-[85px] px-2 text-right text-xs">Amount</TableHead>
-              <TableHead className="w-[95px] px-2 text-center text-xs">Status</TableHead>
+              <TableHead className="w-[130px] px-2 text-center text-xs">Status</TableHead>
               <TableHead className="w-10 px-2" />
             </TableRow>
           </TableHeader>
