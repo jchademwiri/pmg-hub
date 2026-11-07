@@ -198,6 +198,8 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
     [fyRows],
   );
   const netMarginPct = totals.income > 0 ? (totals.profitPool / totals.income) * 100 : 0;
+  const collectionEfficiency =
+    totals.revenue > 0 ? (totals.income / totals.revenue) * 100 : 0;
 
   if (rows.length === 0) {
     return (
@@ -225,6 +227,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             icon={TrendingUp}
             tone="revenue"
             hint="Total invoiced gross revenue recognized in this financial year."
+            subtext="Invoiced billings"
           />
           <SummaryMetric
             label="Total income"
@@ -232,6 +235,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             icon={TrendingUp}
             tone="revenue"
             hint="Total cash income received from clients during this financial year."
+            subtext={`${collectionEfficiency.toFixed(1)}% collection rate`}
           />
           <SummaryMetric
             label="Total expenses"
@@ -239,6 +243,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             icon={TrendingDown}
             tone="expense"
             hint="Total recorded operating expenses during this financial year."
+            subtext="Operating expenses"
           />
           <SummaryMetric
             label="Total profit/loss"
@@ -246,6 +251,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             icon={totals.profitPool >= 0 ? TrendingUp : TrendingDown}
             tone={totals.profitPool >= 0 ? 'positive' : 'negative'}
             hint="Total Actual Profit (Income − Expenses)."
+            subtext="Cash net profit"
           />
           <SummaryMetric
             label="PMG Share"
@@ -253,6 +259,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             icon={TrendingUp}
             tone="share"
             hint="PMG cross-divisional growth & investment reserve."
+            subtext="25% reserve pool"
           />
           <SummaryMetric
             label="Distributable margin"
@@ -260,6 +267,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             icon={Percent}
             tone={netMarginPct >= 0 ? 'positive' : 'negative'}
             hint="Total Actual Profit (Income − Expenses) ÷ Income — actual net operating margin before PMG profit share distribution."
+            subtext="Margin on income"
           />
         </div>
 
@@ -444,12 +452,14 @@ function SummaryMetric({
   icon: Icon,
   tone = 'default',
   hint,
+  subtext,
 }: {
   label: string;
   value: string;
   icon: React.ComponentType<{ className?: string }>;
   tone?: AmountTone;
   hint?: string;
+  subtext?: string;
 }) {
   return (
     <Card size="sm" title={hint}>
@@ -459,6 +469,9 @@ function SummaryMetric({
           <CardTitle className={cn('truncate text-base tabular-nums', amountToneClass(tone))}>
             {value}
           </CardTitle>
+          {subtext && (
+            <p className="text-[10px] text-muted-foreground/80 mt-0.5 font-medium">{subtext}</p>
+          )}
         </div>
         <Icon
           className={cn(
@@ -644,15 +657,24 @@ function SnapshotDetail({
 
         <div className="flex flex-col gap-3 rounded-md border border-border p-3">
           <MarginRow
+            label="Collection rate"
+            hint="Cash income collected relative to total invoiced revenue for this month."
+            value={snapshot.revenue > 0 ? (snapshot.income / snapshot.revenue) * 100 : 0}
+            previousValue={
+              previous && previous.revenue > 0 ? (previous.income / previous.revenue) * 100 : null
+            }
+          />
+          <div className="h-px bg-border" />
+          <MarginRow
             label="Gross margin"
-            hint="Total profit retained in the business (Revenue − Expenses) ÷ Revenue — includes the PMG growth & investment reserve, since that stays within the organisation."
+            hint="Total profit retained in the business (Income − Expenses) ÷ Income — includes the PMG growth & investment reserve, since that stays within the organisation."
             value={grossMargin}
             previousValue={previousGrossMargin}
           />
           <div className="h-px bg-border" />
           <MarginRow
             label="Distributable margin"
-            hint="Total Actual Profit (Revenue − Expenses) ÷ Revenue — actual net operating margin before PMG profit share distribution."
+            hint="Total Actual Profit (Income − Expenses) ÷ Income — actual net operating margin before PMG profit share distribution."
             value={netMargin}
             previousValue={previousNetMargin}
           />
