@@ -23,6 +23,7 @@ export {
   getSnapshotByPeriod,
   insertSnapshot,
   isPeriodLocked,
+  deleteSnapshot,
 } from './queries';
 export {
   getIncomeByPeriod,

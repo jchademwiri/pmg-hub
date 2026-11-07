@@ -185,3 +185,10 @@ export async function isPeriodLocked(period: string): Promise<boolean> {
     .limit(1);
   return result.length > 0;
 }
+
+/**
+ * Deletes a snapshot row for the given period.
+ */
+export async function deleteSnapshot(period: string): Promise<void> {
+  await db.delete(snapshots).where(eq(snapshots.period, period));
+}
