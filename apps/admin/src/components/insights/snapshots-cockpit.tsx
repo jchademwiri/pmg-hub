@@ -198,8 +198,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
     [fyRows],
   );
   const netMarginPct = totals.income > 0 ? (totals.profitPool / totals.income) * 100 : 0;
-  const collectionEfficiency =
-    totals.revenue > 0 ? (totals.income / totals.revenue) * 100 : 0;
+  const collectionEfficiency = totals.revenue > 0 ? (totals.income / totals.revenue) * 100 : 0;
 
   if (rows.length === 0) {
     return (
@@ -348,7 +347,9 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                         <span className={amountToneClass('revenue')}>{formatZAR(row.revenue)}</span>
                       </TableCell>
                       <TableCell className="text-right tabular-nums py-4 font-medium">
-                        <span className="text-emerald-700 dark:text-emerald-300 font-medium">{formatZAR(row.income)}</span>
+                        <span className="text-emerald-700 dark:text-emerald-300 font-medium">
+                          {formatZAR(row.income)}
+                        </span>
                       </TableCell>
                       <TableCell className="text-right tabular-nums py-4 font-medium">
                         <span className={amountToneClass('expense')}>
@@ -411,7 +412,8 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                       )}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {row.status === 'locked' ? fmtDate(row.closedAt) : 'Open (Live figures)'} &middot; Rev {formatZAR(row.revenue)} &middot; Inc {formatZAR(row.income)}
+                      {row.status === 'locked' ? fmtDate(row.closedAt) : 'Open (Live figures)'}{' '}
+                      &middot; Rev {formatZAR(row.revenue)} &middot; Inc {formatZAR(row.income)}
                     </span>
                   </span>
                   <span
