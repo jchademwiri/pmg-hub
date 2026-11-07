@@ -390,8 +390,8 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                             <Button
                               type="button"
                               size="sm"
-                              variant="ghost"
-                              className="h-7 text-xs px-2 gap-1 text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400"
+                              variant="outline"
+                              className="h-7 text-xs px-2.5 gap-1 border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10"
                               title="Reopen accounting period (Requires Admin Password)"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -505,8 +505,8 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                       <Button
                         type="button"
                         size="sm"
-                        variant="ghost"
-                        className="h-7 text-xs px-2 gap-1 text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400"
+                        variant="outline"
+                        className="h-7 text-xs px-2.5 gap-1 border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10"
                         onClick={(e) => {
                           e.stopPropagation();
                           setReopeningSnapshot(row);
@@ -918,7 +918,7 @@ function SnapshotDetail({
               onClick={() => onReopenMonth(snapshot)}
             >
               <KeyRound className="size-4" />
-              Reopen Period (Admin Password)
+              Reopen Period
             </Button>
           </div>
         )}
