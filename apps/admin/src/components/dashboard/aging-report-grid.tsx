@@ -59,13 +59,19 @@ export function AgingReportGrid({ data = [] }: AgingReportGridProps) {
     <div className="space-y-3">
       {/* Section Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+        <Link
+          href="/billing/aging"
+          className="text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+        >
           Accounts Receivable Ageing
-        </h3>
-        <span className="text-xs text-muted-foreground bg-muted border border-border px-2.5 py-1 rounded-full font-medium">
+        </Link>
+        <Link
+          href="/billing/aging"
+          className="text-xs text-muted-foreground bg-muted hover:bg-muted/80 border border-border px-2.5 py-1 rounded-full font-medium transition-colors"
+        >
           Total Expected:{' '}
           <span className="font-bold text-emerald-600">{formatZAR(totalOutstanding)}</span>
-        </span>
+        </Link>
       </div>
 
       {/* Grid of 5 Buckets */}
@@ -76,7 +82,7 @@ export function AgingReportGrid({ data = [] }: AgingReportGridProps) {
           const hasTotal = r.total > 0;
 
           return (
-            <Link href="/billing/reports?type=aging" key={r.bucket} className="block group">
+            <Link href={`/billing/aging?filter=${r.bucket}`} key={r.bucket} className="block group">
               <Card
                 size="sm"
                 className={`rounded-xl border transition-all duration-200 group-hover:scale-[1.01] group-hover:border-primary/20 group-hover:shadow-sm ${theme.borderClass} ${theme.bgClass} shadow-none cursor-pointer`}

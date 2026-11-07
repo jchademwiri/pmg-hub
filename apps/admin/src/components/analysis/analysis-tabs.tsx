@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs } from '@/components/ui/tabs';
 
 interface AnalysisTabsProps {
   defaultTab: string;
@@ -16,12 +16,15 @@ export function AnalysisTabs({ defaultTab, children }: AnalysisTabsProps) {
   let currentTab = searchParams.get('tab') || defaultTab;
   if (currentTab === 'comparison') {
     currentTab = 'mom';
+  } else if (currentTab === 'pipeline') {
+    currentTab = 'divisions';
+  } else if (currentTab === 'ai-growth' || currentTab === 'details') {
+    currentTab = defaultTab;
   }
 
   const handleTabChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('tab', value);
-    // Use push instead of replace if you want back-button to undo tab changes
     router.replace(`${pathname}?${params.toString()}`);
   };
 

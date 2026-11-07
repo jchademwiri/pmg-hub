@@ -335,6 +335,47 @@ describe('Billing Invoices Module', () => {
       expect(revalidatePath).toHaveBeenCalledWith('/billing/invoices');
     });
 
+    it('convertQuoteToInvoice - converts expired quotation successfully (Sage-compatible)', async () => {
+      const expiredQuote = {
+        id: 'quote-expired',
+        status: 'expired',
+        divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
+        clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
+        subtotal: '1000.00',
+        total: '1000.00',
+        expiryDate: '2026-01-01',
+      };
+      let selectCount = 0;
+      mockDbSelect.mockImplementation(() => {
+        selectCount++;
+        return {
+          from: () => ({
+            where: () => {
+              if (selectCount === 1) return selectResult([expiredQuote]);
+              if (selectCount === 2) return selectResult([expiredQuote]);
+              if (selectCount === 3) {
+                return selectResult([
+                  {
+                    sortOrder: 0,
+                    description: 'Expired item',
+                    quantity: '1',
+                    unitPrice: '1000.00',
+                    vatRate: '0',
+                    lineTotal: '1000.00',
+                  },
+                ]);
+              }
+              return selectResult([]);
+            },
+          }),
+        };
+      });
+
+      const res = await convertQuoteToInvoice('quote-expired');
+      expect(res).toEqual({ id: 'new-invoice-id' });
+      expect(mockDbInsert).toHaveBeenCalled();
+    });
+
     it('issueInvoice - transitions draft invoice to issued', async () => {
       mockDbSelect.mockReturnValue({
         from: vi.fn().mockReturnValue({

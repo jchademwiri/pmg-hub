@@ -447,19 +447,16 @@ export async function convertQuoteToInvoice(
 
     const db = getDb();
 
-    // Load quote - must be accepted
+    // Load quote - can be accepted or expired (matching Sage accounting workflow)
     const [quote] = await db.select().from(quotations).where(eq(quotations.id, quotationId));
 
     if (!quote) return { error: 'Quotation not found.' };
-    if (quote.status !== 'accepted') {
-      return { error: 'Only accepted quotations can be converted to invoices.' };
+    if (quote.status !== 'accepted' && quote.status !== 'expired') {
+      return { error: 'Only accepted or expired quotations can be converted to invoices.' };
     }
 
     const { year } = getSASTParts();
     const today = getSASTToday();
-    if (quote.expiryDate && quote.expiryDate < today) {
-      return { error: 'This quotation has expired and can no longer be converted to an invoice.' };
-    }
     if (await isPeriodClosed(today)) {
       const minDate = await getMinAllowedDate();
       throw new ActionError(getMinDateErrorMessage(minDate));
@@ -482,12 +479,9 @@ export async function convertQuoteToInvoice(
         .for('update');
 
       if (!quoteLocked) throw new InvoiceValidationError('Quotation not found.');
-      if (quoteLocked.status !== 'accepted') {
-        throw new InvoiceValidationError('Only accepted quotations can be converted to invoices.');
-      }
-      if (quoteLocked.expiryDate && quoteLocked.expiryDate < today) {
+      if (quoteLocked.status !== 'accepted' && quoteLocked.status !== 'expired') {
         throw new InvoiceValidationError(
-          'This quotation has expired and can no longer be converted to an invoice.',
+          'Only accepted or expired quotations can be converted to invoices.',
         );
       }
 

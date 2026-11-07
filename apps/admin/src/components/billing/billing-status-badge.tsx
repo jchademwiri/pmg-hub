@@ -25,7 +25,10 @@ export function BillingStatusBadge({ status }: BillingStatusBadgeProps) {
   const styles = statusStyles[status] ?? 'bg-muted text-muted-foreground border-border';
 
   return (
-    <Badge variant="secondary" className={`gap-1.5 border font-medium shadow-none ${styles}`}>
+    <Badge
+      variant="secondary"
+      className={`gap-1.5 border font-medium shadow-none whitespace-nowrap shrink-0 inline-flex items-center ${styles}`}
+    >
       <span className="size-1.5 rounded-full bg-current opacity-70" />
       {formatStatusLabel(status)}
     </Badge>

@@ -321,7 +321,7 @@ export async function getMonthlyRevenueVsInvoicedForYear(
       SELECT TO_CHAR(invoice_date::date, 'YYYY-MM') AS month, COALESCE(SUM(total), 0) AS invoiced
       FROM invoices
       WHERE EXTRACT(YEAR FROM (invoice_date::date - INTERVAL '2 months'))::int = ${Number(year)}
-        AND status IN ('issued', 'partially_paid', 'paid', 'overdue')
+        AND status IN ('issued', 'partially_paid', 'paid', 'overdue', 'written_off')
       GROUP BY TO_CHAR(invoice_date::date, 'YYYY-MM')
     )
     SELECT COALESCE(received.month, invoiced.month) AS month,

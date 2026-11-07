@@ -245,15 +245,15 @@ export function InvoicesTable({ entries, issueAction, voidAction }: InvoicesTabl
                   aria-label="Select all invoices"
                 />
               </TableHead>
-              <TableHead className="w-[125px] px-2 text-xs">Invoice #</TableHead>
+              <TableHead className="w-[130px] px-2 text-xs">Invoice #</TableHead>
               <TableHead className="px-2 text-xs">Reference</TableHead>
               <TableHead className="px-2 text-xs">Client</TableHead>
               <TableHead className="w-[85px] px-2 text-xs">Issue Date</TableHead>
               <TableHead className="w-[85px] px-2 text-xs">Due Date</TableHead>
-              <TableHead className="w-[85px] px-2 text-right text-xs">Total</TableHead>
-              <TableHead className="w-[75px] px-2 text-right text-xs">Paid</TableHead>
-              <TableHead className="w-[85px] px-2 text-right text-xs">Balance Due</TableHead>
-              <TableHead className="w-[95px] px-2 text-center text-xs">Status</TableHead>
+              <TableHead className="w-[90px] px-2 text-right text-xs">Total</TableHead>
+              <TableHead className="w-[80px] px-2 text-right text-xs">Paid</TableHead>
+              <TableHead className="w-[90px] px-2 text-right text-xs">Balance Due</TableHead>
+              <TableHead className="w-[130px] px-2 text-center text-xs">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
