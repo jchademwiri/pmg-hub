@@ -85,18 +85,14 @@ export function MoMComparisonTable({ data, year, className }: MoMComparisonTable
           <p className="text-2xl font-bold text-foreground tabular-nums mt-1">
             {formatZAR(totalProfit)}
           </p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            Avg {formatZAR(avgProfit)}/mo
-          </p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Avg {formatZAR(avgProfit)}/mo</p>
         </div>
 
         <div className="rounded-xl border bg-card p-4 shadow-sm bg-gradient-to-br from-primary/5 to-transparent">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">
             Projected FY {year} Forecast
           </p>
-          <p className="text-2xl font-bold text-primary tabular-nums mt-1">
-            {formatZAR(forecast)}
-          </p>
+          <p className="text-2xl font-bold text-primary tabular-nums mt-1">{formatZAR(forecast)}</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">
             Estimated annual gross revenue run-rate
           </p>

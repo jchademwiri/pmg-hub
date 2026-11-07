@@ -374,7 +374,13 @@ export async function getThreeYearYoYComparison(currentYear: number) {
           and(
             gte(invoices.invoiceDate, fy.start),
             lt(invoices.invoiceDate, fy.end),
-            inArray(invoices.status, ['issued', 'partially_paid', 'paid', 'overdue', 'written_off']),
+            inArray(invoices.status, [
+              'issued',
+              'partially_paid',
+              'paid',
+              'overdue',
+              'written_off',
+            ]),
           ),
         );
 

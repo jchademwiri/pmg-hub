@@ -116,7 +116,14 @@ export function YoYComparisonTable({ data, className }: YoYComparisonTableProps)
               )}
               <TableCell className="py-4">
                 <div className="flex items-center justify-end">
-                  {prior ? getTrendIcon(Number(current[row.key as keyof typeof current]), Number(prior[row.key as keyof typeof prior])) : <span className="text-muted-foreground">—</span>}
+                  {prior ? (
+                    getTrendIcon(
+                      Number(current[row.key as keyof typeof current]),
+                      Number(prior[row.key as keyof typeof prior]),
+                    )
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
                 </div>
               </TableCell>
             </TableRow>
