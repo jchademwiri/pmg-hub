@@ -13,6 +13,7 @@ import {
 import { QuotesTable } from './quotes-table';
 import { LazyQuotesTable } from './lazy-quotes-table';
 import { QuotesClient } from './quotes-client';
+import { QuotesKpiCards } from './quotes-kpi-cards';
 import {
   Accordion,
   AccordionItem,
@@ -75,14 +76,16 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
   const currentCalendarYear = now.getFullYear();
   const fyStartYear = currentMonthIdx < 2 ? currentCalendarYear - 1 : currentCalendarYear;
 
-  const monthlySummaries = await getQuotationMonthlySummaries(
-    fyStartYear,
-    divisionId,
-    normalizedStatus,
-  );
+  const monthlySummaries = await getQuotationMonthlySummaries(fyStartYear, divisionId);
   const totalQuoted = monthlySummaries.reduce((sum, m) => sum + m.totalQuoted, 0);
   const totalAccepted = monthlySummaries.reduce((sum, m) => sum + m.totalAccepted, 0);
   const totalPending = monthlySummaries.reduce((sum, m) => sum + m.totalPending, 0);
+  const totalCount = monthlySummaries.reduce((sum, m) => sum + (m.count ?? 0), 0);
+  const acceptedCount = monthlySummaries.reduce((sum, m) => sum + (m.acceptedCount ?? 0), 0);
+  const pendingCount = monthlySummaries.reduce((sum, m) => sum + (m.pendingCount ?? 0), 0);
+
+  const currentMonthSummary = monthlySummaries.find((m) => m.month === currentMonthGroup.value);
+  const currentMonthQuoted = currentMonthSummary?.totalQuoted ?? 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -101,7 +104,7 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
               options={[
                 { value: 'draft', label: 'Draft' },
                 { value: 'sent', label: 'Sent' },
-                { value: 'accepted', label: 'Accepted' },
+                { value: 'accepted', label: 'Accepted & Invoiced' },
                 { value: 'declined', label: 'Declined' },
                 { value: 'expired', label: 'Expired' },
                 { value: 'converted', label: 'Converted' },
@@ -130,63 +133,17 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
       </Button>
 
       {/* Metrics Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        <Card className="shadow-sm flex flex-col p-4 md:p-6 justify-center gap-1.5 md:gap-2">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs md:text-sm font-medium text-muted-foreground">Quoted</h3>
-            <FileText className="size-3.5 md:size-4 text-primary shrink-0" />
-          </div>
-          <div>
-            <div
-              className="text-base sm:text-lg md:text-2xl font-bold truncate"
-              title={formatZAR(totalQuoted)}
-            >
-              {formatZAR(totalQuoted)}
-            </div>
-            <p className="text-[10px] md:text-xs text-muted-foreground truncate mt-0.5">
-              Current FY
-            </p>
-          </div>
-        </Card>
-
-        <Card className="shadow-sm flex flex-col p-4 md:p-6 justify-center gap-1.5 md:gap-2">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs md:text-sm font-medium text-muted-foreground">Accepted</h3>
-            <CheckCircle2 className="size-3.5 md:size-4 text-emerald-500 shrink-0" />
-          </div>
-          <div>
-            <div
-              className="text-base sm:text-lg md:text-2xl font-bold text-emerald-600 dark:text-emerald-400 truncate"
-              title={formatZAR(totalAccepted)}
-            >
-              {formatZAR(totalAccepted)}
-            </div>
-            <p className="text-[10px] md:text-xs text-muted-foreground truncate mt-0.5">
-              Converted into sales
-            </p>
-          </div>
-        </Card>
-
-        <Card className="shadow-sm col-span-2 md:col-span-1 flex flex-col p-4 md:p-6 justify-center gap-1.5 md:gap-2 border-amber-500/20 bg-amber-500/5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs md:text-sm font-semibold text-amber-600/80 dark:text-amber-500/80 uppercase tracking-wider">
-              Pending
-            </h3>
-            <Clock className="size-3.5 md:size-4 text-amber-600 dark:text-amber-500 shrink-0" />
-          </div>
-          <div>
-            <div
-              className={`text-xl md:text-2xl font-bold truncate ${totalPending > 0 ? 'text-amber-600 dark:text-amber-500' : 'text-emerald-600 dark:text-emerald-500'}`}
-              title={formatZAR(totalPending)}
-            >
-              {formatZAR(totalPending)}
-            </div>
-            <p className="text-[10px] md:text-xs text-amber-600/70 dark:text-amber-500/70 truncate mt-0.5 font-medium">
-              Awaiting client response
-            </p>
-          </div>
-        </Card>
-      </div>
+      <QuotesKpiCards
+        totalQuoted={totalQuoted}
+        totalAccepted={totalAccepted}
+        totalPending={totalPending}
+        totalCount={totalCount}
+        acceptedCount={acceptedCount}
+        pendingCount={pendingCount}
+        currentMonthQuoted={currentMonthQuoted}
+        activeStatus={normalizedStatus}
+        divisionId={divisionId}
+      />
 
       {isFiltered ? (
         <QuotesClient

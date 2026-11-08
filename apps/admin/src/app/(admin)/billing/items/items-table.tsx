@@ -376,7 +376,7 @@ export function ItemsTable({ items }: ItemsTableProps) {
           </div>
         ) : (
           sortedItems.map((item) => (
-            <div key={item.id} className="relative">
+            <div key={`mobile-${item.id}`} className="relative">
               <MobileItemCard {...item} />
             </div>
           ))

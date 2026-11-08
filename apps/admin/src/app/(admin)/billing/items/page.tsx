@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Package, DollarSign, Layers, Archive } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { BillingKpiCard } from '@/components/billing/billing-kpi-card';
 import { getAllItems } from '@pmg/db';
 import { ItemsTable } from './items-table';
 import { AddItemDialog } from './add-item-dialog';
@@ -20,7 +21,11 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps = {}) {
     getAllItems({ status: 'archived' }),
   ]);
 
-  const allItems = [...activeItems, ...archivedItems];
+  const itemMap = new Map<string, (typeof activeItems)[number]>();
+  for (const item of [...activeItems, ...archivedItems]) {
+    itemMap.set(item.id, item);
+  }
+  const allItems = Array.from(itemMap.values());
 
   const avgRate = activeItems.length
     ? activeItems.reduce((acc, i) => acc + parseFloat(i.unitPrice), 0) / activeItems.length
@@ -46,56 +51,38 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps = {}) {
       </div>
 
       {/* KPI Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-b-4 border-b-primary overflow-hidden">
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
-              <Package className="size-4" /> Active Services
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold">{activeItems.length}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            Ready for invoices, retainers & quotes
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <BillingKpiCard
+          title="Active Services"
+          value={activeItems.length}
+          subtitle="Ready for invoices, retainers & quotes"
+          icon={Package}
+          variant="blue"
+        />
 
-        <Card className="border-b-4 border-b-emerald-500 overflow-hidden">
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-              <DollarSign className="size-4" /> Average Unit Rate
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
-              {formatZAR(avgRate)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            Across active catalogue items
-          </CardContent>
-        </Card>
+        <BillingKpiCard
+          title="Average Unit Rate"
+          value={formatZAR(avgRate)}
+          subtitle="Across active catalogue items"
+          icon={DollarSign}
+          variant="emerald"
+        />
 
-        <Card className="border-b-4 border-b-blue-500 overflow-hidden">
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-              <Layers className="size-4" /> Packaging Units
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold">{unitTypesCount} Unit Types</CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            Hourly, monthly, project, fixed rates
-          </CardContent>
-        </Card>
+        <BillingKpiCard
+          title="Packaging Units"
+          value={`${unitTypesCount} Unit Types`}
+          subtitle="Hourly, monthly, project, fixed rates"
+          icon={Layers}
+          variant="violet"
+        />
 
-        <Card className="border-b-4 border-b-muted-foreground/60 overflow-hidden">
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <Archive className="size-4" /> Total Catalogue
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold">{allItems.length} Items</CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            {archivedItems.length} archived service item(s)
-          </CardContent>
-        </Card>
+        <BillingKpiCard
+          title="Total Catalogue"
+          value={`${allItems.length} Items`}
+          subtitle={`${archivedItems.length} archived service item(s)`}
+          icon={Archive}
+          variant="zinc"
+        />
       </div>
 
       {/* Items table */}

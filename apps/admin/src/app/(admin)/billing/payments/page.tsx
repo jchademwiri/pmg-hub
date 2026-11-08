@@ -27,6 +27,7 @@ import {
   getCreditApplicationsForPeriod,
 } from '@/app/actions/billing-payments';
 import { PaymentsTable } from './payments-table';
+import { PaymentsKpiCards } from './payments-kpi-cards';
 import { LazyPaymentsTable } from './lazy-payments-table';
 import {
   Accordion,
@@ -200,6 +201,9 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
   const globalReceived = monthlySummaries.reduce((sum, m) => sum + m.totalReceived, 0);
   const globalAllocated = monthlySummaries.reduce((sum, m) => sum + m.totalAllocated, 0);
   const globalUnallocated = Math.max(0, globalReceived - globalAllocated);
+  const totalCount = monthlySummaries.reduce((sum, m) => sum + (m.count ?? 0), 0);
+  const currentMonthSummary = monthlySummaries.find((m) => m.month === currentMonthGroup.value);
+  const currentMonthReceived = currentMonthSummary?.totalReceived ?? 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -212,6 +216,13 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <div className="hidden md:block">
+            <FilterBar
+              divisions={divisions}
+              currentDivisionId={divisionId}
+              baseUrl="/billing/payments"
+            />
+          </div>
           <DownloadReportDialog
             defaultReportType="payments"
             clients={clients}
@@ -239,73 +250,14 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
       </Button>
 
       {/* Metrics Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        <Card className="shadow-sm flex flex-col p-4 md:p-6 justify-center gap-1.5 md:gap-2">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs md:text-sm font-medium text-muted-foreground">Received</h3>
-            <Download className="size-3.5 md:size-4 text-emerald-500 shrink-0" />
-          </div>
-          <div>
-            <div
-              className="text-base sm:text-lg md:text-2xl font-bold text-emerald-600 dark:text-emerald-400 truncate"
-              title={formatZAR(globalReceived)}
-            >
-              {formatZAR(globalReceived)}
-            </div>
-            <p className="text-[10px] md:text-xs text-muted-foreground truncate mt-0.5">
-              Current FY
-            </p>
-          </div>
-        </Card>
-
-        <Card className="shadow-sm flex flex-col p-4 md:p-6 justify-center gap-1.5 md:gap-2">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs md:text-sm font-medium text-muted-foreground">Allocated</h3>
-            <CheckCircle2 className="size-3.5 md:size-4 text-primary shrink-0" />
-          </div>
-          <div>
-            <div
-              className="text-base sm:text-lg md:text-2xl font-bold truncate"
-              title={formatZAR(globalAllocated)}
-            >
-              {formatZAR(globalAllocated)}
-            </div>
-            <p className="text-[10px] md:text-xs text-muted-foreground truncate mt-0.5">
-              Matched to invoices
-            </p>
-          </div>
-        </Card>
-
-        <Card className="shadow-sm col-span-2 md:col-span-1 flex flex-col p-4 md:p-6 justify-center gap-1.5 md:gap-2 border-amber-500/20 bg-amber-500/5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs md:text-sm font-semibold text-amber-600/80 dark:text-amber-500/80 uppercase tracking-wider">
-              Unallocated
-            </h3>
-            <AlertCircle
-              className={`size-3.5 md:size-4 shrink-0 ${globalUnallocated > 0 ? 'text-amber-600 dark:text-amber-500' : 'text-emerald-600 dark:text-emerald-500'}`}
-            />
-          </div>
-          <div>
-            <div
-              className={`text-xl md:text-2xl font-bold truncate ${globalUnallocated > 0 ? 'text-amber-600 dark:text-amber-500' : 'text-emerald-600 dark:text-emerald-500'}`}
-              title={formatZAR(globalUnallocated)}
-            >
-              {formatZAR(globalUnallocated)}
-            </div>
-            <p className="text-[10px] md:text-xs text-amber-600/70 dark:text-amber-500/70 truncate mt-0.5 font-medium">
-              Pending allocation
-            </p>
-          </div>
-        </Card>
-      </div>
-
-      <div className="hidden md:block">
-        <FilterBar
-          divisions={divisions}
-          currentDivisionId={divisionId}
-          baseUrl="/billing/payments"
-        />
-      </div>
+      <PaymentsKpiCards
+        globalReceived={globalReceived}
+        globalAllocated={globalAllocated}
+        globalUnallocated={globalUnallocated}
+        totalCount={totalCount}
+        currentMonthReceived={currentMonthReceived}
+        divisionId={divisionId}
+      />
 
       <Accordion
         type="single"

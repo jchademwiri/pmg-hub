@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/table';
 import { confirm } from '@/components/ui/confirm-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { getDocumentLogoText } from '@/lib/document-logo';
 
 export interface PaymentEntry {
   id: string;
@@ -111,10 +112,10 @@ function PaymentRow({
       </TableCell>
       <TableCell className="py-3 px-3 overflow-hidden">
         <span
-          className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-secondary text-secondary-foreground truncate max-w-full"
+          className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-secondary text-secondary-foreground truncate max-w-full tracking-wide"
           title={entry.divisionName}
         >
-          {entry.divisionName}
+          {entry.divisionName ? getDocumentLogoText(entry.divisionName) : '-'}
         </span>
       </TableCell>
       <TableCell className="text-xs py-3 px-3 overflow-hidden">
@@ -257,8 +258,11 @@ function MobilePaymentCard({
               <Calendar className="size-3" /> {fmtDate(entry.date)}
             </span>
             <span className="hidden sm:inline">•</span>
-            <span className="truncate max-w-[120px] bg-secondary text-secondary-foreground px-1.5 rounded">
-              {entry.divisionName}
+            <span
+              className="truncate max-w-[120px] bg-secondary text-secondary-foreground px-1.5 rounded font-semibold tracking-wide"
+              title={entry.divisionName}
+            >
+              {entry.divisionName ? getDocumentLogoText(entry.divisionName) : '-'}
             </span>
           </div>
         </div>
@@ -359,7 +363,7 @@ export function PaymentsTable({ entries, closedPeriods, deleteAction }: Payments
               <TableRow>
                 <TableHead className="w-[115px] px-3 text-xs">Date</TableHead>
                 <TableHead className="w-[170px] px-3 text-xs">Client</TableHead>
-                <TableHead className="w-[140px] px-3 text-xs">Division</TableHead>
+                <TableHead className="w-[100px] px-3 text-xs">Division</TableHead>
                 <TableHead className="min-w-[180px] px-3 text-xs">Reference</TableHead>
                 <TableHead className="w-[100px] px-3 text-right text-xs">Amount</TableHead>
                 <TableHead className="w-[95px] px-3 text-right text-xs">Credit</TableHead>
