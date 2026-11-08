@@ -18,9 +18,17 @@ interface StatusFilterProps {
   preserveParams?: Record<string, string | undefined>;
   /** Available status options */
   options: { value: string; label: string }[];
+  /** Optional custom class name for the trigger */
+  className?: string;
 }
 
-export function StatusFilter({ status, basePath, preserveParams, options }: StatusFilterProps) {
+export function StatusFilter({
+  status,
+  basePath,
+  preserveParams,
+  options,
+  className,
+}: StatusFilterProps) {
   const router = useRouter();
 
   function handleChange(value: string) {
@@ -41,7 +49,7 @@ export function StatusFilter({ status, basePath, preserveParams, options }: Stat
 
   return (
     <Select value={status ?? 'all'} onValueChange={handleChange}>
-      <SelectTrigger className="w-40">
+      <SelectTrigger className={className ?? 'w-[200px] sm:w-[220px]'}>
         <SelectValue placeholder="All statuses" />
       </SelectTrigger>
       <SelectContent>

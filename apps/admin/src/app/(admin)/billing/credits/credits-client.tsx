@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { Button } from '@/components/ui/button';
+import { BillingKpiCard } from '@/components/billing/billing-kpi-card';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Receipt, TrendingUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -41,6 +43,7 @@ import {
   Clock,
   CheckCircle2,
   Download,
+  Plus,
   Trash2,
   ExternalLink,
 } from 'lucide-react';
@@ -194,7 +197,13 @@ export function CreditsClient({
 
   // Filter credit notes
   const filteredNotes = creditNotes.filter((note) => {
-    if (statusFilter !== 'all' && note.status !== statusFilter) return false;
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'active') {
+        if (note.status !== 'active' && note.status !== 'partially_applied') return false;
+      } else if (note.status !== statusFilter) {
+        return false;
+      }
+    }
     if (typeFilter !== 'all' && note.type !== typeFilter) return false;
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -207,71 +216,27 @@ export function CreditsClient({
     return true;
   });
 
+  const appliedCredit = Math.max(0, totalIssued - activeCredit - expiredCredit);
+  const activeCount = creditNotes.filter(
+    (n) => n.status === 'active' || n.status === 'partially_applied',
+  ).length;
+  const expiredCount = creditNotes.filter((n) => n.status === 'expired').length;
+  const utilizationRate = totalIssued > 0 ? (appliedCredit / totalIssued) * 100 : 0;
+
   return (
     <div className="flex flex-col gap-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-              <Wallet className="size-3.5" />
-              Total Credits Issued
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <span className="text-2xl font-bold tabular-nums">{formatZAR(totalIssued)}</span>
-          </CardContent>
-        </Card>
+      {/* Page header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold">Credit Management</h2>
+          <p className="text-sm text-muted-foreground">
+            Monitor client credits, credit notes, and credit balances
+          </p>
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">
-              Active Credits
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <span className="text-2xl font-bold text-emerald-600 tabular-nums">
-              {formatZAR(activeCredit)}
-            </span>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-amber-600 uppercase tracking-wider">
-              Expired Credits
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <span className="text-2xl font-bold text-amber-600 tabular-nums">
-              {formatZAR(expiredCredit)}
-            </span>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Credit Notes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <span className="text-2xl font-bold tabular-nums">{creditNotes.length}</span>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters and Actions */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <Input
-            placeholder="Search client, document, reason..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full sm:w-64"
-          />
+        <div className="flex flex-wrap items-center gap-3">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-36">
+            <SelectTrigger className="w-36 md:w-40">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -283,8 +248,9 @@ export function CreditsClient({
               <SelectItem value="void">Void</SelectItem>
             </SelectContent>
           </Select>
+
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-full sm:w-44">
+            <SelectTrigger className="w-44 md:w-52">
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
@@ -296,25 +262,117 @@ export function CreditsClient({
               <SelectItem value="refund_reversal">Refund Reversal</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-        <div className="flex items-center gap-2">
+
           {filteredNotes.length > 0 && (
             <Button variant="outline" size="sm" onClick={exportCreditsToCSV} className="gap-1.5">
               <Download className="size-4" />
               Export CSV
             </Button>
           )}
+
           <Button size="sm" onClick={() => setShowIssueDialog(true)}>
+            <Plus className="size-4 mr-1.5" />
             Issue Credit Note
           </Button>
         </div>
       </div>
 
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <BillingKpiCard
+          title="Total Issued"
+          value={formatZAR(totalIssued)}
+          subtitle={
+            <span>
+              <span className="font-semibold text-foreground/80">{creditNotes.length}</span> credit
+              notes issued
+            </span>
+          }
+          icon={Wallet}
+          variant="blue"
+          onClick={() => setStatusFilter('all')}
+          isActive={statusFilter === 'all'}
+          activeLabel="All notes"
+          tooltip="Click to view all credit notes"
+        />
+
+        <BillingKpiCard
+          title="Active Credits"
+          value={formatZAR(activeCredit)}
+          subtitle={
+            <span>
+              <span className="font-semibold text-foreground/80">{activeCount}</span> available for
+              billing
+            </span>
+          }
+          icon={CheckCircle2}
+          variant="emerald"
+          onClick={() => setStatusFilter(statusFilter === 'active' ? 'all' : 'active')}
+          isActive={statusFilter === 'active'}
+          activeLabel="Filtered"
+          tooltip="Click to filter active credit notes"
+        />
+
+        <BillingKpiCard
+          title="Expired Credits"
+          value={formatZAR(expiredCredit)}
+          subtitle={
+            <span>
+              {expiredCredit > 0 ? (
+                <>
+                  <span className="font-semibold text-foreground/80">{expiredCount}</span> expired /
+                  forfeited
+                </>
+              ) : (
+                'Zero expired credits'
+              )}
+            </span>
+          }
+          icon={AlertCircle}
+          variant={expiredCredit > 0 ? 'amber' : 'zinc'}
+          onClick={() => setStatusFilter(statusFilter === 'expired' ? 'all' : 'expired')}
+          isActive={statusFilter === 'expired'}
+          activeLabel="Filtered"
+          tooltip="Click to filter expired credit notes"
+        />
+
+        <BillingKpiCard
+          title="Utilization Rate"
+          value={`${utilizationRate.toFixed(1)}%`}
+          subtitle={
+            <span>
+              Utilized:{' '}
+              <span className="font-semibold text-foreground/80">{formatZAR(appliedCredit)}</span>
+            </span>
+          }
+          icon={TrendingUp}
+          variant="violet"
+          progress={{
+            value: utilizationRate,
+            colorClass: 'bg-violet-500',
+          }}
+          onClick={() =>
+            setStatusFilter(statusFilter === 'fully_applied' ? 'all' : 'fully_applied')
+          }
+          isActive={statusFilter === 'fully_applied'}
+          activeLabel="Filtered"
+          tooltip="Click to filter fully utilized credit notes"
+        />
+      </div>
+
       {/* Credit Notes Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Credit Notes</CardTitle>
-          <CardDescription>All credit notes and their current status</CardDescription>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <CardTitle>Credit Notes</CardTitle>
+            <CardDescription>All credit notes and their current status</CardDescription>
+          </div>
+          <Input
+            placeholder="Search client, document, reason..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full sm:w-64 text-xs h-9"
+          />
         </CardHeader>
         <CardContent className="p-0 px-6 pb-4">
           <div className="overflow-x-auto">

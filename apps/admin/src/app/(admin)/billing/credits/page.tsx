@@ -78,16 +78,6 @@ export default async function CreditsPage() {
     <div className="flex flex-col gap-6">
       <SetPageTotal value={formatZAR(activeCredit)} variant="green" />
 
-      {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">Credit Management</h2>
-          <p className="text-sm text-muted-foreground">
-            Monitor client credits, credit notes, and credit balances
-          </p>
-        </div>
-      </div>
-
       {/* Credits Client Component */}
       <CreditsClient
         creditNotes={creditNotesList}
