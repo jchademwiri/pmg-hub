@@ -15,6 +15,7 @@ import { issueInvoice, voidInvoice } from '@/app/actions/billing-invoices';
 import { InvoicesTable } from './invoices-table';
 import { LazyInvoicesTable } from './lazy-invoices-table';
 import { InvoicesClient } from './invoices-client';
+import { InvoicesKpiCards } from './invoices-kpi-cards';
 import {
   Accordion,
   AccordionItem,
@@ -64,13 +65,25 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
   const fyStartYear = currentMonthIdx < 2 ? currentCalendarYear - 1 : currentCalendarYear;
 
   const [monthlySummaries, clients, divisions] = await Promise.all([
-    getInvoiceMonthlySummaries(fyStartYear, divisionId, status),
+    getInvoiceMonthlySummaries(fyStartYear, divisionId),
     getAllClients(),
     getAllDivisions(),
   ]);
   const totalInvoiced = monthlySummaries.reduce((sum, m) => sum + m.total, 0);
   const totalOutstanding = monthlySummaries.reduce((sum, m) => sum + m.outstanding, 0);
-  const totalPaid = totalInvoiced - totalOutstanding;
+  const totalPaid = monthlySummaries.reduce(
+    (sum, m) => sum + (m.paid ?? Math.max(0, m.total - m.outstanding)),
+    0,
+  );
+  const totalCount = monthlySummaries.reduce((sum, m) => sum + (m.count ?? 0), 0);
+  const fullyPaidCount = monthlySummaries.reduce((sum, m) => sum + (m.paidCount ?? 0), 0);
+  const partiallyPaidCount = monthlySummaries.reduce(
+    (sum, m) => sum + (m.partiallyPaidCount ?? 0),
+    0,
+  );
+  const outstandingCount = monthlySummaries.reduce((sum, m) => sum + (m.outstandingCount ?? 0), 0);
+  const currentMonthSummary = monthlySummaries.find((m) => m.month === currentMonthGroup.value);
+  const currentMonthInvoiced = currentMonthSummary?.total ?? 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -86,13 +99,14 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               status={status}
               basePath="/billing/invoices"
               preserveParams={{ divisionId }}
+              className="w-[210px] sm:w-[230px]"
               options={[
                 { value: 'only_outstanding', label: 'Unpaid & Not Fully Paid' },
                 { value: 'unpaid', label: 'Unpaid Only' },
                 { value: 'partially_paid', label: 'Not Fully Paid (Partially Paid)' },
                 { value: 'issued', label: 'Issued' },
                 { value: 'overdue', label: 'Overdue' },
-                { value: 'paid', label: 'Paid' },
+                { value: 'paid', label: 'Paid & Partially Paid' },
                 { value: 'draft', label: 'Draft' },
                 { value: 'void', label: 'Void' },
                 { value: 'written_off', label: 'Written Off' },
@@ -127,63 +141,18 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       </Button>
 
       {/* Metrics Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        <Card className="shadow-sm flex flex-col p-4 md:p-6 justify-center gap-1.5 md:gap-2">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs md:text-sm font-medium text-muted-foreground">Invoiced</h3>
-            <FileText className="size-3.5 md:size-4 text-primary shrink-0" />
-          </div>
-          <div>
-            <div
-              className="text-base sm:text-lg md:text-2xl font-bold truncate"
-              title={formatZAR(totalInvoiced)}
-            >
-              {formatZAR(totalInvoiced)}
-            </div>
-            <p className="text-[10px] md:text-xs text-muted-foreground truncate mt-0.5">
-              Current FY
-            </p>
-          </div>
-        </Card>
-
-        <Card className="shadow-sm flex flex-col p-4 md:p-6 justify-center gap-1.5 md:gap-2">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs md:text-sm font-medium text-muted-foreground">Collected</h3>
-            <CheckCircle2 className="size-3.5 md:size-4 text-emerald-500 shrink-0" />
-          </div>
-          <div>
-            <div
-              className="text-base sm:text-lg md:text-2xl font-bold text-emerald-600 dark:text-emerald-400 truncate"
-              title={formatZAR(totalPaid)}
-            >
-              {formatZAR(totalPaid)}
-            </div>
-            <p className="text-[10px] md:text-xs text-muted-foreground truncate mt-0.5">
-              Paid invoices
-            </p>
-          </div>
-        </Card>
-
-        <Card className="shadow-sm col-span-2 md:col-span-1 flex flex-col p-4 md:p-6 justify-center gap-1.5 md:gap-2 border-amber-500/20 bg-amber-500/5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs md:text-sm font-semibold text-amber-600/80 dark:text-amber-500/80 uppercase tracking-wider">
-              Outstanding
-            </h3>
-            <Clock className="size-3.5 md:size-4 text-amber-600 dark:text-amber-500 shrink-0" />
-          </div>
-          <div>
-            <div
-              className={`text-xl md:text-2xl font-bold truncate ${totalOutstanding > 0 ? 'text-amber-600 dark:text-amber-500' : 'text-emerald-600 dark:text-emerald-500'}`}
-              title={formatZAR(totalOutstanding)}
-            >
-              {formatZAR(totalOutstanding)}
-            </div>
-            <p className="text-[10px] md:text-xs text-amber-600/70 dark:text-amber-500/70 truncate mt-0.5 font-medium">
-              Pending collection
-            </p>
-          </div>
-        </Card>
-      </div>
+      <InvoicesKpiCards
+        totalInvoiced={totalInvoiced}
+        totalPaid={totalPaid}
+        totalOutstanding={totalOutstanding}
+        totalCount={totalCount}
+        fullyPaidCount={fullyPaidCount}
+        partiallyPaidCount={partiallyPaidCount}
+        outstandingCount={outstandingCount}
+        currentMonthInvoiced={currentMonthInvoiced}
+        activeStatus={status}
+        divisionId={divisionId}
+      />
 
       {isFiltered ? (
         <InvoicesClient
@@ -193,6 +162,9 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           pageSize={pageSize}
           divisionId={divisionId}
           status={status}
+          fullyPaidCount={result.fullyPaidCount}
+          partiallyPaidCount={result.partiallyPaidCount}
+          outstandingCount={result.outstandingCount}
           issueAction={issueInvoice}
           voidAction={voidInvoice}
         />

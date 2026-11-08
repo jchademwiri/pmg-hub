@@ -445,7 +445,11 @@ export async function getAllQuotations(
   }
   if (filters?.status) {
     if (VALID_QUOTE_STATUSES.has(filters.status)) {
-      conditions.push(eq(quotations.status, filters.status as any));
+      if (filters.status === 'accepted') {
+        conditions.push(sql`${quotations.status} IN ('accepted', 'converted')`);
+      } else {
+        conditions.push(eq(quotations.status, filters.status as any));
+      }
     }
   }
   if (filters?.clientId) {
@@ -502,6 +506,8 @@ export async function getAllQuotations(
 export type MonthlyQuotationSummary = {
   month: string;
   count: number;
+  acceptedCount: number;
+  pendingCount: number;
   totalQuoted: number;
   totalAccepted: number;
   totalPending: number;
@@ -524,7 +530,11 @@ export async function getQuotationMonthlySummaries(
 
   if (status) {
     if (VALID_QUOTE_STATUSES.has(status)) {
-      conditions.push(eq(quotations.status, status as any));
+      if (status === 'accepted') {
+        conditions.push(sql`${quotations.status} IN ('accepted', 'converted')`);
+      } else {
+        conditions.push(eq(quotations.status, status as any));
+      }
     }
   } else {
     // Exclude drafts and cancelled by default unless specifically asking for them
@@ -535,6 +545,8 @@ export async function getQuotationMonthlySummaries(
     .select({
       month: sql<string>`TO_CHAR(${quotations.quoteDate}, 'YYYY-MM')`,
       count: sql<number>`count(*)::int`,
+      acceptedCount: sql<number>`count(CASE WHEN ${quotations.status} IN ('accepted', 'converted') THEN 1 END)::int`,
+      pendingCount: sql<number>`count(CASE WHEN ${quotations.status} = 'sent' THEN 1 END)::int`,
       totalQuoted: sql<number>`COALESCE(SUM(${quotations.total}), 0)::numeric`,
       totalAccepted: sql<number>`COALESCE(SUM(CASE WHEN ${quotations.status} IN ('accepted', 'converted') THEN ${quotations.total} ELSE 0 END), 0)::numeric`,
       totalPending: sql<number>`COALESCE(SUM(CASE WHEN ${quotations.status} = 'sent' THEN ${quotations.total} ELSE 0 END), 0)::numeric`,
@@ -547,6 +559,8 @@ export async function getQuotationMonthlySummaries(
   return results.map((r) => ({
     month: r.month,
     count: Number(r.count),
+    acceptedCount: Number(r.acceptedCount),
+    pendingCount: Number(r.pendingCount),
     totalQuoted: Number(r.totalQuoted),
     totalAccepted: Number(r.totalAccepted),
     totalPending: Number(r.totalPending),
@@ -581,7 +595,15 @@ export async function getAllInvoices(
     onlyOutstanding?: boolean;
   },
   pageObj?: { page: number; pageSize: number },
-): Promise<{ data: InvoiceRow[]; total: number; sum: number; outstanding: number }> {
+): Promise<{
+  data: InvoiceRow[];
+  total: number;
+  sum: number;
+  outstanding: number;
+  fullyPaidCount: number;
+  partiallyPaidCount: number;
+  outstandingCount: number;
+}> {
   const conditions = [];
   if (filters?.excludeDraftVoid && !filters?.status) {
     conditions.push(sql`${invoices.status} NOT IN ('draft', 'void')`);
@@ -599,6 +621,8 @@ export async function getAllInvoices(
       conditions.push(eq(invoices.status, 'partially_paid'));
     } else if (filters.status === 'all_active') {
       conditions.push(sql`${invoices.status} NOT IN ('draft', 'void')`);
+    } else if (filters.status === 'paid') {
+      conditions.push(sql`${invoices.status} IN ('paid', 'partially_paid')`);
     } else {
       conditions.push(eq(invoices.status, filters.status as any));
     }
@@ -668,7 +692,13 @@ export async function getAllInvoices(
     .innerJoin(divisions, eq(invoices.divisionId, divisions.id))
     .leftJoin(clients, eq(invoices.clientId, clients.id))
     .leftJoin(q, eq(invoices.quotationId, q.id))
-    .orderBy(desc(invoices.invoiceDate), desc(invoices.createdAt));
+    .orderBy(
+      ...(filters?.status === 'paid'
+        ? [sql`CASE WHEN ${invoices.status} = 'partially_paid' THEN 0 ELSE 1 END`]
+        : []),
+      desc(invoices.invoiceDate),
+      desc(invoices.createdAt),
+    );
 
   let finalQuery = conditions.length > 0 ? query.where(and(...conditions)) : query;
 
@@ -679,7 +709,13 @@ export async function getAllInvoices(
   const countQuery = db
     .select({
       count: sql<number>`count(*)::int`,
-      sum: sql<number>`COALESCE(SUM(${invoices.total}), 0)::numeric`,
+      fullyPaidCount: sql<number>`count(CASE WHEN ${invoices.status} = 'paid' THEN 1 END)::int`,
+      partiallyPaidCount: sql<number>`count(CASE WHEN ${invoices.status} = 'partially_paid' THEN 1 END)::int`,
+      outstandingCount: sql<number>`count(CASE WHEN ${invoices.status} IN ('issued', 'overdue', 'partially_paid') THEN 1 END)::int`,
+      sum:
+        filters?.status === 'paid'
+          ? sql<number>`COALESCE(SUM(CASE WHEN ${invoices.status} = 'paid' THEN ${invoices.total} ELSE LEAST(${invoices.total}, COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0) + COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)) END), 0)::numeric`
+          : sql<number>`COALESCE(SUM(${invoices.total}), 0)::numeric`,
       outstanding: sql<number>`COALESCE(SUM(CASE WHEN ${invoices.status} IN ('issued', 'overdue', 'partially_paid') THEN ${invoices.total} - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0) - COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0) - COALESCE(${invoices.writeOffAmount}, 0) ELSE 0 END), 0)::numeric`,
     })
     .from(invoices);
@@ -689,6 +725,9 @@ export async function getAllInvoices(
   const total = totalRes?.count ?? 0;
   const sumAmount = Number(totalRes?.sum ?? 0);
   const outstanding = Number(totalRes?.outstanding ?? 0);
+  const fullyPaidCount = Number(totalRes?.fullyPaidCount ?? 0);
+  const partiallyPaidCount = Number(totalRes?.partiallyPaidCount ?? 0);
+  const outstandingCount = Number(totalRes?.outstandingCount ?? 0);
 
   if (pageObj) {
     finalQuery = finalQuery
@@ -697,7 +736,15 @@ export async function getAllInvoices(
   }
 
   const data = await finalQuery;
-  return { data: data as InvoiceRow[], total, sum: sumAmount, outstanding };
+  return {
+    data: data as InvoiceRow[],
+    total,
+    sum: sumAmount,
+    outstanding,
+    fullyPaidCount,
+    partiallyPaidCount,
+    outstandingCount,
+  };
 }
 
 // ── getInvoiceMonthlySummaries ────────────────────────────────────────────────
@@ -707,6 +754,10 @@ export type MonthlyInvoiceSummary = {
   count: number;
   total: number;
   outstanding: number;
+  paid: number;
+  paidCount: number;
+  partiallyPaidCount: number;
+  outstandingCount: number;
 };
 
 export async function getInvoiceMonthlySummaries(
@@ -733,6 +784,8 @@ export async function getInvoiceMonthlySummaries(
       conditions.push(eq(invoices.status, 'partially_paid'));
     } else if (status === 'all_active') {
       conditions.push(sql`${invoices.status} NOT IN ('draft', 'void')`);
+    } else if (status === 'paid') {
+      conditions.push(sql`${invoices.status} IN ('paid', 'partially_paid')`);
     } else {
       conditions.push(eq(invoices.status, status as any));
     }
@@ -747,6 +800,20 @@ export async function getInvoiceMonthlySummaries(
       count: sql<number>`count(*)::int`,
       total: sql<number>`COALESCE(SUM(${invoices.total}), 0)::numeric`,
       outstanding: sql<number>`COALESCE(SUM(CASE WHEN ${invoices.status} IN ('issued', 'overdue', 'partially_paid') THEN ${invoices.total} - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0) - COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0) ELSE 0 END), 0)::numeric`,
+      paid: sql<number>`COALESCE(SUM(
+        CASE
+          WHEN ${invoices.status} = 'paid' THEN ${invoices.total}
+          WHEN ${invoices.status} IN ('partially_paid', 'issued', 'overdue') THEN
+            LEAST(${invoices.total},
+              COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0) +
+              COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)
+            )
+          ELSE 0
+        END
+      ), 0)::numeric`,
+      paidCount: sql<number>`count(CASE WHEN ${invoices.status} = 'paid' THEN 1 END)::int`,
+      partiallyPaidCount: sql<number>`count(CASE WHEN ${invoices.status} = 'partially_paid' THEN 1 END)::int`,
+      outstandingCount: sql<number>`count(CASE WHEN ${invoices.status} IN ('issued', 'overdue', 'partially_paid') THEN 1 END)::int`,
     })
     .from(invoices)
     .where(and(...conditions))
@@ -758,6 +825,10 @@ export async function getInvoiceMonthlySummaries(
     count: Number(r.count),
     total: Number(r.total),
     outstanding: Number(r.outstanding),
+    paid: Number(r.paid),
+    paidCount: Number(r.paidCount),
+    partiallyPaidCount: Number(r.partiallyPaidCount),
+    outstandingCount: Number(r.outstandingCount),
   }));
 }
 

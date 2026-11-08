@@ -3,7 +3,19 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, FileText } from 'lucide-react';
+import {
+  Search,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Mail,
+  FileText,
+  Receipt,
+  CheckCircle2,
+  AlertTriangle,
+  TrendingUp,
+} from 'lucide-react';
+import { BillingKpiCard } from '@/components/billing/billing-kpi-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -58,6 +70,8 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
     [globalAging],
   );
   const totalOverdue = React.useMemo(() => totalAR - totalCurrent, [totalAR, totalCurrent]);
+  const delinquencyRate = totalAR > 0 ? (totalOverdue / totalAR) * 100 : 0;
+  const currentRate = totalAR > 0 ? (totalCurrent / totalAR) * 100 : 100;
 
   // Handle Sort
   const handleSort = (field: SortField) => {
@@ -151,33 +165,65 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        <Card className="shadow-none p-4 md:p-5 flex flex-col justify-center">
-          <p className="text-[10px] md:text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">
-            Total Outstanding
-          </p>
-          <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 md:mt-2 tabular-nums text-foreground truncate">
-            {formatZAR(totalAR)}
-          </p>
-        </Card>
-        <Card className="shadow-none p-4 md:p-5 flex flex-col justify-center">
-          <p className="text-[10px] md:text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">
-            Current
-          </p>
-          <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 md:mt-2 tabular-nums text-emerald-600 truncate">
-            {formatZAR(totalCurrent)}
-          </p>
-        </Card>
-        <Card className="shadow-none col-span-2 md:col-span-1 p-4 md:p-5 flex flex-col justify-center border-amber-500/20 bg-amber-500/5">
-          <p className="text-[10px] md:text-xs font-semibold text-amber-600/80 dark:text-amber-500/80 uppercase tracking-wider truncate">
-            Total Delinquent
-          </p>
-          <p
-            className={`text-xl md:text-2xl font-bold mt-1 md:mt-2 tabular-nums truncate ${totalOverdue > 0 ? 'text-red-600 dark:text-red-500' : 'text-emerald-600 dark:text-emerald-500'}`}
-          >
-            {formatZAR(totalOverdue)}
-          </p>
-        </Card>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <BillingKpiCard
+          title="Total Outstanding"
+          value={formatZAR(totalAR)}
+          subtitle={
+            <span>
+              <span className="font-semibold text-foreground/80">{clientAging.length}</span> client
+              accounts
+            </span>
+          }
+          icon={Receipt}
+          variant="blue"
+          onClick={() => setActiveBucket(null)}
+          isActive={activeBucket === null}
+          activeLabel="All aging"
+          tooltip="Click to view all clients"
+        />
+
+        <BillingKpiCard
+          title="Current"
+          value={formatZAR(totalCurrent)}
+          subtitle={
+            <span>
+              <span className="font-semibold text-foreground/80">{currentRate.toFixed(0)}%</span>{' '}
+              within payment terms
+            </span>
+          }
+          icon={CheckCircle2}
+          variant="emerald"
+          onClick={() => setActiveBucket(activeBucket === 'current' ? null : 'current')}
+          isActive={activeBucket === 'current'}
+          activeLabel="Filtered"
+          tooltip="Click to filter current (not overdue) invoices"
+        />
+
+        <BillingKpiCard
+          title="Total Delinquent"
+          value={formatZAR(totalOverdue)}
+          subtitle={<span>{totalOverdue > 0 ? 'Past payment terms' : 'No overdue debt'}</span>}
+          icon={AlertTriangle}
+          variant={totalOverdue > 0 ? 'red' : 'emerald'}
+          onClick={() => setActiveBucket(activeBucket === '61_plus' ? null : '61_plus')}
+          isActive={activeBucket !== null && activeBucket !== 'current'}
+          activeLabel="Filtered"
+          tooltip="Click to filter 60+ days delinquent debt"
+        />
+
+        <BillingKpiCard
+          title="Delinquency Rate"
+          value={`${delinquencyRate.toFixed(1)}%`}
+          subtitle={<span>Overdue ratio (Overdue / Total AR)</span>}
+          icon={TrendingUp}
+          variant={delinquencyRate > 20 ? 'amber' : 'violet'}
+          progress={{
+            value: delinquencyRate,
+            colorClass: delinquencyRate > 20 ? 'bg-amber-500' : 'bg-violet-500',
+          }}
+          tooltip="Percentage of receivables that are past terms"
+        />
       </div>
 
       {/* Visual Proportions Bar */}

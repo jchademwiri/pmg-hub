@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { BillingKpiCard } from '@/components/billing/billing-kpi-card';
+import { Receipt } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
@@ -172,6 +174,7 @@ export function CreditNoteDetailClient({
   const canEdit = note.status !== 'void';
   const usedAmount = note.amount - note.amountRemaining;
   const totalRefunded = refunds.reduce((sum, r) => sum + r.amount, 0);
+  const appliedRatio = note.amount > 0 ? (usedAmount / note.amount) * 100 : 0;
   const pdfUrl = `/api/billing/pdf/credit-note/${note.id}`;
 
   async function handleVoid() {
@@ -292,53 +295,61 @@ export function CreditNoteDetailClient({
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Total Amount
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <span className="text-2xl font-bold tabular-nums">{formatZAR(note.amount)}</span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">
-              Remaining
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <span className="text-2xl font-bold text-emerald-600 tabular-nums">
-              {formatZAR(note.amountRemaining)}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <BillingKpiCard
+          title="Total Amount"
+          value={formatZAR(note.amount)}
+          subtitle={
+            <span>
+              <span className="font-semibold text-foreground/80">{applications.length}</span>{' '}
+              invoice application(s)
             </span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
-              Applied
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <span className="text-2xl font-bold text-blue-600 tabular-nums">
-              {formatZAR(usedAmount)}
+          }
+          icon={Wallet}
+          variant="blue"
+        />
+
+        <BillingKpiCard
+          title="Remaining"
+          value={formatZAR(note.amountRemaining)}
+          subtitle={
+            <span>
+              {note.amountRemaining > 0 ? 'Available for billing' : 'Zero balance remaining'}
             </span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-amber-600 uppercase tracking-wider">
-              Refunded
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <span className="text-2xl font-bold text-amber-600 tabular-nums">
-              {formatZAR(totalRefunded)}
+          }
+          icon={CheckCircle2}
+          variant={note.amountRemaining > 0 ? 'emerald' : 'zinc'}
+        />
+
+        <BillingKpiCard
+          title="Applied"
+          value={formatZAR(usedAmount)}
+          subtitle={
+            <span>
+              <span className="font-semibold text-foreground/80">{appliedRatio.toFixed(0)}%</span>{' '}
+              credit utilized
             </span>
-          </CardContent>
-        </Card>
+          }
+          icon={Receipt}
+          variant="violet"
+          progress={{
+            value: appliedRatio,
+            colorClass: 'bg-violet-500',
+          }}
+        />
+
+        <BillingKpiCard
+          title="Refunded"
+          value={formatZAR(totalRefunded)}
+          subtitle={
+            <span>
+              <span className="font-semibold text-foreground/80">{refunds.length}</span> refund
+              transaction(s)
+            </span>
+          }
+          icon={AlertCircle}
+          variant={totalRefunded > 0 ? 'amber' : 'zinc'}
+        />
       </div>
 
       {/* Details & Timeline */}
