@@ -41,9 +41,9 @@ export function IncomeFilterBar({
   }
 
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-wrap items-center gap-2 md:gap-3">
       <Select value={currentDivisionId ?? 'all'} onValueChange={handleDivisionChange}>
-        <SelectTrigger className="w-48">
+        <SelectTrigger className="w-40 sm:w-44">
           <SelectValue placeholder="All divisions" />
         </SelectTrigger>
         <SelectContent>
@@ -56,7 +56,7 @@ export function IncomeFilterBar({
         </SelectContent>
       </Select>
 
-      <div className="w-64">
+      <div className="w-48 sm:w-56">
         <SearchableClientSelect
           clients={clients}
           value={currentClientId ?? 'all'}

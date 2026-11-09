@@ -7,8 +7,7 @@ import {
   getAllClients,
   getExpenseMonthlySummaries,
 } from '@pmg/db';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Receipt, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ExpensesKpiCards } from './expenses-kpi-cards';
 import { createExpense, updateExpense, deleteExpense } from '@/app/actions/expenses';
 import { ExpenseFilterBar } from '@/components/expenses/expense-filter-bar';
 import { formatZAR } from '@/lib/format';
@@ -76,17 +75,15 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
   const globalTotal = monthlySummaries.reduce((sum, m) => sum + m.totalExpenses, 0);
   const globalCategorized = monthlySummaries.reduce((sum, m) => sum + m.totalCategorized, 0);
   const globalUncategorized = monthlySummaries.reduce((sum, m) => sum + m.totalUncategorized, 0);
+  const totalCount = monthlySummaries.reduce((sum, m) => sum + (m.count ?? 0), 0);
+  const categorizedCount = monthlySummaries.reduce((sum, m) => sum + (m.categorizedCount ?? 0), 0);
+  const uncategorizedCount = monthlySummaries.reduce(
+    (sum, m) => sum + (m.uncategorizedCount ?? 0),
+    0,
+  );
 
   return (
     <div className="flex flex-col gap-6">
-      <ExpenseFilterBar
-        divisions={divisions}
-        categories={categories}
-        clients={clients}
-        currentDivisionId={filters.divisionId}
-        currentCategory={filters.category}
-        currentClientId={filters.clientId}
-      />
       <ExpensesHeader
         divisions={divisions}
         categories={categories}
@@ -96,53 +93,29 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
         initialDivisionId={filters.divisionId}
         initialCategory={filters.category}
         initialClientId={filters.clientId}
-      />
+      >
+        <ExpenseFilterBar
+          divisions={divisions}
+          categories={categories}
+          clients={clients}
+          currentDivisionId={filters.divisionId}
+          currentCategory={filters.category}
+          currentClientId={filters.clientId}
+        />
+      </ExpensesHeader>
 
       {/* Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Expenses
-            </CardTitle>
-            <Receipt className="size-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatZAR(globalTotal)}</div>
-            <p className="text-xs text-muted-foreground mt-1">For the current financial year</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Categorized</CardTitle>
-            <CheckCircle2 className="size-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-              {formatZAR(globalCategorized)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Valid expense categories</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Uncategorized
-            </CardTitle>
-            <AlertCircle
-              className={`size-4 ${globalUncategorized > 0 ? 'text-amber-500' : 'text-muted-foreground'}`}
-            />
-          </CardHeader>
-          <CardContent>
-            <div
-              className={`text-2xl font-bold ${globalUncategorized > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}
-            >
-              {formatZAR(globalUncategorized)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Requires review</p>
-          </CardContent>
-        </Card>
-      </div>
+      <ExpensesKpiCards
+        globalTotal={globalTotal}
+        globalCategorized={globalCategorized}
+        globalUncategorized={globalUncategorized}
+        totalCount={totalCount}
+        categorizedCount={categorizedCount}
+        uncategorizedCount={uncategorizedCount}
+        currentCategory={filters.category}
+        divisionId={filters.divisionId}
+        clientId={filters.clientId}
+      />
 
       <Accordion
         type="single"

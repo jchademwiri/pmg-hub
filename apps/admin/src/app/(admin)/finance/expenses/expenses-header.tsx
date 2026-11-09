@@ -22,6 +22,7 @@ interface ExpensesHeaderProps {
   initialDivisionId?: string;
   initialCategory?: string;
   initialClientId?: string;
+  children?: React.ReactNode;
 }
 
 export function ExpensesHeader({
@@ -33,18 +34,20 @@ export function ExpensesHeader({
   initialDivisionId,
   initialCategory,
   initialClientId,
+  children,
 }: ExpensesHeaderProps) {
   const [isOpen, setIsOpen] = React.useState(false);
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h2 className="text-lg font-semibold">Expenses</h2>
         <p className="text-sm text-muted-foreground">
           Monitor general expense entries and record outgoing cash
         </p>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 md:gap-3">
+        {children}
         <DownloadReportDialog
           defaultReportType="expenses"
           clients={clients}

@@ -52,7 +52,7 @@ vi.mock('@/components/expenses/expense-filter-bar', () => ({
 }));
 
 vi.mock('@/app/(admin)/finance/expenses/expenses-header', () => ({
-  ExpensesHeader: () => <div data-testid="expenses-header" />,
+  ExpensesHeader: ({ children }: any) => <div data-testid="expenses-header">{children}</div>,
 }));
 
 vi.mock('@/app/(admin)/finance/expenses/lazy-expenses-table', () => ({
