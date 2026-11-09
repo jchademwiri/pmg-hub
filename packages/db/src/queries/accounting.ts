@@ -1120,7 +1120,7 @@ export async function getProfitAndLossByDivision(
     const marginPercent = totals.totalRevenue > 0 ? (netProfit / totals.totalRevenue) * 100 : 0;
     const distributionPercent =
       groupTotalRevenue > 0 ? (totals.totalRevenue / groupTotalRevenue) * 100 : 0;
-    const totalOutstandingAr = Math.max(0, totals.totalRevenue - cashIncome);
+    const totalOutstandingAr = Math.max(0, totals.totalRevenue - cashIncome - totals.totalBadDebt);
 
     result.push({
       divisionId,
