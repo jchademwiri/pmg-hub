@@ -13,10 +13,14 @@
 ## Workflow Commands
 
 - `/start <task>` — Create branch from `dev`, audit codebase, plan implementation
+- `/db-migrate` — Audit Drizzle schema changes, verify RLS & indexes, generate & validate migration
 - `/bug-hunter` — Multi-phase systematic bug audit, logic check, and hardening
 - `/ship` (or `/pr`, `/done`) — Pre-flight, commit, push, PR to `dev`, CI checks, next-step reminder
 - `/release` — Check/merge open feature PRs, run audit, PR `dev` → `master`, CI checks
 - `/tag vX.Y.Z` — Check/merge release PR to `master`, tag, push, health check 6 endpoints
+- `/hotfix <bug>` — Fast-track emergency production patch (`vX.Y.Z+1`), tag, and back-merge to `dev`
+- `/health` — Standalone HTTP, database connectivity, and CI health check across all 6 endpoints
+- `/cleanup` — Sync `dev`/`master`, prune merged local & remote feature branches, inspect stashes
 - `/rollback` — Revert to previous release tag on `master`
 - `/incident "desc"` — Diagnose production issues across apps and deployments
 - `/changelog` — Generate release notes from conventional commits

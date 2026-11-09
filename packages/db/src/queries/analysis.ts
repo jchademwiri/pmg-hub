@@ -236,7 +236,9 @@ export async function getAnalysisOverview(year: number, currentDateStr: string) 
 
   const outstandingAR = Math.max(
     0,
-    Number(ar?.totalInvoiced || 0) - Number(arAllocations?.totalAllocated || 0),
+    Number(ar?.totalInvoiced || 0) -
+      Number(arAllocations?.totalAllocated || 0) -
+      Number(ar?.totalWrittenOff || 0),
   );
 
   const [sentQuotes] = await db
