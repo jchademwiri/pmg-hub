@@ -4,6 +4,7 @@ import React, { useEffect, useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { BillingKpiCard } from '@/components/billing/billing-kpi-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -647,73 +648,71 @@ export function RecurringClient({
   return (
     <div className="flex flex-col gap-6">
       {/* Top Banner Stats - Reconciled Operational Cashflow & Monthly MRR */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {/* Card 1: To Collect */}
-        <Card className="border-b-4 border-b-emerald-500 overflow-hidden">
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-600">
-              <ArrowDownLeft className="h-4 w-4" /> To Collect ({currentMonthName})
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
-              {formatZAR(scheduledInboundThisMonth)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            {inboundDueThisMonth.length} retainer(s) running • Next Month ({nextMonthName}):{' '}
-            {formatZAR(scheduledInboundNextMonth)} projected
-          </CardContent>
-        </Card>
+        <BillingKpiCard
+          title={`To Collect (${currentMonthName})`}
+          value={formatZAR(scheduledInboundThisMonth)}
+          subtitle={
+            <span>
+              <span className="font-semibold text-foreground/80">{inboundDueThisMonth.length}</span>{' '}
+              retainer(s) • Next: {formatZAR(scheduledInboundNextMonth)}
+            </span>
+          }
+          icon={ArrowDownLeft}
+          variant="emerald"
+          tooltip={`Scheduled inbound retainers for ${currentMonthName}`}
+        />
 
         {/* Card 2: To Pay */}
-        <Card className="border-b-4 border-b-rose-500 overflow-hidden">
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-rose-600">
-              <TrendingDown className="h-4 w-4" /> To Pay ({currentMonthName})
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold text-rose-700 dark:text-rose-400">
-              {formatZAR(scheduledOutboundThisMonth)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            {outboundDueThisMonth.length} vendor sub(s) due • Next Month ({nextMonthName}):{' '}
-            {formatZAR(scheduledOutboundNextMonth)} projected
-          </CardContent>
-        </Card>
+        <BillingKpiCard
+          title={`To Pay (${currentMonthName})`}
+          value={formatZAR(scheduledOutboundThisMonth)}
+          subtitle={
+            <span>
+              <span className="font-semibold text-foreground/80">
+                {outboundDueThisMonth.length}
+              </span>{' '}
+              sub(s) due • Next: {formatZAR(scheduledOutboundNextMonth)}
+            </span>
+          }
+          icon={TrendingDown}
+          variant="rose"
+          tooltip={`Vendor subscriptions and recurring software/hosting expenses for ${currentMonthName}`}
+        />
 
         {/* Card 3: Net Cashflow */}
-        <Card className="border-b-4 border-b-cyan-500 overflow-hidden">
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-cyan-600">
-              <CalendarClock className="h-4 w-4" /> Net Cashflow ({currentMonthName})
-            </CardDescription>
-            <CardTitle
-              className={`text-2xl font-bold ${netCashflowThisMonth >= 0 ? 'text-cyan-700 dark:text-cyan-400' : 'text-rose-600'}`}
-            >
-              {formatZAR(netCashflowThisMonth)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            Next Month ({nextMonthName}): {formatZAR(netCashflowNextMonth)} projected
-          </CardContent>
-        </Card>
+        <BillingKpiCard
+          title={`Net Cashflow (${currentMonthName})`}
+          value={formatZAR(netCashflowThisMonth)}
+          badge={netCashflowThisMonth >= 0 ? 'Surplus' : 'Deficit'}
+          subtitle={
+            <span>
+              Next Month ({nextMonthName}): {formatZAR(netCashflowNextMonth)}
+            </span>
+          }
+          icon={CalendarClock}
+          variant={netCashflowThisMonth >= 0 ? 'blue' : 'rose'}
+          tooltip="Projected monthly net operational cashflow (Inbound − Outbound)"
+        />
 
         {/* Card 4: Monthly Retainers (MRR) */}
-        <Card className="border-b-4 border-b-blue-500 overflow-hidden">
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-blue-600">
-              <Layers className="h-4 w-4" /> Monthly Retainers (MRR)
-            </CardDescription>
-            <CardTitle
-              className={`text-2xl font-bold ${netMonthlySurplus >= 0 ? 'text-blue-700 dark:text-blue-400' : 'text-rose-600'}`}
-            >
-              {formatZAR(totalMRR)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            {activeMonthlyInbound.length} active monthly retainer(s) •{' '}
-            {formatZAR(netMonthlySurplus)}/mo baseline
-          </CardContent>
-        </Card>
+        <BillingKpiCard
+          title="Monthly Retainers (MRR)"
+          value={formatZAR(totalMRR)}
+          badge={`${activeMonthlyInbound.length} active`}
+          subtitle={
+            <span>
+              <span className="font-semibold text-foreground/80">
+                {formatZAR(netMonthlySurplus)}
+              </span>
+              /mo baseline
+            </span>
+          }
+          icon={Layers}
+          variant="violet"
+          tooltip="Normalized Monthly Recurring Revenue baseline across all active client retainers"
+        />
       </div>
 
       {actionMessage && (
