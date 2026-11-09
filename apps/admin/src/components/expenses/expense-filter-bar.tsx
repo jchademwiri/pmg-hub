@@ -56,9 +56,9 @@ export function ExpenseFilterBar({
   }
 
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-wrap items-center gap-2 md:gap-3">
       <Select value={currentDivisionId ?? 'all'} onValueChange={handleDivisionChange}>
-        <SelectTrigger className="w-48">
+        <SelectTrigger className="w-40 sm:w-44">
           <SelectValue placeholder="All divisions" />
         </SelectTrigger>
         <SelectContent>
@@ -72,7 +72,7 @@ export function ExpenseFilterBar({
       </Select>
 
       <Select value={currentCategory ?? 'all'} onValueChange={handleCategoryChange}>
-        <SelectTrigger className="w-48">
+        <SelectTrigger className="w-40 sm:w-44">
           <SelectValue placeholder="All categories" />
         </SelectTrigger>
         <SelectContent>
@@ -86,10 +86,14 @@ export function ExpenseFilterBar({
       </Select>
 
       {clients.length > 0 && (
-        <div className="w-64">
+        <div className="w-48 sm:w-56">
           <SearchableClientSelect
             clients={[
-              { id: 'unassigned', name: 'General (No Client)', businessName: 'General (No Client)' },
+              {
+                id: 'unassigned',
+                name: 'General (No Client)',
+                businessName: 'General (No Client)',
+              },
               ...clients,
             ]}
             value={currentClientId ?? 'all'}

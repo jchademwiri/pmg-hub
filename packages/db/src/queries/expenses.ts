@@ -182,6 +182,8 @@ export async function getExpenseCategoryById(id: string): Promise<ExpenseCategor
 export type MonthlyExpenseSummary = {
   month: string;
   count: number;
+  categorizedCount?: number;
+  uncategorizedCount?: number;
   totalExpenses: number;
   totalCategorized: number;
   totalUncategorized: number;
@@ -208,6 +210,8 @@ export async function getExpenseMonthlySummaries(
     .select({
       month: sql<string>`TO_CHAR(${expenses.date}, 'YYYY-MM')`,
       count: sql<number>`count(*)::int`,
+      categorizedCount: sql<number>`count(CASE WHEN ${expenses.category} != 'Uncategorized' THEN 1 END)::int`,
+      uncategorizedCount: sql<number>`count(CASE WHEN ${expenses.category} = 'Uncategorized' THEN 1 END)::int`,
       totalExpenses: sql<number>`COALESCE(SUM(${expenses.amount}), 0)::numeric`,
       totalCategorized: sql<number>`COALESCE(SUM(CASE WHEN ${expenses.category} != 'Uncategorized' THEN ${expenses.amount} ELSE 0 END), 0)::numeric`,
       totalUncategorized: sql<number>`COALESCE(SUM(CASE WHEN ${expenses.category} = 'Uncategorized' THEN ${expenses.amount} ELSE 0 END), 0)::numeric`,
@@ -220,6 +224,8 @@ export async function getExpenseMonthlySummaries(
   return result.map((r) => ({
     month: r.month,
     count: r.count,
+    categorizedCount: Number(r.categorizedCount),
+    uncategorizedCount: Number(r.uncategorizedCount),
     totalExpenses: Number(r.totalExpenses),
     totalCategorized: Number(r.totalCategorized),
     totalUncategorized: Number(r.totalUncategorized),
