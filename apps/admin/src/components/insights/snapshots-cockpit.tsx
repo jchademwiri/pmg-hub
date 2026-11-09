@@ -15,6 +15,7 @@ import type { SnapshotRow } from '@pmg/db';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { BillingKpiCard } from '@/components/billing/billing-kpi-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
@@ -236,8 +237,9 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
           {fmtMonthYear(fyEndPeriod, { short: true })}
         </span>
 
-        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <SummaryMetric
+            isRevenue
             label="Total revenue"
             value={formatZAR(totals.revenue)}
             icon={TrendingUp}
@@ -278,6 +280,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             subtext="25% reserve pool"
           />
           <SummaryMetric
+            badge={`${netMarginPct.toFixed(0)}%`}
             label="Distributable margin"
             value={`${netMarginPct.toFixed(1)}%`}
             icon={Percent}
@@ -576,6 +579,17 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
   );
 }
 
+function getKpiVariant(
+  tone?: AmountTone,
+  isRevenue?: boolean,
+): 'emerald' | 'blue' | 'rose' | 'amber' | 'violet' {
+  if (tone === 'expense' || tone === 'negative') return 'rose';
+  if (tone === 'share') return 'violet';
+  if (isRevenue) return 'blue';
+  if (tone === 'revenue' || tone === 'positive') return 'emerald';
+  return 'blue';
+}
+
 function SummaryMetric({
   label,
   value,
@@ -583,34 +597,29 @@ function SummaryMetric({
   tone = 'default',
   hint,
   subtext,
+  badge,
+  isRevenue,
 }: {
   label: string;
   value: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: typeof TrendingUp;
   tone?: AmountTone;
   hint?: string;
   subtext?: string;
+  badge?: React.ReactNode;
+  isRevenue?: boolean;
 }) {
+  const variant = getKpiVariant(tone, isRevenue);
   return (
-    <Card size="sm" title={hint}>
-      <CardHeader className="flex flex-row items-start justify-between gap-2">
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <CardDescription className="text-xs">{label}</CardDescription>
-          <CardTitle className={cn('truncate text-base tabular-nums', amountToneClass(tone))}>
-            {value}
-          </CardTitle>
-          {subtext && (
-            <p className="text-[10px] text-muted-foreground/80 mt-0.5 font-medium">{subtext}</p>
-          )}
-        </div>
-        <Icon
-          className={cn(
-            'mt-0.5 size-3.5 shrink-0',
-            tone === 'default' ? 'text-muted-foreground' : amountToneClass(tone),
-          )}
-        />
-      </CardHeader>
-    </Card>
+    <BillingKpiCard
+      title={label}
+      value={value}
+      subtitle={subtext ? <span>{subtext}</span> : undefined}
+      badge={badge}
+      icon={Icon}
+      variant={variant}
+      tooltip={hint}
+    />
   );
 }
 
