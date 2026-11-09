@@ -13,8 +13,7 @@ import {
   getIncomeMonthlySummaries,
 } from '@pmg/db';
 import { formatZAR } from '@/lib/format';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, CheckCircle2, AlertCircle } from 'lucide-react';
+import { IncomeKpiCards } from './income-kpi-cards';
 import { getMinAllowedDate } from '@/lib/date-rules';
 import { IncomeTable } from './income-table';
 import { LazyIncomeTable } from './lazy-income-table';
@@ -123,78 +122,40 @@ export default async function FinanceIncomePage({ searchParams }: IncomePageProp
   const globalReceived = monthlySummaries.reduce((sum, m) => sum + m.totalReceived, 0);
   const globalAllocated = monthlySummaries.reduce((sum, m) => sum + m.totalAllocated, 0);
   const globalUnallocated = Math.max(0, globalReceived - globalAllocated);
+  const totalCount = monthlySummaries.reduce((sum, m) => sum + (m.count ?? 0), 0);
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Income</h2>
           <p className="text-sm text-muted-foreground">
             All money received and cash receipts with allocation details
           </p>
         </div>
-        <DownloadReportDialog
-          defaultReportType="payments"
-          clients={clients}
-          divisions={divisions}
-          initialDivisionId={filters.divisionId}
-          initialClientId={filters.clientId}
-        />
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+          <IncomeFilterBar
+            divisions={divisions}
+            clients={clients}
+            currentDivisionId={filters.divisionId}
+            currentClientId={filters.clientId}
+          />
+          <DownloadReportDialog
+            defaultReportType="payments"
+            clients={clients}
+            divisions={divisions}
+            initialDivisionId={filters.divisionId}
+            initialClientId={filters.clientId}
+          />
+        </div>
       </div>
 
       {/* Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Received
-            </CardTitle>
-            <Download className="size-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-              {formatZAR(globalReceived)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">For the current financial year</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Allocated
-            </CardTitle>
-            <CheckCircle2 className="size-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatZAR(globalAllocated)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Matched to invoices</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Unallocated Deposits
-            </CardTitle>
-            <AlertCircle
-              className={`size-4 ${globalUnallocated > 0 ? 'text-amber-500' : 'text-muted-foreground'}`}
-            />
-          </CardHeader>
-          <CardContent>
-            <div
-              className={`text-2xl font-bold ${globalUnallocated > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}
-            >
-              {formatZAR(globalUnallocated)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Pending allocation</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <IncomeFilterBar
-        divisions={divisions}
-        clients={clients}
-        currentDivisionId={filters.divisionId}
-        currentClientId={filters.clientId}
+      <IncomeKpiCards
+        globalReceived={globalReceived}
+        globalAllocated={globalAllocated}
+        globalUnallocated={globalUnallocated}
+        totalCount={totalCount}
       />
 
       <Accordion

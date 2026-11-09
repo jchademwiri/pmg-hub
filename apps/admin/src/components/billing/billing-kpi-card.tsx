@@ -4,7 +4,7 @@ import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type BillingKpiVariant =
-  'blue' | 'emerald' | 'amber' | 'violet' | 'red' | 'zinc' | 'primary';
+  'blue' | 'emerald' | 'amber' | 'violet' | 'red' | 'rose' | 'zinc' | 'primary';
 
 export interface BillingKpiCardProps {
   title: string;
@@ -70,6 +70,13 @@ const VARIANT_STYLES: Record<
     activeRing: 'ring-red-500/30',
     activeBorder: 'border-red-500/50',
     progressBar: 'bg-red-500',
+  },
+  rose: {
+    iconBg: 'bg-rose-500/10',
+    iconColor: 'text-rose-600 dark:text-rose-400',
+    activeRing: 'ring-rose-500/30',
+    activeBorder: 'border-rose-500/50',
+    progressBar: 'bg-rose-500',
   },
   zinc: {
     iconBg: 'bg-zinc-500/10',

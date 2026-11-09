@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { getGeneralLedger, getActiveChartAccounts, getLedgerMonthlySummaries } from '@pmg/db';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowDownLeft, ArrowUpRight, Activity } from 'lucide-react';
+import { BillingKpiCard } from '@/components/billing/billing-kpi-card';
+import { ArrowDownLeft, ArrowUpRight, Activity, ShieldCheck } from 'lucide-react';
 import { formatZAR } from '@/lib/format';
 import { GeneralLedgerTable } from './general-ledger-table';
 import { LazyGeneralLedgerTable } from './lazy-general-ledger-table';
@@ -50,68 +50,68 @@ export default async function GeneralLedgerPage({
   const globalDebits = monthlySummaries.reduce((sum, m) => sum + m.totalDebits, 0);
   const globalCredits = monthlySummaries.reduce((sum, m) => sum + m.totalCredits, 0);
   const globalMovement = globalDebits - globalCredits;
+  const totalEntries = monthlySummaries.reduce((sum, m) => sum + (m.count ?? 0), 0);
+  const isBalanced = Math.abs(globalMovement) < 0.01;
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-lg font-semibold">General Ledger</h2>
-        <p className="text-sm text-muted-foreground">
-          View the complete debit and credit ledger with running balances for each account.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold">General Ledger</h2>
+          <p className="text-sm text-muted-foreground">
+            View the complete debit and credit ledger with running balances for each account.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <GeneralLedgerFilterBar accounts={accounts} currentAccountId={params.accountId} />
+        </div>
       </div>
 
-      <GeneralLedgerFilterBar accounts={accounts} currentAccountId={params.accountId} />
-
       {/* Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Debits
-            </CardTitle>
-            <ArrowDownLeft className="size-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatZAR(globalDebits)}</div>
-            <p className="text-xs text-muted-foreground mt-1">For the current financial year</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Credits
-            </CardTitle>
-            <ArrowUpRight className="size-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-              {formatZAR(globalCredits)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">For the current financial year</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {globalMovement < 0
-                ? 'Net Credit'
-                : globalMovement > 0
-                  ? 'Net Debit'
-                  : 'Net Movement'}
-            </CardTitle>
-            <Activity
-              className={`size-4 ${globalMovement > 0 ? 'text-amber-500' : 'text-emerald-500'}`}
-            />
-          </CardHeader>
-          <CardContent>
-            <div
-              className={`text-2xl font-bold ${globalMovement > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}
-            >
-              {formatZAR(Math.abs(globalMovement))}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Difference (Dr - Cr)</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        {/* 1. Total Debits */}
+        <BillingKpiCard
+          title="Total Debits"
+          value={formatZAR(globalDebits)}
+          subtitle={<span>For the current financial year</span>}
+          icon={ArrowDownLeft}
+          variant="blue"
+          tooltip="Total debits recorded across active ledger accounts"
+        />
+
+        {/* 2. Total Credits */}
+        <BillingKpiCard
+          title="Total Credits"
+          value={formatZAR(globalCredits)}
+          subtitle={<span>For the current financial year</span>}
+          icon={ArrowUpRight}
+          variant="emerald"
+          tooltip="Total credits recorded across active ledger accounts"
+        />
+
+        {/* 3. Net Movement */}
+        <BillingKpiCard
+          title="Net Movement"
+          value={formatZAR(Math.abs(globalMovement))}
+          badge={globalMovement < 0 ? 'Net Credit' : globalMovement > 0 ? 'Net Debit' : 'Balanced'}
+          subtitle={<span>Difference (Dr − Cr)</span>}
+          icon={Activity}
+          variant={isBalanced ? 'emerald' : 'amber'}
+          tooltip="Net movement across selected accounts for the financial year"
+        />
+
+        {/* 4. Ledger Integrity */}
+        <BillingKpiCard
+          title="Ledger Integrity"
+          value={isBalanced ? 'Balanced' : 'Unbalanced'}
+          badge={`${totalEntries} line${totalEntries === 1 ? '' : 's'}`}
+          subtitle={
+            <span>{isBalanced ? 'Audit verified (Dr = Cr)' : 'Reconciliation pending'}</span>
+          }
+          icon={ShieldCheck}
+          variant={isBalanced ? 'emerald' : 'rose'}
+          tooltip="Double-entry audit verification across all accounts"
+        />
       </div>
 
       <Accordion

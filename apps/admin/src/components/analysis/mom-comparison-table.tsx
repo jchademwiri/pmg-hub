@@ -8,7 +8,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatZAR } from '@/lib/format';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, ArrowDownLeft, Sparkles } from 'lucide-react';
+import { BillingKpiCard } from '@/components/billing/billing-kpi-card';
 
 interface MonthFinancialRow {
   period: string;
@@ -52,51 +53,45 @@ export function MoMComparisonTable({ data, year, className }: MoMComparisonTable
 
   return (
     <div className={cn('flex flex-col gap-6', className)}>
-      {/* YTD Totals & Run-Rate Forecast Header Cards (at the top) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            YTD Cash Income
-          </p>
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-1">
-            {formatZAR(totalReceived)}
-          </p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            Avg {formatZAR(avgReceived)}/mo
-          </p>
-        </div>
+      {/* YTD Totals & Run-Rate Forecast Header Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <BillingKpiCard
+          title="YTD Cash Income"
+          value={formatZAR(totalReceived)}
+          subtitle={<span>Avg {formatZAR(avgReceived)}/mo</span>}
+          icon={ArrowDownLeft}
+          variant="emerald"
+          tooltip="Total cash received from clients in this financial year"
+        />
 
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            YTD Expenses
-          </p>
-          <p className="text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums mt-1">
-            {formatZAR(totalExpenses)}
-          </p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            Avg {formatZAR(avgExpenses)}/mo
-          </p>
-        </div>
+        <BillingKpiCard
+          title="YTD Expenses"
+          value={formatZAR(totalExpenses)}
+          subtitle={<span>Avg {formatZAR(avgExpenses)}/mo</span>}
+          icon={TrendingDown}
+          variant="rose"
+          tooltip="Total operating expenses recorded in this financial year"
+        />
 
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            YTD Net Profit
-          </p>
-          <p className="text-2xl font-bold text-foreground tabular-nums mt-1">
-            {formatZAR(totalProfit)}
-          </p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Avg {formatZAR(avgProfit)}/mo</p>
-        </div>
+        <BillingKpiCard
+          title="YTD Net Profit"
+          value={formatZAR(totalProfit)}
+          badge={`${totalReceived > 0 ? ((totalProfit / totalReceived) * 100).toFixed(1) : '0'}% margin`}
+          subtitle={<span>Avg {formatZAR(avgProfit)}/mo</span>}
+          icon={totalProfit >= 0 ? TrendingUp : TrendingDown}
+          variant={totalProfit >= 0 ? 'emerald' : 'rose'}
+          tooltip="Net cash operating profit (Income − Expenses)"
+        />
 
-        <div className="rounded-xl border bg-card p-4 shadow-sm bg-gradient-to-br from-primary/5 to-transparent">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">
-            Projected FY {year} Forecast
-          </p>
-          <p className="text-2xl font-bold text-primary tabular-nums mt-1">{formatZAR(forecast)}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            Estimated annual gross revenue run-rate
-          </p>
-        </div>
+        <BillingKpiCard
+          title={`FY ${year} Run-Rate`}
+          value={formatZAR(forecast)}
+          badge="Projection"
+          subtitle={<span>Estimated annual revenue run-rate</span>}
+          icon={Sparkles}
+          variant="violet"
+          tooltip="Projected full-year revenue based on current average monthly run-rate"
+        />
       </div>
 
       {/* Monthly Table */}
