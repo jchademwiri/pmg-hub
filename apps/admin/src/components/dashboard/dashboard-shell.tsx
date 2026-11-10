@@ -42,6 +42,8 @@ type Props = {
   sparklineData: MonthlyFinancials[];
   agingReport: AgingRow[];
   budgetChartSeries: MonthlyBudgetChartRow[];
+  budgetChartSeriesByYear?: Record<number, MonthlyBudgetChartRow[]>;
+  fiscalYear?: number;
   expensesByDivision: { divisionId?: string; divisionName: string; total: number }[];
   hasSnapshot: boolean;
   currentPeriod: string;
@@ -68,6 +70,8 @@ export function DashboardShell({
   sparklineData = [],
   agingReport = [],
   budgetChartSeries = [],
+  budgetChartSeriesByYear,
+  fiscalYear,
   expensesByDivision = [],
   hasSnapshot,
   currentPeriod,
@@ -230,7 +234,11 @@ export function DashboardShell({
 
       {/* ── Row 4: Sales, receipts, and expenses budget chart ── */}
       <div className="w-full hidden md:block">
-        <DivisionAreaChart data={budgetChartSeries} />
+        <DivisionAreaChart
+          data={budgetChartSeries}
+          seriesByYear={budgetChartSeriesByYear}
+          fiscalYear={fiscalYear}
+        />
       </div>
 
       {/* ── Row 5: Division financial breakdown ── */}
