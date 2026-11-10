@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Bar, ComposedChart, Line, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -9,11 +9,29 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { formatZAR, fmtMonthYear, getSASTParts } from '@/lib/format';
 import type { MonthlyBudgetChartRow } from '@/lib/financial';
 
+export type ChartPeriodOption = 'this_fy' | 'prev_fy' | 'last_12m' | `fy:${number}`;
+export type ChartTypeOption = 'line' | 'bar' | 'both';
+
+export const PERIOD_STORAGE_KEY = 'pmg:dashboard-chart-period';
+export const CHART_TYPE_STORAGE_KEY = 'pmg:dashboard-chart-type';
+
 type Props = {
   data: MonthlyBudgetChartRow[];
+  seriesByYear?: Record<number, MonthlyBudgetChartRow[]>;
+  fiscalYear?: number;
 };
 
 const SERIES = [
@@ -48,30 +66,177 @@ const MONTH_ABBR = [
 ];
 
 // Month-only (no year) keeps X-axis ticks short enough to stay legible on narrow screens;
-// the year is shown in the card subtitle and in the tooltip on hover.
+// the year range is shown in the card subtitle and in the tooltip on hover.
 function formatXAxisTick(month: string) {
   const [, m] = month.split('-');
   return MONTH_ABBR[Number(m) - 1] ?? month;
 }
 
-export function DivisionAreaChart({ data }: Props) {
-  const [chartType, setChartType] = useState<'line' | 'bar' | 'both'>('bar');
+function buildEmptyYearSeries(fy: number): MonthlyBudgetChartRow[] {
+  return Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(fy, 2 + i, 1);
+    const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return { month: m, revenue: 0, invoiced: 0, expenses: 0, ar: 0 };
+  });
+}
 
-  const currentMonthStr = useMemo(() => {
+function hasRowActivity(row: MonthlyBudgetChartRow): boolean {
+  return row.revenue > 0 || row.invoiced > 0 || row.expenses > 0 || row.ar > 0;
+}
+
+function isValidSavedPeriod(
+  val: string | null,
+  prevHasData: boolean,
+  seriesByYear?: Record<number, MonthlyBudgetChartRow[]>,
+): val is ChartPeriodOption {
+  if (!val) return false;
+  if (val === 'this_fy' || val === 'last_12m') return true;
+  if (val === 'prev_fy') return prevHasData;
+  if (val.startsWith('fy:')) {
+    const yr = Number(val.slice(3));
+    return (
+      Number.isInteger(yr) &&
+      Boolean(seriesByYear && yr in seriesByYear && seriesByYear[yr]?.some(hasRowActivity))
+    );
+  }
+  return false;
+}
+
+export function DivisionAreaChart({ data, seriesByYear, fiscalYear }: Props) {
+  const { currentMonthStr, resolvedFiscalYear } = useMemo(() => {
     const { year, month } = getSASTParts();
-    return `${year}-${String(month + 1).padStart(2, '0')}`;
+    return {
+      currentMonthStr: `${year}-${String(month + 1).padStart(2, '0')}`,
+      resolvedFiscalYear: fiscalYear ?? (month < 2 ? year - 1 : year),
+    };
+  }, [fiscalYear]);
+
+  const thisFySeries = useMemo(() => {
+    const fromMap = seriesByYear?.[resolvedFiscalYear];
+    if (fromMap && fromMap.length > 0) return fromMap;
+    if (data.length > 0) return data;
+    return buildEmptyYearSeries(resolvedFiscalYear);
+  }, [data, resolvedFiscalYear, seriesByYear]);
+
+  const prevFySeries = useMemo(() => {
+    const fromMap = seriesByYear?.[resolvedFiscalYear - 1];
+    if (fromMap && fromMap.length > 0) return fromMap;
+    return buildEmptyYearSeries(resolvedFiscalYear - 1);
+  }, [resolvedFiscalYear, seriesByYear]);
+
+  const prevFyHasData = useMemo(() => prevFySeries.some(hasRowActivity), [prevFySeries]);
+
+  // Historical financial years older than Previous Fiscal Year that actually have data, sorted newest first
+  const historicalYears = useMemo(() => {
+    if (!seriesByYear) return [];
+    return Object.keys(seriesByYear)
+      .map(Number)
+      .filter(
+        (y) =>
+          Number.isFinite(y) &&
+          y < resolvedFiscalYear - 1 &&
+          Boolean(seriesByYear[y]?.some(hasRowActivity)),
+      )
+      .sort((a, b) => b - a);
+  }, [resolvedFiscalYear, seriesByYear]);
+
+  // Smart default: if This FY has < 2 active elapsed months and Previous FY has data
+  // (e.g. in March at the start of a new FY), default to Last 12 Months.
+  const defaultPeriod = useMemo<ChartPeriodOption>(() => {
+    const activeElapsedCount = thisFySeries.filter(
+      (row) => row.month <= currentMonthStr && hasRowActivity(row),
+    ).length;
+    if (activeElapsedCount < 2 && prevFyHasData) {
+      return 'last_12m';
+    }
+    return 'this_fy';
+  }, [currentMonthStr, prevFyHasData, thisFySeries]);
+
+  const [period, setPeriod] = useState<ChartPeriodOption>(defaultPeriod);
+  const [chartType, setChartType] = useState<ChartTypeOption>('bar');
+
+  // Restore saved period preference from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedPeriod = window.localStorage.getItem(PERIOD_STORAGE_KEY);
+      if (isValidSavedPeriod(savedPeriod, prevFyHasData, seriesByYear)) {
+        setPeriod(savedPeriod);
+      } else {
+        setPeriod(defaultPeriod);
+      }
+    } catch {
+      // Ignore storage access errors in restricted environments
+    }
+  }, [defaultPeriod, prevFyHasData, seriesByYear]);
+
+  // Restore saved chart type ('line' | 'bar' | 'both') from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedChartType = window.localStorage.getItem(CHART_TYPE_STORAGE_KEY);
+      if (savedChartType === 'line' || savedChartType === 'bar' || savedChartType === 'both') {
+        setChartType(savedChartType);
+      }
+    } catch {
+      // Ignore storage access errors in restricted environments
+    }
   }, []);
 
-  const elapsedData = useMemo(
-    () => data.filter((row) => row.month <= currentMonthStr),
-    [currentMonthStr, data],
-  );
+  const handlePeriodChange = (next: string) => {
+    const nextPeriod = next as ChartPeriodOption;
+    setPeriod(nextPeriod);
+    try {
+      window.localStorage.setItem(PERIOD_STORAGE_KEY, nextPeriod);
+    } catch {
+      // Ignore storage write errors
+    }
+  };
+
+  const handleChartTypeChange = (next: ChartTypeOption) => {
+    setChartType(next);
+    try {
+      window.localStorage.setItem(CHART_TYPE_STORAGE_KEY, next);
+    } catch {
+      // Ignore storage write errors
+    }
+  };
+
+  // Resolve the 12-month series for the selected period
+  const activeSeries = useMemo<MonthlyBudgetChartRow[]>(() => {
+    if (period === 'this_fy') {
+      return thisFySeries;
+    }
+    if (period === 'prev_fy') {
+      return prevFySeries;
+    }
+    if (period === 'last_12m') {
+      const byMonth = new Map<string, MonthlyBudgetChartRow>();
+      for (const row of [...prevFySeries, ...thisFySeries]) {
+        byMonth.set(row.month, row);
+      }
+      const elapsedCombined = [...byMonth.values()]
+        .filter((row) => row.month <= currentMonthStr)
+        .sort((a, b) => a.month.localeCompare(b.month));
+      return elapsedCombined.slice(-12);
+    }
+    if (period.startsWith('fy:')) {
+      const yr = Number(period.slice(3));
+      return seriesByYear?.[yr] ?? buildEmptyYearSeries(yr);
+    }
+    return thisFySeries;
+  }, [currentMonthStr, period, prevFySeries, seriesByYear, thisFySeries]);
+
+  const elapsedData = useMemo(() => {
+    if (period === 'this_fy') {
+      return activeSeries.filter((row) => row.month <= currentMonthStr);
+    }
+    return activeSeries;
+  }, [activeSeries, currentMonthStr, period]);
 
   // Prepare chartData to keep all 12 months for X-Axis, but set future values to undefined
-  // so Recharts does not draw lines or bars for them.
+  // in 'this_fy' mode so Recharts does not draw lines or bars for months that haven't occurred.
   const chartData = useMemo(() => {
-    return data.map((row) => {
-      const isFuture = row.month > currentMonthStr;
+    return activeSeries.map((row) => {
+      const isFuture = period === 'this_fy' && row.month > currentMonthStr;
       return {
         ...row,
         revenue: isFuture ? undefined : row.revenue,
@@ -80,7 +245,45 @@ export function DivisionAreaChart({ data }: Props) {
         ar: isFuture ? undefined : row.ar,
       };
     });
-  }, [currentMonthStr, data]);
+  }, [activeSeries, currentMonthStr, period]);
+
+  const subtitleLabel = useMemo(() => {
+    const firstMonth = activeSeries[0]?.month;
+    const lastMonth = activeSeries[activeSeries.length - 1]?.month;
+    const rangeText =
+      firstMonth && lastMonth
+        ? `${fmtMonthYear(firstMonth, { short: true })} – ${fmtMonthYear(lastMonth, { short: true })}`
+        : '';
+
+    if (period === 'this_fy') {
+      return rangeText ? `This Fiscal Year (${rangeText})` : 'This Fiscal Year';
+    }
+    if (period === 'prev_fy') {
+      return rangeText ? `Previous Fiscal Year (${rangeText})` : 'Previous Fiscal Year';
+    }
+    if (period === 'last_12m') {
+      return rangeText ? `Last 12 Months (${rangeText})` : 'Last 12 Months';
+    }
+    if (period.startsWith('fy:')) {
+      const yr = Number(period.slice(3));
+      return rangeText ? `FY ${yr} (${rangeText})` : `FY ${yr}`;
+    }
+    return 'This Fiscal Year';
+  }, [activeSeries, period]);
+
+  const emptyMessage = useMemo(() => {
+    if (period === 'prev_fy') {
+      return 'No revenue, cash receipt, or expense data for the previous fiscal year.';
+    }
+    if (period === 'last_12m') {
+      return 'No revenue, cash receipt, or expense data for the last 12 months.';
+    }
+    if (period.startsWith('fy:')) {
+      const yr = Number(period.slice(3));
+      return `No revenue, cash receipt, or expense data for FY ${yr}.`;
+    }
+    return 'No revenue, cash receipt, or expense data for this fiscal year.';
+  }, [period]);
 
   const totals = useMemo(
     () =>
@@ -124,47 +327,88 @@ export function DivisionAreaChart({ data }: Props) {
             <CardTitle className="text-sm font-semibold text-card-foreground">
               Revenue, Cash Receipts, and Expenses
             </CardTitle>
-            <p className="text-xs text-muted-foreground mt-0.5">This Fiscal Year</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{subtitleLabel}</p>
           </div>
 
-          {/* Interactive Chart Type Toggles */}
-          <div className="flex flex-wrap items-center gap-1 bg-muted/50 p-0.5 rounded-lg border border-border/50 text-[10px] font-medium text-muted-foreground select-none">
-            <button
-              type="button"
-              aria-pressed={chartType === 'line'}
-              onClick={() => setChartType('line')}
-              className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
-                chartType === 'line'
-                  ? 'bg-background text-foreground shadow-xs font-semibold'
-                  : 'hover:text-foreground'
-              }`}
-            >
-              Line
-            </button>
-            <button
-              type="button"
-              aria-pressed={chartType === 'bar'}
-              onClick={() => setChartType('bar')}
-              className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
-                chartType === 'bar'
-                  ? 'bg-background text-foreground shadow-xs font-semibold'
-                  : 'hover:text-foreground'
-              }`}
-            >
-              Bar
-            </button>
-            <button
-              type="button"
-              aria-pressed={chartType === 'both'}
-              onClick={() => setChartType('both')}
-              className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
-                chartType === 'both'
-                  ? 'bg-background text-foreground shadow-xs font-semibold'
-                  : 'hover:text-foreground'
-              }`}
-            >
-              Both
-            </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Zoho-style Period & Historical FY Selector */}
+            <Select value={period} onValueChange={handlePeriodChange}>
+              <SelectTrigger
+                size="sm"
+                aria-label="Select time period"
+                className="h-7 w-auto min-w-[155px] gap-1.5 rounded-lg border-border/50 bg-muted/50 px-2.5 py-1 text-xs font-medium text-foreground shadow-none"
+              >
+                <SelectValue placeholder="This Fiscal Year" />
+              </SelectTrigger>
+              <SelectContent align="end" className="rounded-lg">
+                <SelectItem value="this_fy" className="text-xs">
+                  This Fiscal Year
+                </SelectItem>
+                {prevFyHasData && (
+                  <SelectItem value="prev_fy" className="text-xs">
+                    Previous Fiscal Year
+                  </SelectItem>
+                )}
+                <SelectItem value="last_12m" className="text-xs">
+                  Last 12 Months
+                </SelectItem>
+                {historicalYears.length > 0 && (
+                  <>
+                    <SelectSeparator />
+                    <SelectGroup>
+                      <SelectLabel className="text-[10px] uppercase tracking-wider">
+                        Past Financial Years
+                      </SelectLabel>
+                      {historicalYears.map((y) => (
+                        <SelectItem key={y} value={`fy:${y}`} className="text-xs">
+                          {`FY ${y} (Mar ${y} – Feb ${y + 1})`}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+
+            {/* Interactive Chart Type Toggles */}
+            <div className="flex flex-wrap items-center gap-1 bg-muted/50 p-0.5 rounded-lg border border-border/50 text-[10px] font-medium text-muted-foreground select-none">
+              <button
+                type="button"
+                aria-pressed={chartType === 'line'}
+                onClick={() => handleChartTypeChange('line')}
+                className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                  chartType === 'line'
+                    ? 'bg-background text-foreground shadow-xs font-semibold'
+                    : 'hover:text-foreground'
+                }`}
+              >
+                Line
+              </button>
+              <button
+                type="button"
+                aria-pressed={chartType === 'bar'}
+                onClick={() => handleChartTypeChange('bar')}
+                className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                  chartType === 'bar'
+                    ? 'bg-background text-foreground shadow-xs font-semibold'
+                    : 'hover:text-foreground'
+                }`}
+              >
+                Bar
+              </button>
+              <button
+                type="button"
+                aria-pressed={chartType === 'both'}
+                onClick={() => handleChartTypeChange('both')}
+                className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                  chartType === 'both'
+                    ? 'bg-background text-foreground shadow-xs font-semibold'
+                    : 'hover:text-foreground'
+                }`}
+              >
+                Both
+              </button>
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -172,7 +416,7 @@ export function DivisionAreaChart({ data }: Props) {
       <CardContent className="pt-5">
         {!hasData ? (
           <div className="flex h-64 items-center justify-center text-xs text-muted-foreground/50">
-            No revenue, cash receipt, or expense data for this fiscal year.
+            {emptyMessage}
           </div>
         ) : (
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px]">
@@ -245,7 +489,7 @@ export function DivisionAreaChart({ data }: Props) {
                     {(chartType === 'bar' || chartType === 'both') &&
                       SERIES.map((item) => (
                         <Bar
-                          key={item.key}
+                          key={`bar-${item.key}`}
                           dataKey={item.key}
                           name={item.label}
                           fill={item.color}
@@ -258,7 +502,7 @@ export function DivisionAreaChart({ data }: Props) {
                     {(chartType === 'line' || chartType === 'both') &&
                       SERIES.map((item) => (
                         <Line
-                          key={item.key}
+                          key={`line-${item.key}`}
                           type="monotone"
                           dataKey={item.key}
                           name={item.label}
@@ -328,8 +572,8 @@ export function DivisionAreaChart({ data }: Props) {
 
         <p className="mt-5 text-xs text-muted-foreground">
           Revenue is client-facing invoice totals. Cash Receipts is payments received. Accounts
-          Receivable is the outstanding balance owed on this fiscal year&apos;s invoices. Expenses
-          are recorded expenses.
+          Receivable is the cumulative outstanding balance owed on open invoices as of each
+          month-end. Expenses are recorded expenses.
         </p>
       </CardContent>
     </Card>

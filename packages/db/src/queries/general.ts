@@ -369,7 +369,7 @@ export async function getMonthlyARBalanceForYear(
       -- fact, which would otherwise show up here as a negative balance and wash out
       -- real outstanding AR from other invoices. Matches getAgingReport's status set.
       WHERE status IN ('issued', 'partially_paid', 'overdue')
-        AND EXTRACT(YEAR FROM (invoice_date::date - INTERVAL '2 months'))::int = ${Number(year)}
+        AND invoice_date::date <= (make_date(${Number(year)} + 1, 3, 1) - INTERVAL '1 day')::date
     )
     SELECT
       TO_CHAR(me.month_end, 'YYYY-MM') AS month,
