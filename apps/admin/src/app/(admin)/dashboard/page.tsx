@@ -9,11 +9,13 @@ import {
   getDivisionInvoiced,
   getMonthlyFinancialsSeries,
   getBudgetChartSeriesForYear,
+  getDistinctReportYears,
   getMoMChartData,
   getExpensesByDivision,
   getCurrentMonthLabel,
   getPreviousMonthLabel,
   getYTDLabel,
+  type MonthlyBudgetChartRow,
 } from '@/lib/financial';
 import { getSnapshotByPeriod, getAgingReport, getActiveRates } from '@pmg/db';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
@@ -41,6 +43,8 @@ export default async function DashboardPage() {
     monthlySeries,
     agingReport,
     budgetChartSeries,
+    prevYearBudgetChartSeries,
+    distinctReportYears,
     momData,
     expensesByDivision,
     currentPeriodSnapshot,
@@ -56,11 +60,30 @@ export default async function DashboardPage() {
     getMonthlyFinancialsSeries(),
     getAgingReport(),
     getBudgetChartSeriesForYear(fiscalYear),
+    getBudgetChartSeriesForYear(fiscalYear - 1).catch(() => [] as MonthlyBudgetChartRow[]),
+    getDistinctReportYears().catch(() => [] as number[]),
     getMoMChartData(),
     getExpensesByDivision(),
     getSnapshotByPeriod(periodToClose),
     getActiveRates().catch(() => ({ pmg_share: 0.25 })),
   ]);
+
+  const olderYears = distinctReportYears.filter((y) => y < fiscalYear - 1).sort((a, b) => b - a);
+
+  const olderSeriesEntries = await Promise.all(
+    olderYears.map(async (y) => {
+      const series = await getBudgetChartSeriesForYear(y).catch(
+        () => [] as MonthlyBudgetChartRow[],
+      );
+      return [y, series] as const;
+    }),
+  );
+
+  const budgetChartSeriesByYear: Record<number, MonthlyBudgetChartRow[]> = {
+    [fiscalYear]: budgetChartSeries,
+    [fiscalYear - 1]: prevYearBudgetChartSeries,
+    ...Object.fromEntries(olderSeriesEntries),
+  };
 
   const pmgShareRate = activeRates?.pmg_share ?? 0.25;
 
@@ -101,6 +124,8 @@ export default async function DashboardPage() {
       sparklineData={monthlySeries.slice(-6)}
       agingReport={agingReport}
       budgetChartSeries={budgetChartSeries}
+      budgetChartSeriesByYear={budgetChartSeriesByYear}
+      fiscalYear={fiscalYear}
       expensesByDivision={expensesByDivision}
       // Snapshot
       currentPeriod={periodToClose}
