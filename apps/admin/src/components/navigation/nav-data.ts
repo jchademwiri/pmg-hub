@@ -32,7 +32,7 @@ import {
   BookMarked,
   LayoutGrid,
   CalendarClock,
-  CalendarRange,
+  // CalendarRange,
   UserCheck,
   Clock,
   Camera,
@@ -109,15 +109,16 @@ export const GROUPS: NavGroup[] = [
       { title: 'Public Documents', url: '/documents', icon: FileText },
     ],
   },
-  {
-    key: 'projects',
-    label: 'Projects',
-    icon: CalendarClock,
-    items: [
-      { title: 'Overview', url: '/projects', icon: LayoutGrid },
-      { title: 'Timeline', url: '/projects/timeline', icon: CalendarRange },
-    ],
-  },
+  // Temporarily hidden — re-enable when Project Scheduling is active again
+  // {
+  //   key: 'projects',
+  //   label: 'Projects',
+  //   icon: CalendarClock,
+  //   items: [
+  //     { title: 'Overview', url: '/projects', icon: LayoutGrid },
+  //     { title: 'Timeline', url: '/projects/timeline', icon: CalendarRange },
+  //   ],
+  // },
   {
     key: 'finance',
     label: 'Finance',

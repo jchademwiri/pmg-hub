@@ -89,7 +89,8 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
 
   const NAV_ITEMS = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Projects', href: '/projects', icon: CalendarDays },
+    // Temporarily hidden — re-enable when Project Scheduling is active again
+    // { label: 'Projects', href: '/projects', icon: CalendarDays },
     { label: 'Invoices', href: '/invoices', icon: FileText },
     { label: 'Quotes', href: '/quotes', icon: FileSpreadsheet },
     { label: 'Statements', href: '/statements', icon: Receipt },
@@ -344,11 +345,11 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
             <span className="text-[10px] font-medium">Dashboard</span>
           </Link>
           <Link
-            href="/projects"
-            className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname.startsWith('/projects') ? 'text-blue-400' : 'text-muted-foreground hover:text-white'}`}
+            href="/quotes"
+            className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname.startsWith('/quotes') ? 'text-blue-400' : 'text-muted-foreground hover:text-white'}`}
           >
-            <CalendarDays className="size-5" />
-            <span className="text-[10px] font-medium">Projects</span>
+            <FileSpreadsheet className="size-5" />
+            <span className="text-[10px] font-medium">Quotes</span>
           </Link>
           <Link
             href="/invoices"
