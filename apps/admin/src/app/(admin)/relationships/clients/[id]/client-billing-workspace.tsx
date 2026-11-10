@@ -977,18 +977,21 @@ export function ClientBillingWorkspace({
               <BarChart3 className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
               <span>Analytics</span>
             </TabsTrigger>
-            <TabsTrigger
-              value="projects"
-              className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
-            >
-              <Briefcase className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
-              <span>Projects</span>
-              {projects.length > 0 && (
-                <span className="text-[10px] font-semibold bg-muted group-data-[state=active]:bg-amber-500/10 group-data-[state=active]:text-amber-600 px-1.5 py-0.5 rounded-full text-muted-foreground transition-colors">
-                  {projects.length}
-                </span>
-              )}
-            </TabsTrigger>
+            {/* Temporarily hidden — Projects tab */}
+            {false && (
+              <TabsTrigger
+                value="projects"
+                className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
+              >
+                <Briefcase className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
+                <span>Projects</span>
+                {projects.length > 0 && (
+                  <span className="text-[10px] font-semibold bg-muted group-data-[state=active]:bg-amber-500/10 group-data-[state=active]:text-amber-600 px-1.5 py-0.5 rounded-full text-muted-foreground transition-colors">
+                    {projects.length}
+                  </span>
+                )}
+              </TabsTrigger>
+            )}
             <TabsTrigger
               value="compliance"
               className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
@@ -1045,7 +1048,7 @@ export function ClientBillingWorkspace({
                       Issue Credit Note
                     </Button>
                   )}
-                  {activeTab === 'projects' && (
+                  {false && activeTab === 'projects' && (
                     <Button size="sm" asChild>
                       <Link href={`/projects/new?clientId=${client.id}`}>
                         <Plus className="size-4 mr-1" />

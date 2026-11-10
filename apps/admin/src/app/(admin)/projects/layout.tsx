@@ -2,13 +2,16 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 
 export default function SchedulingLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+
+  // Feature temporarily hidden — redirect all /projects/* routes to /dashboard
+  redirect('/dashboard');
 
   const tabs = [
     { label: 'Overview', href: '/projects' },
