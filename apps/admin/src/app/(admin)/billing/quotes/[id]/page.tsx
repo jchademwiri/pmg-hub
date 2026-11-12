@@ -10,7 +10,7 @@ import { DocumentPreview } from '@/components/billing/document-preview';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { MobileReceiptPreview } from '@/components/billing/mobile-receipt-preview';
-import { getQuotationById, getDivisionBillingSettings } from '@pmg/db';
+import { getQuotationById, getDivisionBillingSettings, getOrganisationSettings } from '@pmg/db';
 import {
   updateQuotationStatus,
   deleteQuotation,
@@ -45,7 +45,10 @@ export default async function QuoteDetailPage({ params, searchParams }: Props) {
   const quote = await getQuotationById(id);
   if (!quote) notFound();
 
-  const divSettings = await getDivisionBillingSettings(quote.divisionId);
+  const [divSettings, orgSettings] = await Promise.all([
+    getDivisionBillingSettings(quote.divisionId),
+    getOrganisationSettings(),
+  ]);
   const quotePdfUrl = `/api/billing/pdf/quote/${quote.id}`;
 
   // Build DocumentPreview props from real data
@@ -55,7 +58,7 @@ export default async function QuoteDetailPage({ params, searchParams }: Props) {
     issueDate: quote.quoteDate,
     dueDate: quote.expiryDate ?? undefined,
     reference: quote.reference ?? undefined,
-    org: buildOrgProps(quote.divisionName, divSettings, undefined),
+    org: buildOrgProps(quote.divisionName, divSettings, orgSettings),
     client: {
       name: quote.clientName ?? 'No client',
       email: quote.clientEmail ?? undefined,

@@ -41,11 +41,13 @@ import { calculateAgeing, totalAgeingDue } from './billing-ageing';
 import {
   buildOrgProps,
   determineStatementStatus,
-  buildIncomeInvoiceMap,
   buildTransactionHistory,
   adjustOpeningBalance,
   resolveDivisionBranding,
   buildBankingProps,
+  formatStatementNumber,
+  formatPaymentReference,
+  formatRefundReference,
 } from './client-billing-helpers';
 import { PAGE, split, ensurePage, drawShellHeader, drawShellFooter } from './pdf-shell';
 
@@ -603,10 +605,7 @@ async function buildInvoicePdfData(id: string): Promise<PdfDocumentData | null> 
           ? safeNumber(line.lineTotal)
           : safeNumber(line.quantity) * safeNumber(line.unitPrice),
     })),
-    notes:
-      invoice.notes ??
-      settings?.invoiceNotes ??
-      'Payment is due within agreed terms. Please use the invoice number as payment reference.',
+    notes: invoice.notes ?? settings?.invoiceNotes ?? undefined,
     terms: invoice.terms,
     banking: buildBankingProps(settings),
     totals: {
@@ -920,7 +919,18 @@ async function buildStatementPdfData(
     periodFrom,
   );
 
-  const invoiceToIncome = buildIncomeInvoiceMap(statement.invoices);
+  // Resolve branding first: payment/refund reference numbers are division-prefixed.
+  const clientRecord = await getClientById(clientId);
+  const allDivisions = await getAllDivisions();
+  const linkedDivisionId = filters?.divisionId ?? clientRecord?.divisionId;
+  const { divisionName, effectiveDivisionId } = resolveDivisionBranding(
+    linkedDivisionId,
+    statement.invoices,
+    allDivisions,
+  );
+  const settings = effectiveDivisionId
+    ? await getDivisionBillingSettings(effectiveDivisionId)
+    : null;
 
   let transactions: PdfTransaction[];
   let finalBalance: number;
@@ -949,7 +959,7 @@ async function buildStatementPdfData(
   } else {
     const raw = [
       ...statement.invoices
-        .filter((invoice) => invoice.status !== 'void' && invoice.status !== 'written_off')
+        .filter((invoice) => invoice.status !== 'void')
         .map((invoice) => ({
           date: invoice.invoiceDate,
           reference: invoice.documentNumber,
@@ -959,7 +969,7 @@ async function buildStatementPdfData(
         })),
       ...incomeResult.data.map((payment) => ({
         date: payment.date,
-        reference: invoiceToIncome.get(payment.id) ?? '-',
+        reference: formatPaymentReference(payment.id, payment.divisionName || divisionName),
         description: 'Payment received',
         debit: undefined,
         credit: safeNumber(payment.amount),
@@ -989,7 +999,7 @@ async function buildStatementPdfData(
         .filter((refund) => refund.refundDate >= periodFrom && refund.refundDate <= periodTo)
         .map((refund) => ({
           date: refund.refundDate,
-          reference: refund.reference ?? '-',
+          reference: formatRefundReference(refund.id, refund.reference, divisionName),
           description: refund.description ?? 'Credit refund',
           debit: safeNumber(refund.amount),
           credit: undefined,
@@ -1003,18 +1013,6 @@ async function buildStatementPdfData(
 
   const asOfDate = periodTo || statement.periodTo || getSASTToday();
   const ageing = calculateAgeing(statement.outstandingInvoices ?? statement.invoices, asOfDate);
-
-  const clientRecord = await getClientById(clientId);
-  const allDivisions = await getAllDivisions();
-  const linkedDivisionId = filters?.divisionId ?? clientRecord?.divisionId;
-  const { divisionName, effectiveDivisionId } = resolveDivisionBranding(
-    linkedDivisionId,
-    statement.invoices,
-    allDivisions,
-  );
-  const settings = effectiveDivisionId
-    ? await getDivisionBillingSettings(effectiveDivisionId)
-    : null;
 
   const status = determineStatementStatus(statement.summary.totalOutstanding, statement.invoices);
 
@@ -1030,21 +1028,33 @@ async function buildStatementPdfData(
   }
 
   const isOutstanding = filters?.statementType === 'outstanding';
-  const outstandingSubtotal = transactions.reduce((sum, tx) => sum + (tx.debit ?? 0), 0);
-  const outstandingPaid = transactions.reduce((sum, tx) => sum + (tx.credit ?? 0), 0);
+  // Totals come from the rows shown so they always reconcile with the on-screen statement.
+  const periodInvoiced = transactions.reduce((sum, tx) => sum + (tx.debit ?? 0), 0);
+  const periodPaid = transactions.reduce((sum, tx) => sum + (tx.credit ?? 0), 0);
 
   return {
     type: 'statement',
     statementType: filters?.statementType ?? 'activity',
     title:
       filters?.statementType === 'outstanding' ? 'Statement of Outstanding Invoices' : 'Statement',
-    number: `ST-${statement.client.name.toUpperCase().substring(0, 3)}-${filters?.year ?? currentYear}`,
+    number: formatStatementNumber({
+      clientName: statement.client.name,
+      businessName: statement.client.businessName,
+      monthPeriod: filters?.monthPeriod,
+      year: filters?.year,
+      currentFY,
+    }),
     status,
     issueDate: getSASTToday(),
     dueDate: earliestDueDate,
     periodFrom: isOutstanding ? undefined : periodFrom,
     periodTo,
-    org: buildOrgProps(divisionName, settings, orgSettings),
+    org: buildOrgProps(
+      divisionName,
+      settings,
+      orgSettings,
+      settings ? 'Playhouse Media Group' : null,
+    ),
     banking: buildBankingProps(settings),
     client: {
       name: statement.client.businessName ?? statement.client.name,
@@ -1055,10 +1065,8 @@ async function buildStatementPdfData(
     openingBalance: isOutstanding ? 0 : openingBalance,
     ageing,
     totals: {
-      subtotal: isOutstanding
-        ? outstandingSubtotal
-        : safeNumber(statement.summary.totalInvoiced) + openingBalance,
-      paid: isOutstanding ? outstandingPaid : safeNumber(statement.summary.totalPaid),
+      subtotal: isOutstanding ? periodInvoiced : periodInvoiced + openingBalance,
+      paid: periodPaid,
       balanceDue: finalBalance,
     },
   };
@@ -1133,8 +1141,6 @@ async function renderDeclarativeBillingPdf(data: PdfDocumentData): Promise<Buffe
         org,
         client: data.client,
         openingBalance: data.openingBalance,
-        subtotal: data.totals?.subtotal,
-        totalPaid: data.totals?.paid,
         totalDue: data.totals?.balanceDue,
         transactions: (data.transactions || []).map((tx) => ({
           date: tx.date,

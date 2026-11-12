@@ -1,11 +1,22 @@
 import React from 'react';
 import { formatZAR, fmtDate, fmtDateLong } from '../../format';
-import { Document, Page, KeepTogether } from '../primitives';
-import { PageHeader, type OrgDetails } from '../components/page-header';
-import { PageFooter } from '../components/page-footer';
-import { Table, TableHeader, TableBody, TableRow, TableCell } from '../components/table';
-import { KeyValue } from '../components/key-value';
-import { usePdfTheme } from '../theme-provider';
+import { Document } from '../primitives';
+import type { OrgDetails } from '../components/page-header';
+import {
+  DOC_COLORS,
+  DocumentPage,
+  DocumentHeader,
+  DocumentMetaRow,
+  DocTable,
+  DocRow,
+  DocumentTotalsBlock,
+  DocumentNotesSection,
+  DocumentFooter,
+  SectionLabel,
+  type DocColumn,
+  type MetaRowItem,
+  type TotalsRow,
+} from '../components/document-layout';
 
 export interface CreditNoteApplication {
   invoiceNumber: string;
@@ -36,366 +47,133 @@ export interface CreditNotePdfData {
   notes?: string | null;
 }
 
+const APPLICATION_COLUMNS: DocColumn[] = [
+  { key: 'invoice', label: 'Invoice Number', width: '40%' },
+  { key: 'date', label: 'Applied Date', width: '30%' },
+  { key: 'amount', label: 'Amount Applied', width: '30%', align: 'right' },
+];
+
+const ADJUSTMENT_COLUMNS: DocColumn[] = [
+  { key: 'desc', label: 'Description', width: '65%' },
+  { key: 'amount', label: 'Credit Amount', width: '35%', align: 'right' },
+];
+
 export function CreditNotePdfDocument({ data }: { data: CreditNotePdfData }) {
-  const theme = usePdfTheme();
+  const hasApplications = !!data.applications && data.applications.length > 0;
+
+  const metaRows: MetaRowItem[] = [
+    { label: 'Issue Date', value: fmtDateLong(data.issueDate) },
+    { label: 'Credit Type', value: data.type },
+  ];
+  if (data.originalInvoiceNumber) {
+    metaRows.push({ label: 'Original Invoice', value: data.originalInvoiceNumber });
+  }
+  if (data.expiresDate) {
+    metaRows.push({ label: 'Expiry Date', value: fmtDateLong(data.expiresDate) });
+  }
+
+  const totals: TotalsRow[] = [
+    { label: 'Total Credit Issued', value: formatZAR(data.amount), color: DOC_COLORS.text },
+  ];
+  if (data.amountApplied > 0) {
+    totals.push({ label: 'Amount Applied', value: `-${formatZAR(data.amountApplied)}` });
+  }
+  if (data.amountRefunded != null && data.amountRefunded > 0) {
+    totals.push({ label: 'Amount Refunded', value: `-${formatZAR(data.amountRefunded)}` });
+  }
+  totals.push({
+    label: 'Remaining Balance',
+    value: formatZAR(data.amountRemaining),
+    color: data.amountRemaining > 0 ? DOC_COLORS.emerald : DOC_COLORS.muted,
+    bold: true,
+    divider: true,
+  });
+
+  const notes =
+    data.notes && data.notes !== data.reason
+      ? data.notes
+      : 'This credit note can be applied against current or future invoices. Please contact accounts for queries.';
 
   return (
     <Document title={`Credit Note ${data.creditNoteNumber}`}>
-      <Page size="a4">
-        {/* Header */}
-        <PageHeader
+      <DocumentPage>
+        <DocumentHeader
           org={data.org}
           title="Credit Note"
           number={data.creditNoteNumber}
           status={data.status}
         />
 
-        {/* Client & Credit Details */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginBottom: theme.spacing.sectionGap,
-            gap: 20,
-          }}
-        >
-          {/* Credit To */}
-          <div style={{ display: 'flex', flexDirection: 'column', width: '50%' }}>
-            <span
-              style={{
-                fontSize: 7.5,
-                fontWeight: 700,
-                color: theme.colors.primary,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: 4,
-              }}
-            >
-              Credit To
-            </span>
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                color: theme.colors.foreground,
-                marginBottom: 2,
-              }}
-            >
-              {data.client.name}
-            </span>
-            {data.client.email && (
-              <span style={{ fontSize: 8, color: theme.colors.mutedForeground }}>
-                {data.client.email}
-              </span>
-            )}
-            {data.client.phone && (
-              <span style={{ fontSize: 8, color: theme.colors.mutedForeground }}>
-                {data.client.phone}
-              </span>
-            )}
-            {data.client.address && (
-              <span style={{ fontSize: 8, color: theme.colors.mutedForeground, marginTop: 2 }}>
-                {data.client.address}
-              </span>
-            )}
-          </div>
+        <DocumentMetaRow
+          partyLabel="Credit To"
+          party={data.client}
+          rows={metaRows}
+          referenceLabel="Reason"
+          reference={data.reason}
+        />
 
-          {/* Credit Note Details */}
-          <div style={{ display: 'flex', flexDirection: 'column', width: '45%' }}>
-            <span
-              style={{
-                fontSize: 7.5,
-                fontWeight: 700,
-                color: theme.colors.primary,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: 4,
-              }}
-            >
-              Credit Note Details
-            </span>
-            <KeyValue
-              size="sm"
-              items={[
-                { key: 'Issue Date', value: fmtDateLong(data.issueDate) },
-                { key: 'Credit Type', value: data.type },
-                ...(data.originalInvoiceNumber
-                  ? [{ key: 'Original Invoice', value: data.originalInvoiceNumber }]
-                  : []),
-                ...(data.expiresDate
-                  ? [{ key: 'Expiry Date', value: fmtDateLong(data.expiresDate) }]
-                  : []),
+        <SectionLabel style={{ marginBottom: 8 }}>
+          {hasApplications ? 'Credit Applications' : 'Credit Adjustment'}
+        </SectionLabel>
+        {hasApplications ? (
+          <DocTable columns={APPLICATION_COLUMNS}>
+            {data.applications!.map((app, idx) => (
+              <DocRow
+                key={idx}
+                columns={APPLICATION_COLUMNS}
+                cells={[
+                  {
+                    content: app.invoiceNumber,
+                    style: { fontSize: 8.5, fontWeight: 500, color: DOC_COLORS.blue },
+                  },
+                  { content: fmtDate(app.appliedDate), style: { fontSize: 8 } },
+                  {
+                    content: formatZAR(app.amount),
+                    style: { fontSize: 8.5, fontWeight: 600, color: DOC_COLORS.text },
+                  },
+                ]}
+              />
+            ))}
+          </DocTable>
+        ) : (
+          <DocTable columns={ADJUSTMENT_COLUMNS}>
+            <DocRow
+              columns={ADJUSTMENT_COLUMNS}
+              cells={[
+                {
+                  content: (
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontSize: 8.5, color: DOC_COLORS.text }}>{data.type}</span>
+                      {data.reason && (
+                        <span
+                          style={{
+                            fontSize: 7.5,
+                            fontStyle: 'italic',
+                            color: DOC_COLORS.subtle,
+                            marginTop: 2,
+                          }}
+                        >
+                          {data.reason}
+                        </span>
+                      )}
+                    </div>
+                  ),
+                },
+                {
+                  content: formatZAR(data.amount),
+                  style: { fontSize: 8.5, fontWeight: 600, color: DOC_COLORS.text },
+                },
               ]}
             />
-          </div>
-        </div>
-
-        {/* Reason */}
-        {data.reason && (
-          <div style={{ marginBottom: 12 }}>
-            <span
-              style={{
-                fontSize: 7.5,
-                fontWeight: 700,
-                color: theme.colors.primary,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                display: 'block',
-                marginBottom: 3,
-              }}
-            >
-              Reason
-            </span>
-            <span style={{ fontSize: 8.5, color: theme.colors.foreground, lineHeight: '13px' }}>
-              {data.reason}
-            </span>
-          </div>
+          </DocTable>
         )}
 
-        {/* Applications / Line Items Table */}
-        <span
-          style={{
-            fontSize: 7.5,
-            fontWeight: 700,
-            color: theme.colors.primary,
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            display: 'block',
-            marginBottom: 6,
-          }}
-        >
-          {data.applications && data.applications.length > 0
-            ? 'Credit Applications'
-            : 'Credit Adjustment'}
-        </span>
+        <DocumentTotalsBlock rows={totals} />
 
-        {data.applications && data.applications.length > 0 ? (
-          <Table variant="compact" style={{ marginBottom: theme.spacing.sectionGap }}>
-            <TableHeader>
-              <TableRow header>
-                <TableCell header width="40%">
-                  Invoice Number
-                </TableCell>
-                <TableCell header width="30%">
-                  Applied Date
-                </TableCell>
-                <TableCell header align="right" width="30%">
-                  Amount Applied
-                </TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.applications.map((app, idx) => (
-                <TableRow key={idx} striped={idx % 2 === 1}>
-                  <TableCell width="40%" bold>
-                    #{app.invoiceNumber}
-                  </TableCell>
-                  <TableCell width="30%">{fmtDate(app.appliedDate)}</TableCell>
-                  <TableCell width="30%" align="right" bold tabular>
-                    {formatZAR(app.amount)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <Table variant="compact" style={{ marginBottom: theme.spacing.sectionGap }}>
-            <TableHeader>
-              <TableRow header>
-                <TableCell header width="65%">
-                  Description
-                </TableCell>
-                <TableCell header align="right" width="35%">
-                  Credit Amount
-                </TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell width="65%">
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span
-                      style={{ fontWeight: 600, color: theme.colors.foreground, fontSize: 8.5 }}
-                    >
-                      {data.type}
-                    </span>
-                    {data.reason && (
-                      <span
-                        style={{ color: theme.colors.mutedForeground, fontSize: 8, marginTop: 2 }}
-                      >
-                        {data.reason}
-                      </span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell width="35%" align="right" bold tabular>
-                  {formatZAR(data.amount)}
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        )}
+        <DocumentNotesSection notes={notes} />
 
-        {/* Bottom Section: Notes & Totals */}
-        <KeepTogether>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              gap: 24,
-              marginTop: 8,
-              marginBottom: 16,
-            }}
-          >
-            {/* Left: Notes */}
-            <div style={{ display: 'flex', flexDirection: 'column', width: '50%' }}>
-              <span
-                style={{
-                  fontSize: 7.5,
-                  fontWeight: 700,
-                  color: theme.colors.mutedForeground,
-                  textTransform: 'uppercase',
-                }}
-              >
-                Notes
-              </span>
-              <span
-                style={{
-                  fontSize: 7.5,
-                  color: theme.colors.mutedForeground,
-                  marginTop: 2,
-                  lineHeight: 1.4,
-                }}
-              >
-                {data.notes && data.notes !== data.reason
-                  ? data.notes
-                  : 'This credit note can be applied against current or future invoices. Please contact accounts for queries.'}
-              </span>
-            </div>
-
-            {/* Right: Totals Summary */}
-            <div
-              style={{
-                width: '42%',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 6,
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  borderBottom: `1px solid ${theme.colors.border}`,
-                  paddingBottom: 4,
-                }}
-              >
-                <span style={{ fontSize: 8.5, fontWeight: 600, color: theme.colors.foreground }}>
-                  Total Credit Issued
-                </span>
-                <span
-                  style={{
-                    fontSize: 9,
-                    fontWeight: 700,
-                    color: theme.colors.foreground,
-                    fontVariantNumeric: 'tabular-nums',
-                  }}
-                >
-                  {formatZAR(data.amount)}
-                </span>
-              </div>
-
-              {data.amountApplied > 0 && (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    borderBottom: `1px solid #f4f4f5`,
-                    paddingBottom: 4,
-                  }}
-                >
-                  <span style={{ fontSize: 8, color: theme.colors.mutedForeground }}>
-                    Amount Applied
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 8.5,
-                      fontWeight: 600,
-                      color: theme.colors.foreground,
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
-                  >
-                    -{formatZAR(data.amountApplied)}
-                  </span>
-                </div>
-              )}
-
-              {data.amountRefunded != null && data.amountRefunded > 0 && (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    borderBottom: `1px solid #f4f4f5`,
-                    paddingBottom: 4,
-                  }}
-                >
-                  <span style={{ fontSize: 8, color: theme.colors.mutedForeground }}>
-                    Amount Refunded
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 8.5,
-                      fontWeight: 600,
-                      color: theme.colors.foreground,
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
-                  >
-                    -{formatZAR(data.amountRefunded)}
-                  </span>
-                </div>
-              )}
-
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  borderBottom: `2px solid ${theme.colors.primary}`,
-                  paddingBottom: 6,
-                  paddingTop: 2,
-                }}
-              >
-                <span style={{ fontSize: 9, fontWeight: 700, color: theme.colors.foreground }}>
-                  Remaining Balance
-                </span>
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: theme.colors.primary,
-                    fontVariantNumeric: 'tabular-nums',
-                  }}
-                >
-                  {formatZAR(data.amountRemaining)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </KeepTogether>
-
-        {/* Footer */}
-        <PageFooter org={data.org} />
-      </Page>
+        <DocumentFooter />
+      </DocumentPage>
     </Document>
   );
 }

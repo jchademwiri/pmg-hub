@@ -1,6 +1,39 @@
 import type { InvoiceDetail, QuotationDetail, InvoiceRow, QuotationRow } from '@pmg/db';
+import { deriveDivisionPrefix, generateReceiptNumber } from '@pmg/utils';
 import { getDocumentLogoUrl } from './document-logo';
 import { formatOrgAddress } from './format';
+
+/**
+ * Statement number shared by the web preview and the downloaded PDF so both
+ * always show the same identifier, e.g. `STMT-2026-BAS`, `STMT-CURRENT-BAS`.
+ */
+export function formatStatementNumber(opts: {
+  clientName: string;
+  businessName?: string | null;
+  monthPeriod?: string | null;
+  year?: number | string | null;
+  currentFY: number | string;
+}): string {
+  const period = opts.monthPeriod ? opts.monthPeriod.toUpperCase() : (opts.year ?? opts.currentFY);
+  const code = (opts.businessName ?? opts.clientName).slice(0, 3).toUpperCase();
+  return `STMT-${period}-${code}`;
+}
+
+/** Reference No. for a payment row on a statement: its receipt number (e.g. TES-REC-A1B2C3D4). */
+export function formatPaymentReference(paymentId: string, divisionName: string): string {
+  return generateReceiptNumber(paymentId, divisionName);
+}
+
+/** Reference No. for a refund row on a statement: the captured reference, else a derived one. */
+export function formatRefundReference(
+  refundId: string,
+  refundReference: string | null | undefined,
+  divisionName: string,
+): string {
+  const trimmed = refundReference?.trim();
+  if (trimmed) return trimmed;
+  return `${deriveDivisionPrefix(divisionName)}-REF-${refundId.slice(0, 8).toUpperCase()}`;
+}
 
 export interface OrgPreviewProps {
   name: string;

@@ -488,18 +488,20 @@ export function DocumentPreview({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-y border-zinc-100 bg-zinc-50">
-                  {['Date', 'Invoice No.', 'Description', 'Debit', 'Credit', 'Balance'].map((h) => (
-                    <th
-                      key={h}
-                      className={cn(
-                        'py-2.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600',
-                        ['Debit', 'Credit', 'Balance'].includes(h) ? 'text-right' : 'text-left',
-                        h === 'Date' ? 'pr-4' : 'px-4',
-                      )}
-                    >
-                      {h}
-                    </th>
-                  ))}
+                  {['Date', 'Reference No.', 'Description', 'Debit', 'Credit', 'Balance'].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        className={cn(
+                          'py-2.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600',
+                          ['Debit', 'Credit', 'Balance'].includes(h) ? 'text-right' : 'text-left',
+                          h === 'Date' ? 'pr-4' : 'px-4',
+                        )}
+                      >
+                        {h}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -544,6 +546,13 @@ export function DocumentPreview({
                       ) : tx.paymentId ? (
                         <Link
                           href={`/billing/payments/${tx.paymentId}`}
+                          className="text-blue-700 hover:underline print:text-zinc-600 print:no-underline font-medium"
+                        >
+                          {tx.reference}
+                        </Link>
+                      ) : tx.creditNoteId ? (
+                        <Link
+                          href={`/billing/credits/${tx.creditNoteId}`}
                           className="text-blue-700 hover:underline print:text-zinc-600 print:no-underline font-medium"
                         >
                           {tx.reference}

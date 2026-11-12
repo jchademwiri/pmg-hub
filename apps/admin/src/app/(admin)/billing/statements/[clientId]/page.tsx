@@ -29,11 +29,13 @@ import { formatZAR, formatZARWithCR, fmtDate, fmtDateLong, getSASTToday } from '
 import {
   buildOrgProps,
   determineStatementStatus,
-  buildIncomeInvoiceMap,
   buildTransactionHistory,
   adjustOpeningBalance,
   resolveDivisionBranding,
   buildBankingProps,
+  formatStatementNumber,
+  formatPaymentReference,
+  formatRefundReference,
 } from '@/lib/client-billing-helpers';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
@@ -194,7 +196,14 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     refundId?: string;
   };
 
-  const incomeToInvoiceNumber = buildIncomeInvoiceMap(invoices);
+  // Division branding is resolved first: receipt/refund reference numbers are division-prefixed.
+  const clientRecord = await getClientById(clientId);
+  const allDivisions = await getAllDivisions();
+  const { divisionName: orgName, effectiveDivisionId } = resolveDivisionBranding(
+    clientRecord?.divisionId,
+    invoices,
+    allDivisions,
+  );
 
   const txRaw: TxRaw[] = [
     ...invoices
@@ -208,7 +217,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       })),
     ...incomeResult.data.map((inc) => ({
       date: inc.date,
-      reference: incomeToInvoiceNumber.get(inc.id) ?? '-',
+      reference: formatPaymentReference(inc.id, inc.divisionName || orgName),
       description: 'Payment received',
       credit: Number(inc.amount),
       paymentId: inc.id,
@@ -224,7 +233,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       })),
     ...filteredRefunds.map((r) => ({
       date: r.refundDate,
-      reference: r.reference ?? '-',
+      reference: formatRefundReference(r.id, r.reference, orgName),
       description: r.description ?? 'Credit refund',
       debit: Number(r.amount),
       refundId: r.id,
@@ -283,19 +292,18 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     earliestDueDate = unpaidWithDueDates[0]!.dueDate!;
   }
 
-  const clientRecord = await getClientById(clientId);
-  const allDivisions = await getAllDivisions();
-  const { divisionName: orgName, effectiveDivisionId } = resolveDivisionBranding(
-    clientRecord?.divisionId,
-    invoices,
-    allDivisions,
-  );
   const divSettings = effectiveDivisionId
     ? await getDivisionBillingSettings(effectiveDivisionId)
     : null;
 
   const docPreviewProps = {
-    number: `STMT-${monthPeriod ? monthPeriod.toUpperCase() : year ? year : currentFY}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
+    number: formatStatementNumber({
+      clientName: client.name,
+      businessName: client.businessName,
+      monthPeriod,
+      year,
+      currentFY,
+    }),
     status: docStatus,
     dueDate: earliestDueDate,
     statementType,

@@ -11,6 +11,7 @@ export * from './components/key-value';
 export * from './components/table';
 export * from './components/page-header';
 export * from './components/page-footer';
+export * from './components/document-layout';
 export * from './documents/invoice-pdf-document';
 export * from './documents/quote-pdf-document';
 export * from './documents/statement-pdf-document';
