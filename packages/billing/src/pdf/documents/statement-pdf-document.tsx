@@ -180,7 +180,7 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
               border: `1px dashed ${DOC_COLORS.borderStrong}`,
             }}
           >
-            <span style={{ fontSize: 10, color: DOC_COLORS.muted }}>
+            <span style={{ fontSize: 11, color: DOC_COLORS.muted }}>
               No transactions for this period.
             </span>
           </div>
@@ -193,18 +193,18 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                 cells={[
                   {
                     content: data.periodFrom ? fmtDateLong(data.periodFrom) : '-',
-                    style: { fontSize: 8, color: DOC_COLORS.subtle },
+                    style: { color: DOC_COLORS.subtle },
                   },
                   {
                     content: 'Balance Brought Forward',
                     span: 2,
-                    style: { fontSize: 8, fontStyle: 'italic', color: DOC_COLORS.subtle },
+                    style: { fontStyle: 'italic', color: DOC_COLORS.subtle },
                   },
-                  { content: '—', style: { fontSize: 8, color: DOC_COLORS.subtle } },
-                  { content: '—', style: { fontSize: 8, color: DOC_COLORS.subtle } },
+                  { content: '—', style: { color: DOC_COLORS.subtle } },
+                  { content: '—', style: { color: DOC_COLORS.subtle } },
                   {
                     content: formatZARWithCR(openingBalance),
-                    style: { fontSize: 8, fontWeight: 600, color: DOC_COLORS.subtle },
+                    style: { fontWeight: 600, color: DOC_COLORS.subtle },
                   },
                 ]}
               />
@@ -217,11 +217,10 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                   key={idx}
                   columns={COLUMNS}
                   cells={[
-                    { content: fmtDateLong(tx.date), style: { fontSize: 8, whiteSpace: 'nowrap' } },
+                    { content: fmtDateLong(tx.date), style: { whiteSpace: 'nowrap' } },
                     {
                       content: hasRef ? tx.reference : '-',
                       style: {
-                        fontSize: 8,
                         fontWeight: hasRef ? 500 : 400,
                         color: hasRef ? DOC_COLORS.blue : DOC_COLORS.muted,
                       },
@@ -229,26 +228,23 @@ export function StatementPdfDocument({ data }: { data: StatementPdfData }) {
                     {
                       content: tx.description,
                       style: {
-                        fontSize: 8,
                         color: isCredit ? DOC_COLORS.emerald : DOC_COLORS.text,
                         fontWeight: isCredit ? 500 : 400,
                       },
                     },
                     {
                       content: tx.debit ? formatZAR(tx.debit) : '-',
-                      style: { fontSize: 8 },
                     },
                     {
                       content: isCredit ? formatZAR(tx.credit as number) : '-',
                       style: {
-                        fontSize: 8,
                         fontWeight: isCredit ? 500 : 400,
                         color: isCredit ? DOC_COLORS.emerald : DOC_COLORS.muted,
                       },
                     },
                     {
                       content: tx.balance != null ? formatZARWithCR(tx.balance) : '-',
-                      style: { fontSize: 8, fontWeight: 600, color: DOC_COLORS.text },
+                      style: { fontWeight: 600, color: DOC_COLORS.text },
                     },
                   ]}
                 />

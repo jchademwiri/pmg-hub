@@ -80,10 +80,10 @@ export function LineItemDescription({
   const hasSecondary = !!itemName && !!description && itemName !== description;
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <span style={{ fontSize: 8.5, color: DOC_COLORS.text }}>{itemName || description}</span>
+      <span style={{ fontSize: 10.5, color: DOC_COLORS.text }}>{itemName || description}</span>
       {hasSecondary && (
         <span
-          style={{ fontSize: 7.5, fontStyle: 'italic', color: DOC_COLORS.subtle, marginTop: 2 }}
+          style={{ fontSize: 9.5, fontStyle: 'italic', color: DOC_COLORS.subtle, marginTop: 2 }}
         >
           {description}
         </span>
@@ -180,11 +180,11 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
                       />
                     ),
                   },
-                  { content: String(item.qty), style: { fontSize: 8.5 } },
-                  { content: formatZAR(item.unitPrice), style: { fontSize: 8.5 } },
+                  { content: String(item.qty) },
+                  { content: formatZAR(item.unitPrice) },
                   {
                     content: formatZAR(item.amount),
-                    style: { fontSize: 8.5, fontWeight: 600, color: DOC_COLORS.text },
+                    style: { fontWeight: 600, color: DOC_COLORS.text },
                   },
                 ]}
               />

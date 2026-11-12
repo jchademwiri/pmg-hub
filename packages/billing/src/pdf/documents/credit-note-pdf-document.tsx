@@ -124,12 +124,12 @@ export function CreditNotePdfDocument({ data }: { data: CreditNotePdfData }) {
                 cells={[
                   {
                     content: app.invoiceNumber,
-                    style: { fontSize: 8.5, fontWeight: 500, color: DOC_COLORS.blue },
+                    style: { fontWeight: 500, color: DOC_COLORS.blue },
                   },
-                  { content: fmtDate(app.appliedDate), style: { fontSize: 8 } },
+                  { content: fmtDate(app.appliedDate) },
                   {
                     content: formatZAR(app.amount),
-                    style: { fontSize: 8.5, fontWeight: 600, color: DOC_COLORS.text },
+                    style: { fontWeight: 600, color: DOC_COLORS.text },
                   },
                 ]}
               />
@@ -143,11 +143,11 @@ export function CreditNotePdfDocument({ data }: { data: CreditNotePdfData }) {
                 {
                   content: (
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: 8.5, color: DOC_COLORS.text }}>{data.type}</span>
+                      <span style={{ fontSize: 10.5, color: DOC_COLORS.text }}>{data.type}</span>
                       {data.reason && (
                         <span
                           style={{
-                            fontSize: 7.5,
+                            fontSize: 9.5,
                             fontStyle: 'italic',
                             color: DOC_COLORS.subtle,
                             marginTop: 2,
@@ -161,7 +161,7 @@ export function CreditNotePdfDocument({ data }: { data: CreditNotePdfData }) {
                 },
                 {
                   content: formatZAR(data.amount),
-                  style: { fontSize: 8.5, fontWeight: 600, color: DOC_COLORS.text },
+                  style: { fontWeight: 600, color: DOC_COLORS.text },
                 },
               ]}
             />

@@ -54,7 +54,7 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
     {
       label: 'Amount Paid',
       value: formatZAR(data.amount),
-      valueStyle: { fontSize: 12, fontWeight: 700, color: DOC_COLORS.emerald },
+      valueStyle: { fontSize: 14, fontWeight: 700, color: DOC_COLORS.emerald },
     },
   ];
 
@@ -100,15 +100,15 @@ export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
                 cells={[
                   {
                     content: alloc.invoiceNumber,
-                    style: { fontSize: 8.5, fontWeight: 500, color: DOC_COLORS.text },
+                    style: { fontWeight: 500, color: DOC_COLORS.text },
                   },
                   {
                     content: alloc.invoiceDate ? fmtDateLong(alloc.invoiceDate) : '-',
-                    style: { fontSize: 8, color: DOC_COLORS.subtle },
+                    style: { color: DOC_COLORS.subtle },
                   },
                   {
                     content: formatZAR(alloc.amount),
-                    style: { fontSize: 8.5, fontWeight: 600, color: DOC_COLORS.emerald },
+                    style: { fontWeight: 600, color: DOC_COLORS.emerald },
                   },
                 ]}
               />

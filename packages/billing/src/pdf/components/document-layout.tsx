@@ -32,7 +32,7 @@ export const ACCENT_BLUE = '#1d4ed8';
 export const ACCENT_EMERALD = '#059669';
 
 const labelStyle: CSSProperties = {
-  fontSize: 7.5,
+  fontSize: 9,
   fontWeight: 600,
   color: DOC_COLORS.label,
   textTransform: 'uppercase',
@@ -86,12 +86,12 @@ export function StatusPill({ status }: { status: string }) {
     <div
       style={{
         display: 'flex',
-        padding: '2px 8px',
+        padding: '2.5px 9px',
         borderRadius: 9999,
         backgroundColor: tone.bg,
       }}
     >
-      <span style={{ fontSize: 8, fontWeight: 500, color: tone.fg }}>{status}</span>
+      <span style={{ fontSize: 9.5, fontWeight: 500, color: tone.fg }}>{status}</span>
     </div>
   );
 }
@@ -111,7 +111,7 @@ export interface DocumentHeaderProps {
 
 function OrgLine({ children, style }: { children: ReactNode; style?: CSSProperties }) {
   return (
-    <span style={{ fontSize: 9, color: DOC_COLORS.subtle, lineHeight: 1.35, ...style }}>
+    <span style={{ fontSize: 10.5, color: DOC_COLORS.subtle, lineHeight: 1.35, ...style }}>
       {children}
     </span>
   );
@@ -135,14 +135,12 @@ export function DocumentHeader({
           justifyContent: 'space-between',
           alignItems: 'flex-start',
           width: '100%',
-          paddingBottom: 18,
+          paddingBottom: 16,
         }}
       >
         {/* Left: organisation */}
-        <div style={{ display: 'flex', flexDirection: 'column', width: '36%' }}>
-          <span style={{ fontSize: 13.5, fontWeight: 700, color: DOC_COLORS.text }}>
-            {org.name}
-          </span>
+        <div style={{ display: 'flex', flexDirection: 'column', width: '38%' }}>
+          <span style={{ fontSize: 16, fontWeight: 700, color: DOC_COLORS.text }}>{org.name}</span>
           {org.divisionOf && (
             <OrgLine style={{ fontStyle: 'italic' }}>A division of {org.divisionOf}</OrgLine>
           )}
@@ -160,7 +158,7 @@ export function DocumentHeader({
           style={{
             display: 'flex',
             width: '24%',
-            height: 48,
+            height: 52,
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -169,10 +167,10 @@ export function DocumentHeader({
             <img
               src={org.logoDataUri}
               alt={org.name}
-              style={{ width: 90, height: 48, objectFit: 'contain' }}
+              style={{ width: 100, height: 52, objectFit: 'contain' }}
             />
           ) : (
-            <span style={{ fontSize: 9, fontWeight: 700, color: DOC_COLORS.textSoft }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: DOC_COLORS.textSoft }}>
               {org.name.slice(0, 3).toUpperCase()}
             </span>
           )}
@@ -184,12 +182,12 @@ export function DocumentHeader({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-end',
-            width: '36%',
+            width: '38%',
           }}
         >
           <span
             style={{
-              fontSize: 18,
+              fontSize: 22,
               fontWeight: 700,
               color: DOC_COLORS.title,
               textTransform: 'uppercase',
@@ -199,13 +197,13 @@ export function DocumentHeader({
             {title}
           </span>
           <span
-            style={{ fontSize: 10.5, fontWeight: 600, color: DOC_COLORS.textSoft, marginTop: 5 }}
+            style={{ fontSize: 12.5, fontWeight: 600, color: DOC_COLORS.textSoft, marginTop: 4 }}
           >
             {prefixHash ? '#' : ''}
             {number}
           </span>
           {status && (
-            <div style={{ display: 'flex', marginTop: 6 }}>
+            <div style={{ display: 'flex', marginTop: 5 }}>
               <StatusPill status={status} />
             </div>
           )}
@@ -215,13 +213,13 @@ export function DocumentHeader({
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'flex-end',
-                marginTop: 12,
+                marginTop: 10,
               }}
             >
               <SectionLabel style={{ letterSpacing: '1.4px' }}>Amount Due</SectionLabel>
               <span
                 style={{
-                  fontSize: 13.5,
+                  fontSize: 16,
                   fontWeight: 700,
                   marginTop: 2,
                   fontVariantNumeric: 'tabular-nums',
@@ -280,13 +278,13 @@ export function DocumentMetaRow({
           justifyContent: 'space-between',
           alignItems: 'flex-start',
           width: '100%',
-          paddingTop: 18,
-          paddingBottom: 18,
+          paddingTop: 16,
+          paddingBottom: 16,
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', width: '50%' }}>
           <SectionLabel>{partyLabel}</SectionLabel>
-          <span style={{ fontSize: 10.5, fontWeight: 600, color: DOC_COLORS.text, marginTop: 4 }}>
+          <span style={{ fontSize: 13.5, fontWeight: 700, color: DOC_COLORS.text, marginTop: 4 }}>
             {party.name}
           </span>
           {party.contactName && party.contactName !== party.name && (
@@ -319,7 +317,7 @@ export function DocumentMetaRow({
                 <SectionLabel style={{ marginRight: 10 }}>{row.label}</SectionLabel>
                 <span
                   style={{
-                    fontSize: 9,
+                    fontSize: 10.5,
                     fontWeight: 500,
                     color: DOC_COLORS.textSoft,
                     ...row.valueStyle,
@@ -334,9 +332,9 @@ export function DocumentMetaRow({
       </div>
 
       {reference && (
-        <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 14 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 12 }}>
           <SectionLabel>{referenceLabel}</SectionLabel>
-          <span style={{ fontSize: 9, color: DOC_COLORS.muted, marginTop: 2 }}>{reference}</span>
+          <span style={{ fontSize: 10.5, color: DOC_COLORS.muted, marginTop: 2 }}>{reference}</span>
         </div>
       )}
     </div>
@@ -383,7 +381,7 @@ export function DocTable({ columns, children }: { columns: DocColumn[]; children
           >
             <span
               style={{
-                fontSize: 7.5,
+                fontSize: 9,
                 fontWeight: 600,
                 color: DOC_COLORS.label,
                 textTransform: 'uppercase',
@@ -439,7 +437,7 @@ export function DocRow({
         {typeof cell.content === 'string' || typeof cell.content === 'number' ? (
           <span
             style={{
-              fontSize: 8.5,
+              fontSize: 10.5,
               color: DOC_COLORS.muted,
               fontVariantNumeric: 'tabular-nums',
               ...cell.style,
@@ -495,7 +493,7 @@ export function DocumentTotalsBlock({ rows }: { rows: TotalsRow[] }) {
         breakInside: 'avoid',
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', width: 200 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', width: 230 }}>
         {rows.map((row) => (
           <div
             key={row.label}
@@ -512,7 +510,7 @@ export function DocumentTotalsBlock({ rows }: { rows: TotalsRow[] }) {
           >
             <span
               style={{
-                fontSize: row.emphasize ? 10 : 9,
+                fontSize: row.emphasize ? 12 : 10.5,
                 fontWeight: row.bold ? 700 : 400,
                 color: row.bold ? DOC_COLORS.text : (row.color ?? DOC_COLORS.muted),
               }}
@@ -521,7 +519,7 @@ export function DocumentTotalsBlock({ rows }: { rows: TotalsRow[] }) {
             </span>
             <span
               style={{
-                fontSize: row.emphasize ? 10 : 9,
+                fontSize: row.emphasize ? 12 : 10.5,
                 fontWeight: row.bold ? 700 : 400,
                 color: row.color ?? DOC_COLORS.muted,
                 fontVariantNumeric: 'tabular-nums',
@@ -571,33 +569,33 @@ export function DocumentBankingSection({
         flexDirection: 'column',
         width: '100%',
         borderTop: `1px solid ${DOC_COLORS.border}`,
-        paddingTop: 14,
-        paddingBottom: 12,
+        paddingTop: 12,
+        paddingBottom: 10,
         breakInside: 'avoid',
       }}
     >
-      <SectionLabel style={{ marginBottom: 8 }}>Banking Details</SectionLabel>
+      <SectionLabel style={{ marginBottom: 6 }}>Banking Details</SectionLabel>
       {fields.map((f) => (
         <div
           key={f.label}
-          style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}
+          style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: 3 }}
         >
-          <span style={{ fontSize: 9, color: DOC_COLORS.label, width: 110 }}>{f.label}</span>
-          <span style={{ fontSize: 9, fontWeight: 700, color: DOC_COLORS.textSoft }}>
+          <span style={{ fontSize: 10, color: DOC_COLORS.label, width: 130 }}>{f.label}</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: DOC_COLORS.textSoft }}>
             {f.value}
           </span>
         </div>
       ))}
       {showPaymentInstructions && (
-        <div style={{ display: 'flex', flexDirection: 'column', marginTop: 8 }}>
-          <span style={{ fontSize: 9, color: DOC_COLORS.subtle, lineHeight: 1.4 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', marginTop: 6 }}>
+          <span style={{ fontSize: 10, color: DOC_COLORS.subtle, lineHeight: 1.4 }}>
             <span style={{ fontWeight: 700, color: DOC_COLORS.textSoft }}>Payment Reference: </span>
             Please use{' '}
             <span style={{ fontWeight: 700, color: DOC_COLORS.text }}>{paymentReference}</span> as
             your EFT deposit reference.
           </span>
           {contactEmail && (
-            <span style={{ fontSize: 9, color: DOC_COLORS.subtle, lineHeight: 1.4 }}>
+            <span style={{ fontSize: 10, color: DOC_COLORS.subtle, lineHeight: 1.4 }}>
               <span style={{ fontWeight: 700, color: DOC_COLORS.textSoft }}>
                 Proof of Payment (POP):{' '}
               </span>
@@ -626,15 +624,15 @@ export function DocumentNotesSection({
         flexDirection: 'column',
         width: '100%',
         borderTop: `1px solid ${DOC_COLORS.border}`,
-        paddingTop: 12,
-        paddingBottom: 12,
+        paddingTop: 10,
+        paddingBottom: 10,
         breakInside: 'avoid',
       }}
     >
       {notes && (
-        <div style={{ display: 'flex', flexDirection: 'column', marginBottom: terms ? 10 : 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', marginBottom: terms ? 8 : 0 }}>
           <SectionLabel>Notes</SectionLabel>
-          <span style={{ fontSize: 9, color: DOC_COLORS.muted, marginTop: 3, lineHeight: 1.4 }}>
+          <span style={{ fontSize: 10, color: DOC_COLORS.muted, marginTop: 2, lineHeight: 1.35 }}>
             {notes}
           </span>
         </div>
@@ -642,7 +640,7 @@ export function DocumentNotesSection({
       {terms && (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <SectionLabel>Terms &amp; Conditions</SectionLabel>
-          <span style={{ fontSize: 9, color: DOC_COLORS.muted, marginTop: 3, lineHeight: 1.4 }}>
+          <span style={{ fontSize: 10, color: DOC_COLORS.muted, marginTop: 2, lineHeight: 1.35 }}>
             {terms}
           </span>
         </div>
@@ -671,20 +669,20 @@ export function DocumentFooter({
         alignItems: centerLines ? 'center' : 'center',
         width: '100%',
         marginTop: 'auto',
-        paddingTop: 12,
+        paddingTop: 10,
         borderTop: `1px solid ${DOC_COLORS.border}`,
       }}
     >
       {centerLines ? (
         centerLines.map((line) => (
-          <span key={line} style={{ fontSize: 7.5, color: DOC_COLORS.label, marginTop: 2 }}>
+          <span key={line} style={{ fontSize: 8.5, color: DOC_COLORS.label, marginTop: 2 }}>
             {line}
           </span>
         ))
       ) : (
         <>
-          <span style={{ fontSize: 7.5, color: DOC_COLORS.label }}>{trimmedRef}</span>
-          <span style={{ fontSize: 7.5, color: DOC_COLORS.label }}>
+          <span style={{ fontSize: 8.5, color: DOC_COLORS.label }}>{trimmedRef}</span>
+          <span style={{ fontSize: 8.5, color: DOC_COLORS.label }}>
             Thank you for your business.
           </span>
         </>
@@ -740,12 +738,12 @@ export function DocumentAgeingSummary({
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
-        paddingTop: 12,
-        paddingBottom: 12,
+        paddingTop: 10,
+        paddingBottom: 10,
         breakInside: 'avoid',
       }}
     >
-      <SectionLabel style={{ marginBottom: 8 }}>Ageing Summary</SectionLabel>
+      <SectionLabel style={{ marginBottom: 6 }}>Ageing Summary</SectionLabel>
       <div
         style={{
           display: 'flex',
@@ -776,7 +774,7 @@ export function DocumentAgeingSummary({
             >
               <span
                 style={{
-                  fontSize: 7,
+                  fontSize: 8.5,
                   fontWeight: 500,
                   color: DOC_COLORS.subtle,
                   textTransform: 'uppercase',
@@ -787,10 +785,10 @@ export function DocumentAgeingSummary({
                 {col.label}
               </span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 2px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '7px 2px' }}>
               <span
                 style={{
-                  fontSize: 8.5,
+                  fontSize: 10.5,
                   fontWeight: col.bold ? 700 : 600,
                   color: col.color,
                   fontVariantNumeric: 'tabular-nums',

@@ -112,11 +112,11 @@ export function QuotePdfDocument({ data }: { data: QuotePdfData }) {
                       />
                     ),
                   },
-                  { content: String(item.qty), style: { fontSize: 8.5 } },
-                  { content: formatZAR(item.unitPrice), style: { fontSize: 8.5 } },
+                  { content: String(item.qty) },
+                  { content: formatZAR(item.unitPrice) },
                   {
                     content: formatZAR(item.amount),
-                    style: { fontSize: 8.5, fontWeight: 600, color: DOC_COLORS.text },
+                    style: { fontWeight: 600, color: DOC_COLORS.text },
                   },
                 ]}
               />
