@@ -44,9 +44,9 @@ import {
   calculateClientHealth,
   calculateAverageDaysToPay,
   buildOrgProps,
-  buildIncomeInvoiceMap,
-  buildTransactionHistory,
   buildBankingProps,
+  buildTransactionHistory,
+  formatPaymentReference,
 } from '@/lib/client-billing-helpers';
 import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
 import { appendElementToPdf, elementToPdfBase64, sanitizePdfFileName } from '@/lib/pdf-export';
@@ -425,7 +425,7 @@ export function ClientBillingWorkspace({
   });
 
   // Statement preparation
-  const statementToInvoiceNumber = buildIncomeInvoiceMap(statement?.invoices ?? []);
+  const primaryDivisionName = clientDivisions[0]?.name ?? 'General';
 
   const statementTxRaw = [
     ...(statement?.invoices ?? [])
@@ -438,7 +438,7 @@ export function ClientBillingWorkspace({
       })),
     ...(payments.data ?? []).map((inc: PaymentItem) => ({
       date: inc.date,
-      reference: statementToInvoiceNumber.get(inc.id) ?? '-',
+      reference: formatPaymentReference(inc.id, inc.divisionName || primaryDivisionName),
       description: 'Payment received',
       credit: Number(inc.amount),
     })),
@@ -1398,7 +1398,7 @@ export function ClientBillingWorkspace({
                         <TableHeader>
                           <TableRow>
                             <TableHead>Date</TableHead>
-                            <TableHead>Reference</TableHead>
+                            <TableHead>Reference No.</TableHead>
                             <TableHead className="text-right">Debit (+)</TableHead>
                             <TableHead className="text-right">Credit (-)</TableHead>
                             <TableHead className="text-right">Balance</TableHead>

@@ -71,6 +71,12 @@ git merge master --no-ff -m "chore: back-merge hotfix vX.Y.Z+1 into dev"
 git push origin dev
 ```
 
+If a `fix/<bug-slug>` Neon branch was created for the hotfix, delete it now (never delete `main`, `master`, or `dev`):
+
+```bash
+bunx neon@latest branches delete fix/<bug-slug> --project-id raspy-dawn-56455281
+```
+
 ### 6. Live Production Health Check
 
 Verify all 6 endpoints respond `200 OK`:

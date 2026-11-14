@@ -1,11 +1,21 @@
 import React from 'react';
 import { formatZAR, fmtDateLong } from '../../format';
-import { Document, Page, KeepTogether } from '../primitives';
-import { PageHeader, type OrgDetails } from '../components/page-header';
-import { PageFooter } from '../components/page-footer';
-import { Table, TableHeader, TableBody, TableRow, TableCell } from '../components/table';
-import { KeyValue } from '../components/key-value';
-import { usePdfTheme } from '../theme-provider';
+import { Document } from '../primitives';
+import type { OrgDetails } from '../components/page-header';
+import {
+  ACCENT_EMERALD,
+  DOC_COLORS,
+  DocumentPage,
+  DocumentHeader,
+  DocumentMetaRow,
+  DocTable,
+  DocRow,
+  DocumentTotalsBlock,
+  DocumentFooter,
+  SectionLabel,
+  type DocColumn,
+  type MetaRowItem,
+} from '../components/document-layout';
 
 export interface ReceiptAllocation {
   invoiceNumber: string;
@@ -32,245 +42,100 @@ export interface ReceiptPdfData {
   notes?: string | null;
 }
 
+const COLUMNS: DocColumn[] = [
+  { key: 'invoice', label: 'Invoice Number', width: '38%' },
+  { key: 'date', label: 'Invoice Date', width: '32%' },
+  { key: 'amount', label: 'Allocated Amount', width: '30%', align: 'right' },
+];
+
 export function ReceiptPdfDocument({ data }: { data: ReceiptPdfData }) {
-  const theme = usePdfTheme();
+  const metaRows: MetaRowItem[] = [
+    { label: 'Payment Date', value: fmtDateLong(data.paymentDate) },
+    {
+      label: 'Amount Paid',
+      value: formatZAR(data.amount),
+      valueStyle: { fontSize: 14, fontWeight: 700, color: DOC_COLORS.emerald },
+    },
+  ];
 
   return (
     <Document title={`Receipt ${data.receiptNumber}`}>
-      <Page size="a4">
-        <PageHeader
+      <DocumentPage accent={ACCENT_EMERALD}>
+        <DocumentHeader
           org={data.org}
-          title="Payment Receipt"
+          title="Receipt"
           number={data.receiptNumber}
           status="Paid"
+          prefixHash={false}
         />
 
-        {/* Client & Receipt Metadata */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginBottom: theme.spacing.sectionGap,
-            gap: 20,
-          }}
-        >
-          {/* Received From */}
-          <div style={{ display: 'flex', flexDirection: 'column', width: '50%' }}>
-            <span
-              style={{
-                fontSize: 7.5,
-                fontWeight: 700,
-                color: theme.colors.primary,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: 4,
-              }}
-            >
-              Received From
-            </span>
-            <span
-              style={{
-                fontSize: 9.5,
-                fontWeight: 700,
-                color: theme.colors.foreground,
-                marginBottom: 2,
-              }}
-            >
-              {data.client.name}
-            </span>
-            {data.client.contactName && (
-              <span style={{ fontSize: 8.5, color: theme.colors.foreground, marginBottom: 2 }}>
-                {data.client.contactName}
-              </span>
-            )}
-            {data.client.email && (
-              <span style={{ fontSize: 8, color: theme.colors.mutedForeground, marginBottom: 1 }}>
-                {data.client.email}
-              </span>
-            )}
-            {data.client.phone && (
-              <span style={{ fontSize: 8, color: theme.colors.mutedForeground }}>
-                {data.client.phone}
-              </span>
-            )}
-          </div>
+        <DocumentMetaRow
+          partyLabel="Received From"
+          party={data.client}
+          rows={metaRows}
+          referenceLabel="Payment Reference"
+          reference={data.reference}
+        />
 
-          {/* Receipt Details */}
-          <div style={{ display: 'flex', flexDirection: 'column', width: '45%' }}>
-            <span
-              style={{
-                fontSize: 7.5,
-                fontWeight: 700,
-                color: theme.colors.primary,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: 4,
-              }}
-            >
-              Payment Details
-            </span>
-            <KeyValue
-              size="sm"
-              items={[
-                { key: 'Payment Date', value: fmtDateLong(data.paymentDate) },
-                {
-                  key: 'Total Received',
-                  value: formatZAR(data.amount),
-                  keyStyle: { fontWeight: 700, color: theme.colors.foreground },
-                  valueStyle: { fontWeight: 700, color: theme.colors.primary, fontSize: 10 },
-                },
-              ]}
-            />
-          </div>
-        </div>
-
-        {/* Payment Reference */}
-        {data.reference && (
-          <div style={{ marginBottom: theme.spacing.sectionGap }}>
-            <span
-              style={{
-                fontSize: 7.5,
-                fontWeight: 700,
-                color: theme.colors.primary,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                display: 'block',
-                marginBottom: 3,
-              }}
-            >
-              Payment Reference
-            </span>
-            <span style={{ fontSize: 8.5, color: theme.colors.foreground, lineHeight: '13px' }}>
-              {data.reference}
+        <SectionLabel style={{ marginBottom: 8 }}>Invoice Allocations</SectionLabel>
+        {data.allocations.length === 0 ? (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              padding: '22px 0',
+              border: `1px dashed ${DOC_COLORS.borderStrong}`,
+            }}
+          >
+            <span style={{ fontSize: 9, color: DOC_COLORS.muted }}>
+              This payment is currently unallocated, or recorded as a general retainer.
             </span>
           </div>
+        ) : (
+          <DocTable columns={COLUMNS}>
+            {data.allocations.map((alloc, idx) => (
+              <DocRow
+                key={idx}
+                columns={COLUMNS}
+                cells={[
+                  {
+                    content: alloc.invoiceNumber,
+                    style: { fontWeight: 500, color: DOC_COLORS.text },
+                  },
+                  {
+                    content: alloc.invoiceDate ? fmtDateLong(alloc.invoiceDate) : '-',
+                    style: { color: DOC_COLORS.subtle },
+                  },
+                  {
+                    content: formatZAR(alloc.amount),
+                    style: { fontWeight: 600, color: DOC_COLORS.emerald },
+                  },
+                ]}
+              />
+            ))}
+          </DocTable>
         )}
 
-        {/* Invoice Allocations Table */}
-        <span
-          style={{
-            fontSize: 7.5,
-            fontWeight: 700,
-            color: theme.colors.primary,
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            display: 'block',
-            marginBottom: 6,
-          }}
-        >
-          Payment Allocations
-        </span>
-        <Table variant="compact" style={{ marginBottom: theme.spacing.sectionGap }}>
-          <TableHeader>
-            <TableRow header>
-              <TableCell header width="38%">
-                Invoice Number
-              </TableCell>
-              <TableCell header width="32%">
-                Invoice Date
-              </TableCell>
-              <TableCell header align="right" width="30%">
-                Allocated Amount
-              </TableCell>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.allocations.length === 0 ? (
-              <TableRow>
-                <TableCell width="38%">Unallocated Payment on Account</TableCell>
-                <TableCell width="32%">-</TableCell>
-                <TableCell width="30%" align="right" bold tabular>
-                  {formatZAR(data.amount)}
-                </TableCell>
-              </TableRow>
-            ) : (
-              data.allocations.map((alloc, idx) => (
-                <TableRow key={idx} striped={idx % 2 === 1}>
-                  <TableCell width="38%" bold>
-                    #{alloc.invoiceNumber}
-                  </TableCell>
-                  <TableCell width="32%">
-                    {alloc.invoiceDate ? fmtDateLong(alloc.invoiceDate) : '-'}
-                  </TableCell>
-                  <TableCell width="30%" align="right" bold tabular>
-                    {formatZAR(alloc.amount)}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        {data.unallocated && data.unallocated > 0 ? (
+          <DocumentTotalsBlock
+            rows={[
+              { label: 'Total Received', value: formatZAR(data.amount), color: DOC_COLORS.text },
+              {
+                label: 'Account Credit',
+                value: formatZAR(data.unallocated),
+                color: DOC_COLORS.emerald,
+              },
+            ]}
+          />
+        ) : null}
 
-        {/* Total Summary */}
-        <KeepTogether>
-          <div
-            style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10, marginBottom: 16 }}
-          >
-            <div
-              style={{
-                width: '42%',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 6,
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  borderBottom: `2px solid ${theme.colors.primary}`,
-                  paddingBottom: 6,
-                }}
-              >
-                <span style={{ fontSize: 9, fontWeight: 700, color: theme.colors.foreground }}>
-                  Total Received
-                </span>
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: theme.colors.primary,
-                    fontVariantNumeric: 'tabular-nums',
-                  }}
-                >
-                  {formatZAR(data.amount)}
-                </span>
-              </div>
-              {data.unallocated && data.unallocated > 0 ? (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    borderBottom: `1px solid ${theme.colors.border}`,
-                    paddingBottom: 4,
-                  }}
-                >
-                  <span style={{ fontSize: 8, color: theme.colors.mutedForeground }}>
-                    Account Credit
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 8.5,
-                      fontWeight: 600,
-                      color: theme.colors.success,
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
-                  >
-                    {formatZAR(data.unallocated)}
-                  </span>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </KeepTogether>
-
-        <PageFooter org={data.org} />
-      </Page>
+        <DocumentFooter
+          centerLines={[
+            `This is an official payment receipt issued by ${data.org.name}.`,
+            'Thank you for your valued business!',
+          ]}
+        />
+      </DocumentPage>
     </Document>
   );
 }

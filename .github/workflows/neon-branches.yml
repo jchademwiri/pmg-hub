@@ -1,0 +1,53 @@
+name: Sync Neon Branches with GitHub Branches
+
+on:
+  create:
+  delete:
+
+jobs:
+  sync-neon-branch:
+    name: Sync Neon Branch (${{ github.event_name }})
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.ref_type == 'branch' &&
+      github.event.ref != 'main' &&
+      github.event.ref != 'master' &&
+      github.event.ref != 'dev' &&
+      startsWith(github.event.ref, 'preview/') == false
+    env:
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID || vars.NEON_PROJECT_ID }}
+      BRANCH_NAME: ${{ github.event.ref }}
+    steps:
+      - name: Check Neon credentials
+        if: env.NEON_API_KEY == '' || env.NEON_PROJECT_ID == ''
+        run: |
+          echo "NEON_API_KEY or NEON_PROJECT_ID is not set; skipping Neon branch sync."
+          exit 0
+
+      - name: Create Neon branch
+        if: github.event_name == 'create' && env.NEON_API_KEY != '' && env.NEON_PROJECT_ID != ''
+        run: |
+          if npx -y neonctl@latest branches get "$BRANCH_NAME" --project-id "$NEON_PROJECT_ID" >/dev/null 2>&1; then
+            echo "Neon branch '$BRANCH_NAME' already exists."
+          else
+            npx -y neonctl@latest branches create --project-id "$NEON_PROJECT_ID" --name "$BRANCH_NAME" --parent main
+          fi
+
+      - name: Delete Neon branch
+        if: github.event_name == 'delete' && env.NEON_API_KEY != '' && env.NEON_PROJECT_ID != ''
+        run: |
+          # Extra safeguard: never delete main, master, or dev
+          case "$BRANCH_NAME" in
+            main|master|dev|preview/dev|preview/main|preview/master)
+              echo "Refusing to delete protected branch '$BRANCH_NAME'."
+              exit 1
+              ;;
+          esac
+
+          for target in "$BRANCH_NAME" "preview/$BRANCH_NAME"; do
+            if npx -y neonctl@latest branches get "$target" --project-id "$NEON_PROJECT_ID" >/dev/null 2>&1; then
+              npx -y neonctl@latest branches delete "$target" --project-id "$NEON_PROJECT_ID"
+              echo "Deleted Neon branch '$target'."
+            fi
+          done
