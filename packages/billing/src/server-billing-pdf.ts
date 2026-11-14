@@ -48,6 +48,7 @@ import {
   formatStatementNumber,
   formatPaymentReference,
   formatRefundReference,
+  buildCreditNoteDivisionMap,
 } from './client-billing-helpers';
 import { PAGE, split, ensurePage, drawShellHeader, drawShellFooter } from './pdf-shell';
 
@@ -932,6 +933,8 @@ async function buildStatementPdfData(
     ? await getDivisionBillingSettings(effectiveDivisionId)
     : null;
 
+  const creditNoteDivisionById = buildCreditNoteDivisionMap(dbCreditNotes, allDivisions);
+
   let transactions: PdfTransaction[];
   let finalBalance: number;
 
@@ -999,7 +1002,11 @@ async function buildStatementPdfData(
         .filter((refund) => refund.refundDate >= periodFrom && refund.refundDate <= periodTo)
         .map((refund) => ({
           date: refund.refundDate,
-          reference: formatRefundReference(refund.id, refund.reference, divisionName),
+          reference: formatRefundReference(
+            refund.id,
+            refund.reference,
+            creditNoteDivisionById.get(refund.creditNoteId) ?? divisionName,
+          ),
           description: refund.description ?? 'Credit refund',
           debit: safeNumber(refund.amount),
           credit: undefined,

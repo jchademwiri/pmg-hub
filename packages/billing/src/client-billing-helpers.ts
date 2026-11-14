@@ -118,6 +118,24 @@ export function buildIncomeInvoiceMap(
   return map;
 }
 
+/**
+ * Build a map of creditNoteId → division name so refunds can resolve
+ * their fallback prefix from the issuing credit note's division.
+ */
+export function buildCreditNoteDivisionMap(
+  creditNotes: { id: string; divisionId?: string | null }[],
+  divisions: { id: string; name: string }[],
+): Map<string, string> {
+  const divisionById = new Map(divisions.map((d) => [d.id, d.name]));
+  const map = new Map<string, string>();
+  for (const note of creditNotes) {
+    if (!note.divisionId) continue;
+    const divName = divisionById.get(note.divisionId);
+    if (divName) map.set(note.id, divName);
+  }
+  return map;
+}
+
 export interface DivisionBrandingResult {
   /** Resolved division name to display on the statement */
   divisionName: string;

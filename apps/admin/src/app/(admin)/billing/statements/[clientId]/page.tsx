@@ -36,6 +36,7 @@ import {
   formatStatementNumber,
   formatPaymentReference,
   formatRefundReference,
+  buildCreditNoteDivisionMap,
 } from '@/lib/client-billing-helpers';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
@@ -205,6 +206,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     allDivisions,
   );
 
+  const creditNoteDivisionById = buildCreditNoteDivisionMap(dbCreditNotes, allDivisions);
+
   const txRaw: TxRaw[] = [
     ...invoices
       .filter((inv) => inv.status !== 'void')
@@ -233,7 +236,11 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       })),
     ...filteredRefunds.map((r) => ({
       date: r.refundDate,
-      reference: formatRefundReference(r.id, r.reference, orgName),
+      reference: formatRefundReference(
+        r.id,
+        r.reference,
+        creditNoteDivisionById.get(r.creditNoteId) ?? orgName,
+      ),
       description: r.description ?? 'Credit refund',
       debit: Number(r.amount),
       refundId: r.id,
