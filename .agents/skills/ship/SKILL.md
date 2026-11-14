@@ -37,9 +37,26 @@ git push origin <branch>
 
 ### 4. Create Pull Request
 
-```bash
-gh pr create --base <target> --head <branch> --title "..." --body "..."
+Write a clean, well-structured Markdown PR description (using headings, bullet points, code spans, and a verification checklist). **Always pass the PR body via `--body-file` (e.g. a UTF-8 `.md` file or stdin) instead of inline `--body "..."`** so PowerShell/shell escaping never mangles backticks or turns `\b`/`\f`/`\t`/`\a` into control characters.
+
+Recommended PR Markdown template:
+
+```markdown
+## Summary
+- <concise bullet describing the main change and affected modules>
+- <additional bullets for secondary changes>
+
+## Verification
+- [x] `bun run check-types`
+- [x] `bunx prettier --check` on changed files
+- [x] `bun run test`
+- [x] `bun run build`
 ```
+
+```bash
+gh pr create --base <target> --head <branch> --title "<type>(<scope>): <summary>" --body-file <pr-body.md>
+```
+(Remove any temporary `<pr-body.md>` file after `gh pr create` completes.)
 
 ### 5. Monitor CI Checks
 
