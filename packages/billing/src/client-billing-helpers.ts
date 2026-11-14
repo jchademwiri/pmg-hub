@@ -1,6 +1,83 @@
 import type { InvoiceDetail, QuotationDetail, InvoiceRow, QuotationRow } from '@pmg/db';
+import { deriveDivisionPrefix, generateReceiptNumber } from '@pmg/utils';
 import { getDocumentLogoUrl } from './document-logo';
 import { formatOrgAddress } from './format';
+
+/**
+ * Statement number shared by the web preview and the downloaded PDF so both
+ * always show the same identifier, e.g. `STMT-2026-BAS`, `STMT-CURRENT-BAS`.
+ */
+export function formatStatementNumber(opts: {
+  clientName: string;
+  businessName?: string | null;
+  monthPeriod?: string | null;
+  year?: number | string | null;
+  currentFY: number | string;
+}): string {
+  const period = opts.monthPeriod ? opts.monthPeriod.toUpperCase() : (opts.year ?? opts.currentFY);
+  const code = (opts.businessName ?? opts.clientName).slice(0, 3).toUpperCase();
+  return `STMT-${period}-${code}`;
+}
+
+/** Reference No. for a payment row on a statement: its receipt number (e.g. TES-REC-A1B2C3D4). */
+export function formatPaymentReference(paymentId: string, divisionName: string): string {
+  return generateReceiptNumber(paymentId, divisionName);
+}
+
+/**
+ * Concise payment reference description for receipts and income records.
+ * Lists up to 2 invoice numbers directly and summarizes 3+ as a count so the
+ * reference stays readable when a payment covers multiple invoices.
+ */
+export function formatPaymentDescription(opts: {
+  invoiceNumbers: string[];
+  amount: number;
+  excessAmount?: number;
+  clientLabel?: string;
+  bankReference?: string | null;
+  formatAmount?: (value: number) => string;
+}): string {
+  const {
+    invoiceNumbers,
+    amount,
+    excessAmount = 0,
+    clientLabel,
+    bankReference,
+    formatAmount,
+  } = opts;
+
+  let base: string;
+  if (invoiceNumbers.length > 0) {
+    const summary =
+      invoiceNumbers.length <= 2 ? invoiceNumbers.join(', ') : `${invoiceNumbers.length} invoices`;
+    base = `Payment for ${summary}`;
+    if (excessAmount > 0.005) {
+      const creditStr = formatAmount ? formatAmount(excessAmount) : `R${excessAmount.toFixed(2)}`;
+      base += ` + ${creditStr} credit`;
+    }
+  } else if (amount > 0) {
+    base = 'Unallocated client credit / deposit';
+  } else {
+    base = clientLabel ? `Payment received - ${clientLabel}` : '';
+  }
+
+  const trimmedRef = bankReference?.trim();
+  if (trimmedRef) {
+    return base ? `${base} · Ref: ${trimmedRef}` : `Ref: ${trimmedRef}`;
+  }
+  return base;
+}
+
+/** Reference No. for a refund row on a statement: the captured reference, else a derived one. */
+export function formatRefundReference(
+  refundId: string,
+  refundReference: string | null | undefined,
+  divisionName: string,
+): string {
+  const trimmed = refundReference?.trim();
+  if (trimmed) return trimmed;
+  return `${deriveDivisionPrefix(divisionName)}-REF-${refundId.slice(0, 8).toUpperCase()}`;
+}
 
 export interface OrgPreviewProps {
   name: string;
@@ -81,6 +158,24 @@ export function buildIncomeInvoiceMap(
   const map = new Map<string, string>();
   for (const inv of invoices) {
     if (inv.incomeId) map.set(inv.incomeId, inv.documentNumber);
+  }
+  return map;
+}
+
+/**
+ * Build a map of creditNoteId → division name so refunds can resolve
+ * their fallback prefix from the issuing credit note's division.
+ */
+export function buildCreditNoteDivisionMap(
+  creditNotes: { id: string; divisionId?: string | null }[],
+  divisions: { id: string; name: string }[],
+): Map<string, string> {
+  const divisionById = new Map(divisions.map((d) => [d.id, d.name]));
+  const map = new Map<string, string>();
+  for (const note of creditNotes) {
+    if (!note.divisionId) continue;
+    const divName = divisionById.get(note.divisionId);
+    if (divName) map.set(note.id, divName);
   }
   return map;
 }

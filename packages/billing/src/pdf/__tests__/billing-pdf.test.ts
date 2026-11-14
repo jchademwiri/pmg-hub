@@ -215,6 +215,121 @@ describe('Declarative Billing PDF Documents', () => {
     expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe('%PDF-');
   });
 
+  it('renders the Basadipele TES statement 1:1 with the web preview', async () => {
+    const React2 = await import('react');
+    const { renderToStaticMarkup } = await import('react-dom/server');
+    const { StatementPdfDocument } = await import('../documents/statement-pdf-document');
+    const { renderDocumentToPdf } = await import('../render-document');
+    const { runWithPdfTheme } = await import('../theme-provider');
+    const { tesTheme } = await import('../themes');
+    const { getLogoDataUri } = await import('../logo-helper');
+
+    const data = {
+      statementNumber: 'STMT-2026-BAS',
+      status: 'Outstanding',
+      periodFrom: '2026-03-01',
+      periodTo: '2027-02-28',
+      dueDate: '2026-11-09',
+      org: {
+        name: 'Tender Edge Solutions',
+        divisionOf: 'Playhouse Media Group',
+        registrationNumber: '2023/683669/07',
+        address: 'Raswouw AH, Centurion, 0157',
+        email: 'tenders@tenderedgesolutions.co.za',
+        phone: '+27 74 501 7094',
+        website: 'www.tenderedgesolutions.co.za',
+        salesRep: 'Tender Edge Solutions Team',
+        logoDataUri: getLogoDataUri('Tender Edge Solutions'),
+      },
+      client: {
+        name: 'Basadipele',
+        email: 'info@basadipeleserv.co.za',
+        phone: '+27 72 531 0590',
+      },
+      openingBalance: 0,
+      totalDue: 10000,
+      transactions: [
+        {
+          date: '2026-11-09',
+          reference: 'TES-INV-2026-048',
+          description: 'November Tenders',
+          debit: 5000,
+          balance: 10000,
+        },
+        {
+          date: '2026-10-22',
+          reference: 'TES-REC-1A2B3C4D',
+          description: 'Payment received',
+          credit: 5000,
+          balance: 5000,
+        },
+        {
+          date: '2026-10-13',
+          reference: 'TES-REC-5E6F7A8B',
+          description: 'Payment received',
+          credit: 6000,
+          balance: 10000,
+        },
+        {
+          date: '2026-04-30',
+          reference: 'TES-INV-2026-007',
+          description: 'Invoice',
+          debit: 2500,
+          balance: 5000,
+        },
+        {
+          date: '2026-03-01',
+          reference: 'TES-INV-2026-002',
+          description: 'Invoice',
+          debit: 2500,
+          balance: 2500,
+        },
+      ],
+      ageing: { current: 0, days1_14: 0, days15_30: 0, days31_60: 0, days61plus: 10000 },
+      banking: {
+        bankName: 'Bidvest Bank Alliance',
+        accountName: 'Tender Edge Solutions',
+        accountNumber: '78605333483',
+        branchCode: '683000',
+      },
+    };
+
+    const markup = runWithPdfTheme(tesTheme, () =>
+      renderToStaticMarkup(React2.createElement(StatementPdfDocument, { data })),
+    );
+
+    // Same labels / structure as the on-screen DocumentPreview
+    expect(markup).toContain('#STMT-2026-BAS');
+    expect(markup).toContain('A division of Playhouse Media Group');
+    expect(markup).toContain('Reg: 2023/683669/07');
+    expect(markup).toContain('Rep: Tender Edge Solutions Team');
+    expect(markup).toContain('Reference No.');
+    expect(markup).toContain('TES-REC-1A2B3C4D');
+    expect(markup).toContain('Total Invoiced (Period)');
+    expect(markup).toContain('Total Paid (Period)');
+    expect(markup).toContain('Amount Due');
+    expect(markup).toContain('Thank you for your business.');
+    // Zero opening balance must not print an OPENING row, credits are not bracketed
+    expect(markup).not.toContain('OPENING');
+    expect(markup).not.toContain('Balance Brought Forward');
+    expect(markup).not.toContain('(R');
+
+    const pdfBytes = await renderDocumentToPdf(
+      React2.createElement(StatementPdfDocument, { data }),
+      {
+        theme: tesTheme,
+      },
+    );
+    expect(String.fromCharCode(...pdfBytes.slice(0, 5))).toBe('%PDF-');
+
+    const fs = await import('fs');
+    const outDir = process.env.PDF_PARITY_OUT;
+    if (outDir) {
+      fs.mkdirSync(outDir, { recursive: true });
+      fs.writeFileSync(`${outDir}/statement-basadipele.pdf`, pdfBytes);
+    }
+  });
+
   it('renders a Payment Receipt into a valid PDF', async () => {
     const { ReceiptPdfDocument } = await import('../documents/receipt-pdf-document');
     const { renderDocumentToPdf } = await import('../render-document');

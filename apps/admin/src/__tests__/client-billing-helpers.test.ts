@@ -7,6 +7,7 @@ import {
   resolveDivisionBranding,
   buildOrgProps,
   buildBankingProps,
+  formatPaymentDescription,
 } from '@/lib/client-billing-helpers';
 import { formatStatementDueDate, isDueDateOverdue } from '@/lib/format';
 
@@ -507,5 +508,59 @@ describe('formatStatementDueDate & isDueDateOverdue', () => {
   it('formatStatementDueDate returns "-" for missing dates', () => {
     expect(formatStatementDueDate(null)).toBe('-');
     expect(formatStatementDueDate(undefined)).toBe('-');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// formatPaymentDescription
+// ---------------------------------------------------------------------------
+describe('formatPaymentDescription', () => {
+  it('lists 1 or 2 invoice numbers directly', () => {
+    expect(formatPaymentDescription({ invoiceNumbers: ['TES-INV-2026-048'], amount: 1000 })).toBe(
+      'Payment for TES-INV-2026-048',
+    );
+
+    expect(
+      formatPaymentDescription({
+        invoiceNumbers: ['TES-INV-2026-047', 'TES-INV-2026-048'],
+        amount: 2000,
+      }),
+    ).toBe('Payment for TES-INV-2026-047, TES-INV-2026-048');
+  });
+
+  it('summarizes 3 or more invoices as a count and keeps Payment for prefix', () => {
+    const res = formatPaymentDescription({
+      invoiceNumbers: [
+        'TES-INV-2026-041',
+        'TES-INV-2026-042',
+        'TES-INV-2026-043',
+        'TES-INV-2026-044',
+        'TES-INV-2026-045',
+      ],
+      amount: 5000,
+      bankReference: '  FNB-99210  ',
+    });
+    expect(res).toBe('Payment for 5 invoices · Ref: FNB-99210');
+    expect(res.startsWith('Payment for')).toBe(true);
+  });
+
+  it('appends excess credit concisely when present', () => {
+    expect(
+      formatPaymentDescription({
+        invoiceNumbers: ['INV-1', 'INV-2', 'INV-3'],
+        amount: 3500,
+        excessAmount: 500,
+      }),
+    ).toBe('Payment for 3 invoices + R500.00 credit');
+  });
+
+  it('handles unallocated deposit with optional bank reference', () => {
+    expect(
+      formatPaymentDescription({
+        invoiceNumbers: [],
+        amount: 1500,
+        bankReference: 'EFT-DEP',
+      }),
+    ).toBe('Unallocated client credit / deposit · Ref: EFT-DEP');
   });
 });

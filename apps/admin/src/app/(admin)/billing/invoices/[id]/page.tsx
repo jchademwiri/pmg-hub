@@ -38,7 +38,8 @@ import { fmtDate, fmtDateTime, formatZAR, getSASTParts, getSASTToday } from '@/l
 import {
   buildOrgProps,
   determineStatementStatus,
-  buildIncomeInvoiceMap,
+  formatPaymentReference,
+  formatStatementNumber,
   buildTransactionHistory,
   buildBankingProps,
 } from '@/lib/client-billing-helpers';
@@ -83,8 +84,6 @@ export default async function InvoiceDetailPage({ params }: Props) {
     ]);
 
     if (statement) {
-      const incomeToInvoiceNumber = buildIncomeInvoiceMap(statement.invoices);
-
       const txRaw = [
         ...statement.invoices
           .filter((inv) => inv.status !== 'void')
@@ -97,7 +96,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
           })),
         ...incomeResult.data.map((inc) => ({
           date: inc.date,
-          reference: incomeToInvoiceNumber.get(inc.id) ?? '-',
+          reference: formatPaymentReference(inc.id, inc.divisionName || invoice.divisionName),
           description: 'Payment received',
           debit: undefined as number | undefined,
           credit: Number(inc.amount) as number | undefined,
@@ -120,7 +119,13 @@ export default async function InvoiceDetailPage({ params }: Props) {
       const today = getSASTToday();
 
       statementProps = {
-        number: `ST-${statement.client.name.toUpperCase().substring(0, 3)}-${year}`,
+        number: formatStatementNumber({
+          clientName: statement.client.name,
+          businessName: statement.client.businessName,
+          monthPeriod: null,
+          year,
+          currentFY: year,
+        }),
         status: docStatus,
         issueDate: today,
         dueDate: undefined,

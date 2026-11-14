@@ -32,6 +32,12 @@ git checkout dev && git pull origin dev
 git checkout -b feat/<task-slug>
 ```
 
+Create the matching Neon database branch from `main` (skip if it already exists, and keep local `.env` intact with `--no-env-pull`):
+
+```bash
+bunx neon@latest branches create --project-id raspy-dawn-56455281 --name feat/<task-slug> --parent main
+```
+
 ### 4. Audit & Plan
 
 Inspect codebase, identify risks, generate `implementation_plan.md`.

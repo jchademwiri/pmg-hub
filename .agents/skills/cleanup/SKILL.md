@@ -53,7 +53,23 @@ Delete merged remote feature branches on `origin`:
 git push origin --delete <branch>
 ```
 
-### 5. Inspect Stashes
+### 5. Delete Merged Neon Feature Branches
+
+> **Protected branches:** NEVER delete `main`, `master`, `dev`, or `preview/dev` in Neon.
+
+List existing Neon branches:
+
+```bash
+bunx neon@latest branches list --project-id raspy-dawn-56455281
+```
+
+For each merged `feat/*`, `fix/*`, or `chore/*` branch deleted above, delete its matching Neon branch (`<branch>` and `preview/<branch>` if present):
+
+```bash
+bunx neon@latest branches delete <branch> --project-id raspy-dawn-56455281
+```
+
+### 6. Inspect Stashes
 
 ```bash
 git stash list
@@ -61,13 +77,14 @@ git stash list
 
 Report any remaining stashes (do not drop stashes automatically without user confirmation).
 
-### 6. Summary & Next Step Guidance
+### 7. Summary & Next Step Guidance
 
 ```
 🧹 Workspace Cleanup Complete!
 - Active branch: dev (up to date with origin/dev)
 - Pruned local branches: <list or None>
 - Pruned remote branches: <list or None>
+- Pruned Neon branches: <list or None>
 - Active stashes: <count>
 
 👉 Next Step: Run `/start <task>` to begin your next feature on a fresh branch.

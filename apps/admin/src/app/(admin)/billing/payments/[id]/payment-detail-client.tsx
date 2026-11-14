@@ -562,14 +562,8 @@ export function PaymentDetailClient({
               Edit Payment
             </Button>
           )}
-          <PrintButton
-            label="Print"
-            documentTitle={`Receipt-${payment.id.slice(0, 8).toUpperCase()}`}
-          />
-          <ExportPdfButton
-            fileName={`Receipt-${payment.id.slice(0, 8).toUpperCase()}`}
-            pdfUrl={pdfUrl}
-          />
+          <PrintButton label="Print" documentTitle={`Receipt-${receiptNumber}`} />
+          <ExportPdfButton fileName={`Receipt-${receiptNumber}`} pdfUrl={pdfUrl} />
           <UniversalEmailDialog
             documentId={payment.id}
             documentNumber={receiptNumber}

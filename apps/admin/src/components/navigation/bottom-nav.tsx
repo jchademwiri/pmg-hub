@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, CalendarClock, Receipt, Menu } from 'lucide-react';
+import { LayoutDashboard, Users, Receipt, Menu } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -34,11 +34,11 @@ export function BottomNav() {
           <span className="text-[10px] font-medium">Dashboard</span>
         </Link>
         <Link
-          href="/projects"
-          className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname.startsWith('/projects') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+          href="/relationships/clients"
+          className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname.startsWith('/relationships/clients') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
         >
-          <CalendarClock className="size-5" />
-          <span className="text-[10px] font-medium">Projects</span>
+          <Users className="size-5" />
+          <span className="text-[10px] font-medium">Clients</span>
         </Link>
         <Link
           href="/billing"

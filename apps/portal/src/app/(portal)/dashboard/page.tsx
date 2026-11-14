@@ -264,9 +264,9 @@ export default async function DashboardPage() {
         })}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Active Project Progress Bar */}
-        {primaryProject && (
+      <div className="grid grid-cols-1 gap-4">
+        {/* Active Project Progress Bar — temporarily hidden */}
+        {false && primaryProject && (
           <Card className="bg-[#0a0f1d] border-white/5">
             <CardContent className="p-4 py-3">
               <div className="flex items-center justify-between text-xs mb-1.5 gap-2">
