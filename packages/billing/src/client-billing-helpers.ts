@@ -24,6 +24,50 @@ export function formatPaymentReference(paymentId: string, divisionName: string):
   return generateReceiptNumber(paymentId, divisionName);
 }
 
+/**
+ * Concise payment reference description for receipts and income records.
+ * Lists up to 2 invoice numbers directly and summarizes 3+ as a count so the
+ * reference stays readable when a payment covers multiple invoices.
+ */
+export function formatPaymentDescription(opts: {
+  invoiceNumbers: string[];
+  amount: number;
+  excessAmount?: number;
+  clientLabel?: string;
+  bankReference?: string | null;
+  formatAmount?: (value: number) => string;
+}): string {
+  const {
+    invoiceNumbers,
+    amount,
+    excessAmount = 0,
+    clientLabel,
+    bankReference,
+    formatAmount,
+  } = opts;
+
+  let base: string;
+  if (invoiceNumbers.length > 0) {
+    const summary =
+      invoiceNumbers.length <= 2 ? invoiceNumbers.join(', ') : `${invoiceNumbers.length} invoices`;
+    base = `Payment for ${summary}`;
+    if (excessAmount > 0.005) {
+      const creditStr = formatAmount ? formatAmount(excessAmount) : `R${excessAmount.toFixed(2)}`;
+      base += ` + ${creditStr} credit`;
+    }
+  } else if (amount > 0) {
+    base = 'Unallocated client credit / deposit';
+  } else {
+    base = clientLabel ? `Payment received - ${clientLabel}` : '';
+  }
+
+  const trimmedRef = bankReference?.trim();
+  if (trimmedRef) {
+    return base ? `${base} · Ref: ${trimmedRef}` : `Ref: ${trimmedRef}`;
+  }
+  return base;
+}
+
 /** Reference No. for a refund row on a statement: the captured reference, else a derived one. */
 export function formatRefundReference(
   refundId: string,

@@ -17,6 +17,7 @@ import { SearchableClientSelect } from '@/components/billing/searchable-client-s
 import { Separator } from '@/components/ui/separator';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { fmtDate, formatZAR } from '@/lib/format';
+import { formatPaymentDescription } from '@pmg/billing/client-billing-helpers';
 import {
   Table,
   TableBody,
@@ -222,22 +223,16 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
   }, [unpaidInvoices, currentAllocations]);
 
   const autoReference = React.useMemo(() => {
-    if (allocatedInvoiceNumbers.length === 0) {
-      if (!useExistingCredit && totalPaidNum > 0) {
-        return 'Unallocated client credit / deposit';
-      }
+    if (allocatedInvoiceNumbers.length === 0 && (useExistingCredit || totalPaidNum <= 0)) {
       return '';
     }
-    const invoiceList = allocatedInvoiceNumbers.join(', ');
-    const base = `Payment for ${invoiceList}`;
-    const hasUnallocated = unallocatedCreditValue > 0;
-    const withCredit = hasUnallocated
-      ? `${base}; Unallocated credit ${formatZAR(unallocatedCreditValue)}`
-      : base;
-    const withBankRef = description.trim()
-      ? `${withCredit} | Bank ref: ${description.trim()}`
-      : withCredit;
-    return withBankRef;
+    return formatPaymentDescription({
+      invoiceNumbers: allocatedInvoiceNumbers,
+      amount: totalPaidNum,
+      excessAmount: unallocatedCreditValue,
+      bankReference: description,
+      formatAmount: formatZAR,
+    });
   }, [
     allocatedInvoiceNumbers,
     unallocatedCreditValue,

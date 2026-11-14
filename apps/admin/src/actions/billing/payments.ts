@@ -28,6 +28,7 @@ import {
   postBadDebtRecoveryJournalEntry,
 } from '@/lib/accounting/posting';
 import { getPortalBaseUrl } from '@/lib/portal-url';
+import { formatPaymentDescription } from '@pmg/billing/client-billing-helpers';
 import { RecordPaymentSchema, AdjustPaymentSchema } from './schemas';
 
 export interface PaymentAllocationInput {
@@ -243,21 +244,13 @@ export async function recordClientPayment(
       return { error: 'Total allocations exceed the payment amount received.' };
     }
 
-    let autoReference: string;
-    if (allocatedInvoicesInfo.length > 0) {
-      const invoiceList = allocatedInvoicesInfo.map((i) => i.documentNumber).join(', ');
-      autoReference = `Payment for ${invoiceList}`;
-      if (excessAmount > 0) {
-        autoReference += `; Unallocated credit R${excessAmount.toFixed(2)}`;
-      }
-    } else if (data.amount > 0) {
-      autoReference = 'Unallocated client credit / deposit';
-    } else {
-      autoReference = `Payment received - ${clientLabel}`;
-    }
-    if (data.description?.trim()) {
-      autoReference += ` | Bank ref: ${data.description.trim()}`;
-    }
+    const autoReference = formatPaymentDescription({
+      invoiceNumbers: allocatedInvoicesInfo.map((i) => i.documentNumber),
+      amount: data.amount,
+      excessAmount,
+      clientLabel,
+      bankReference: data.description,
+    });
 
     // 5. Execute database operations in a transaction
     const recoveriesToPost: { invoiceId: string; amount: number; documentNumber: string }[] = [];
