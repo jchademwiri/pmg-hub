@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { LeadAddForm } from '@/components/leads/lead-add-form';
 import { LeadsTable } from '@/components/leads/leads-table';
 import { EmptyState } from '@/components/ui/empty-state';
+import { useOpenOnNewParam } from '@/hooks/use-open-on-new-param';
 import type { LeadRow } from '@pmg/db';
 
 import {
@@ -36,6 +37,7 @@ export default function LeadsPageClient({
   deleteAction,
 }: LeadsPageClientProps) {
   const [isOpen, setIsOpen] = React.useState(false);
+  useOpenOnNewParam(setIsOpen);
 
   return (
     <div className="flex flex-col gap-6">

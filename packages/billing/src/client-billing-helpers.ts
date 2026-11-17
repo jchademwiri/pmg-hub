@@ -123,6 +123,38 @@ export function buildTransactionHistory<
   return withBalance.reverse();
 }
 
+export interface StatementTotalRow {
+  debit?: number;
+  credit?: number;
+  kind?: 'invoice' | 'payment' | 'credit_note' | 'refund';
+  creditNoteId?: string;
+  refundId?: string;
+}
+
+/**
+ * Sum statement period debits/credits scoped strictly to actual invoices and
+ * payments so credit-note issuances and refunds do not inflate Total Paid or
+ * Total Invoiced.
+ */
+export function computeStatementPeriodTotals(transactions: StatementTotalRow[]): {
+  totalInvoiced: number;
+  totalPaid: number;
+} {
+  let totalInvoiced = 0;
+  let totalPaid = 0;
+  for (const tx of transactions) {
+    const isRefund = tx.kind === 'refund' || Boolean(tx.refundId);
+    const isCreditNote = tx.kind === 'credit_note' || Boolean(tx.creditNoteId);
+    if (!isRefund && tx.debit) {
+      totalInvoiced += tx.debit;
+    }
+    if (!isCreditNote && tx.credit) {
+      totalPaid += tx.credit;
+    }
+  }
+  return { totalInvoiced, totalPaid };
+}
+
 /**
  * Adjust an opening balance by deducting credit notes and adding refunds
  * that fall before the statement period. Overpayment-type credit notes are

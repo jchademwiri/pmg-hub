@@ -17,6 +17,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { createItem } from '@/app/actions/billing-items';
+import { useOpenOnNewParam } from '@/hooks/use-open-on-new-param';
 
 const UNIT_PRESETS = ['hour', 'month', 'project', 'day', 'fixed', 'user', 'license'];
 
@@ -43,6 +44,7 @@ export function AddItemDialog({
   const [isPending, startTransition] = React.useTransition();
 
   const isControlled = controlledOpen !== undefined;
+  useOpenOnNewParam(setInternalOpen, !isControlled);
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = (newOpen: boolean) => {
     if (isControlled) {

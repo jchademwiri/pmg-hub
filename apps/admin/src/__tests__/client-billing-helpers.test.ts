@@ -8,6 +8,7 @@ import {
   buildOrgProps,
   buildBankingProps,
   formatPaymentDescription,
+  computeStatementPeriodTotals,
 } from '@/lib/client-billing-helpers';
 import { formatStatementDueDate, isDueDateOverdue } from '@/lib/format';
 
@@ -562,5 +563,23 @@ describe('formatPaymentDescription', () => {
         bankReference: 'EFT-DEP',
       }),
     ).toBe('Unallocated client credit / deposit · Ref: EFT-DEP');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// computeStatementPeriodTotals
+// ---------------------------------------------------------------------------
+describe('computeStatementPeriodTotals', () => {
+  it('excludes credit note issuances and refunds from Total Paid and Total Invoiced', () => {
+    const totals = computeStatementPeriodTotals([
+      { debit: 10000 }, // invoice
+      { credit: 4000 }, // payment
+      { credit: 1500, creditNoteId: 'cn-1' }, // credit note issuance (web row)
+      { debit: 500, refundId: 'ref-1' }, // refund (web row)
+      { credit: 2000, kind: 'credit_note' }, // credit note issuance (PDF row)
+      { debit: 250, kind: 'refund' }, // refund (PDF row)
+    ]);
+
+    expect(totals).toEqual({ totalInvoiced: 10000, totalPaid: 4000 });
   });
 });
