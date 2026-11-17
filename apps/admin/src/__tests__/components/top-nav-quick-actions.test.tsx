@@ -80,7 +80,7 @@ describe('TopNavQuickActions', () => {
     );
   });
 
-  it('renders Relationships group quick actions on /relationships', () => {
+  it('renders Relationships group quick actions on /relationships without Lead', () => {
     mockUsePathname.mockReturnValue('/relationships');
     render(<TopNavQuickActions />);
 
@@ -88,10 +88,7 @@ describe('TopNavQuickActions', () => {
       'href',
       '/relationships/clients?new=1',
     );
-    expect(screen.getByRole('link', { name: /lead/i })).toHaveAttribute(
-      'href',
-      '/relationships/leads?new=1',
-    );
+    expect(screen.queryByRole('link', { name: /lead/i })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /division/i })).toHaveAttribute(
       'href',
       '/relationships/divisions?new=1',

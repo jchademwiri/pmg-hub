@@ -6,7 +6,6 @@ import {
   Wallet,
   Package,
   Users,
-  UserPlus,
   Building2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -41,7 +40,6 @@ export const QUICK_ACTIONS_BY_ROUTE: Record<string, QuickAction[]> = {
   ],
   '/relationships': [
     { label: 'Client', href: '/relationships/clients?new=1', icon: Users },
-    { label: 'Lead', href: '/relationships/leads?new=1', icon: UserPlus },
     { label: 'Division', href: '/relationships/divisions?new=1', icon: Building2 },
   ],
   '/finance': [{ label: 'Expense', href: '/finance/expenses?new=1', icon: TrendingDown }],
