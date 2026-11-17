@@ -144,7 +144,7 @@ export async function saveDivisionBillingSettings(
       });
     }
 
-    revalidatePath('/settings/billing');
+    revalidatePath('/settings/billing', 'layout');
     return {};
   } catch {
     return { error: 'Failed to save. Please try again.' };

@@ -25,12 +25,12 @@ function printPdf(type: string, id: string) {
       console.error('Failed to print PDF via iframe, falling back to opening in a new tab', e);
       window.open(`/api/billing/pdf/${type}/${id}`, '_blank');
     }
-    // Clean up the iframe after a short delay
+    // Clean up the iframe after print dialog completes
     setTimeout(() => {
       if (document.body.contains(iframe)) {
         document.body.removeChild(iframe);
       }
-    }, 5000);
+    }, 60000);
   };
 }
 

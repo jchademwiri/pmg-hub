@@ -45,7 +45,7 @@ export default async function CreditNotesPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-hidden">
+            <div className="overflow-x-auto">
               <table className="w-full table-fixed text-left border-collapse">
                 <thead>
                   <tr className="border-b border-white/5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 bg-white/[0.01]">

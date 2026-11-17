@@ -39,27 +39,22 @@ export default async function QuoteDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  // Fetch division details
-  const [division] = await db
-    .select()
-    .from(divisions)
-    .where(eq(divisions.id, quote.divisionId))
-    .limit(1);
-
-  const [divSettings] = await db
-    .select()
-    .from(divisionBillingSettings)
-    .where(eq(divisionBillingSettings.divisionId, quote.divisionId))
-    .limit(1);
-
-  // Fetch line items
-  const lineItems = await db
-    .select()
-    .from(billingLineItems)
-    .where(
-      and(eq(billingLineItems.documentType, 'quote'), eq(billingLineItems.documentId, quote.id)),
-    )
-    .orderBy(billingLineItems.sortOrder);
+  // Fetch division details and line items in parallel
+  const [[division], [divSettings], lineItems] = await Promise.all([
+    db.select().from(divisions).where(eq(divisions.id, quote.divisionId)).limit(1),
+    db
+      .select()
+      .from(divisionBillingSettings)
+      .where(eq(divisionBillingSettings.divisionId, quote.divisionId))
+      .limit(1),
+    db
+      .select()
+      .from(billingLineItems)
+      .where(
+        and(eq(billingLineItems.documentType, 'quote'), eq(billingLineItems.documentId, quote.id)),
+      )
+      .orderBy(billingLineItems.sortOrder),
+  ]);
 
   // Construct Status Banner
   let statusBanner: React.ReactNode = null;

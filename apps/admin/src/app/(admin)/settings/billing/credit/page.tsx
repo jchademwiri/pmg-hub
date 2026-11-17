@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
+import { CreditCard } from 'lucide-react';
 import { getAllDivisions, getAllDivisionBillingSettings } from '@pmg/db';
 import { saveDivisionBillingSettings } from '@/app/actions/settings';
+import { SettingsPageHeader } from '@/components/settings/settings-page-header';
 import { BillingCreditClient } from '../billing-settings-client';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Credit Policy | Billing Settings',
@@ -16,12 +20,11 @@ export default async function BillingCreditPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-xl font-semibold tracking-tight">Credit Policy</h2>
-        <p className="text-sm text-muted-foreground">
-          Configure credit note retention limits and auto-application rules per division.
-        </p>
-      </div>
+      <SettingsPageHeader
+        icon={CreditCard}
+        title="Credit Policy"
+        description="Configure credit note retention limits and auto-application rules per division."
+      />
 
       <BillingCreditClient
         divisions={divisionsList}

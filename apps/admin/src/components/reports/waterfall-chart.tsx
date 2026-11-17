@@ -194,7 +194,7 @@ export function WaterfallChart({ revenue, expenses, pmgShare, profitPool }: Wate
                   x={col.x + col.width / 2}
                   y={col.y - 8}
                   textAnchor="middle"
-                  className="text-[10px] font-bold tabular-nums fill-white"
+                  className="text-[10px] font-bold tabular-nums fill-foreground"
                 >
                   {formatZAR(Math.abs(col.value))}
                 </text>

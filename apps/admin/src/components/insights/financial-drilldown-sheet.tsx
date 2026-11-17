@@ -72,6 +72,9 @@ export function FinancialDrilldownSheet({
       .then((result) => {
         if (!cancelled) setData(result);
       })
+      .catch(() => {
+        if (!cancelled) setData(null);
+      })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getLeadById } from '@pmg/db';
 import { updateLeadStatus, updateLeadNotes } from '@/app/actions/leads';
@@ -8,6 +9,7 @@ import { LeadNotesForm } from '@/components/leads/lead-notes-form';
 import { ConvertToClientButton } from '@/components/leads/convert-to-client-button';
 import { ShareOnboardingLinkDialog } from '@/components/onboarding/share-onboarding-link-dialog';
 import { BackButton } from '@/components/ui/back-button';
+import { SetPageLabel } from '@/components/navigation/page-header-context';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Lead Detail' };
@@ -23,9 +25,10 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
 
   return (
     <div className="flex flex-col gap-6">
+      <SetPageLabel value={lead.name ?? 'Lead Detail'} />
       <div className="flex items-center gap-4">
         <BackButton href="/relationships/leads" label="Leads" />
-        <h1 className="text-2xl font-semibold">Lead Detail</h1>
+        <h1 className="text-2xl font-semibold">{lead.name ?? 'Lead Detail'}</h1>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -37,12 +40,32 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
               <dd>{lead.name ?? '-'}</dd>
             </div>
             <div className="flex flex-col gap-0.5">
+              <dt className="text-muted-foreground">Company Name</dt>
+              <dd>{lead.companyName ?? '-'}</dd>
+            </div>
+            <div className="flex flex-col gap-0.5">
               <dt className="text-muted-foreground">Email</dt>
-              <dd>{lead.email ?? '-'}</dd>
+              <dd>
+                {lead.email ? (
+                  <a href={`mailto:${lead.email}`} className="text-primary hover:underline">
+                    {lead.email}
+                  </a>
+                ) : (
+                  '-'
+                )}
+              </dd>
             </div>
             <div className="flex flex-col gap-0.5">
               <dt className="text-muted-foreground">Phone</dt>
-              <dd>{lead.phone ?? '-'}</dd>
+              <dd>
+                {lead.phone ? (
+                  <a href={`tel:${lead.phone}`} className="text-primary hover:underline">
+                    {lead.phone}
+                  </a>
+                ) : (
+                  '-'
+                )}
+              </dd>
             </div>
             <div className="flex flex-col gap-0.5">
               <dt className="text-muted-foreground">Message</dt>
@@ -96,7 +119,13 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
         <div className="flex flex-col gap-4 rounded-lg border p-4 bg-muted/20">
           <h2 className="text-lg font-medium text-muted-foreground">Actions</h2>
           <p className="text-sm text-muted-foreground">
-            This lead has been successfully converted into an active client profile.
+            This lead has been successfully converted into an active client profile.{' '}
+            <Link
+              href="/relationships/clients"
+              className="text-primary hover:underline font-medium"
+            >
+              View Clients →
+            </Link>
           </p>
         </div>
       )}

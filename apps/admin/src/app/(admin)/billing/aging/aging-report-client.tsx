@@ -93,6 +93,7 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
 
       if (activeBucket) {
         if (activeBucket === 'current') return client.current > 0;
+        if (activeBucket === 'overdue') return client.totalOutstanding - client.current > 0;
         if (activeBucket === '1_14') return client.bucket_1_14 > 0;
         if (activeBucket === '15_30') return client.bucket_15_30 > 0;
         if (activeBucket === '31_60') return client.bucket_31_60 > 0;
@@ -206,10 +207,10 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
           subtitle={<span>{totalOverdue > 0 ? 'Past payment terms' : 'No overdue debt'}</span>}
           icon={AlertTriangle}
           variant={totalOverdue > 0 ? 'red' : 'emerald'}
-          onClick={() => setActiveBucket(activeBucket === '61_plus' ? null : '61_plus')}
+          onClick={() => setActiveBucket(activeBucket === 'overdue' ? null : 'overdue')}
           isActive={activeBucket !== null && activeBucket !== 'current'}
           activeLabel="Filtered"
-          tooltip="Click to filter 60+ days delinquent debt"
+          tooltip="Click to filter all overdue delinquent debt"
         />
 
         <BillingKpiCard

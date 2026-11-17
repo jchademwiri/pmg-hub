@@ -8,7 +8,7 @@ export default function CategoriesNotFound() {
         { label: 'Categories', href: '/finance/categories' },
         { label: 'Expenses', href: '/finance/expenses' },
         { label: 'Payments', href: '/billing/payments' },
-        { label: 'Distributions', href: '/finance/distributions' },
+        { label: 'Recurring', href: '/finance/recurring' },
       ]}
     />
   );

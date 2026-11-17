@@ -25,7 +25,7 @@ export function YearFilter({ years, currentYear }: YearFilterProps) {
 
   return (
     <Select value={String(currentYear)} onValueChange={handleYearChange}>
-      <SelectTrigger className="w-32">
+      <SelectTrigger className="w-32" aria-label="Select report year">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

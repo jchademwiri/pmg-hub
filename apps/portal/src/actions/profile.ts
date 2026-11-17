@@ -58,6 +58,7 @@ export async function updateClientProfileAction(formData: {
       .where(eq(clients.id, client.id));
 
     revalidatePath('/profile');
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to update profile.';

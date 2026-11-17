@@ -60,7 +60,7 @@ export default async function EditQuotePage({ params }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pb-28 md:pb-0">
       <SetPageLabel value={`Edit ${quote.documentNumber}`} />
       {/* Page header */}
       <div className="flex items-center gap-4">

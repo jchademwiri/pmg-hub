@@ -10,7 +10,7 @@ export default function FinanceNotFound() {
         { label: 'Income', href: '/finance/income' },
         { label: 'Expenses', href: '/finance/expenses' },
         { label: 'Categories', href: '/finance/categories' },
-        { label: 'Distributions', href: '/finance/distributions' },
+        { label: 'Recurring', href: '/finance/recurring' },
       ]}
     />
   );

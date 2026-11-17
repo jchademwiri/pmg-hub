@@ -38,6 +38,7 @@ import {
   getClientCreditBalanceForEdit,
 } from '@/app/actions/billing-payments';
 import { getClientCreditBalanceV2 } from '@/app/actions/credit-management';
+import { SetPageLabel } from '@/components/navigation/page-header-context';
 
 interface PaymentDetailClientProps {
   payment: any;
@@ -403,109 +404,113 @@ export function PaymentDetailClient({
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 <p className="mt-2 text-sm text-muted-foreground">Loading invoices...</p>
               </div>
-            ) : unpaidInvoices.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 rounded-lg border border-dashed border-border bg-emerald-50/20">
-                <p className="text-sm text-emerald-700 font-medium">
-                  This client has no outstanding invoices!
-                </p>
-                {totalPaidNum > 0 && (
-                  <p className="mt-1 text-xs text-muted-foreground text-center">
-                    The full {formatZAR(totalPaidNum)} will be saved as an unallocated credit
-                    retainer.
-                  </p>
-                )}
-              </div>
             ) : (
               <div className="flex flex-col gap-4">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Invoice #</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                      <TableHead className="text-right">Outstanding</TableHead>
-                      <TableHead className="text-right w-36">Allocated</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {unpaidInvoices.map((inv) => {
-                      const currentAlloc = manualAllocations[inv.id] || '0';
-                      const outstandingAfterThis = Math.max(
-                        0,
-                        inv.outstanding - (parseFloat(currentAlloc) || 0),
-                      );
-
-                      return (
-                        <TableRow key={inv.id}>
-                          <TableCell className="font-medium">{inv.documentNumber}</TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {fmtDate(inv.invoiceDate)}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums">
-                            {formatZAR(inv.total)}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums font-medium text-amber-600">
-                            {formatZAR(inv.outstanding)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="relative inline-block w-full">
-                              <span className="absolute left-2.5 top-2 text-xs font-medium text-muted-foreground">
-                                R
-                              </span>
-                              <Input
-                                type="number"
-                                step="0.01"
-                                max={inv.outstanding}
-                                className="h-8 pl-6 pr-2 text-right font-medium text-sm tabular-nums"
-                                value={currentAlloc === '0' ? '' : currentAlloc}
-                                placeholder="0.00"
-                                onChange={(e) => handleAllocationChange(inv.id, e.target.value)}
-                              />
-                            </div>
-                            {parseFloat(currentAlloc) > 0 && (
-                              <span className="block mt-0.5 text-[10px] text-muted-foreground text-right">
-                                Remaining: {formatZAR(outstandingAfterThis)}
-                              </span>
-                            )}
-                          </TableCell>
+                {unpaidInvoices.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 rounded-lg border border-dashed border-border bg-emerald-500/10">
+                    <p className="text-sm text-emerald-700 dark:text-emerald-400 font-medium">
+                      This client has no outstanding invoices!
+                    </p>
+                    {totalPaidNum > 0 && (
+                      <p className="mt-1 text-xs text-muted-foreground text-center">
+                        The full {formatZAR(totalPaidNum)} will be saved as an unallocated credit
+                        retainer.
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Invoice #</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead className="text-right">Total</TableHead>
+                          <TableHead className="text-right">Outstanding</TableHead>
+                          <TableHead className="text-right w-36">Allocated</TableHead>
                         </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {unpaidInvoices.map((inv) => {
+                          const currentAlloc = manualAllocations[inv.id] || '0';
+                          const outstandingAfterThis = Math.max(
+                            0,
+                            inv.outstanding - (parseFloat(currentAlloc) || 0),
+                          );
 
-                {/* Calculations Summary */}
-                <div className="flex flex-col gap-2 p-4 rounded-md bg-muted/30 border border-border text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Total Cash Received:</span>
-                    <span className="font-semibold">{formatZAR(totalPaidNum)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Amount Allocated to Invoices:</span>
-                    <span className="font-semibold text-amber-600">
-                      {formatZAR(totalAllocatedInForm)}
-                    </span>
-                  </div>
+                          return (
+                            <TableRow key={inv.id}>
+                              <TableCell className="font-medium">{inv.documentNumber}</TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {fmtDate(inv.invoiceDate)}
+                              </TableCell>
+                              <TableCell className="text-right tabular-nums">
+                                {formatZAR(inv.total)}
+                              </TableCell>
+                              <TableCell className="text-right tabular-nums font-medium text-amber-600">
+                                {formatZAR(inv.outstanding)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="relative inline-block w-full">
+                                  <span className="absolute left-2.5 top-2 text-xs font-medium text-muted-foreground">
+                                    R
+                                  </span>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    max={inv.outstanding}
+                                    className="h-8 pl-6 pr-2 text-right font-medium text-sm tabular-nums"
+                                    value={currentAlloc === '0' ? '' : currentAlloc}
+                                    placeholder="0.00"
+                                    onChange={(e) => handleAllocationChange(inv.id, e.target.value)}
+                                  />
+                                </div>
+                                {parseFloat(currentAlloc) > 0 && (
+                                  <span className="block mt-0.5 text-[10px] text-muted-foreground text-right">
+                                    Remaining: {formatZAR(outstandingAfterThis)}
+                                  </span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
 
-                  <Separator className="my-1" />
+                    {/* Calculations Summary */}
+                    <div className="flex flex-col gap-2 p-4 rounded-md bg-muted/30 border border-border text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Total Cash Received:</span>
+                        <span className="font-semibold">{formatZAR(totalPaidNum)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Amount Allocated to Invoices:</span>
+                        <span className="font-semibold text-amber-600">
+                          {formatZAR(totalAllocatedInForm)}
+                        </span>
+                      </div>
 
-                  {isAllocationExceeded ? (
-                    <div className="flex items-center gap-2 p-2.5 rounded bg-destructive/10 border border-destructive/20 text-destructive text-xs">
-                      <span className="font-semibold">Error:</span>
-                      <span>
-                        You have allocated {formatZAR(totalAllocatedInForm - totalPaidNum)} more
-                        than the total payment amount.
-                      </span>
+                      <Separator className="my-1" />
+
+                      {isAllocationExceeded ? (
+                        <div className="flex items-center gap-2 p-2.5 rounded bg-destructive/10 border border-destructive/20 text-destructive text-xs">
+                          <span className="font-semibold">Error:</span>
+                          <span>
+                            You have allocated {formatZAR(totalAllocatedInForm - totalPaidNum)} more
+                            than the total payment amount.
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400">
+                          <span className="font-medium">
+                            Leftover saved as Client Credit (Retainer):
+                          </span>
+                          <span className="font-bold">{formatZAR(unallocatedCreditValue)}</span>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="flex items-center justify-between text-emerald-700">
-                      <span className="font-medium">
-                        Leftover saved as Client Credit (Retainer):
-                      </span>
-                      <span className="font-bold">{formatZAR(unallocatedCreditValue)}</span>
-                    </div>
-                  )}
-                </div>
+                  </>
+                )}
 
                 {/* Submit Buttons */}
                 <div className="flex justify-end gap-3 mt-2">
@@ -533,6 +538,7 @@ export function PaymentDetailClient({
 
   return (
     <div className="flex flex-col gap-6">
+      <SetPageLabel value="Payment Receipt" />
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
@@ -546,7 +552,7 @@ export function PaymentDetailClient({
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-lg font-semibold">{receiptNumber}</h2>
-              <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-emerald-50 text-emerald-700">
+              <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
                 Paid
               </span>
             </div>
@@ -607,7 +613,7 @@ export function PaymentDetailClient({
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Allocated
                   </span>
-                  <span className="text-sm font-semibold text-zinc-700 tabular-nums">
+                  <span className="text-sm font-semibold text-foreground tabular-nums">
                     {formatZAR(allocatedSum)}
                   </span>
                 </div>
@@ -615,7 +621,7 @@ export function PaymentDetailClient({
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Unallocated
                   </span>
-                  <span className="text-sm font-semibold text-zinc-700 tabular-nums">
+                  <span className="text-sm font-semibold text-foreground tabular-nums">
                     {formatZAR(creditBalance)}
                   </span>
                 </div>

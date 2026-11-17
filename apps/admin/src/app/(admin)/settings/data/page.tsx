@@ -8,6 +8,7 @@ import { SettingsSection } from '@/components/settings/settings-section';
 import { getBackupStorageStatus, listDatabaseBackups } from '@/lib/data-export';
 import { DataExportList, DatabaseBackupPanel } from './data-settings-client';
 
+export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Data & Exports Settings' };
 
 export default async function DataSettingsPage() {

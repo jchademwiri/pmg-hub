@@ -53,7 +53,9 @@ export function StickyPageHeader({
           {description && <p className="text-sm text-muted-foreground">{description}</p>}
         </div>
         {actions && (
-          <div className="flex w-full sm:w-auto shrink-0 items-center gap-2">{actions}</div>
+          <div className="flex flex-wrap w-full sm:w-auto shrink-0 items-center gap-2">
+            {actions}
+          </div>
         )}
       </div>
     </div>
