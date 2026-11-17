@@ -6,7 +6,6 @@ import {
   getLeadCountsByStatus,
   getClientsWithBillingActivity,
 } from '@pmg/db';
-import { SetPageTotal } from '@/components/navigation/page-header-context';
 import { RelationshipsOverviewClient } from './relationships-overview-client';
 
 export const dynamic = 'force-dynamic';
@@ -26,8 +25,6 @@ export default async function RelationshipsOverviewPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SetPageTotal value={`${clients.length} clients, ${leadCounts.all} leads`} />
-
       <div>
         <h2 className="text-lg font-semibold">Relationships Overview</h2>
         <p className="text-sm text-muted-foreground">

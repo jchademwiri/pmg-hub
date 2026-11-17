@@ -13,6 +13,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { usePageHeader } from '@/components/navigation/page-header-context';
+import { TopNavQuickActions } from '@/components/navigation/top-nav-quick-actions';
 import { ROUTE_LABELS, GROUPS } from '@/components/navigation/nav-data';
 
 /** Find the exact match label, or null if no exact match */
@@ -112,6 +113,7 @@ export function TopNav() {
       </div>
 
       <div className="flex items-center gap-2">
+        <TopNavQuickActions />
         {total && (
           <span className={`text-sm font-semibold tabular-nums ${totalColor}`}>{total}</span>
         )}

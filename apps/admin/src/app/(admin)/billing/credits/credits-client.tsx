@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { IssueCreditNoteDialog } from '@/components/billing/issue-credit-note-dialog';
 import { CreditRefundDialog } from '@/components/billing/credit-refund-dialog';
+import { useOpenOnNewParam } from '@/hooks/use-open-on-new-param';
 import {
   Wallet,
   AlertCircle,
@@ -148,6 +149,7 @@ export function CreditsClient({
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
   const [showIssueDialog, setShowIssueDialog] = useState(false);
+  useOpenOnNewParam(setShowIssueDialog);
   const [showRefundDialog, setShowRefundDialog] = useState(false);
   const [isVoiding, setIsVoiding] = useState(false);
   const [selectedNoteForRefund, setSelectedNoteForRefund] = useState<{

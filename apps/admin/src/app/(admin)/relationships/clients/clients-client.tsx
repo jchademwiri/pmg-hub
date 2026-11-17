@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ClientAddForm } from '@/components/clients/client-add-form';
 import { ClientsTable } from '@/components/clients/clients-table';
 import { EmptyState } from '@/components/ui/empty-state';
+import { useOpenOnNewParam } from '@/hooks/use-open-on-new-param';
 import type { ClientWithIncomeCount } from '@pmg/db';
 
 import {
@@ -34,6 +35,7 @@ export default function ClientsPageClient({
   toggleActiveAction,
 }: ClientsPageClientProps) {
   const [isAdding, setIsAdding] = React.useState(false);
+  useOpenOnNewParam(setIsAdding);
   const [statusTab, setStatusTab] = React.useState('active');
 
   const activeClients = React.useMemo(() => clients.filter((c) => c.isActive), [clients]);

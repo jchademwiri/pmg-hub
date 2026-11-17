@@ -49,6 +49,7 @@ import {
   formatPaymentReference,
   formatRefundReference,
   buildCreditNoteDivisionMap,
+  computeStatementPeriodTotals,
 } from './client-billing-helpers';
 import { PAGE, split, ensurePage, drawShellHeader, drawShellFooter } from './pdf-shell';
 
@@ -937,6 +938,8 @@ async function buildStatementPdfData(
 
   let transactions: PdfTransaction[];
   let finalBalance: number;
+  let periodInvoiced = 0;
+  let periodPaid = 0;
 
   if (filters?.statementType === 'outstanding') {
     const outstandingInvoices =
@@ -959,6 +962,8 @@ async function buildStatementPdfData(
     transactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     finalBalance = transactions.reduce((sum, tx) => sum + (tx.balance ?? 0), 0);
+    ({ totalInvoiced: periodInvoiced, totalPaid: periodPaid } =
+      computeStatementPeriodTotals(transactions));
   } else {
     const raw = [
       ...statement.invoices
@@ -996,6 +1001,7 @@ async function buildStatementPdfData(
             description: note.reason ?? 'Credit Note',
             debit: undefined,
             credit: safeNumber(note.amount),
+            kind: 'credit_note' as const,
           };
         }),
       ...dbRefunds
@@ -1010,10 +1016,14 @@ async function buildStatementPdfData(
           description: refund.description ?? 'Credit refund',
           debit: safeNumber(refund.amount),
           credit: undefined,
+          kind: 'refund' as const,
         })),
     ];
 
-    transactions = buildTransactionHistory(raw, openingBalance);
+    const built = buildTransactionHistory(raw, openingBalance);
+    transactions = built;
+    ({ totalInvoiced: periodInvoiced, totalPaid: periodPaid } =
+      computeStatementPeriodTotals(built));
     finalBalance =
       transactions.length > 0 ? (transactions[0]!.balance ?? openingBalance) : openingBalance;
   }
@@ -1035,9 +1045,6 @@ async function buildStatementPdfData(
   }
 
   const isOutstanding = filters?.statementType === 'outstanding';
-  // Totals come from the rows shown so they always reconcile with the on-screen statement.
-  const periodInvoiced = transactions.reduce((sum, tx) => sum + (tx.debit ?? 0), 0);
-  const periodPaid = transactions.reduce((sum, tx) => sum + (tx.credit ?? 0), 0);
 
   return {
     type: 'statement',

@@ -16,6 +16,7 @@ import { DivisionsTable } from '@/components/divisions/divisions-table';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatZAR } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { useOpenOnNewParam } from '@/hooks/use-open-on-new-param';
 import type { DivisionRow } from '@pmg/db';
 
 export type DivisionWithPnl = DivisionRow & {
@@ -58,6 +59,7 @@ export default function DivisionsPageClient({
 }: DivisionsPageClientProps) {
   const router = useRouter();
   const [isAdding, setIsAdding] = React.useState(false);
+  useOpenOnNewParam(setIsAdding);
   const [isPending, startTransition] = React.useTransition();
 
   function handlePeriodChange(newPeriod: string) {

@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { fmtDateLong, formatZAR, formatStatementDueDate, isDueDateOverdue } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { totalAgeingDue } from '@/lib/billing-ageing';
+import { computeStatementPeriodTotals } from '@pmg/billing/client-billing-helpers';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -595,8 +596,7 @@ export function DocumentPreview({
           <div className="mt-4 flex justify-end print:break-inside-avoid [break-inside:avoid]">
             <div className="flex w-64 flex-col gap-2">
               {(() => {
-                const totalInvoiced = transactions.reduce((s, t) => s + (t.debit ?? 0), 0);
-                const totalPaid = transactions.reduce((s, t) => s + (t.credit ?? 0), 0);
+                const { totalInvoiced, totalPaid } = computeStatementPeriodTotals(transactions);
                 const balanceDueCalc =
                   balanceDue !== undefined
                     ? balanceDue
