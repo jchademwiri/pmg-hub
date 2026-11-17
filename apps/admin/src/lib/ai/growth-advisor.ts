@@ -8,6 +8,7 @@ import {
   getClientAgingReport,
 } from '@pmg/db';
 import { getSASTParts, formatZAR } from '@/lib/format';
+import { getSessionOrRedirect } from '@/lib/auth';
 import { gateway, generateText } from 'ai';
 
 export interface GrowthAdvisorResult {
@@ -85,6 +86,7 @@ async function callGeminiDirect(
  * an executive growth forecast and cashflow runway report.
  */
 export async function generateGrowthAdvisoryReport(): Promise<GrowthAdvisorResult> {
+  await getSessionOrRedirect();
   const { year, month } = getSASTParts();
   const fiscalYear = month < 2 ? year - 1 : year;
 

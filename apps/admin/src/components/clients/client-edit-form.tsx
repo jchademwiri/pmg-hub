@@ -26,7 +26,7 @@ export function ClientEditForm({ client, divisions, updateAction, onCancel }: Cl
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
-  const [divisionId, setDivisionId] = React.useState(client.divisionId ?? '');
+  const [divisionId, setDivisionId] = React.useState(client.divisionId ?? '__none__');
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -173,7 +173,7 @@ export function ClientEditForm({ client, divisions, updateAction, onCancel }: Cl
         <Field>
           <FieldLabel htmlFor="client-division">Linked Division</FieldLabel>
           <Select
-            defaultValue={divisionId}
+            value={divisionId}
             disabled={isPending}
             onValueChange={(value) => setDivisionId(value)}
           >
@@ -192,7 +192,12 @@ export function ClientEditForm({ client, divisions, updateAction, onCancel }: Cl
             </SelectContent>
           </Select>
           {/* Hidden input to carry the value in FormData */}
-          <input id="client-division-hidden" type="hidden" name="divisionId" value={divisionId} />
+          <input
+            id="client-division-hidden"
+            type="hidden"
+            name="divisionId"
+            value={divisionId === '__none__' ? '' : divisionId}
+          />
           <p className="text-xs text-muted-foreground mt-1">
             When set, statements will use this division&apos;s branding. If unset, the first
             invoice&apos;s division is used.

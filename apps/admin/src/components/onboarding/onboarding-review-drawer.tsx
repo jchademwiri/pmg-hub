@@ -305,10 +305,18 @@ export function OnboardingReviewDrawer({ entry, open, onOpenChange }: Onboarding
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => router.push(`/relationships/clients`)}
+                  onClick={() =>
+                    router.push(
+                      entry.convertedClientId
+                        ? `/relationships/clients/${entry.convertedClientId}`
+                        : `/relationships/clients`,
+                    )
+                  }
                   className="text-xs font-semibold gap-1.5 rounded-xl h-9 px-3.5"
                 >
-                  <span>View in Clients List</span>
+                  <span>
+                    {entry.convertedClientId ? 'View Client Profile' : 'View in Clients List'}
+                  </span>
                   <ExternalLink className="size-3.5" />
                 </Button>
 

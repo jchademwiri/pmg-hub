@@ -21,6 +21,7 @@ import { DeleteGoalButton } from '@/components/savings/delete-goal-button';
 import { getSpendTracker } from '@/lib/spend-trackers';
 import { computeProgress, computeSavingRate } from '@/lib/savings';
 import { formatZAR, fmtDate, getSASTToday, getSASTParts } from '@/lib/format';
+import { SetPageLabel, SetPageTotal } from '@/components/navigation/page-header-context';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Savings Goal' };
@@ -65,6 +66,11 @@ export default async function SavingsGoalPage({ params }: { params: Promise<{ id
 
   return (
     <div className="flex flex-col gap-6">
+      <SetPageLabel value={goal.name} />
+      <SetPageTotal
+        value={`${progress.percent.toFixed(0)}% funded`}
+        variant={progress.percent >= 100 ? 'green' : 'default'}
+      />
       <StickyPageHeader
         title={goal.name}
         description={goal.description ?? goal.vendor ?? undefined}

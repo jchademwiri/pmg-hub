@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { updateClientProfileAction } from '@/app/actions/profile-actions';
-import { Loader2, Save, Building, MapPin, Globe } from 'lucide-react';
+import { Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ProfileEditFormProps {

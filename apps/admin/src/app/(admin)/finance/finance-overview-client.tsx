@@ -279,7 +279,7 @@ export function FinanceOverviewClient({
             </div>
           </div>
           <p className="text-2xl font-bold mt-2 tabular-nums text-emerald-600">
-            {formatZAR(profitAndLoss.totalRevenue || summary.revenue)}
+            {formatZAR(selectedPeriod ? profitAndLoss.totalRevenue : summary.revenue)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Recognized income</p>
         </div>
@@ -295,7 +295,7 @@ export function FinanceOverviewClient({
             </div>
           </div>
           <p className="text-2xl font-bold mt-2 tabular-nums text-red-600">
-            {formatZAR(profitAndLoss.totalExpenses || summary.expenses)}
+            {formatZAR(selectedPeriod ? profitAndLoss.totalExpenses : summary.expenses)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Total operating costs</p>
         </div>
@@ -711,6 +711,34 @@ export function FinanceOverviewClient({
               description: 'Lock and reconcile monthly periods',
               color: 'bg-indigo-500/10 text-indigo-600',
               icon: CalendarClock,
+            },
+            {
+              href: '/finance/income',
+              label: 'Income',
+              description: 'Cash receipts & payment allocations',
+              color: 'bg-emerald-500/10 text-emerald-600',
+              icon: TrendingUp,
+            },
+            {
+              href: '/finance/categories',
+              label: 'Expense Categories',
+              description: 'Manage spend classifications',
+              color: 'bg-orange-500/10 text-orange-600',
+              icon: Folders,
+            },
+            {
+              href: '/assets',
+              label: 'Assets Register',
+              description: 'Fixed assets & Luno portfolio',
+              color: 'bg-sky-500/10 text-sky-600',
+              icon: Building2,
+            },
+            {
+              href: '/savings',
+              label: 'Savings Goals',
+              description: 'Track capital & equipment goals',
+              color: 'bg-teal-500/10 text-teal-600',
+              icon: PiggyBank,
             },
           ].map((link) => (
             <Link

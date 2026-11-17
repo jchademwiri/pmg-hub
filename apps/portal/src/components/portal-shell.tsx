@@ -16,7 +16,6 @@ import {
   ShieldCheck,
   ShieldAlert,
   X,
-  CalendarDays,
   Shield,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -190,6 +189,7 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
             {/* Collapse Toggle Button */}
             <button
               type="button"
+              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="hidden md:flex h-8 items-center justify-center rounded-lg border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] text-muted-foreground hover:text-white transition-all cursor-pointer"
             >
@@ -230,6 +230,7 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
               </div>
               <button
                 type="button"
+                aria-label="Close navigation menu"
                 onClick={() => setIsMobileOpen(false)}
                 className="text-muted-foreground hover:text-white cursor-pointer"
               >
@@ -333,7 +334,7 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
 
       {/* Mobile Bottom Navigation */}
       <div
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-white/5 bg-[#0a0f1d]/95 backdrop-blur-md"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-white/5 bg-[#0a0f1d]/95 backdrop-blur-md print:hidden"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}
       >
         <div className="grid grid-cols-4 h-16 px-2 w-full overflow-hidden">

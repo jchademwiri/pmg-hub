@@ -14,6 +14,7 @@ import { getMinAllowedDate } from '@/lib/date-rules';
 import { InvoiceFormClient } from './invoice-form-client';
 import { SetPageLabel } from '@/components/navigation/page-header-context';
 
+export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'New Invoice' };
 
 export default async function NewInvoicePage() {
@@ -28,7 +29,7 @@ export default async function NewInvoicePage() {
     ]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pb-28 md:pb-0">
       <SetPageLabel value="New Invoice" />
       {/* Page header */}
       <div className="flex items-center gap-4">

@@ -131,12 +131,13 @@ export function QuotesTable({
             <TableHead className="w-[80px] px-2 text-xs">Expires</TableHead>
             <TableHead className="w-[85px] px-2 text-right text-xs">Amount</TableHead>
             <TableHead className="w-[90px] px-2 text-center text-xs">Status</TableHead>
+            <TableHead className="w-10 px-2" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {entries.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="h-24 text-center text-muted-foreground text-xs">
+              <TableCell colSpan={8} className="h-24 text-center text-muted-foreground text-xs">
                 No quotations match the current filters.
               </TableCell>
             </TableRow>
@@ -186,6 +187,63 @@ export function QuotesTable({
                 </TableCell>
                 <TableCell className="px-2 text-center whitespace-nowrap">
                   <BillingStatusBadge status={quote.status} />
+                </TableCell>
+                <TableCell className="relative z-10 px-2 text-center">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="size-8" title="Actions">
+                        <MoreHorizontal className="size-4" />
+                        <span className="sr-only">Actions</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link href={`/billing/quotes/${quote.id}`}>View</Link>
+                      </DropdownMenuItem>
+                      {quote.status === 'draft' && (
+                        <DropdownMenuItem onClick={() => handleStatusChange(quote.id, 'sent')}>
+                          Mark Sent
+                        </DropdownMenuItem>
+                      )}
+                      {quote.status === 'sent' && (
+                        <>
+                          <DropdownMenuItem
+                            onClick={() => handleStatusChange(quote.id, 'accepted')}
+                          >
+                            Mark Accepted
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleStatusChange(quote.id, 'declined')}
+                          >
+                            Mark Declined
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      {quote.status === 'accepted' && (
+                        <DropdownMenuItem
+                          onClick={() => handleConvert(quote.id, quote.documentNumber)}
+                        >
+                          Convert to Invoice
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => handleDuplicate(quote.id)}>
+                        Duplicate
+                      </DropdownMenuItem>
+                      {(quote.status === 'draft' || quote.status === 'sent') && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => handleDelete(quote.id, quote.documentNumber)}
+                            disabled={quote.status !== 'draft'}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))

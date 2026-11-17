@@ -154,7 +154,7 @@ export default async function StatementsPage({ searchParams }: PageProps) {
   type LedgerTransaction = {
     id: string;
     date: Date;
-    type: 'invoice' | 'payment';
+    type: 'invoice' | 'payment' | 'credit';
     reference: string;
     amount: number;
     status?: string;
@@ -180,6 +180,19 @@ export default async function StatementsPage({ searchParams }: PageProps) {
       type: 'payment',
       reference: pay.description || 'Payment Received',
       amount: parseFloat(pay.amount),
+    });
+  });
+
+  creditApps.forEach((credit) => {
+    const appliedInvoice = allInvoices.find((inv) => inv.id === credit.invoiceId);
+    ledger.push({
+      id: credit.id,
+      date: credit.appliedAt ? new Date(credit.appliedAt) : new Date(),
+      type: 'credit',
+      reference: appliedInvoice
+        ? `Credit Applied (${appliedInvoice.documentNumber})`
+        : 'Credit Note Applied',
+      amount: parseFloat(credit.amount),
     });
   });
 
@@ -209,16 +222,19 @@ export default async function StatementsPage({ searchParams }: PageProps) {
     }
     if (currentPeriod === 'previous') {
       const prev = new Date();
+      prev.setDate(1);
       prev.setMonth(prev.getMonth() - 1);
       return txDate.getMonth() === prev.getMonth() && txDate.getFullYear() === prev.getFullYear();
     }
     if (currentPeriod === 'past3') {
       const limit = new Date();
+      limit.setDate(1);
       limit.setMonth(limit.getMonth() - 3);
       return txDate >= limit;
     }
     if (currentPeriod === 'past6') {
       const limit = new Date();
+      limit.setDate(1);
       limit.setMonth(limit.getMonth() - 6);
       return txDate >= limit;
     }
@@ -454,8 +470,8 @@ export default async function StatementsPage({ searchParams }: PageProps) {
                             <td className="py-4 px-4 font-semibold text-white print:text-black">
                               {tx.reference}
                               {tx.status && tx.status !== 'paid' && (
-                                <span className="inline-block text-[9px] font-bold uppercase px-1.5 py-0.2 ml-2 rounded bg-amber-500/10 text-amber-400 print:border">
-                                  {tx.status}
+                                <span className="inline-block text-[9px] font-bold uppercase px-1.5 py-0.5 ml-2 rounded bg-amber-500/10 text-amber-400 print:border">
+                                  {tx.status.replace('_', ' ')}
                                 </span>
                               )}
                             </td>

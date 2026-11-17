@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { getClientById, getClientOutstandingInvoices } from '@pmg/db';
 import { Button } from '@/components/ui/button';
-import { SetPageTotal } from '@/components/navigation/page-header-context';
+import { SetPageTotal, SetPageLabel } from '@/components/navigation/page-header-context';
 import { formatZAR } from '@/lib/format';
 import { ClientAgingDetailClient } from './client-aging-detail-client';
 
@@ -41,20 +41,22 @@ export default async function ClientAgingDetailPage({ params }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
+      <SetPageLabel value={client.businessName || client.name} />
       <SetPageTotal value={formatZAR(totalOutstanding)} variant="red" />
 
       {/* Back button + title */}
       <div className="flex flex-col gap-2">
-        <Link href="/billing/aging">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="-ml-3 gap-1 h-8 text-muted-foreground hover:text-foreground"
-          >
+        <Button
+          variant="ghost"
+          size="sm"
+          asChild
+          className="-ml-3 gap-1 h-8 w-fit text-muted-foreground hover:text-foreground"
+        >
+          <Link href="/billing/aging">
             <ChevronLeft className="size-4" />
             Back to Aging Report
-          </Button>
-        </Link>
+          </Link>
+        </Button>
         <div>
           <h2 className="text-lg font-semibold">{client.businessName || client.name}</h2>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground mt-0.5">

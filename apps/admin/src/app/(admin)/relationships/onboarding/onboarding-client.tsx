@@ -59,7 +59,7 @@ export function OnboardingClient({ entries, counts, divisions }: OnboardingClien
       {/* Status Tabs */}
       <div className="flex items-center justify-between">
         <Tabs value={currentStatus} onValueChange={handleTabChange} className="w-full sm:w-auto">
-          <TabsList className="grid grid-cols-3 sm:flex h-9 bg-muted/60 p-1">
+          <TabsList className="grid grid-cols-2 sm:flex h-auto sm:h-9 bg-muted/60 p-1 gap-1">
             <TabsTrigger value="pending" className="text-xs font-semibold gap-1.5 px-3">
               <span>Pending</span>
               <Badge
@@ -77,6 +77,13 @@ export function OnboardingClient({ entries, counts, divisions }: OnboardingClien
                 className="ml-1 h-5 px-1.5 text-[10px] font-bold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
               >
                 {counts.converted}
+              </Badge>
+            </TabsTrigger>
+
+            <TabsTrigger value="archived" className="text-xs font-semibold gap-1.5 px-3">
+              <span>Archived</span>
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
+                {counts.archived}
               </Badge>
             </TabsTrigger>
 

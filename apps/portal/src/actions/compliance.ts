@@ -56,6 +56,7 @@ export async function addClientComplianceRecord(formData: FormData): Promise<{ e
     });
 
     revalidatePath('/compliance');
+    revalidatePath('/dashboard');
 
     return {};
   } catch (e) {
@@ -80,6 +81,7 @@ export async function deleteClientComplianceRecord(id: string): Promise<{ error?
     await dbDeleteComplianceRecord(id);
 
     revalidatePath('/compliance');
+    revalidatePath('/dashboard');
 
     return {};
   } catch (e) {
@@ -117,6 +119,7 @@ export async function updateClientComplianceRecord(
     await dbUpdateComplianceRecord(id, parsed);
 
     revalidatePath('/compliance');
+    revalidatePath('/dashboard');
 
     return {};
   } catch (e) {

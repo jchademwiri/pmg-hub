@@ -19,6 +19,7 @@ import {
   ScrollText,
   Package,
   BarChart3,
+  Clock,
 } from 'lucide-react';
 import type { AgingRow } from '@pmg/db';
 import { STATUS_STYLES, STATUS_TEXT_COLORS, formatStatusLabel } from '@/lib/billing-status';
@@ -169,7 +170,7 @@ export function BillingOverviewClient({
           <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
             <h3 className="text-sm font-semibold">Aging Report</h3>
             <Link
-              href="/billing/reports?type=aging"
+              href="/billing/aging"
               className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
             >
               View all <ArrowUpRight className="h-3 w-3" />
@@ -303,7 +304,7 @@ export function BillingOverviewClient({
                       {formatZAR(Number(inv.total))}
                     </span>
                     <span
-                      className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] sm:text-[10px] font-medium uppercase tracking-wider sm:tracking-normal sm:none ${
+                      className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] sm:text-[10px] font-medium uppercase tracking-wider sm:tracking-normal ${
                         STATUS_STYLES[inv.status] || 'bg-zinc-500/10 text-zinc-600'
                       }`}
                     >
@@ -363,6 +364,13 @@ export function BillingOverviewClient({
               description: 'Client account statements',
               color: 'bg-rose-500/10 text-rose-600',
               icon: ScrollText,
+            },
+            {
+              href: '/billing/aging',
+              label: 'AR Aging',
+              description: 'Aged receivables by client',
+              color: 'bg-orange-500/10 text-orange-600',
+              icon: Clock,
             },
             {
               href: '/billing/items',

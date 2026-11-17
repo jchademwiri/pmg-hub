@@ -13,6 +13,7 @@ import {
 } from '@/lib/audit-log';
 import { PaginatedLogPanel, PaginatedSessionsPanel } from './security-logs-client';
 
+export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Security Settings' };
 
 export default async function SecuritySettingsPage() {

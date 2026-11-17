@@ -14,7 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'PMG Client Portal',
+  title: {
+    default: 'PMG Client Portal',
+    template: '%s | PMG Client Portal',
+  },
   description: 'Playhouse Media Group Client Billing & Self-Service Portal',
 };
 

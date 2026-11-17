@@ -26,17 +26,17 @@ export default async function AssetDetailPage({ params }: Props) {
 
   return (
     <div className="flex flex-col gap-6 pb-32 lg:pb-0">
-      <SetPageLabel value="Asset Details" />
+      <SetPageLabel value={asset.name} />
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
+          <Button variant="ghost" size="sm" asChild>
             <Link href="/assets">
               <ChevronLeft className="size-4" />
               Back
             </Link>
           </Button>
-          <Separator orientation="vertical" className="h-5 hidden sm:block" />
+          <Separator orientation="vertical" className="h-5" />
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold">{asset.name}</h2>

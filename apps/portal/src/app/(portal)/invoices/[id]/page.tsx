@@ -32,30 +32,25 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  // Fetch division details
-  const [division] = await db
-    .select()
-    .from(divisions)
-    .where(eq(divisions.id, invoice.divisionId))
-    .limit(1);
-
-  const [divSettings] = await db
-    .select()
-    .from(divisionBillingSettings)
-    .where(eq(divisionBillingSettings.divisionId, invoice.divisionId))
-    .limit(1);
-
-  // Fetch line items
-  const lineItems = await db
-    .select()
-    .from(billingLineItems)
-    .where(
-      and(
-        eq(billingLineItems.documentType, 'invoice'),
-        eq(billingLineItems.documentId, invoice.id),
-      ),
-    )
-    .orderBy(billingLineItems.sortOrder);
+  // Fetch division details and line items in parallel
+  const [[division], [divSettings], lineItems] = await Promise.all([
+    db.select().from(divisions).where(eq(divisions.id, invoice.divisionId)).limit(1),
+    db
+      .select()
+      .from(divisionBillingSettings)
+      .where(eq(divisionBillingSettings.divisionId, invoice.divisionId))
+      .limit(1),
+    db
+      .select()
+      .from(billingLineItems)
+      .where(
+        and(
+          eq(billingLineItems.documentType, 'invoice'),
+          eq(billingLineItems.documentId, invoice.id),
+        ),
+      )
+      .orderBy(billingLineItems.sortOrder),
+  ]);
 
   return (
     <BillingDocumentView

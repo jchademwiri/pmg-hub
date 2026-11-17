@@ -42,11 +42,13 @@ import {
   Trash2,
   Ban,
   ExternalLink,
+  RotateCcw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 import { UniversalEmailDialog } from '@/components/billing/universal-email-dialog';
+import { CreditRefundDialog } from '@/components/billing/credit-refund-dialog';
 
 interface CreditNoteDetail {
   id: string;
@@ -85,7 +87,7 @@ interface Props {
   client: { id: string; name: string; email?: string | null } | null;
   division: { id: string; name: string } | null;
   creator: { name: string | null; email: string | null } | null;
-  originalInvoice: { documentNumber: string } | null;
+  originalInvoice: { id?: string; documentNumber: string } | null;
   applications: CreditAppDetail[];
   refunds: RefundDetail[];
 }
@@ -168,10 +170,13 @@ export function CreditNoteDetailClient({
     note.expiresAt ? note.expiresAt.split('T')[0] : '',
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [showRefundDialog, setShowRefundDialog] = useState(false);
 
   const canVoid =
     note.status !== 'void' && note.status !== 'fully_applied' && applications.length === 0;
   const canEdit = note.status !== 'void';
+  const canRefund =
+    note.status !== 'void' && note.status !== 'expired' && note.amountRemaining > 0 && !!client;
   const usedAmount = note.amount - note.amountRemaining;
   const totalRefunded = refunds.reduce((sum, r) => sum + r.amount, 0);
   const appliedRatio = note.amount > 0 ? (usedAmount / note.amount) * 100 : 0;
@@ -230,7 +235,7 @@ export function CreditNoteDetailClient({
       </Link>
 
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <Wallet className="size-5 text-primary" />
@@ -245,7 +250,7 @@ export function CreditNoteDetailClient({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {canEdit && (
             <Button
               variant="outline"
@@ -257,8 +262,19 @@ export function CreditNoteDetailClient({
               Edit
             </Button>
           )}
+          {canRefund && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setShowRefundDialog(true)}
+            >
+              <RotateCcw className="size-4" />
+              Refund
+            </Button>
+          )}
           <PrintButton label="Print" documentTitle={`Credit-Note-${note.documentNumber}`} />
-          <ExportPdfButton fileName={`CreditNote-${note.documentNumber}.pdf`} pdfUrl={pdfUrl} />
+          <ExportPdfButton fileName={`CreditNote-${note.documentNumber}`} pdfUrl={pdfUrl} />
           <UniversalEmailDialog
             documentId={note.id}
             documentNumber={note.documentNumber}
@@ -397,7 +413,18 @@ export function CreditNoteDetailClient({
             {originalInvoice && (
               <div>
                 <Label className="text-xs text-muted-foreground">Original Invoice</Label>
-                <p className="text-sm font-medium mt-0.5">{originalInvoice.documentNumber}</p>
+                <p className="text-sm font-medium mt-0.5">
+                  {'id' in originalInvoice && originalInvoice.id ? (
+                    <Link
+                      href={`/billing/invoices/${originalInvoice.id}`}
+                      className="text-primary hover:underline font-mono"
+                    >
+                      {originalInvoice.documentNumber}
+                    </Link>
+                  ) : (
+                    originalInvoice.documentNumber
+                  )}
+                </p>
               </div>
             )}
             <div>
@@ -522,6 +549,21 @@ export function CreditNoteDetailClient({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Refund Dialog */}
+      {client && (
+        <CreditRefundDialog
+          open={showRefundDialog}
+          onOpenChange={setShowRefundDialog}
+          creditNote={{
+            id: note.id,
+            documentNumber: note.documentNumber,
+            amountRemaining: note.amountRemaining,
+            clientId: client.id,
+            clientName: client.name,
+          }}
+        />
+      )}
     </div>
   );
 }
