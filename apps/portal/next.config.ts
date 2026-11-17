@@ -31,6 +31,7 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
+    agentUpgrade: 'security',
     optimizePackageImports: ['lucide-react', 'radix-ui', '@radix-ui/react-select'],
     serverActions: {
       allowedOrigins: [
