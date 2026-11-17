@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { ExpenseAddForm } from '@/components/expenses/expense-add-form';
 import { DownloadReportDialog } from '@/components/reports/download-report-dialog';
+import { useOpenOnNewParam } from '@/hooks/use-open-on-new-param';
 
 interface ExpensesHeaderProps {
   divisions: { id: string; name: string }[];
@@ -37,6 +38,7 @@ export function ExpensesHeader({
   children,
 }: ExpensesHeaderProps) {
   const [isOpen, setIsOpen] = React.useState(false);
+  useOpenOnNewParam(setIsOpen);
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

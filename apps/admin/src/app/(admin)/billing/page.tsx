@@ -3,11 +3,9 @@ import {
   getAllInvoices,
   getAgingReport,
   getAllItems,
-  getClientsWithBillingActivity,
   getAllQuotations,
   getAllIncome,
 } from '@pmg/db';
-import { SetPageTotal } from '@/components/navigation/page-header-context';
 import { getSASTParts } from '@/lib/format';
 import { BillingOverviewClient } from './billing-overview-client';
 
@@ -25,7 +23,6 @@ export default async function BillingOverviewPage() {
     lfyInvoiceData,
     currentMonthInvoiceData,
     aging,
-    clients,
     currentMonthPayments,
   ] = await Promise.all([
     getAllInvoices({ excludeDraftVoid: true }, { page: 1, pageSize: 5 }),
@@ -36,14 +33,11 @@ export default async function BillingOverviewPage() {
     getAllInvoices({ year: lastFinancialYear, excludeDraftVoid: true }, { page: 1, pageSize: 1 }),
     getAllInvoices({ monthPeriod: 'current', excludeDraftVoid: true }, { page: 1, pageSize: 1 }),
     getAgingReport(),
-    getClientsWithBillingActivity(),
     getAllIncome({ monthPeriod: 'current' }),
   ]);
 
   return (
     <div className="flex flex-col gap-6">
-      <SetPageTotal value={`${invoiceData.total} invoices, ${clients.length} clients`} />
-
       <div>
         <h2 className="text-lg font-semibold">Billing Overview</h2>
         <p className="text-sm text-muted-foreground">
