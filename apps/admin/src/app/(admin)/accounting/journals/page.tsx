@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { getJournalEntries, getAllAccountingPeriods, getJournalMonthlySummaries } from '@pmg/db';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookOpen, CheckCircle2, FileEdit } from 'lucide-react';
@@ -52,9 +53,9 @@ export default async function JournalsPage({
           </p>
         </div>
         <Button size="sm" asChild>
-          <a href="/accounting/journals/new">
+          <Link href="/accounting/journals/new">
             <Plus className="mr-2 h-4 w-4" /> New Entry
-          </a>
+          </Link>
         </Button>
       </div>
 

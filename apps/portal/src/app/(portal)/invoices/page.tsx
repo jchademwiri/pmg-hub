@@ -2,8 +2,8 @@ import * as React from 'react';
 import { getPortalSessionOrRedirect } from '@/lib/portal-session';
 import { getDb, invoices, paymentAllocations, creditApplications } from '@pmg/db';
 import { eq, and, ne, desc, inArray } from 'drizzle-orm';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, Eye } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { FileText } from 'lucide-react';
 import Link from 'next/link';
 
 function formatCurrency(val: string | number) {
@@ -195,10 +195,12 @@ export default async function InvoicesPage({ searchParams }: PageProps) {
                               ? 'bg-emerald-500/10 text-emerald-400'
                               : inv.status === 'overdue'
                                 ? 'bg-red-500/10 text-red-400'
-                                : 'bg-blue-500/10 text-blue-400'
+                                : inv.status === 'partially_paid'
+                                  ? 'bg-amber-500/10 text-amber-400'
+                                  : 'bg-blue-500/10 text-blue-400'
                           }`}
                         >
-                          {inv.status}
+                          {inv.status.replace('_', ' ')}
                         </span>
                       </td>
                     </tr>
@@ -240,10 +242,12 @@ export default async function InvoicesPage({ searchParams }: PageProps) {
                             ? 'bg-emerald-500/10 text-emerald-400'
                             : inv.status === 'overdue'
                               ? 'bg-red-500/10 text-red-400'
-                              : 'bg-blue-500/10 text-blue-400'
+                              : inv.status === 'partially_paid'
+                                ? 'bg-amber-500/10 text-amber-400'
+                                : 'bg-blue-500/10 text-blue-400'
                         }`}
                       >
-                        {inv.status}
+                        {inv.status.replace('_', ' ')}
                       </span>
                     </div>
                   </Link>

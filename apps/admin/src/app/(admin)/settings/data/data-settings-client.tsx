@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   CloudUpload,
@@ -98,10 +98,10 @@ export function DataExportList() {
             </div>
           </div>
           <Button variant="outline" size="sm" className="shrink-0" asChild>
-            <Link href={opt.href}>
+            <a href={opt.href} download>
               <Download data-icon="inline-start" />
               Export
-            </Link>
+            </a>
           </Button>
         </div>
       ))}
@@ -116,6 +116,7 @@ export function DatabaseBackupPanel({
   retentionDays,
   backups,
 }: DataSettingsClientProps) {
+  const router = useRouter();
   const [isBackupPending, startBackupTransition] = useTransition();
   const [isCleanupPending, startCleanupTransition] = useTransition();
   const [isRestorePending, startRestoreTransition] = useTransition();
@@ -134,6 +135,7 @@ export function DatabaseBackupPanel({
       toast.success('Database backup uploaded to Cloudflare R2.', {
         description: `${result.tableCount} tables, ${formatBytes(result.sizeBytes ?? 0)}`,
       });
+      router.refresh();
     });
   }
 
@@ -148,6 +150,7 @@ export function DatabaseBackupPanel({
       toast.success('Old database backups cleaned up.', {
         description: `${result.deletedCount ?? 0} files older than ${result.retentionDays} days deleted.`,
       });
+      router.refresh();
     });
   }
 

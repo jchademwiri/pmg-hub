@@ -50,8 +50,17 @@ export function ExpenseSnapshot({
   );
 
   const totalExpenses = expensesByDivision.reduce((sum, d) => sum + d.total, 0);
+  const totalRevenue = names.reduce((sum, name) => sum + (invoicedByName.get(name)?.total ?? 0), 0);
+  const totalCashReceipts = names.reduce(
+    (sum, name) => sum + (receiptsByName.get(name)?.total ?? 0),
+    0,
+  );
+  const totalAR = names.reduce((sum, name) => sum + (arByName.get(name)?.total ?? 0), 0);
 
-  if (names.length === 0 || totalExpenses === 0) {
+  if (
+    names.length === 0 ||
+    (totalExpenses === 0 && totalRevenue === 0 && totalCashReceipts === 0 && totalAR === 0)
+  ) {
     return (
       <DivisionBreakdownCard
         title={TITLE}
@@ -62,14 +71,8 @@ export function ExpenseSnapshot({
     );
   }
 
-  const totalRevenue = names.reduce((sum, name) => sum + (invoicedByName.get(name)?.total ?? 0), 0);
-  const totalCashReceipts = names.reduce(
-    (sum, name) => sum + (receiptsByName.get(name)?.total ?? 0),
-    0,
-  );
   const totalNet = totalCashReceipts - totalExpenses;
   const totalPmgShare = Math.max(0, totalNet) * pmgShareRate;
-  const totalAR = names.reduce((sum, name) => sum + (arByName.get(name)?.total ?? 0), 0);
   // Profit is revenue-based (accrual): invoiced revenue − expenses. The cash-based
   // equivalent is already shown as "Net" (cash receipts − expenses).
   const totalProfit = totalRevenue - totalExpenses;

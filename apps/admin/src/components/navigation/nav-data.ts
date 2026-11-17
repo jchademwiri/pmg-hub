@@ -166,11 +166,14 @@ for (const group of GROUPS) {
 // Extra routes that exist in the app but are not sidebar items
 const EXTRA_LABELS: Record<string, string> = {
   // Billing
+  '/billing/quotes/new': 'New Quotation',
+  '/billing/invoices/new': 'New Invoice',
   '/billing/payments/add': 'Record Payment',
 
   // Relationships
 
   // Projects
+  '/projects/new': 'New Project',
   '/projects/list': 'Schedule List',
   '/projects/timeline': 'Timeline',
 
@@ -194,7 +197,12 @@ const EXTRA_LABELS: Record<string, string> = {
 
   // Settings
   '/settings/organisation': 'Organisation',
-  '/settings/billing': 'Billing Settings',
+  '/settings/billing': 'Document Defaults',
+  '/settings/billing/banking': 'Banking Accounts',
+  '/settings/billing/email': 'Email Delivery',
+  '/settings/billing/templates': 'Document Templates',
+  '/settings/billing/statements': 'Automated Statements',
+  '/settings/billing/credit': 'Credit Policy',
   '/settings/users': 'Users',
   '/settings/users/invite': 'Invite User',
   '/settings/security': 'Security',

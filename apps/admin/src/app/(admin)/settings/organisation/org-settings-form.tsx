@@ -70,7 +70,7 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
         </div>
 
         {/* Company Identity Tab */}
-        <TabsContent value="identity" className="mt-4">
+        <TabsContent value="identity" forceMount className="mt-4 data-[state=inactive]:hidden">
           <SettingsSection
             title="Company Identity"
             description="Your registered company name and legal identifiers."
@@ -108,7 +108,7 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
         </TabsContent>
 
         {/* Contact Details Tab */}
-        <TabsContent value="contact" className="mt-4">
+        <TabsContent value="contact" forceMount className="mt-4 data-[state=inactive]:hidden">
           <SettingsSection
             title="Contact Details"
             description="How clients can reach you. Appears in document footers."
@@ -147,7 +147,7 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
         </TabsContent>
 
         {/* Address Tab */}
-        <TabsContent value="address" className="mt-4">
+        <TabsContent value="address" forceMount className="mt-4 data-[state=inactive]:hidden">
           <SettingsSection
             title="Address"
             description="Physical or postal address printed on documents."
@@ -202,7 +202,7 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
         </TabsContent>
 
         {/* Brand Logo Tab */}
-        <TabsContent value="logo" className="mt-4">
+        <TabsContent value="logo" forceMount className="mt-4 data-[state=inactive]:hidden">
           <SettingsSection
             title="Logo"
             description="Displayed on invoices, quotes, and statements."

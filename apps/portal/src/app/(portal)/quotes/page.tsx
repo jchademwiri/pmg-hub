@@ -3,7 +3,7 @@ import { getPortalSessionOrRedirect } from '@/lib/portal-session';
 import { getDb, quotations } from '@pmg/db';
 import { eq, and, ne, desc } from 'drizzle-orm';
 import { Card, CardContent } from '@/components/ui/card';
-import { FileSpreadsheet, Eye } from 'lucide-react';
+import { FileSpreadsheet } from 'lucide-react';
 import Link from 'next/link';
 
 function formatCurrency(val: string | number) {

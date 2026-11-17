@@ -34,13 +34,12 @@ export function PageHeaderProvider({ children }: { children: React.ReactNode }) 
     setCustomLabelValue(v);
   }, []);
 
-  return (
-    <PageHeaderContext.Provider
-      value={{ total, totalVariant, setTotal, customLabel, setCustomLabel }}
-    >
-      {children}
-    </PageHeaderContext.Provider>
+  const contextValue = React.useMemo(
+    () => ({ total, totalVariant, setTotal, customLabel, setCustomLabel }),
+    [total, totalVariant, setTotal, customLabel, setCustomLabel],
   );
+
+  return <PageHeaderContext.Provider value={contextValue}>{children}</PageHeaderContext.Provider>;
 }
 
 export function usePageHeader() {

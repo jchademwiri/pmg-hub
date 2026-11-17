@@ -16,18 +16,20 @@ export function BottomNav() {
 
   // Hide on detail/form pages to allow Sticky Action Bars to anchor to the bottom
   const isDeepPage = pathname.match(
-    /\/(new|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/i,
+    /\/(new|add|edit|invite|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})(\/|$)/i,
   );
   if (isDeepPage) return null;
 
   return (
-    <div
+    <nav
+      aria-label="Mobile bottom navigation"
       className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md print:hidden"
       style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}
     >
       <div className="grid grid-cols-4 h-16 px-2 w-full overflow-hidden">
         <Link
           href="/dashboard"
+          aria-current={pathname === '/dashboard' ? 'page' : undefined}
           className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname === '/dashboard' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
         >
           <LayoutDashboard className="size-5" />
@@ -35,6 +37,7 @@ export function BottomNav() {
         </Link>
         <Link
           href="/relationships/clients"
+          aria-current={pathname.startsWith('/relationships/clients') ? 'page' : undefined}
           className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname.startsWith('/relationships/clients') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
         >
           <Users className="size-5" />
@@ -42,12 +45,15 @@ export function BottomNav() {
         </Link>
         <Link
           href="/billing"
+          aria-current={pathname.startsWith('/billing') ? 'page' : undefined}
           className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname.startsWith('/billing') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
         >
           <Receipt className="size-5" />
           <span className="text-[10px] font-medium">Billing</span>
         </Link>
         <button
+          type="button"
+          aria-expanded={openMobile}
           onClick={() => setOpenMobile(!openMobile)}
           className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${openMobile ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
         >
@@ -55,6 +61,6 @@ export function BottomNav() {
           <span className="text-[10px] font-medium">More</span>
         </button>
       </div>
-    </div>
+    </nav>
   );
 }

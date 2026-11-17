@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useTransition, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { AlertCircle, CheckCircle2, Landmark, Mail, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -53,7 +54,13 @@ function divisionPrefix(name: string): string {
     .join('');
 }
 
-function HiddenPreserveInputs({ settings }: { settings: DivisionBillingSettings | null }) {
+function HiddenPreserveInputs({
+  settings,
+  excludeFields = [],
+}: {
+  settings: DivisionBillingSettings | null;
+  excludeFields?: string[];
+}) {
   if (!settings) return null;
   return (
     <>
@@ -94,8 +101,17 @@ function HiddenPreserveInputs({ settings }: { settings: DivisionBillingSettings 
       {settings.creditExpiryMonths != null ? (
         <input type="hidden" name="creditExpiryMonths" value={settings.creditExpiryMonths} />
       ) : null}
-      {settings.autoApplyCredits ? (
+      {!excludeFields.includes('autoApplyCredits') && settings.autoApplyCredits ? (
         <input type="hidden" name="autoApplyCredits" value="on" />
+      ) : null}
+      {!excludeFields.includes('autoSendStatements') && settings.autoSendStatements ? (
+        <input type="hidden" name="autoSendStatements" value="on" />
+      ) : null}
+      {!excludeFields.includes('statementCycleDay') && settings.statementCycleDay != null ? (
+        <input type="hidden" name="statementCycleDay" value={settings.statementCycleDay} />
+      ) : null}
+      {!excludeFields.includes('statementType') && settings.statementType ? (
+        <input type="hidden" name="statementType" value={settings.statementType} />
       ) : null}
     </>
   );
@@ -356,7 +372,8 @@ export function BillingTemplatesClient({
   const [activeId, setActiveId] = useState<string>(divisions[0]?.id ?? '');
   const activeDivision = divisions.find((d) => d.id === activeId) ?? divisions[0];
 
-  if (!activeDivision) return null;
+  if (!activeDivision)
+    return <EmptyState title="No divisions found" message="Add a division first." />;
 
   return (
     <div className="flex flex-col gap-6">
@@ -421,7 +438,7 @@ function DivisionCreditForm({ division, currentSettings, saveAction }: DivisionB
       onChange={() => setIsDirty(true)}
       className="flex flex-col gap-6"
     >
-      <HiddenPreserveInputs settings={s} />
+      <HiddenPreserveInputs settings={s} excludeFields={['autoApplyCredits']} />
 
       <SettingsSection
         title={`Credit Rules & Expiry for ${division.name}`}
@@ -491,7 +508,8 @@ export function BillingCreditClient({
   const [activeId, setActiveId] = useState<string>(divisions[0]?.id ?? '');
   const activeDivision = divisions.find((d) => d.id === activeId) ?? divisions[0];
 
-  if (!activeDivision) return null;
+  if (!activeDivision)
+    return <EmptyState title="No divisions found" message="Add a division first." />;
 
   return (
     <div className="flex flex-col gap-6">
@@ -638,11 +656,13 @@ export function BillingEmailClient({
   allSettings,
   saveAction,
 }: BillingSettingsClientProps) {
+  const router = useRouter();
   const [activeId, setActiveId] = useState<string>(divisions[0]?.id ?? '');
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const activeDivision = divisions.find((d) => d.id === activeId) ?? divisions[0];
 
-  if (!activeDivision) return null;
+  if (!activeDivision)
+    return <EmptyState title="No divisions found" message="Add a division first." />;
 
   return (
     <div className="flex flex-col gap-4">
@@ -711,7 +731,10 @@ export function BillingEmailClient({
                   division={division}
                   currentSettings={allSettings[division.id] ?? null}
                   saveAction={saveAction}
-                  onSuccess={() => setIsEditing(false)}
+                  onSuccess={() => {
+                    setIsEditing(false);
+                    router.refresh();
+                  }}
                 />
               </TabsContent>
             ))}
@@ -739,6 +762,7 @@ function BankingMatrixRow({
   onStartEdit: () => void;
   onCancelEdit: () => void;
 }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [bankName, setBankName] = useState<string>(settings?.bankName ?? '');
   const [bankAccountName, setBankAccountName] = useState<string>(settings?.bankAccountName ?? '');
@@ -746,6 +770,14 @@ function BankingMatrixRow({
     settings?.bankAccountNumber ?? '',
   );
   const [bankBranchCode, setBankBranchCode] = useState<string>(settings?.bankBranchCode ?? '');
+
+  function handleCancel() {
+    setBankName(settings?.bankName ?? '');
+    setBankAccountName(settings?.bankAccountName ?? '');
+    setBankAccountNumber(settings?.bankAccountNumber ?? '');
+    setBankBranchCode(settings?.bankBranchCode ?? '');
+    onCancelEdit();
+  }
 
   function handleSave() {
     startTransition(async () => {
@@ -767,6 +799,10 @@ function BankingMatrixRow({
       if (settings?.creditExpiryMonths != null)
         fd.append('creditExpiryMonths', String(settings.creditExpiryMonths));
       if (settings?.autoApplyCredits) fd.append('autoApplyCredits', 'on');
+      if (settings?.autoSendStatements) fd.append('autoSendStatements', 'on');
+      if (settings?.statementCycleDay != null)
+        fd.append('statementCycleDay', String(settings.statementCycleDay));
+      if (settings?.statementType) fd.append('statementType', settings.statementType);
 
       const res = await saveAction(division.id, fd);
       if (res.error) {
@@ -774,6 +810,7 @@ function BankingMatrixRow({
       } else {
         toast.success(`${division.name} banking details saved.`);
         onCancelEdit();
+        router.refresh();
       }
     });
   }
@@ -784,6 +821,7 @@ function BankingMatrixRow({
         <TableCell className="py-2.5 pl-4 font-medium align-middle">{division.name}</TableCell>
         <TableCell className="py-2.5">
           <Input
+            aria-label={`Bank Name for ${division.name}`}
             value={bankName}
             onChange={(e) => setBankName(e.target.value)}
             placeholder="e.g. Capitec"
@@ -793,6 +831,7 @@ function BankingMatrixRow({
         </TableCell>
         <TableCell className="py-2.5">
           <Input
+            aria-label={`Account Name for ${division.name}`}
             value={bankAccountName}
             onChange={(e) => setBankAccountName(e.target.value)}
             placeholder="e.g. PMG Solutions"
@@ -802,6 +841,7 @@ function BankingMatrixRow({
         </TableCell>
         <TableCell className="py-2.5">
           <Input
+            aria-label={`Account Number for ${division.name}`}
             value={bankAccountNumber}
             onChange={(e) => setBankAccountNumber(e.target.value)}
             placeholder="e.g. 2520318607"
@@ -811,6 +851,7 @@ function BankingMatrixRow({
         </TableCell>
         <TableCell className="py-2.5">
           <Input
+            aria-label={`Branch Code for ${division.name}`}
             value={bankBranchCode}
             onChange={(e) => setBankBranchCode(e.target.value)}
             placeholder="e.g. 470010"
@@ -832,7 +873,7 @@ function BankingMatrixRow({
             <Button
               variant="ghost"
               size="sm"
-              onClick={onCancelEdit}
+              onClick={handleCancel}
               disabled={isPending}
               className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
             >

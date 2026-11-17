@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -20,6 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { recordCashTransfer } from '@/app/actions/accounting';
+import { getSASTToday } from '@/lib/format';
 import { Loader2, ArrowRightLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -36,6 +38,7 @@ export function CashTransferDialog({
   accounts,
   suggestedAmount,
 }: CashTransferDialogProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState('');
   const [fromAccountId, setFromAccountId] = useState('');
@@ -71,7 +74,7 @@ export function CashTransferDialog({
 
     setLoading(true);
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getSASTToday();
       const res = await recordCashTransfer({
         fromAccountId: defaultFrom,
         toAccountId: defaultTo,
@@ -86,6 +89,7 @@ export function CashTransferDialog({
         toast.success('Cash transfer recorded successfully.');
         onOpenChange(false);
         setAmount('');
+        router.refresh();
       }
     } catch (err) {
       toast.error('Failed to record transfer.');

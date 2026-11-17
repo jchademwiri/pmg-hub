@@ -168,24 +168,35 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
     Promise.all([
       getSnapshotArSummary(selectedSnapshot.period),
       previousPeriod ? getSnapshotArSummary(previousPeriod) : Promise.resolve(null),
-    ]).then(([selectedResult, previousResult]) => {
-      if (cancelled) return;
-      if (selectedResult && 'error' in selectedResult) {
+    ])
+      .then(([selectedResult, previousResult]) => {
+        if (cancelled) return;
+        if (selectedResult && 'error' in selectedResult) {
+          setArSummary({
+            selected: null,
+            previous: null,
+            loading: false,
+            error: selectedResult.error,
+          });
+          return;
+        }
         setArSummary({
-          selected: null,
-          previous: null,
+          selected: selectedResult,
+          previous: previousResult && !('error' in previousResult) ? previousResult : null,
           loading: false,
-          error: selectedResult.error,
+          error: null,
         });
-        return;
-      }
-      setArSummary({
-        selected: selectedResult,
-        previous: previousResult && !('error' in previousResult) ? previousResult : null,
-        loading: false,
-        error: null,
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setArSummary({
+            selected: null,
+            previous: null,
+            loading: false,
+            error: 'Failed to load AR summary.',
+          });
+        }
       });
-    });
 
     return () => {
       cancelled = true;

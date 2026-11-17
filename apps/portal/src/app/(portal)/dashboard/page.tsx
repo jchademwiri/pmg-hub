@@ -39,43 +39,36 @@ export default async function DashboardPage() {
   const { client } = await getPortalSessionOrRedirect();
   const db = getDb();
 
-  // Fetch invoices (excluding drafts and voided)
-  const allInvoices = await db
-    .select()
-    .from(invoices)
-    .where(
-      and(
-        eq(invoices.clientId, client.id),
-        ne(invoices.status, 'draft'),
-        ne(invoices.status, 'void'),
-      ),
-    )
-    .orderBy(desc(invoices.invoiceDate));
-
-  // Fetch quotes (excluding drafts)
-  const allQuotes = await db
-    .select()
-    .from(quotations)
-    .where(and(eq(quotations.clientId, client.id), ne(quotations.status, 'draft')))
-    .orderBy(desc(quotations.quoteDate));
-
-  // Fetch active projects for client
-  const activeProjects = await db
-    .select()
-    .from(projectScheduleEntries)
-    .where(
-      and(
-        eq(projectScheduleEntries.clientId, client.id),
-        inArray(projectScheduleEntries.status, ['planned', 'in_progress']),
-      ),
-    )
-    .orderBy(desc(projectScheduleEntries.updatedAt));
-
-  // Fetch compliance documents
-  const complianceDocs = await db
-    .select()
-    .from(complianceDocuments)
-    .where(eq(complianceDocuments.clientId, client.id));
+  // Fetch invoices, quotes, active projects, and compliance documents in parallel
+  const [allInvoices, allQuotes, activeProjects, complianceDocs] = await Promise.all([
+    db
+      .select()
+      .from(invoices)
+      .where(
+        and(
+          eq(invoices.clientId, client.id),
+          ne(invoices.status, 'draft'),
+          ne(invoices.status, 'void'),
+        ),
+      )
+      .orderBy(desc(invoices.invoiceDate)),
+    db
+      .select()
+      .from(quotations)
+      .where(and(eq(quotations.clientId, client.id), ne(quotations.status, 'draft')))
+      .orderBy(desc(quotations.quoteDate)),
+    db
+      .select()
+      .from(projectScheduleEntries)
+      .where(
+        and(
+          eq(projectScheduleEntries.clientId, client.id),
+          inArray(projectScheduleEntries.status, ['planned', 'in_progress']),
+        ),
+      )
+      .orderBy(desc(projectScheduleEntries.updatedAt)),
+    db.select().from(complianceDocuments).where(eq(complianceDocuments.clientId, client.id)),
+  ]);
 
   // Fetch payment allocations and credit applications for these invoices to calculate exact paid/due balances
   const invoiceIds = allInvoices.map((inv) => inv.id);
@@ -301,14 +294,17 @@ export default async function DashboardPage() {
             <div className="flex items-center justify-between text-xs mb-1.5">
               <span className="text-white font-medium">Payment Progress</span>
               <span className="font-bold text-emerald-400">
-                {totalInvoiced > 0 ? Math.round((paidToDate / totalInvoiced) * 100) : 100}% Paid
+                {totalInvoiced > 0
+                  ? Math.min(100, Math.round((paidToDate / totalInvoiced) * 100))
+                  : 100}
+                % Paid
               </span>
             </div>
             <div className="h-1.5 w-full bg-white/[0.03] rounded-full overflow-hidden border border-white/5">
               <div
                 className="h-full bg-gradient-to-r from-emerald-600 to-teal-400 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)] transition-all duration-500"
                 style={{
-                  width: `${totalInvoiced > 0 ? (paidToDate / totalInvoiced) * 100 : 100}%`,
+                  width: `${totalInvoiced > 0 ? Math.min(100, (paidToDate / totalInvoiced) * 100) : 100}%`,
                 }}
               />
             </div>
@@ -362,10 +358,12 @@ export default async function DashboardPage() {
                             ? 'bg-emerald-500/10 text-emerald-400'
                             : inv.status === 'overdue'
                               ? 'bg-red-500/10 text-red-400'
-                              : 'bg-blue-500/10 text-blue-400'
+                              : inv.status === 'partially_paid'
+                                ? 'bg-amber-500/10 text-amber-400'
+                                : 'bg-blue-500/10 text-blue-400'
                         }`}
                       >
-                        {inv.status}
+                        {inv.status.replace('_', ' ')}
                       </span>
                     </div>
                   </Link>

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 import { getPortalSession } from '@/lib/portal-session';
-import { getDb, clients, invoices, quotations, eq, and } from '@pmg/db';
+import { getDb, invoices, quotations, eq, and } from '@pmg/db';
 import { generateBillingPdf } from '@/lib/server-billing-pdf';
 
 type PdfType = 'invoice' | 'quote' | 'statement';

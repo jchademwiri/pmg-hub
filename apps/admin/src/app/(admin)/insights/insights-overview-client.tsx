@@ -1,7 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { TrendingUp, BarChart3, Camera, Shield, ArrowRight, Sparkles } from 'lucide-react';
+import {
+  TrendingUp,
+  BarChart3,
+  Camera,
+  Shield,
+  ArrowRight,
+  Sparkles,
+  FileText,
+} from 'lucide-react';
 import { AnalysisKpiStrip } from '@/components/analysis/analysis-kpi-strip';
 
 interface InsightsOverviewClientProps {
@@ -60,6 +68,16 @@ export function InsightsOverviewClient({
       badge: 'Client Health',
       color: 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400',
       accent: 'border-amber-500/20 hover:border-amber-500/40',
+    },
+    {
+      href: '/insights/financial-reports',
+      title: 'Financial Reports Workbench',
+      description:
+        'Generate CIPC Annual Financial Statements, Balance Sheets, Cash Flows, and Ledger Packs.',
+      icon: FileText,
+      badge: 'AFS & Audit',
+      color: 'bg-cyan-500/10 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-400',
+      accent: 'border-cyan-500/20 hover:border-cyan-500/40',
     },
   ];
 

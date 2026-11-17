@@ -46,8 +46,9 @@ export function JournalsTable({ entries, postAction, voidAction }: JournalsTable
 
   async function handleVoid(id: string) {
     const reason = prompt('Reason for voiding this entry (optional):');
+    if (reason === null) return;
     setProcessing(id);
-    const result = await voidAction(id, reason ?? '');
+    const result = await voidAction(id, reason);
     setProcessing(null);
     if (result.error) {
       toast.error(result.error);
@@ -112,6 +113,7 @@ export function JournalsTable({ entries, postAction, voidAction }: JournalsTable
                             onClick={() => handlePost(entry.id)}
                             disabled={processing === entry.id}
                             title="Post entry"
+                            aria-label="Post entry"
                           >
                             <Send className="h-3.5 w-3.5 text-emerald-600" />
                           </Button>
@@ -121,6 +123,7 @@ export function JournalsTable({ entries, postAction, voidAction }: JournalsTable
                             onClick={() => handleVoid(entry.id)}
                             disabled={processing === entry.id}
                             title="Void entry"
+                            aria-label="Void entry"
                           >
                             <Ban className="h-3.5 w-3.5 text-destructive" />
                           </Button>

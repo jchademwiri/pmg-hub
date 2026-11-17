@@ -196,7 +196,7 @@ export function BillingDocumentView({
           </div>
 
           {/* Line Items Table */}
-          <div className="py-8">
+          <div className="py-8 overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-white/5 print:border-black/20 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/75 print:text-black/60">

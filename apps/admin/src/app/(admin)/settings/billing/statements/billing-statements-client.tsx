@@ -129,7 +129,7 @@ function DivisionStatementsForm({
 
       <SettingsSection
         title={`Automated Statements for ${division.name}`}
-        description="Configure rules for automatically emailing monthly account statements to clients who have an outstanding balance. Note: Clients with a $0 balance are automatically skipped."
+        description="Configure rules for automatically emailing monthly account statements to clients who have an outstanding balance. Note: Clients with a R0 balance are automatically skipped."
       >
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <Field orientation="horizontal" className="items-end pb-1 sm:col-span-2">
@@ -149,6 +149,13 @@ function DivisionStatementsForm({
               </p>
             </FieldContent>
           </Field>
+
+          {!autoSendStatements && (
+            <>
+              <input type="hidden" name="statementCycleDay" value={statementCycleDay} />
+              <input type="hidden" name="statementType" value={statementType} />
+            </>
+          )}
 
           {autoSendStatements && (
             <>

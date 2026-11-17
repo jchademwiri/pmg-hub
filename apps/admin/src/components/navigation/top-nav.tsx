@@ -42,12 +42,30 @@ function getParentGroup(pathname: string): { label: string; href: string } | nul
     }
   }
 
-  // Fallback for sub-routes of combined accounting prefix (e.g. /accounting/* -> Finance)
-  if (segments[0] === 'accounting') {
+  // Fallback for sub-routes of combined finance/accounting/assets/savings prefix
+  if (
+    segments[0] === 'accounting' ||
+    segments[0] === 'finance' ||
+    segments[0] === 'assets' ||
+    segments[0] === 'savings'
+  ) {
     const financeGroup = GROUPS.find((g) => g.key === 'finance');
     if (financeGroup) {
       return { label: financeGroup.label, href: financeGroup.items[0].url };
     }
+  }
+
+  // Fallback for sub-routes of insights not listed directly in sidebar items
+  if (segments[0] === 'insights') {
+    const insightsGroup = GROUPS.find((g) => g.key === 'insights');
+    if (insightsGroup) {
+      return { label: insightsGroup.label, href: insightsGroup.items[0].url };
+    }
+  }
+
+  // Fallback for sub-routes of settings
+  if (segments[0] === 'settings') {
+    return { label: 'Settings', href: '/settings' };
   }
 
   return null;
@@ -96,6 +114,7 @@ export function TopNav() {
                 <BreadcrumbItem className="md:hidden">
                   <BreadcrumbLink
                     href={parent.href}
+                    aria-label={`Back to ${parent.label}`}
                     className="flex items-center text-muted-foreground hover:text-foreground transition-colors -ml-1"
                   >
                     <ChevronLeft className="size-5" />

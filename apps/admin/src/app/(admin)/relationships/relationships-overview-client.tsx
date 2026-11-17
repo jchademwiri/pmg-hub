@@ -272,6 +272,24 @@ export function RelationshipsOverviewClient({
               description: 'Business division management',
               color: 'bg-violet-500/10 text-violet-600',
             },
+            {
+              href: '/relationships/onboarding',
+              label: 'Onboarding',
+              description: 'Review client self-onboarding',
+              color: 'bg-emerald-500/10 text-emerald-600',
+            },
+            {
+              href: '/insights/compliance-radar',
+              label: 'Compliance Radar',
+              description: 'Monitor compliance expirations',
+              color: 'bg-rose-500/10 text-rose-600',
+            },
+            {
+              href: '/documents',
+              label: 'Public Documents',
+              description: 'SBD forms & public downloads',
+              color: 'bg-cyan-500/10 text-cyan-600',
+            },
           ].map((link) => (
             <Link
               key={link.href}

@@ -128,7 +128,7 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
     }
 
     return { timelineDays: days, minDate: start, totalDays: total };
-  }, [projects]);
+  }, [activeProjects]);
 
   return (
     <div className="space-y-6">
@@ -342,10 +342,6 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
                           entry.startDate,
                         );
                         const workDays = daysBetween(entry.startDate, entry.targetCompletionDate);
-                        const status = STATUS_CONFIG[entry.status] || {
-                          label: entry.status,
-                          className: '',
-                        };
                         const progress = progressMap[entry.id] || { total: 0, completed: 0 };
                         const percent =
                           progress.total > 0

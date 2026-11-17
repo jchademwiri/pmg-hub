@@ -49,62 +49,54 @@ export default async function CreditNoteDetailPage({
 
   if (!note) notFound();
 
-  // Fetch client, division, creator
-  const [client] = await db
-    .select({
-      id: clients.id,
-      name: clients.name,
-      businessName: clients.businessName,
-      email: clients.email,
-    })
-    .from(clients)
-    .where(eq(clients.id, note.clientId))
-    .limit(1);
-
-  const [division] = await db
-    .select({ id: divisions.id, name: divisions.name })
-    .from(divisions)
-    .where(eq(divisions.id, note.divisionId))
-    .limit(1);
-
-  const [creator] = await db
-    .select({ name: user.name, email: user.email })
-    .from(user)
-    .where(eq(user.id, note.createdBy))
-    .limit(1);
-
-  // Fetch applications (which invoices this credit was applied to)
-  const apps = await db
-    .select({
-      id: creditApplications.id,
-      amount: creditApplications.amount,
-      appliedAt: creditApplications.appliedAt,
-      invoiceId: creditApplications.invoiceId,
-      invoiceNumber: invoices.documentNumber,
-      invoiceStatus: invoices.status,
-    })
-    .from(creditApplications)
-    .innerJoin(invoices, eq(invoices.id, creditApplications.invoiceId))
-    .where(eq(creditApplications.creditNoteId, id))
-    .orderBy(desc(creditApplications.appliedAt));
-
-  // Fetch refunds
-  const refunds = await db
-    .select()
-    .from(creditRefunds)
-    .where(eq(creditRefunds.creditNoteId, id))
-    .orderBy(desc(creditRefunds.createdAt));
-
-  // Fetch original invoice if linked
-  let originalInvoice: { documentNumber: string } | null = null;
-  if (note.originalInvoiceId) {
-    const [inv] = await db
-      .select({ documentNumber: invoices.documentNumber })
-      .from(invoices)
-      .where(eq(invoices.id, note.originalInvoiceId))
-      .limit(1);
-    originalInvoice = inv ?? null;
-  }
+  // Fetch client, division, creator, applications, refunds, and original invoice in parallel
+  const [[client], [division], [creator], apps, refunds, [originalInvoice]] = await Promise.all([
+    db
+      .select({
+        id: clients.id,
+        name: clients.name,
+        businessName: clients.businessName,
+        email: clients.email,
+      })
+      .from(clients)
+      .where(eq(clients.id, note.clientId))
+      .limit(1),
+    db
+      .select({ id: divisions.id, name: divisions.name })
+      .from(divisions)
+      .where(eq(divisions.id, note.divisionId))
+      .limit(1),
+    db
+      .select({ name: user.name, email: user.email })
+      .from(user)
+      .where(eq(user.id, note.createdBy))
+      .limit(1),
+    db
+      .select({
+        id: creditApplications.id,
+        amount: creditApplications.amount,
+        appliedAt: creditApplications.appliedAt,
+        invoiceId: creditApplications.invoiceId,
+        invoiceNumber: invoices.documentNumber,
+        invoiceStatus: invoices.status,
+      })
+      .from(creditApplications)
+      .innerJoin(invoices, eq(invoices.id, creditApplications.invoiceId))
+      .where(eq(creditApplications.creditNoteId, id))
+      .orderBy(desc(creditApplications.appliedAt)),
+    db
+      .select()
+      .from(creditRefunds)
+      .where(eq(creditRefunds.creditNoteId, id))
+      .orderBy(desc(creditRefunds.createdAt)),
+    note.originalInvoiceId
+      ? db
+          .select({ id: invoices.id, documentNumber: invoices.documentNumber })
+          .from(invoices)
+          .where(eq(invoices.id, note.originalInvoiceId))
+          .limit(1)
+      : Promise.resolve([undefined]),
+  ]);
 
   return (
     <>
@@ -133,7 +125,7 @@ export default async function CreditNoteDetailPage({
         }
         division={division ?? null}
         creator={creator ?? null}
-        originalInvoice={originalInvoice}
+        originalInvoice={originalInvoice ?? null}
         applications={apps.map((a) => ({
           id: a.id,
           amount: parseFloat(a.amount),

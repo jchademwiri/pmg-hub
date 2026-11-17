@@ -1,6 +1,5 @@
-import { redirect } from 'next/navigation';
 import { NextRequest, NextResponse } from 'next/server';
-import { createHmac, randomUUID } from 'node:crypto';
+import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { getDb, session as sessionTable, user, clients, eq, and } from '@pmg/db';
 
 const TOKEN_TTL_MS = 5 * 60_000; // 5 minutes
@@ -19,7 +18,8 @@ export async function GET(request: NextRequest) {
   }
 
   const ts = Number(timestamp);
-  if (isNaN(ts) || Date.now() - ts > TOKEN_TTL_MS) {
+  const ageMs = Date.now() - ts;
+  if (isNaN(ts) || ageMs < -60_000 || ageMs > TOKEN_TTL_MS) {
     return redirectToLogin(request);
   }
 
@@ -29,12 +29,14 @@ export async function GET(request: NextRequest) {
     return redirectToLogin(request);
   }
 
-  // Verify HMAC
+  // Verify HMAC using constant-time comparison
   const expectedHmac = createHmac('sha256', secret)
     .update(`${clientId}:${adminUserId}:${ts}`)
     .digest('hex');
 
-  if (token !== expectedHmac) {
+  const tokenBuf = Buffer.from(token);
+  const expectedBuf = Buffer.from(expectedHmac);
+  if (tokenBuf.length !== expectedBuf.length || !timingSafeEqual(tokenBuf, expectedBuf)) {
     return redirectToLogin(request);
   }
 

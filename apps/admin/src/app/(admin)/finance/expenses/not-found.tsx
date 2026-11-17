@@ -8,7 +8,7 @@ export default function ExpensesNotFound() {
         { label: 'Expenses', href: '/finance/expenses' },
         { label: 'Payments', href: '/billing/payments' },
         { label: 'Categories', href: '/finance/categories' },
-        { label: 'Distributions', href: '/finance/distributions' },
+        { label: 'Recurring', href: '/finance/recurring' },
       ]}
     />
   );

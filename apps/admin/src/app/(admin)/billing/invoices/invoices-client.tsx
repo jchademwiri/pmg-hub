@@ -24,11 +24,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { EmptyState } from '@/components/ui/empty-state';
+import { DataList } from '@/components/ui/data-list';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
-import { Badge } from '@/components/ui/badge';
-import { getDocumentLogoText } from '@/lib/document-logo';
+import { MobileInvoiceCard } from '@/components/billing/mobile-invoice-card';
 import { formatZAR, fmtDate } from '@/lib/format';
-import { STATUS_TEXT_COLORS } from '@/lib/billing-status';
 import type { InvoiceRow } from '@pmg/db';
 
 interface InvoicesClientProps {
@@ -74,7 +73,10 @@ export function InvoicesClient({
     startTransition(async () => {
       const result = await issueAction(id);
       if (result.error) toast.error(result.error);
-      else toast.success(`${docNumber} issued.`);
+      else {
+        toast.success(`${docNumber} issued.`);
+        router.refresh();
+      }
     });
   }
 
@@ -113,6 +115,150 @@ export function InvoicesClient({
     );
   }
 
+  const desktopView = (
+    <div className="rounded-md border border-border overflow-hidden">
+      <Table className="table-fixed w-full" containerClassName="overflow-hidden">
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[125px] px-2 text-xs">Invoice #</TableHead>
+            <TableHead className="px-2 text-xs">Reference</TableHead>
+            <TableHead className="px-2 text-xs">Client</TableHead>
+            <TableHead className="w-[80px] px-2 text-xs">Issue Date</TableHead>
+            <TableHead className="w-[80px] px-2 text-xs">Due Date</TableHead>
+            <TableHead className="w-[85px] px-2 text-right text-xs">Total</TableHead>
+            <TableHead className="w-[80px] px-2 text-right text-xs">Paid</TableHead>
+            <TableHead className="w-[85px] px-2 text-right text-xs">Balance Due</TableHead>
+            <TableHead className="w-[110px] px-2 text-center text-xs">Status</TableHead>
+            <TableHead className="w-10 px-2" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {entries.map((inv) => {
+            const invTotal = Number(inv.total);
+            const invPaid =
+              inv.status === 'paid'
+                ? invTotal
+                : Math.min(invTotal, Number(inv.allocatedAmount || 0));
+            const invBalance = Math.max(0, invTotal - invPaid);
+
+            return (
+              <TableRow
+                key={inv.id}
+                className="hover:bg-muted/40 transition-colors border-b border-border relative"
+              >
+                <TableCell className="font-medium px-2 truncate">
+                  <Link
+                    href={`/billing/invoices/${inv.id}`}
+                    className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
+                    aria-label={`View invoice ${inv.documentNumber}`}
+                  />
+                  <span className="hover:underline text-primary font-semibold relative z-10 font-mono text-xs">
+                    {inv.documentNumber}
+                  </span>
+                </TableCell>
+                <TableCell className="px-2 truncate" title={inv.reference || undefined}>
+                  {inv.reference ? (
+                    <span className="text-muted-foreground truncate block text-xs">
+                      {inv.reference}
+                    </span>
+                  ) : (
+                    <span className="italic text-muted-foreground/50 text-xs">None</span>
+                  )}
+                </TableCell>
+                <TableCell
+                  className="text-muted-foreground px-2 truncate"
+                  title={inv.clientName || undefined}
+                >
+                  <span className="truncate block text-xs">
+                    {inv.clientName ?? <span className="italic">No client</span>}
+                  </span>
+                </TableCell>
+                <TableCell className="tabular-nums text-xs px-2 whitespace-nowrap">
+                  {fmtDate(inv.invoiceDate)}
+                </TableCell>
+                <TableCell className="tabular-nums text-xs text-muted-foreground px-2 whitespace-nowrap">
+                  {fmtDate(inv.dueDate)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-xs font-medium px-2 whitespace-nowrap">
+                  {formatZAR(invTotal)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-xs px-2 whitespace-nowrap">
+                  <span
+                    className={
+                      invPaid > 0 ? 'text-emerald-600 font-medium' : 'text-muted-foreground'
+                    }
+                  >
+                    {formatZAR(invPaid)}
+                  </span>
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-xs font-semibold px-2 whitespace-nowrap">
+                  <span
+                    className={
+                      invBalance === 0
+                        ? 'text-emerald-600 font-medium'
+                        : 'text-amber-600 font-semibold'
+                    }
+                  >
+                    {formatZAR(invBalance)}
+                  </span>
+                </TableCell>
+                <TableCell className="px-2 text-center whitespace-nowrap">
+                  <BillingStatusBadge status={inv.status} />
+                </TableCell>
+                <TableCell className="relative z-10 px-2 text-center">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="size-8" title="Actions">
+                        <MoreHorizontal className="size-4" />
+                        <span className="sr-only">Actions</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link href={`/billing/invoices/${inv.id}`}>View</Link>
+                      </DropdownMenuItem>
+                      {inv.status === 'draft' && (
+                        <DropdownMenuItem onClick={() => handleIssue(inv.id, inv.documentNumber)}>
+                          Issue Invoice
+                        </DropdownMenuItem>
+                      )}
+                      {(inv.status === 'draft' ||
+                        inv.status === 'issued' ||
+                        inv.status === 'overdue') && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => handleVoid(inv.id, inv.documentNumber)}
+                          >
+                            Void
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
+  const mobileView = (
+    <>
+      {entries.map((inv) => (
+        <MobileInvoiceCard
+          key={inv.id}
+          inv={inv}
+          handleIssue={handleIssue}
+          handleVoid={handleVoid}
+        />
+      ))}
+    </>
+  );
+
   return (
     <div className="flex flex-col gap-4">
       {status === 'paid' && (
@@ -150,134 +296,7 @@ export function InvoicesClient({
         </div>
       )}
 
-      <div className="rounded-md border border-border overflow-hidden">
-        <Table className="table-fixed w-full" containerClassName="overflow-hidden">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[125px] px-2 text-xs">Invoice #</TableHead>
-              <TableHead className="px-2 text-xs">Reference</TableHead>
-              <TableHead className="px-2 text-xs">Client</TableHead>
-              <TableHead className="w-[80px] px-2 text-xs">Issue Date</TableHead>
-              <TableHead className="w-[80px] px-2 text-xs">Due Date</TableHead>
-              <TableHead className="w-[85px] px-2 text-right text-xs">Total</TableHead>
-              <TableHead className="w-[80px] px-2 text-right text-xs">Paid</TableHead>
-              <TableHead className="w-[85px] px-2 text-right text-xs">Balance Due</TableHead>
-              <TableHead className="w-[110px] px-2 text-center text-xs">Status</TableHead>
-              <TableHead className="w-10 px-2" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {entries.map((inv) => {
-              const invTotal = Number(inv.total);
-              const invPaid =
-                inv.status === 'paid'
-                  ? invTotal
-                  : Math.min(invTotal, Number(inv.allocatedAmount || 0));
-              const invBalance = Math.max(0, invTotal - invPaid);
-
-              return (
-                <TableRow
-                  key={inv.id}
-                  className="hover:bg-muted/40 transition-colors border-b border-border relative"
-                >
-                  <TableCell className="font-medium px-2 truncate">
-                    <Link
-                      href={`/billing/invoices/${inv.id}`}
-                      className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
-                      aria-label={`View invoice ${inv.documentNumber}`}
-                    />
-                    <span className="hover:underline text-primary font-semibold relative z-10 font-mono text-xs">
-                      {inv.documentNumber}
-                    </span>
-                  </TableCell>
-                  <TableCell className="px-2 truncate" title={inv.reference || undefined}>
-                    {inv.reference ? (
-                      <span className="text-muted-foreground truncate block text-xs">
-                        {inv.reference}
-                      </span>
-                    ) : (
-                      <span className="italic text-muted-foreground/50 text-xs">None</span>
-                    )}
-                  </TableCell>
-                  <TableCell
-                    className="text-muted-foreground px-2 truncate"
-                    title={inv.clientName || undefined}
-                  >
-                    <span className="truncate block text-xs">
-                      {inv.clientName ?? <span className="italic">No client</span>}
-                    </span>
-                  </TableCell>
-                  <TableCell className="tabular-nums text-xs px-2 whitespace-nowrap">
-                    {fmtDate(inv.invoiceDate)}
-                  </TableCell>
-                  <TableCell className="tabular-nums text-xs text-muted-foreground px-2 whitespace-nowrap">
-                    {fmtDate(inv.dueDate)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums text-xs font-medium px-2 whitespace-nowrap">
-                    {formatZAR(invTotal)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums text-xs px-2 whitespace-nowrap">
-                    <span
-                      className={
-                        invPaid > 0 ? 'text-emerald-600 font-medium' : 'text-muted-foreground'
-                      }
-                    >
-                      {formatZAR(invPaid)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums text-xs font-semibold px-2 whitespace-nowrap">
-                    <span
-                      className={
-                        invBalance === 0
-                          ? 'text-emerald-600 font-medium'
-                          : 'text-amber-600 font-semibold'
-                      }
-                    >
-                      {formatZAR(invBalance)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="px-2 text-center whitespace-nowrap">
-                    <BillingStatusBadge status={inv.status} />
-                  </TableCell>
-                  <TableCell className="relative z-10 px-2 text-center">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="size-8" title="Actions">
-                          <MoreHorizontal className="size-4" />
-                          <span className="sr-only">Actions</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/billing/invoices/${inv.id}`}>View</Link>
-                        </DropdownMenuItem>
-                        {inv.status === 'draft' && (
-                          <DropdownMenuItem onClick={() => handleIssue(inv.id, inv.documentNumber)}>
-                            Issue Invoice
-                          </DropdownMenuItem>
-                        )}
-                        {(inv.status === 'draft' ||
-                          inv.status === 'issued' ||
-                          inv.status === 'overdue') && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => handleVoid(inv.id, inv.documentNumber)}
-                            >
-                              Void
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+      <DataList desktop={desktopView} mobile={mobileView} />
 
       {/* Pagination */}
       <div className="flex items-center justify-between px-2">

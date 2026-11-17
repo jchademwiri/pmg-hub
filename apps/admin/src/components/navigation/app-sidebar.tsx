@@ -49,7 +49,12 @@ function getActiveGroup(pathname: string): GroupKey | null {
       }
     }
   }
-  if (!bestMatch && pathname.startsWith('/accounting')) {
+  if (
+    !bestMatch &&
+    (pathname.startsWith('/accounting') ||
+      pathname.startsWith('/assets') ||
+      pathname.startsWith('/savings'))
+  ) {
     return 'finance';
   }
   return bestMatch ? bestMatch.key : null;
