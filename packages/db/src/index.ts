@@ -40,7 +40,7 @@ export {
   getAllClients,
   getActiveClients,
 } from './queries';
-export { getDivisionWithStatsById, setDivisionActive } from './queries';
+export { getDivisionWithStatsById, setDivisionActive, getAllDivisions } from './queries';
 export { getAllExpenseCategories, getExpenseCategoryById } from './queries';
 export type { ExpenseCategory } from './schema/expense-categories';
 export type { Invitation, NewInvitation } from './schema/invitations';
@@ -124,6 +124,7 @@ export {
 export type {
   TrialBalanceRow,
   ProfitAndLossRow,
+  AccountDivisionBreakdown,
   ProfitAndLossResult,
   ProfitAndLossByDivisionRow,
   ClientPerformanceRow,

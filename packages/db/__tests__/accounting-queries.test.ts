@@ -35,6 +35,24 @@ function mockSubqueryChain(subqueryColumns: Record<string, unknown>) {
 }
 
 /**
+ * Creates a mock chain for the division breakdown query:
+ *   db.select({...}).from(t).innerJoin(...).innerJoin(...).groupBy(...)
+ */
+function mockDivisionQueryChain(returnValue: unknown[]) {
+  const thenable = {
+    then: <T>(resolve: (v: unknown) => T) => Promise.resolve(returnValue).then(resolve),
+    catch: <T>(reject: (e: unknown) => T) => Promise.resolve(returnValue).catch(reject),
+  };
+
+  return {
+    from: vi.fn().mockReturnThis(),
+    innerJoin: vi.fn().mockReturnThis(),
+    groupBy: vi.fn().mockResolvedValue(returnValue),
+    ...thenable,
+  };
+}
+
+/**
  * Creates a mock chain for the main query:
  *   db.select({...}).from(t).leftJoin(...).where(...).orderBy(...)
  * Resolves to the given returnValue.
@@ -519,5 +537,65 @@ describe('getProfitAndLoss', () => {
     // Must not be R55,580 (posted + void)
     expect(result.revenue[0].amount).not.toBe(55580);
     expect(result.totalRevenue).toBe(35080);
+  });
+
+  it('returns division breakdown for revenue accounts with amounts and percentages', async () => {
+    const rows = [
+      {
+        accountId: 'r1',
+        accountCode: '4010',
+        accountName: 'Sales Revenue',
+        accountType: 'revenue',
+        totalDebits: '0',
+        totalCredits: '100000',
+      },
+    ];
+
+    const divisionRows = [
+      {
+        accountId: 'r1',
+        divisionId: 'div-pmg',
+        divisionName: 'Playhouse Media Group',
+        totalDebits: '0',
+        totalCredits: '70000',
+      },
+      {
+        accountId: 'r1',
+        divisionId: 'div-tes',
+        divisionName: 'TenderEdge Solutions',
+        totalDebits: '0',
+        totalCredits: '30000',
+      },
+    ];
+
+    mockSelect
+      .mockReturnValueOnce(
+        mockSubqueryChain({
+          accountId: 'mock_account_id',
+          totalDebits: 'mock_total_debits',
+          totalCredits: 'mock_total_credits',
+        }),
+      )
+      .mockReturnValueOnce(mockMainQueryChain(rows))
+      .mockReturnValueOnce(mockDivisionQueryChain(divisionRows));
+
+    const result = await getProfitAndLoss();
+
+    expect(result.revenue).toHaveLength(1);
+    expect(result.revenue[0].amount).toBe(100000);
+    expect(result.revenue[0].divisions).toBeDefined();
+    expect(result.revenue[0].divisions).toHaveLength(2);
+    expect(result.revenue[0].divisions![0]).toEqual({
+      divisionId: 'div-pmg',
+      divisionName: 'Playhouse Media Group',
+      amount: 70000,
+      percentage: 70,
+    });
+    expect(result.revenue[0].divisions![1]).toEqual({
+      divisionId: 'div-tes',
+      divisionName: 'TenderEdge Solutions',
+      amount: 30000,
+      percentage: 30,
+    });
   });
 });
