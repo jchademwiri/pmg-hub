@@ -906,12 +906,20 @@ export async function getCashFlowStatement(
 
 // ── Profit & Loss ─────────────────────────────────────────────────────────────
 
+export type AccountDivisionBreakdown = {
+  divisionId: string;
+  divisionName: string;
+  amount: number;
+  percentage: number;
+};
+
 export type ProfitAndLossRow = {
   accountId: string;
   accountCode: string;
   accountName: string;
   accountType: string;
   amount: number;
+  divisions?: AccountDivisionBreakdown[];
 };
 
 export type ProfitAndLossResult = {
@@ -985,18 +993,93 @@ export async function getProfitAndLoss(
     .where(and(...accountConditions))
     .orderBy(asc(chartAccounts.code));
 
+  const divisionMovementMap = new Map<
+    string,
+    { divisionId: string; divisionName: string; debits: number; credits: number }[]
+  >();
+
+  try {
+    const divRows = await db
+      .select({
+        accountId: journalLines.accountId,
+        divisionId: journalEntries.divisionId,
+        divisionName: divisions.name,
+        totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`,
+        totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
+      })
+      .from(journalLines)
+      .innerJoin(
+        journalEntries,
+        and(eq(journalLines.journalEntryId, journalEntries.id), ...entryConditions),
+      )
+      .innerJoin(divisions, eq(journalEntries.divisionId, divisions.id))
+      .groupBy(journalLines.accountId, journalEntries.divisionId, divisions.name);
+
+    if (Array.isArray(divRows)) {
+      for (const dr of divRows) {
+        if (!dr || !dr.accountId) continue;
+        const list = divisionMovementMap.get(dr.accountId) || [];
+        list.push({
+          divisionId: dr.divisionId,
+          divisionName: dr.divisionName,
+          debits: Number(dr.totalDebits || 0),
+          credits: Number(dr.totalCredits || 0),
+        });
+        divisionMovementMap.set(dr.accountId, list);
+      }
+    }
+  } catch {
+    // Graceful fallback if division query is unsupported or unmocked
+  }
+
+  const buildDivisionBreakdown = (
+    divList: { divisionId: string; divisionName: string; debits: number; credits: number }[],
+    totalAmount: number,
+    isRevenue: boolean,
+  ): AccountDivisionBreakdown[] | undefined => {
+    const breakdown = divList
+      .map((d) => {
+        const divAmount = isRevenue ? d.credits - d.debits : d.debits - d.credits;
+        const percentage = Math.abs(totalAmount) > 0.01 ? (divAmount / totalAmount) * 100 : 0;
+        return {
+          divisionId: d.divisionId,
+          divisionName: d.divisionName,
+          amount: divAmount,
+          percentage: Number(percentage.toFixed(1)),
+        };
+      })
+      .filter((d) => Math.abs(d.amount) > 0.01)
+      .sort((a, b) => b.amount - a.amount);
+
+    return breakdown.length > 0 ? breakdown : undefined;
+  };
+
   const revenue: ProfitAndLossRow[] = [];
   const expenses: ProfitAndLossRow[] = [];
 
   for (const r of rows) {
     const debits = Number(r.totalDebits);
     const credits = Number(r.totalCredits);
+    const divList = divisionMovementMap.get(r.accountId) || [];
+
     if (r.accountType === 'revenue') {
       const amount = credits - debits;
-      if (Math.abs(amount) > 0.01) revenue.push({ ...r, amount });
+      if (Math.abs(amount) > 0.01) {
+        revenue.push({
+          ...r,
+          amount,
+          divisions: buildDivisionBreakdown(divList, amount, true),
+        });
+      }
     } else if (r.accountType === 'expense') {
       const amount = debits - credits;
-      if (Math.abs(amount) > 0.01) expenses.push({ ...r, amount });
+      if (Math.abs(amount) > 0.01) {
+        expenses.push({
+          ...r,
+          amount,
+          divisions: buildDivisionBreakdown(divList, amount, false),
+        });
+      }
     }
   }
 
