@@ -1,0 +1,8 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allowlist WebCrypto algorithm names in modern-web-guidance documentation"
+paths = [
+  '''^\.agents/skills/modern-web-guidance/guides/security/client-side-encryption\.md$''',
+]
