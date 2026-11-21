@@ -1,6 +1,16 @@
 import 'server-only';
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import {
+  ALLOWED_LEAVE_PROOF_MIME_TYPES,
+  MAX_LEAVE_PROOF_SIZE_BYTES,
+  buildLeaveProofKey,
+} from '@/lib/leave';
 
 export function getR2Client() {
   const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID;
@@ -98,4 +108,82 @@ export async function generateReceiptPresignedUrl(
     Key: key,
   });
   return getSignedUrl(client, command, { expiresIn: expiresInSeconds });
+}
+
+// ── Leave Proof Document Helpers ──────────────────────────────────────────────
+
+export async function uploadLeaveProofToR2(
+  file: File | null,
+  entryId: number,
+  startDate: string,
+): Promise<{
+  key?: string;
+  fileName?: string;
+  mimeType?: string;
+  sizeBytes?: number;
+  error?: string;
+}> {
+  if (!file || typeof file === 'string' || file.size === 0 || file.name === 'undefined') {
+    return { error: 'Please select a file to upload.' };
+  }
+
+  if (file.size > MAX_LEAVE_PROOF_SIZE_BYTES) {
+    return { error: 'File size exceeds 10MB limit.' };
+  }
+
+  const mime = (file.type || '').toLowerCase();
+  const mimeMatch = (ALLOWED_LEAVE_PROOF_MIME_TYPES as readonly string[]).includes(mime);
+  const nameMatch = /\.(pdf|png|jpe?g|webp)$/i.test(file.name);
+  if (!mimeMatch && !nameMatch) {
+    return { error: 'Only PDF, PNG, JPG, JPEG, and WEBP files are allowed.' };
+  }
+
+  try {
+    const { client, bucket } = getR2Client();
+    const s3Key = buildLeaveProofKey(startDate, entryId, file.name);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const contentType = file.type || 'application/octet-stream';
+
+    await client.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: s3Key,
+        Body: buffer,
+        ContentType: contentType,
+      }),
+    );
+
+    return {
+      key: s3Key,
+      fileName: file.name,
+      mimeType: contentType,
+      sizeBytes: file.size,
+    };
+  } catch (err: unknown) {
+    console.error('Failed to upload leave proof to R2:', err);
+    return { error: 'Failed to upload proof file to cloud storage.' };
+  }
+}
+
+export async function deleteR2Object(key: string): Promise<void> {
+  if (!key) return;
+  try {
+    const { client, bucket } = getR2Client();
+    await client.send(
+      new DeleteObjectCommand({
+        Bucket: bucket,
+        Key: key,
+      }),
+    );
+  } catch (err: unknown) {
+    // Non-fatal: object may already be removed
+    console.warn(`Failed to delete R2 object "${key}":`, err);
+  }
+}
+
+export async function generateLeaveProofPresignedUrl(
+  key: string,
+  expiresInSeconds = 300,
+): Promise<string> {
+  return generateReceiptPresignedUrl(key, expiresInSeconds);
 }

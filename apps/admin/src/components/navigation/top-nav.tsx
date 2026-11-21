@@ -81,7 +81,7 @@ import { ChevronLeft } from 'lucide-react';
 
 export function TopNav() {
   const pathname = usePathname();
-  const { total, totalVariant, customLabel } = usePageHeader();
+  const { total, totalVariant, customLabel, rightContent } = usePageHeader();
   // Two-level breadcrumb: parent > child
   const parent = getParentGroup(pathname);
   const label = customLabel ?? getExactLabel(pathname) ?? deriveLabel(pathname);
@@ -133,6 +133,7 @@ export function TopNav() {
 
       <div className="flex items-center gap-2">
         <TopNavQuickActions />
+        {rightContent}
         {total && (
           <span className={`text-sm font-semibold tabular-nums ${totalColor}`}>{total}</span>
         )}

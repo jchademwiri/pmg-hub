@@ -10,6 +10,8 @@ interface PageHeaderContextValue {
   setTotal: (v: string | null, variant?: TotalVariant) => void;
   customLabel: string | null;
   setCustomLabel: (v: string | null) => void;
+  rightContent: React.ReactNode | null;
+  setRightContent: (node: React.ReactNode | null) => void;
 }
 
 const PageHeaderContext = React.createContext<PageHeaderContextValue>({
@@ -18,12 +20,15 @@ const PageHeaderContext = React.createContext<PageHeaderContextValue>({
   setTotal: () => {},
   customLabel: null,
   setCustomLabel: () => {},
+  rightContent: null,
+  setRightContent: () => {},
 });
 
 export function PageHeaderProvider({ children }: { children: React.ReactNode }) {
   const [total, setTotalValue] = React.useState<string | null>(null);
   const [totalVariant, setTotalVariant] = React.useState<TotalVariant>('default');
   const [customLabel, setCustomLabelValue] = React.useState<string | null>(null);
+  const [rightContent, setRightContentValue] = React.useState<React.ReactNode | null>(null);
 
   const setTotal = React.useCallback((v: string | null, variant: TotalVariant = 'default') => {
     setTotalValue(v);
@@ -34,9 +39,21 @@ export function PageHeaderProvider({ children }: { children: React.ReactNode }) 
     setCustomLabelValue(v);
   }, []);
 
+  const setRightContent = React.useCallback((node: React.ReactNode | null) => {
+    setRightContentValue(node);
+  }, []);
+
   const contextValue = React.useMemo(
-    () => ({ total, totalVariant, setTotal, customLabel, setCustomLabel }),
-    [total, totalVariant, setTotal, customLabel, setCustomLabel],
+    () => ({
+      total,
+      totalVariant,
+      setTotal,
+      customLabel,
+      setCustomLabel,
+      rightContent,
+      setRightContent,
+    }),
+    [total, totalVariant, setTotal, customLabel, setCustomLabel, rightContent, setRightContent],
   );
 
   return <PageHeaderContext.Provider value={contextValue}>{children}</PageHeaderContext.Provider>;
