@@ -32,6 +32,7 @@ import {
   BookMarked,
   LayoutGrid,
   CalendarClock,
+  CalendarDays,
   // CalendarRange,
   UserCheck,
   Clock,
@@ -71,6 +72,7 @@ export type NavGroup = {
 
 export const OVERVIEW: NavItem[] = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+  { title: 'Leave Tracker', url: '/leave', icon: CalendarDays, minRole: 'admin' },
 ];
 
 // ── Groups ────────────────────────────────────────────────────────────────────
