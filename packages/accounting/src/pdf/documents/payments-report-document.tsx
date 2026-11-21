@@ -15,7 +15,7 @@ import {
   usePdfTheme,
 } from '@pmg/billing/pdf';
 import { formatZAR, fmtDateLong } from '@pmg/billing/format';
-import { type PdfOrgHeader } from '@pmg/billing/pdf-shell';
+import { type PdfOrgHeader } from '@pmg/billing/pdf';
 
 export interface PaymentReportRow {
   date: string;

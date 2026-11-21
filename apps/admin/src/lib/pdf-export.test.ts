@@ -1,41 +1,24 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  extractPdfBase64,
+  assertEmailPdfSize,
+  fetchServerPdfBytes,
   getBase64ByteSize,
-  getPrintableElementById,
+  MAX_EMAIL_PDF_BYTES,
   sanitizePdfFileName,
+  serverPdfUrlToBase64,
 } from './pdf-export';
 
 describe('pdf-export helpers', () => {
-  it('finds printable elements by explicit id', () => {
-    document.body.innerHTML = '<div id="printable-area"></div><div class="print-document"></div>';
-
-    expect(getPrintableElementById('printable-area')).toBe(
-      document.getElementById('printable-area'),
-    );
-  });
-
-  it('throws when the requested printable element is missing', () => {
-    document.body.innerHTML = '<div class="print-document"></div>';
-
-    expect(() => getPrintableElementById('missing-printable')).toThrow(
-      "Printable element '#missing-printable' not found.",
-    );
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('sanitizes PDF filenames', () => {
     expect(sanitizePdfFileName('Invoice INV/001: PMG.pdf')).toBe('Invoice-INV-001-PMG.pdf');
     expect(sanitizePdfFileName('')).toBe('document.pdf');
-  });
-
-  it('extracts base64 PDF data from data URIs', () => {
-    expect(extractPdfBase64('data:application/pdf;base64,abc123')).toBe('abc123');
-    expect(() => extractPdfBase64('data:application/pdf;base64')).toThrow(
-      'PDF base64 conversion failed.',
-    );
   });
 
   it('calculates base64 byte sizes', () => {
@@ -44,17 +27,44 @@ describe('pdf-export helpers', () => {
     expect(getBase64ByteSize('TQ==')).toBe(1);
   });
 
-  it('validates email PDF attachment size quota (< 8MB)', async () => {
-    const { assertEmailPdfSize, MAX_EMAIL_PDF_BYTES } = await import('./pdf-export');
-
-    // Vector PDF simulated size ~15KB
+  it('validates email PDF attachment size quota (< 8MB)', () => {
     const smallBase64 = 'A'.repeat(20000);
     expect(() => assertEmailPdfSize(smallBase64, 'Invoice PDF')).not.toThrow();
 
-    // Massive rasterized PDF exceeding 8MB quota
     const oversizedBase64 = 'A'.repeat(Math.ceil(((MAX_EMAIL_PDF_BYTES + 1000) * 4) / 3));
-    expect(() => assertEmailPdfSize(oversizedBase64, 'Rasterized PDF')).toThrow(
-      'Rasterized PDF is too large to email',
+    expect(() => assertEmailPdfSize(oversizedBase64, 'Oversized PDF')).toThrow(
+      'Oversized PDF is too large to email',
     );
+  });
+
+  it('fetches server PDF bytes and throws on HTTP error', async () => {
+    const payload = new Uint8Array([0x25, 0x50, 0x44, 0x46]); // "%PDF"
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      arrayBuffer: async () => payload.buffer,
+    } as Response);
+
+    const bytes = await fetchServerPdfBytes('/api/billing/pdf/invoice/123');
+    expect(Array.from(bytes)).toEqual([0x25, 0x50, 0x44, 0x46]);
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+    } as Response);
+
+    await expect(fetchServerPdfBytes('/api/billing/pdf/invoice/bad')).rejects.toThrow(
+      'PDF generation failed (500).',
+    );
+  });
+
+  it('converts a server PDF response to base64', async () => {
+    const payload = new TextEncoder().encode('%PDF');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      arrayBuffer: async () => payload.buffer,
+    } as Response);
+
+    const base64 = await serverPdfUrlToBase64('/api/billing/pdf/invoice/123', 'Invoice PDF');
+    expect(base64).toBe(window.btoa('%PDF'));
   });
 });

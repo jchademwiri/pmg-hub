@@ -68,3 +68,16 @@ export interface PdfTheme {
     orientation: 'portrait' | 'landscape';
   };
 }
+
+export interface PdfOrgHeader {
+  name: string;
+  divisionOf?: string;
+  registrationNumber?: string;
+  vatNumber?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  address?: string;
+  salesRep?: string;
+  logoDataUri?: string | null;
+}

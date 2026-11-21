@@ -741,3 +741,245 @@ export function formatFileSize(bytes: number | null | undefined): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+// ── Financial Year Report & CSV Helpers ───────────────────────────────────────
+
+export type LeaveReportScope = 'all' | 'taken';
+
+export interface FinancialYearRange {
+  fyEndYear: number;
+  fyStartDate: string;
+  fyEndDate: string;
+  label: string; // e.g. "FY 2026/27"
+  periodLabel: string; // e.g. "01 Mar 2026 – 28 Feb 2027"
+  slug: string; // e.g. "FY2026-27"
+}
+
+export interface LeaveReportRow {
+  id: number;
+  type: LeaveType;
+  typeLabel: string;
+  status: LeaveStatus;
+  displayStatus: 'Taken' | 'In Progress' | 'Planned';
+  startDate: string;
+  endDate: string;
+  dateRangeLabel: string;
+  daysCount: number;
+  excludedHolidays: SAPublicHoliday[];
+  proofFileName: string | null;
+  notes: string | null;
+}
+
+export interface LeaveReportTypeTotals {
+  takenDays: number;
+  plannedDays: number;
+  totalDays: number;
+}
+
+export interface LeaveReportData {
+  employeeName: string;
+  employmentStartDate: string;
+  anchorDate: string;
+  generatedDate: string;
+  scope: LeaveReportScope;
+  fy: FinancialYearRange;
+  balances: LeaveBalanceSummary;
+  rows: LeaveReportRow[];
+  totalsByType: Record<LeaveType, LeaveReportTypeTotals>;
+  grandTotalTaken: number;
+  grandTotalPlanned: number;
+  grandTotalDays: number;
+}
+
+/**
+ * Returns the South African financial year bounds (`1 March – 28/29 February`)
+ * ending in `fyEndYear` (leap-year safe).
+ */
+export function getFinancialYearRange(fyEndYear: number): FinancialYearRange {
+  const startYear = fyEndYear - 1;
+  const fyStartDate = `${startYear}-03-01`;
+  const lastFeb = new Date(Date.UTC(fyEndYear, 2, 0));
+  const fyEndDate = formatUTCDate(lastFeb);
+  const shortEnd = String(fyEndYear).slice(-2);
+  return {
+    fyEndYear,
+    fyStartDate,
+    fyEndDate,
+    label: `FY ${startYear}/${shortEnd}`,
+    periodLabel: `${formatLeaveDate(fyStartDate)} – ${formatLeaveDate(fyEndDate)}`,
+    slug: `FY${startYear}-${shortEnd}`,
+  };
+}
+
+/**
+ * Returns the financial year end-year (e.g. 2027 for `2026-11-21`) containing `dateStr`.
+ */
+export function getFYEndYearForDate(dateStr: string): number {
+  const [y, m] = dateStr.split('-').map(Number);
+  return m! >= 3 ? y! + 1 : y!;
+}
+
+/**
+ * Returns selectable financial years sorted newest-first, always including the
+ * active financial year plus any FY overlapped by logged entries.
+ */
+export function getAvailableLeaveFinancialYears(
+  entries: Array<Pick<LeaveEntry, 'startDate' | 'endDate' | 'status'>>,
+  todayDate: string = getTodaySAST(),
+): FinancialYearRange[] {
+  const years = new Set<number>([getFYEndYearForDate(todayDate)]);
+  for (const e of entries) {
+    if (e.status === 'CANCELLED') continue;
+    years.add(getFYEndYearForDate(e.startDate));
+    years.add(getFYEndYearForDate(e.endDate));
+  }
+  return Array.from(years)
+    .sort((a, b) => b - a)
+    .map(getFinancialYearRange);
+}
+
+export function buildLeaveReportData(
+  settings: Pick<
+    LeaveSettings,
+    | 'employmentStartDate'
+    | 'anchorDate'
+    | 'annualOpeningBalance'
+    | 'annualMonthlyAccrual'
+    | 'annualMaxCarryOver'
+    | 'sickCycleStartDate'
+    | 'sickCycleEntitlement'
+    | 'sickOpeningBalance'
+    | 'familyOpeningBalance'
+    | 'familyAnnualEntitlement'
+    | 'familyResetMonth'
+  >,
+  entries: Array<
+    Pick<
+      LeaveEntry,
+      'id' | 'type' | 'status' | 'startDate' | 'endDate' | 'daysCount' | 'notes' | 'proofFileName'
+    >
+  >,
+  options: {
+    fyEndYear?: number;
+    scope?: LeaveReportScope;
+    todayDate?: string;
+    employeeName?: string;
+  } = {},
+): LeaveReportData {
+  const todayDate = options.todayDate ?? getTodaySAST();
+  const fyEndYear = options.fyEndYear ?? getFYEndYearForDate(todayDate);
+  const scope: LeaveReportScope = options.scope ?? 'all';
+  const fy = getFinancialYearRange(fyEndYear);
+  const balances = computeLeaveBalances(settings, entries, todayDate);
+
+  const filtered = entries
+    .filter((e) => e.status !== 'CANCELLED')
+    .filter((e) => e.startDate <= fy.fyEndDate && e.endDate >= fy.fyStartDate)
+    .filter((e) => (scope === 'taken' ? e.status === 'TAKEN' : true))
+    .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.id - b.id);
+
+  const totalsByType: Record<LeaveType, LeaveReportTypeTotals> = {
+    ANNUAL: { takenDays: 0, plannedDays: 0, totalDays: 0 },
+    SICK: { takenDays: 0, plannedDays: 0, totalDays: 0 },
+    FAMILY_RESPONSIBILITY: { takenDays: 0, plannedDays: 0, totalDays: 0 },
+  };
+
+  let grandTotalTaken = 0;
+  let grandTotalPlanned = 0;
+
+  const rows: LeaveReportRow[] = filtered.map((entry) => {
+    const working = calculateWorkingDays(entry.startDate, entry.endDate);
+    const displayStatus: LeaveReportRow['displayStatus'] =
+      entry.status === 'TAKEN'
+        ? 'Taken'
+        : isEntryInProgress(entry, todayDate)
+          ? 'In Progress'
+          : 'Planned';
+
+    const bucket = totalsByType[entry.type];
+    if (entry.status === 'TAKEN') {
+      bucket.takenDays += entry.daysCount;
+      grandTotalTaken += entry.daysCount;
+    } else {
+      bucket.plannedDays += entry.daysCount;
+      grandTotalPlanned += entry.daysCount;
+    }
+    bucket.totalDays += entry.daysCount;
+
+    const dateRangeLabel =
+      entry.startDate === entry.endDate
+        ? formatLeaveDate(entry.startDate)
+        : `${formatLeaveDate(entry.startDate)} – ${formatLeaveDate(entry.endDate)}`;
+
+    return {
+      id: entry.id,
+      type: entry.type,
+      typeLabel: LEAVE_TYPE_LABELS[entry.type],
+      status: entry.status,
+      displayStatus,
+      startDate: entry.startDate,
+      endDate: entry.endDate,
+      dateRangeLabel,
+      daysCount: entry.daysCount,
+      excludedHolidays: working.excludedHolidays,
+      proofFileName: entry.proofFileName ?? null,
+      notes: entry.notes ?? null,
+    };
+  });
+
+  return {
+    employeeName: options.employeeName || 'Jacob Chademwiri',
+    employmentStartDate: settings.employmentStartDate,
+    anchorDate: settings.anchorDate,
+    generatedDate: todayDate,
+    scope,
+    fy,
+    balances,
+    rows,
+    totalsByType,
+    grandTotalTaken,
+    grandTotalPlanned,
+    grandTotalDays: grandTotalTaken + grandTotalPlanned,
+  };
+}
+
+function csvEscape(value: unknown): string {
+  if (value == null) return '';
+  const text = String(value);
+  if (!/[",\n\r]/.test(text)) return text;
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+/**
+ * Generates a UTF-8 BOM CSV spreadsheet of the leave report (Excel-friendly).
+ */
+export function buildLeaveReportCsv(report: LeaveReportData): string {
+  const headers = [
+    'Start Date',
+    'End Date',
+    'Leave Type',
+    'Status',
+    'Working Days',
+    'Excluded SA Holidays',
+    'Proof Document',
+    'Personal Notes',
+  ];
+
+  const rows = report.rows.map((r) => [
+    r.startDate,
+    r.endDate,
+    r.typeLabel,
+    r.displayStatus,
+    r.daysCount,
+    r.excludedHolidays.map((h) => `${h.name} (${h.date})`).join('; '),
+    r.proofFileName ?? '',
+    r.notes ?? '',
+  ]);
+
+  const lines = [
+    headers.map(csvEscape).join(','),
+    ...rows.map((row) => row.map(csvEscape).join(',')),
+  ];
+
+  return '\uFEFF' + lines.join('\r\n');
+}

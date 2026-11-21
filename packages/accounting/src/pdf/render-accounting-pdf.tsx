@@ -2,7 +2,7 @@ import 'server-only';
 
 import React from 'react';
 import { renderDocumentToPdf, pmgTheme, getLogoDataUri } from '@pmg/billing/pdf';
-import { type PdfOrgHeader } from '@pmg/billing/pdf-shell';
+import { type PdfOrgHeader } from '@pmg/billing/pdf';
 
 function resolveOrg(org: PdfOrgHeader): PdfOrgHeader {
   return {

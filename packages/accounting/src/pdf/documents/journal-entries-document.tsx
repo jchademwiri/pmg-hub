@@ -11,7 +11,7 @@ import {
 } from '@pmg/billing/pdf';
 import { formatZAR, fmtDate } from '@pmg/billing/format';
 import type { JournalEntry, JournalEntryLineRow } from '@pmg/db';
-import { type PdfOrgHeader } from '@pmg/billing/pdf-shell';
+import { type PdfOrgHeader } from '@pmg/billing/pdf';
 import { AccountingReportLayout } from '../components/report-layout';
 
 export interface JournalEntriesDocumentProps {
