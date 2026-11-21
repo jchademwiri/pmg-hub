@@ -15,7 +15,7 @@ import {
   usePdfTheme,
 } from '@pmg/billing/pdf';
 import { formatZAR, fmtDate, cleanPdfText } from '@pmg/billing/format';
-import { type PdfOrgHeader } from '@pmg/billing/pdf-shell';
+import { type PdfOrgHeader } from '@pmg/billing/pdf';
 
 export interface AgingReportRow {
   clientId: string;

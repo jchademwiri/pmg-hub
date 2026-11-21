@@ -10,7 +10,7 @@ import {
   KeepTogether,
 } from '@pmg/billing/pdf';
 import type { ChartAccount } from '@pmg/db';
-import { type PdfOrgHeader } from '@pmg/billing/pdf-shell';
+import { type PdfOrgHeader } from '@pmg/billing/pdf';
 import { AccountingReportLayout } from '../components/report-layout';
 
 const ACCOUNT_GROUPS = [

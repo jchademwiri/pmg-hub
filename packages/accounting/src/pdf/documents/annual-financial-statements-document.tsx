@@ -13,7 +13,7 @@ import {
 } from '@pmg/billing/pdf';
 import { formatZAR } from '@pmg/billing/format';
 import type { AnnualFinancialStatementsResult } from '@pmg/db';
-import { type PdfOrgHeader } from '@pmg/billing/pdf-shell';
+import { type PdfOrgHeader } from '@pmg/billing/pdf';
 
 export interface AnnualFinancialStatementsDocumentProps {
   result: AnnualFinancialStatementsResult;

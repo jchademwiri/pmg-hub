@@ -35,16 +35,14 @@ import {
   sendReceiptEmailAction,
 } from '@/app/actions/email-delivery';
 import { EmailPreviewPanel } from '@/components/billing/email-preview-panel';
-import { elementToPdfBase64, serverPdfUrlToBase64 } from '@/lib/pdf-export';
+import { serverPdfUrlToBase64 } from '@/lib/pdf-export';
 
 interface UniversalEmailDialogProps {
   documentId: string; // Can be invoiceId, quoteId, incomeId (receipt), or creditNoteId
   documentNumber: string;
   documentType: 'invoice' | 'quote' | 'receipt' | 'credit_note';
   defaultRecipientEmail: string;
-  printableElementId?: string;
-  statementElementId?: string;
-  pdfUrl?: string;
+  pdfUrl: string;
   statementPdfUrl?: string;
   onSuccess?: () => void;
   trigger?: React.ReactNode | null;
@@ -84,8 +82,6 @@ export function UniversalEmailDialog({
   documentNumber,
   documentType,
   defaultRecipientEmail,
-  printableElementId = 'printable-area',
-  statementElementId = 'printable-statement-area',
   pdfUrl,
   statementPdfUrl,
   onSuccess,
@@ -123,7 +119,8 @@ export function UniversalEmailDialog({
 
   const [subject, setSubject] = useState(defaultSubjectText);
   const [message, setMessage] = useState('');
-  const [attachStatement, setAttachStatement] = useState(documentType === 'invoice');
+  const canAttachStatement = documentType === 'invoice' && Boolean(statementPdfUrl);
+  const [attachStatement, setAttachStatement] = useState(canAttachStatement);
 
   // Custom attachments
   const [customFiles, setCustomFiles] = useState<CustomFile[]>([]);
@@ -234,21 +231,17 @@ export function UniversalEmailDialog({
               ? 'Credit Note'
               : 'Receipt';
       setStatusText(`Compiling ${docLabel.toLowerCase()} PDF...`);
-      const pdfBase64 = pdfUrl
-        ? await serverPdfUrlToBase64(pdfUrl, `${docLabel} PDF`)
-        : await elementToPdfBase64(printableElementId, `${docLabel} PDF`);
+      const pdfBase64 = await serverPdfUrlToBase64(pdfUrl, `${docLabel} PDF`);
 
       // 2. Compile statement if selected
       // Note: The statement PDF URL now includes includeDraftInvoiceId when the
       // invoice is a draft, so the statement query will include it even before
       // the invoice is issued. Issuance happens AFTER successful email send.
       let statementBase64: string | undefined;
-      if (documentType === 'invoice' && attachStatement) {
+      if (documentType === 'invoice' && attachStatement && statementPdfUrl) {
         setStatusText('Compiling account statement PDF...');
         try {
-          statementBase64 = statementPdfUrl
-            ? await serverPdfUrlToBase64(statementPdfUrl, 'Statement PDF')
-            : await elementToPdfBase64(statementElementId, 'Statement PDF');
+          statementBase64 = await serverPdfUrlToBase64(statementPdfUrl, 'Statement PDF');
         } catch (err) {
           console.error('Statement compile failed:', err);
           toast.warning('Failed to render client statement. Emailing invoice only.');
@@ -495,7 +488,7 @@ export function UniversalEmailDialog({
                 </div>
 
                 {/* Account Statement (Optional for invoices) */}
-                {documentType === 'invoice' && (
+                {canAttachStatement && (
                   <div className="flex items-center justify-between p-2 rounded-lg border bg-muted/30 text-xs">
                     <label className="flex items-center gap-2 min-w-0 cursor-pointer w-full">
                       <Checkbox

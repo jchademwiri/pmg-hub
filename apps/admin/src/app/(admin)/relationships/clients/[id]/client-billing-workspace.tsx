@@ -34,7 +34,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
-import { DocumentPreview } from '@/components/billing/document-preview';
 import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
 import { ClientMetricStrip } from './client-metric-strip';
@@ -43,13 +42,16 @@ import { DownloadReportDialog } from '@/components/reports/download-report-dialo
 import {
   calculateClientHealth,
   calculateAverageDaysToPay,
-  buildOrgProps,
-  buildBankingProps,
   buildTransactionHistory,
   formatPaymentReference,
 } from '@/lib/client-billing-helpers';
 import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
-import { appendElementToPdf, elementToPdfBase64, sanitizePdfFileName } from '@/lib/pdf-export';
+import {
+  downloadBlob,
+  fetchServerPdfBytes,
+  sanitizePdfFileName,
+  serverPdfUrlToBase64,
+} from '@/lib/pdf-export';
 import {
   FileDown,
   Mail,
@@ -158,7 +160,7 @@ export function ClientBillingWorkspace({
   availableYears,
   currentFY,
   divSettings,
-  orgSettings,
+  orgSettings: _orgSettings,
   updateClientAction,
   creditSummary,
   creditHistory,
@@ -177,12 +179,6 @@ export function ClientBillingWorkspace({
   // Checkbox Multiselect Layer
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<Set<string>>(new Set());
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
-
-  // Sequential Queue Render State (Recommendations implemented)
-  const [activeRenderingDocId, setActiveRenderingDocId] = useState<string | null>(null);
-  const [activeRenderingDocType, setActiveRenderingDocType] = useState<'invoice' | 'quote' | null>(
-    null,
-  );
 
   // Bulk Progress Dialog
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
@@ -371,59 +367,6 @@ export function ClientBillingWorkspace({
     }
   }, [searchParams]);
 
-  // Helper to compile preview props in memory
-  const getInvoicePreviewProps = (inv: InvoiceDetail) => ({
-    number: inv.documentNumber,
-    status: inv.status.charAt(0).toUpperCase() + inv.status.slice(1),
-    issueDate: inv.invoiceDate,
-    dueDate: inv.dueDate ?? undefined,
-    reference: inv.reference ?? undefined,
-    org: buildOrgProps(inv.divisionName, divSettings, orgSettings),
-    client: {
-      name: inv.clientName ?? 'No client',
-      email: inv.clientEmail ?? undefined,
-      phone: inv.clientPhone ?? undefined,
-    },
-    lineItems: inv.lineItems.map((li) => ({
-      itemName: li.itemName,
-      description: li.description,
-      qty: Number(li.quantity),
-      unitPrice: Number(li.unitPrice),
-      vatApplicable: false,
-    })),
-    notes: inv.notes ?? divSettings?.invoiceNotes ?? undefined,
-    terms: inv.terms ?? undefined,
-    vatRate: 15 as const,
-    discountAmount: Number(inv.discountAmount ?? 0),
-    banking: buildBankingProps(divSettings),
-  });
-
-  const getQuotePreviewProps = (q: QuotationDetail) => ({
-    number: q.documentNumber,
-    status: q.status.charAt(0).toUpperCase() + q.status.slice(1),
-    issueDate: q.quoteDate,
-    dueDate: q.expiryDate ?? undefined,
-    reference: q.reference ?? undefined,
-    org: buildOrgProps(q.divisionName, divSettings, orgSettings),
-    client: {
-      name: q.clientName ?? 'No client',
-      email: q.clientEmail ?? undefined,
-      phone: q.clientPhone ?? undefined,
-    },
-    lineItems: q.lineItems.map((li) => ({
-      itemName: li.itemName,
-      description: li.description,
-      qty: Number(li.quantity),
-      unitPrice: Number(li.unitPrice),
-      vatApplicable: false,
-    })),
-    notes: q.notes ?? divSettings?.quoteNotes ?? undefined,
-    terms: q.terms ?? undefined,
-    vatRate: 15 as const,
-    discountAmount: Number(q.discountAmount ?? 0),
-    banking: buildBankingProps(divSettings),
-  });
-
   // Statement preparation
   const primaryDivisionName = clientDivisions[0]?.name ?? 'General';
 
@@ -525,46 +468,48 @@ export function ClientBillingWorkspace({
     setIsBulkDialogOpen(true);
 
     try {
-      const { jsPDF } = await import('jspdf');
-
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-
-      let pageAdded = false;
-      setActiveRenderingDocType(activeTab === 'invoices' ? 'invoice' : 'quote');
+      const { PDFDocument } = await import('pdf-lib');
+      const mergedPdf = await PDFDocument.create();
+      const docType = activeTab === 'invoices' ? 'invoice' : 'quote';
+      let mergedCount = 0;
 
       for (let i = 0; i < selectedIds.length; i++) {
         const id = selectedIds[i]!;
-
-        // Update state to render this document off-screen
-        setActiveRenderingDocId(id);
         setBulkProgress(Math.round((i / selectedIds.length) * 100));
 
-        // Delay to allow React mounting/rendering
-        await new Promise((resolve) => setTimeout(resolve, 250));
-
-        const elementId = `offscreen-doc-${id}`;
-        if (!document.getElementById(elementId)) {
+        try {
+          const pdfBytes = await fetchServerPdfBytes(`/api/billing/pdf/${docType}/${id}`);
+          const docPdf = await PDFDocument.load(pdfBytes);
+          const copiedPages = await mergedPdf.copyPages(docPdf, docPdf.getPageIndices());
+          for (const page of copiedPages) {
+            mergedPdf.addPage(page);
+          }
+          mergedCount += 1;
+          setBulkLog((prev) => prev.map((e) => (e.id === id ? { ...e, status: 'success' } : e)));
+        } catch (error) {
           setBulkLog((prev) =>
             prev.map((e) =>
-              e.id === id ? { ...e, status: 'failed', error: 'Render container missing' } : e,
+              e.id === id
+                ? {
+                    ...e,
+                    status: 'failed',
+                    error: error instanceof Error ? error.message : 'PDF generation failed',
+                  }
+                : e,
             ),
           );
-          continue;
         }
-
-        await appendElementToPdf(pdf, elementId, pageAdded);
-        pageAdded = true;
-
-        // Success for this item
-        setBulkLog((prev) => prev.map((e) => (e.id === id ? { ...e, status: 'success' } : e)));
       }
 
       setBulkProgress(100);
-      pdf.save(
+      if (mergedCount === 0) {
+        toast.error('No documents could be compiled into the combined PDF.');
+        return;
+      }
+
+      const mergedBytes = await mergedPdf.save();
+      downloadBlob(
+        new Blob([new Uint8Array(mergedBytes)], { type: 'application/pdf' }),
         sanitizePdfFileName(
           `Combined_${activeTab === 'invoices' ? 'Invoices' : 'Quotes'}_${client.businessName ?? 'Client'}`,
         ),
@@ -573,9 +518,6 @@ export function ClientBillingWorkspace({
     } catch (err) {
       console.error(err);
       toast.error('Combined PDF compilation failed.');
-    } finally {
-      setActiveRenderingDocId(null);
-      setActiveRenderingDocType(null);
     }
   };
 
@@ -609,7 +551,7 @@ export function ClientBillingWorkspace({
     setIsBulkDialogOpen(true);
 
     try {
-      setActiveRenderingDocType(activeTab === 'invoices' ? 'invoice' : 'quote');
+      const docType = activeTab === 'invoices' ? 'invoice' : 'quote';
 
       for (let i = 0; i < selectedIds.length; i++) {
         const id = selectedIds[i]!;
@@ -618,23 +560,12 @@ export function ClientBillingWorkspace({
             ? invoices.find((inv) => inv.id === id)
             : quotes.find((q) => q.id === id);
 
-        setActiveRenderingDocId(id);
         setBulkProgress(Math.round((i / selectedIds.length) * 100));
-
-        await new Promise((resolve) => setTimeout(resolve, 250));
-
-        const elementId = `offscreen-doc-${id}`;
-        if (!document.getElementById(elementId)) {
-          setBulkLog((prev) =>
-            prev.map((e) => (e.id === id ? { ...e, status: 'failed', error: 'Render error' } : e)),
-          );
-          continue;
-        }
 
         let base64Pdf: string;
         try {
-          base64Pdf = await elementToPdfBase64(
-            elementId,
+          base64Pdf = await serverPdfUrlToBase64(
+            `/api/billing/pdf/${docType}/${id}`,
             `${activeTab === 'invoices' ? 'Invoice' : 'Quote'} PDF`,
           );
         } catch (error) {
@@ -655,7 +586,7 @@ export function ClientBillingWorkspace({
         // Transmit via Resend
         const result = await sendDocumentEmailAction({
           documentId: id,
-          documentType: activeTab === 'invoices' ? 'invoice' : 'quote',
+          documentType: docType,
           recipientEmail: client.email,
           subject: `${activeTab === 'invoices' ? 'Invoice' : 'Quotation'} ${item?.documentNumber} - ${client.businessName ?? client.name}`,
           personalMessage: `Please find attached document ${item?.documentNumber}.`,
@@ -678,9 +609,6 @@ export function ClientBillingWorkspace({
     } catch (err) {
       console.error(err);
       toast.error('Bulk email operations failed.');
-    } finally {
-      setActiveRenderingDocId(null);
-      setActiveRenderingDocType(null);
     }
   };
 
@@ -728,30 +656,6 @@ export function ClientBillingWorkspace({
   return (
     <div className="flex flex-col gap-8">
       <SetPageLabel value={client.businessName ?? client.name} />
-      {/* Off-screen canvas render container (for sequential combined PDF/Email generation) */}
-      {activeRenderingDocId && activeRenderingDocType && (
-        <div
-          className="absolute left-[-9999px] top-[-9999px] w-[794px] bg-white text-black"
-          style={{ zIndex: -100 }}
-        >
-          {activeRenderingDocType === 'invoice' &&
-            invoices.find((i) => i.id === activeRenderingDocId) && (
-              <DocumentPreview
-                id={`offscreen-doc-${activeRenderingDocId}`}
-                type="invoice"
-                {...getInvoicePreviewProps(invoices.find((i) => i.id === activeRenderingDocId)!)}
-              />
-            )}
-          {activeRenderingDocType === 'quote' &&
-            quotes.find((q) => q.id === activeRenderingDocId) && (
-              <DocumentPreview
-                id={`offscreen-doc-${activeRenderingDocId}`}
-                type="quote"
-                {...getQuotePreviewProps(quotes.find((q) => q.id === activeRenderingDocId)!)}
-              />
-            )}
-        </div>
-      )}
 
       {/* Header panel */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
