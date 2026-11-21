@@ -10,6 +10,7 @@ import { LeaveEntryForm } from './leave-entry-form';
 import { LeaveHistoryTable } from './leave-history-table';
 import { SAPublicHolidaysSidebar } from './sa-holidays-sidebar';
 import { LeaveSettingsDialog } from './leave-settings-dialog';
+import { LeaveExportMenu } from './leave-export-menu';
 
 interface LeaveWorkspaceProps {
   settings: LeaveSettings;
@@ -96,6 +97,7 @@ export function LeaveWorkspace({ settings, entries, todayDate }: LeaveWorkspaceP
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <LeaveExportMenu entries={entries} todayDate={todayDate} />
           <LeaveSettingsDialog settings={settings} />
         </div>
       </div>
