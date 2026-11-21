@@ -10,7 +10,7 @@ import {
 } from '@pmg/billing/pdf';
 import { formatZAR } from '@pmg/billing/format';
 import type { ProfitAndLossResult, ProfitAndLossByDivisionRow } from '@pmg/db';
-import { type PdfOrgHeader } from '@pmg/billing/pdf-shell';
+import { type PdfOrgHeader } from '@pmg/billing/pdf';
 import { AccountingReportLayout } from '../components/report-layout';
 
 export interface ProfitAndLossDocumentProps {

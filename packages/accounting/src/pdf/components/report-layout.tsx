@@ -1,6 +1,6 @@
 import React, { type CSSProperties, type ReactNode } from 'react';
 import { Document, Page, View, Text } from '@pmg/billing/pdf';
-import { type PdfOrgHeader } from '@pmg/billing/pdf-shell';
+import { type PdfOrgHeader } from '@pmg/billing/pdf';
 
 export interface AccountingReportLayoutProps {
   title: string;

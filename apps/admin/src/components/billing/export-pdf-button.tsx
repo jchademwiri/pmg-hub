@@ -4,20 +4,18 @@ import React, { useState } from 'react';
 import { FileDown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { downloadElementPdf, downloadServerPdf } from '@/lib/pdf-export';
+import { downloadServerPdf } from '@/lib/pdf-export';
 
 interface ExportPdfButtonProps {
   fileName?: string;
   label?: string;
-  elementId?: string;
-  pdfUrl?: string;
+  pdfUrl: string;
   disabled?: boolean;
 }
 
 export function ExportPdfButton({
   fileName = 'document.pdf',
   label = 'Export PDF',
-  elementId = 'printable-area',
   pdfUrl,
   disabled = false,
 }: ExportPdfButtonProps) {
@@ -28,11 +26,7 @@ export function ExportPdfButton({
     const toastId = toast.loading('Generating high-quality PDF...');
 
     try {
-      if (pdfUrl) {
-        await downloadServerPdf(pdfUrl, fileName);
-      } else {
-        await downloadElementPdf(elementId, fileName);
-      }
+      await downloadServerPdf(pdfUrl, fileName);
       toast.success('PDF downloaded successfully!', { id: toastId });
     } catch (error) {
       console.error('PDF export failed:', error);

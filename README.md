@@ -13,7 +13,7 @@ Part of the `pmg-hub` Turborepo monorepo. This app lives at `apps/admin`.
 - **Auth:** Better Auth (magic link + OTP)
 - **Email:** Resend, via `@pmg/emails`
 - **Charts:** Recharts
-- **PDF export:** jsPDF + html2canvas-pro
+- **PDF export:** pdfcn (takumi-pdf)
 - **Rate limiting:** Upstash Redis
 - **Testing:** Vitest + Testing Library + fast-check (property-based tests)
 

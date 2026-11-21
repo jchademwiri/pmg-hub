@@ -11,7 +11,6 @@
     "./client-billing-helpers": "./src/client-billing-helpers.ts",
     "./document-logo": "./src/document-logo.ts",
     "./server-billing-pdf": "./src/server-billing-pdf.ts",
-    "./pdf-shell": "./src/pdf-shell.ts",
     "./pdf": "./src/pdf/index.ts",
     "./pdf/*": "./src/pdf/*.ts",
     "./*": "./src/*.ts"
@@ -20,7 +19,6 @@
     "@pmg/db": "workspace:*",
     "@pmg/utils": "workspace:*",
     "@takumi-rs/helpers": "2.13.7",
-    "jspdf": "^4.2.1",
     "server-only": "^0.0.1",
     "takumi-pdf": "0.14.3"
   },
