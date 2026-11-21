@@ -1,11 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import {
   buildLeaveProofKey,
+  buildLeaveReportCsv,
+  buildLeaveReportData,
   calculateWorkingDays,
   canMarkEntryTaken,
   computeEasterSunday,
   computeLeaveBalances,
   formatFileSize,
+  getFinancialYearRange,
   getNextAvailableWorkingDay,
   getSAPublicHolidays,
   getUpcomingSAPublicHolidays,
@@ -265,5 +268,82 @@ describe('Leave Proof R2 Path & Validation Helpers', () => {
     expect(getNextAvailableWorkingDay('2026-12-24')).toBe('2026-12-28');
     // Saturday 31 Oct 2026 -> Monday 2 Nov 2026 (next month)
     expect(getNextAvailableWorkingDay('2026-10-31')).toBe('2026-11-02');
+  });
+});
+
+describe('Financial Year Leave Report & CSV Builder', () => {
+  it('computes South African FY bounds including leap years', () => {
+    const fy27 = getFinancialYearRange(2027);
+    expect(fy27.fyStartDate).toBe('2026-03-01');
+    expect(fy27.fyEndDate).toBe('2027-02-28');
+    expect(fy27.label).toBe('FY 2026/27');
+    expect(fy27.slug).toBe('FY2026-27');
+
+    const fy28 = getFinancialYearRange(2028);
+    expect(fy28.fyStartDate).toBe('2027-03-01');
+    expect(fy28.fyEndDate).toBe('2028-02-29');
+  });
+
+  it('filters to the active FY, respects taken scope, sorts chronologically, and totals by type', () => {
+    const entries = [
+      {
+        id: 2,
+        type: 'ANNUAL' as const,
+        status: 'PLANNED' as const,
+        startDate: '2026-12-14',
+        endDate: '2026-12-18',
+        daysCount: 4,
+        notes: 'Festive, "family" break',
+        proofFileName: null,
+      },
+      {
+        id: 1,
+        type: 'SICK' as const,
+        status: 'TAKEN' as const,
+        startDate: '2026-11-10',
+        endDate: '2026-11-11',
+        daysCount: 2,
+        notes: 'Flu',
+        proofFileName: 'dr-note.pdf',
+      },
+      {
+        id: 3,
+        type: 'ANNUAL' as const,
+        status: 'PLANNED' as const,
+        startDate: '2027-03-04',
+        endDate: '2027-03-05',
+        daysCount: 2,
+        notes: 'Next FY trip',
+        proofFileName: null,
+      },
+    ];
+
+    const fullReport = buildLeaveReportData(
+      { ...BASELINE_SETTINGS, employmentStartDate: '2022-01-01' },
+      entries,
+      { fyEndYear: 2027, scope: 'all', todayDate: '2026-11-21' },
+    );
+
+    expect(fullReport.rows).toHaveLength(2);
+    expect(fullReport.rows[0]?.id).toBe(1); // chronological oldest -> newest
+    expect(fullReport.rows[1]?.id).toBe(2);
+    expect(fullReport.rows[1]?.excludedHolidays[0]?.name).toBe('Day of Reconciliation');
+    expect(fullReport.grandTotalTaken).toBe(2);
+    expect(fullReport.grandTotalPlanned).toBe(4);
+    expect(fullReport.grandTotalDays).toBe(6);
+
+    const takenOnly = buildLeaveReportData(
+      { ...BASELINE_SETTINGS, employmentStartDate: '2022-01-01' },
+      entries,
+      { fyEndYear: 2027, scope: 'taken', todayDate: '2026-11-21' },
+    );
+    expect(takenOnly.rows).toHaveLength(1);
+    expect(takenOnly.grandTotalDays).toBe(2);
+
+    const csv = buildLeaveReportCsv(fullReport);
+    expect(csv.startsWith('\uFEFF')).toBe(true);
+    expect(csv).toContain('"Festive, ""family"" break"');
+    expect(csv).toContain('Day of Reconciliation (2026-12-16)');
+    expect(csv).toContain('dr-note.pdf');
   });
 });
