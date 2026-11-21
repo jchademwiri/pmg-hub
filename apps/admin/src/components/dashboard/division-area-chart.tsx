@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Bar, ComposedChart, Line, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Bar, ComposedChart, Line, CartesianGrid, ReferenceLine, XAxis, YAxis } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ChartContainer,
@@ -22,7 +22,7 @@ import {
 import { formatZAR, fmtMonthYear, getSASTParts } from '@/lib/format';
 import type { MonthlyBudgetChartRow } from '@/lib/financial';
 
-export type ChartPeriodOption = 'this_fy' | 'prev_fy' | 'last_12m' | `fy:${number}`;
+export type ChartPeriodOption = 'ytd' | 'this_fy' | 'prev_fy' | 'last_12m' | `fy:${number}`;
 export type ChartTypeOption = 'line' | 'bar' | 'both';
 
 export const PERIOD_STORAGE_KEY = 'pmg:dashboard-chart-period';
@@ -34,16 +34,48 @@ type Props = {
   fiscalYear?: number;
 };
 
-const SERIES = [
+const BAR_SERIES = [
   { key: 'invoiced', label: 'Revenue', color: 'var(--chart-1)' },
   { key: 'revenue', label: 'Cash Receipts', color: 'oklch(0.72 0.16 150)' },
   { key: 'ar', label: 'Accounts Receivable', color: 'oklch(0.62 0.19 293)' },
   { key: 'expenses', label: 'Expenses', color: 'var(--chart-expense)' },
 ] as const;
 
-const chartConfig: ChartConfig = Object.fromEntries(
-  SERIES.map((item) => [item.key, { label: item.label, color: item.color }]),
-);
+const LINE_SERIES = [
+  {
+    key: 'invoiced',
+    label: 'Revenue',
+    color: 'var(--chart-1)',
+    yAxisId: 'left' as const,
+    dashed: false,
+  },
+  {
+    key: 'profit',
+    label: 'Net Profit',
+    color: 'oklch(0.696 0.17 162.48)',
+    yAxisId: 'left' as const,
+    dashed: false,
+  },
+  {
+    key: 'expenses',
+    label: 'Expenses',
+    color: 'var(--chart-expense)',
+    yAxisId: 'left' as const,
+    dashed: false,
+  },
+  {
+    key: 'profitMargin',
+    label: 'Profit Margin',
+    color: 'oklch(0.75 0.15 75)',
+    yAxisId: 'right' as const,
+    dashed: true,
+  },
+] as const;
+
+const chartConfig: ChartConfig = Object.fromEntries([
+  ...BAR_SERIES.map((item) => [item.key, { label: item.label, color: item.color }]),
+  ...LINE_SERIES.map((item) => [item.key, { label: item.label, color: item.color }]),
+]);
 
 function formatYAxis(value: number) {
   if (Math.abs(value) >= 1000) return `R${Math.round(value / 1000)}k`;
@@ -90,7 +122,7 @@ function isValidSavedPeriod(
   seriesByYear?: Record<number, MonthlyBudgetChartRow[]>,
 ): val is ChartPeriodOption {
   if (!val) return false;
-  if (val === 'this_fy' || val === 'last_12m') return true;
+  if (val === 'ytd' || val === 'this_fy' || val === 'last_12m') return true;
   if (val === 'prev_fy') return prevHasData;
   if (val.startsWith('fy:')) {
     const yr = Number(val.slice(3));
@@ -200,8 +232,12 @@ export function DivisionAreaChart({ data, seriesByYear, fiscalYear }: Props) {
     }
   };
 
-  // Resolve the 12-month series for the selected period
+  // Resolve the series for the selected period
   const activeSeries = useMemo<MonthlyBudgetChartRow[]>(() => {
+    if (period === 'ytd') {
+      const elapsed = thisFySeries.filter((row) => row.month <= currentMonthStr);
+      return elapsed.length > 0 ? elapsed : thisFySeries.slice(0, 1);
+    }
     if (period === 'this_fy') {
       return thisFySeries;
     }
@@ -237,12 +273,16 @@ export function DivisionAreaChart({ data, seriesByYear, fiscalYear }: Props) {
   const chartData = useMemo(() => {
     return activeSeries.map((row) => {
       const isFuture = period === 'this_fy' && row.month > currentMonthStr;
+      const profit = row.revenue - row.expenses;
+      const profitMargin = row.revenue > 0 ? Math.round((profit / row.revenue) * 1000) / 10 : 0;
       return {
         ...row,
         revenue: isFuture ? undefined : row.revenue,
         invoiced: isFuture ? undefined : row.invoiced,
         expenses: isFuture ? undefined : row.expenses,
         ar: isFuture ? undefined : row.ar,
+        profit: isFuture ? undefined : profit,
+        profitMargin: isFuture ? undefined : profitMargin,
       };
     });
   }, [activeSeries, currentMonthStr, period]);
@@ -252,9 +292,14 @@ export function DivisionAreaChart({ data, seriesByYear, fiscalYear }: Props) {
     const lastMonth = activeSeries[activeSeries.length - 1]?.month;
     const rangeText =
       firstMonth && lastMonth
-        ? `${fmtMonthYear(firstMonth, { short: true })} – ${fmtMonthYear(lastMonth, { short: true })}`
+        ? firstMonth === lastMonth
+          ? fmtMonthYear(firstMonth, { short: true })
+          : `${fmtMonthYear(firstMonth, { short: true })} – ${fmtMonthYear(lastMonth, { short: true })}`
         : '';
 
+    if (period === 'ytd') {
+      return rangeText ? `Year to Date (${rangeText})` : 'Year to Date';
+    }
     if (period === 'this_fy') {
       return rangeText ? `This Fiscal Year (${rangeText})` : 'This Fiscal Year';
     }
@@ -272,6 +317,9 @@ export function DivisionAreaChart({ data, seriesByYear, fiscalYear }: Props) {
   }, [activeSeries, period]);
 
   const emptyMessage = useMemo(() => {
+    if (period === 'ytd') {
+      return 'No revenue, cash receipt, or expense data year to date.';
+    }
     if (period === 'prev_fy') {
       return 'No revenue, cash receipt, or expense data for the previous fiscal year.';
     }
@@ -285,27 +333,45 @@ export function DivisionAreaChart({ data, seriesByYear, fiscalYear }: Props) {
     return 'No revenue, cash receipt, or expense data for this fiscal year.';
   }, [period]);
 
-  const totals = useMemo(
-    () =>
-      elapsedData.reduce(
-        (acc, row) => ({
-          revenue: acc.revenue + row.revenue,
-          invoiced: acc.invoiced + row.invoiced,
-          expenses: acc.expenses + row.expenses,
-        }),
-        { revenue: 0, invoiced: 0, expenses: 0 },
-      ),
-    [elapsedData],
-  );
+  const totals = useMemo(() => {
+    const sums = elapsedData.reduce(
+      (acc, row) => ({
+        revenue: acc.revenue + row.revenue,
+        invoiced: acc.invoiced + row.invoiced,
+        expenses: acc.expenses + row.expenses,
+      }),
+      { revenue: 0, invoiced: 0, expenses: 0 },
+    );
+    const profit = sums.revenue - sums.expenses;
+    const profitMargin = sums.revenue > 0 ? (profit / sums.revenue) * 100 : 0;
+    return { ...sums, profit, profitMargin };
+  }, [elapsedData]);
 
   const averages = useMemo(() => {
     const n = elapsedData.length || 1;
+    const revenue = elapsedData.reduce((sum, row) => sum + row.revenue, 0) / n;
+    const invoiced = elapsedData.reduce((sum, row) => sum + row.invoiced, 0) / n;
+    const expenses = elapsedData.reduce((sum, row) => sum + row.expenses, 0) / n;
     return {
-      revenue: elapsedData.reduce((sum, row) => sum + row.revenue, 0) / n,
-      invoiced: elapsedData.reduce((sum, row) => sum + row.invoiced, 0) / n,
-      expenses: elapsedData.reduce((sum, row) => sum + row.expenses, 0) / n,
+      revenue,
+      invoiced,
+      expenses,
+      profit: revenue - expenses,
     };
   }, [elapsedData]);
+
+  // Show a subtle zero reference line when Net Profit dips negative in Line or Both views
+  const hasNegativeProfit = useMemo(
+    () => chartData.some((row) => (row.profit ?? 0) < 0),
+    [chartData],
+  );
+
+  // In 'both' mode, Expenses is plotted as a crisp trend line, so omit the duplicate Expenses bar
+  const visibleBarSeries = useMemo(
+    () =>
+      chartType === 'both' ? BAR_SERIES.filter((item) => item.key !== 'expenses') : BAR_SERIES,
+    [chartType],
+  );
 
   // AR is a running balance, not a flow — the meaningful summary figure is the
   // latest elapsed month's balance, not a sum or average across months.
@@ -341,6 +407,9 @@ export function DivisionAreaChart({ data, seriesByYear, fiscalYear }: Props) {
                 <SelectValue placeholder="This Fiscal Year" />
               </SelectTrigger>
               <SelectContent align="end" className="rounded-lg">
+                <SelectItem value="ytd" className="text-xs">
+                  Year to Date
+                </SelectItem>
                 <SelectItem value="this_fy" className="text-xs">
                   This Fiscal Year
                 </SelectItem>
@@ -419,7 +488,7 @@ export function DivisionAreaChart({ data, seriesByYear, fiscalYear }: Props) {
             {emptyMessage}
           </div>
         ) : (
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px]">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_150px]">
             <div className="min-w-0 overflow-x-auto hide-scrollbar rounded-md border border-border bg-muted/20 p-4">
               <div className="min-w-[560px]">
                 <ChartContainer config={chartConfig} className="aspect-auto h-[230px] w-full">
@@ -444,12 +513,32 @@ export function DivisionAreaChart({ data, seriesByYear, fiscalYear }: Props) {
                       tickMargin={8}
                     />
                     <YAxis
+                      yAxisId="left"
                       tickFormatter={(value) => formatYAxis(Number(value))}
                       tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
                       axisLine={false}
                       tickLine={false}
                       width={46}
                     />
+                    {(chartType === 'line' || chartType === 'both') && (
+                      <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        tickFormatter={(value) => `${Math.round(Number(value))}%`}
+                        tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+                        axisLine={false}
+                        tickLine={false}
+                        width={40}
+                      />
+                    )}
+                    {chartType !== 'bar' && hasNegativeProfit && (
+                      <ReferenceLine
+                        yAxisId="left"
+                        y={0}
+                        stroke="var(--border)"
+                        strokeDasharray="3 3"
+                      />
+                    )}
                     <ChartTooltip
                       payloadUniqBy={(item) => item.dataKey}
                       cursor={
@@ -476,7 +565,9 @@ export function DivisionAreaChart({ data, seriesByYear, fiscalYear }: Props) {
                               <div className="flex flex-1 items-center justify-between gap-4 leading-none">
                                 <span className="text-muted-foreground">{name}</span>
                                 <span className="font-semibold tabular-nums text-foreground">
-                                  {formatZAR(Number(value))}
+                                  {item.dataKey === 'profitMargin'
+                                    ? `${Number(value).toFixed(1)}%`
+                                    : formatZAR(Number(value))}
                                 </span>
                               </div>
                             </>
@@ -487,9 +578,10 @@ export function DivisionAreaChart({ data, seriesByYear, fiscalYear }: Props) {
 
                     {/* Column Bars */}
                     {(chartType === 'bar' || chartType === 'both') &&
-                      SERIES.map((item) => (
+                      visibleBarSeries.map((item) => (
                         <Bar
                           key={`bar-${item.key}`}
+                          yAxisId="left"
                           dataKey={item.key}
                           name={item.label}
                           fill={item.color}
@@ -498,38 +590,45 @@ export function DivisionAreaChart({ data, seriesByYear, fiscalYear }: Props) {
                         />
                       ))}
 
-                    {/* Lines with dot markers */}
+                    {/* Trend Lines: Net Profit, Expenses & Profit Margin % */}
                     {(chartType === 'line' || chartType === 'both') &&
-                      SERIES.map((item) => (
-                        <Line
-                          key={`line-${item.key}`}
-                          type="monotone"
-                          dataKey={item.key}
-                          name={item.label}
-                          stroke={item.color}
-                          strokeWidth={2}
-                          dot={{
-                            r: 4,
-                            strokeWidth: 2,
-                            fill: 'hsl(var(--background))',
-                            stroke: item.color,
-                          }}
-                          activeDot={{ r: 6 }}
-                          opacity={chartType === 'both' ? 0.15 : 1}
-                        />
-                      ))}
+                      LINE_SERIES.map((item) => {
+                        const isBoth = chartType === 'both';
+                        const lineOpacity = isBoth ? (item.dashed ? 0.45 : 0.6) : 1;
+                        return (
+                          <Line
+                            key={`line-${item.key}`}
+                            yAxisId={item.yAxisId}
+                            type="monotone"
+                            dataKey={item.key}
+                            name={item.label}
+                            stroke={item.color}
+                            strokeWidth={isBoth ? (item.dashed ? 1.5 : 2) : item.dashed ? 2 : 2.5}
+                            strokeDasharray={item.dashed ? '4 4' : undefined}
+                            strokeOpacity={lineOpacity}
+                            dot={{
+                              r: item.dashed ? 3 : 4,
+                              strokeWidth: isBoth ? 1.75 : 2,
+                              strokeOpacity: lineOpacity,
+                              fill: 'hsl(var(--background))',
+                              stroke: item.color,
+                            }}
+                            activeDot={{ r: 6, strokeOpacity: 1 }}
+                          />
+                        );
+                      })}
                   </ComposedChart>
                 </ChartContainer>
               </div>
             </div>
 
-            <div className="hidden lg:flex flex-col justify-center gap-6 text-right">
+            <div className="hidden lg:flex flex-col justify-center gap-3.5 text-right">
               <div>
                 <p className="text-xs font-medium text-[color:var(--chart-1)]">Total Revenue</p>
-                <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">
+                <p className="mt-0.5 text-lg font-semibold tabular-nums text-foreground">
                   {formatZAR(totals.invoiced)}
                 </p>
-                <p className="text-[10px] text-muted-foreground/80 mt-0.5">
+                <p className="text-[10px] text-muted-foreground/80">
                   Avg: {formatZAR(averages.invoiced)}/mo
                 </p>
               </div>
@@ -537,21 +636,36 @@ export function DivisionAreaChart({ data, seriesByYear, fiscalYear }: Props) {
                 <p className="text-xs font-medium text-[color:oklch(0.72_0.16_150)]">
                   Total Cash Receipts
                 </p>
-                <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">
+                <p className="mt-0.5 text-lg font-semibold tabular-nums text-foreground">
                   {formatZAR(totals.revenue)}
                 </p>
-                <p className="text-[10px] text-muted-foreground/80 mt-0.5">
+                <p className="text-[10px] text-muted-foreground/80">
                   Avg: {formatZAR(averages.revenue)}/mo
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-[color:oklch(0.696_0.17_162.48)]">
+                  Net Profit
+                </p>
+                <p
+                  className={`mt-0.5 text-lg font-semibold tabular-nums ${
+                    totals.profit < 0 ? 'text-[color:var(--chart-expense)]' : 'text-foreground'
+                  }`}
+                >
+                  {formatZAR(totals.profit)}
+                </p>
+                <p className="text-[10px] text-muted-foreground/80">
+                  Margin: {totals.profitMargin.toFixed(1)}%
                 </p>
               </div>
               <div>
                 <p className="text-xs font-medium text-[color:oklch(0.62_0.19_293)]">
                   Accounts Receivable
                 </p>
-                <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">
+                <p className="mt-0.5 text-lg font-semibold tabular-nums text-foreground">
                   {formatZAR(currentAR)}
                 </p>
-                <p className="text-[10px] text-muted-foreground/80 mt-0.5">
+                <p className="text-[10px] text-muted-foreground/80">
                   As of {fmtMonthYear(elapsedData[elapsedData.length - 1]?.month)}
                 </p>
               </div>
@@ -559,10 +673,10 @@ export function DivisionAreaChart({ data, seriesByYear, fiscalYear }: Props) {
                 <p className="text-xs font-medium text-[color:var(--chart-expense)]">
                   Total Expenses
                 </p>
-                <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">
+                <p className="mt-0.5 text-lg font-semibold tabular-nums text-foreground">
                   {formatZAR(totals.expenses)}
                 </p>
-                <p className="text-[10px] text-muted-foreground/80 mt-0.5">
+                <p className="text-[10px] text-muted-foreground/80">
                   Avg: {formatZAR(averages.expenses)}/mo
                 </p>
               </div>
@@ -573,7 +687,8 @@ export function DivisionAreaChart({ data, seriesByYear, fiscalYear }: Props) {
         <p className="mt-5 text-xs text-muted-foreground">
           Revenue is client-facing invoice totals. Cash Receipts is payments received. Accounts
           Receivable is the cumulative outstanding balance owed on open invoices as of each
-          month-end. Expenses are recorded expenses.
+          month-end. Expenses are recorded expenses. Net Profit is Cash Receipts minus Expenses, and
+          Profit Margin is the percentage of Cash Receipts retained as Net Profit.
         </p>
       </CardContent>
     </Card>

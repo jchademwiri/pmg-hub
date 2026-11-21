@@ -23,14 +23,25 @@ vi.mock('@/components/ui/chart', () => ({
 }));
 
 vi.mock('recharts', () => ({
-  ComposedChart: ({ data }: { data: unknown[] }) => (
-    <div data-testid="composed-chart" data-points={JSON.stringify(data)} />
+  ComposedChart: ({ data, children }: { data: unknown[]; children?: React.ReactNode }) => (
+    <div data-testid="composed-chart" data-points={JSON.stringify(data)}>
+      {children}
+    </div>
   ),
-  Bar: () => null,
-  Line: () => null,
+  Bar: ({ dataKey, yAxisId }: { dataKey: string; yAxisId?: string }) => (
+    <div data-testid="chart-bar" data-key={dataKey} data-yaxis={yAxisId ?? ''} />
+  ),
+  Line: ({ dataKey, yAxisId }: { dataKey: string; yAxisId?: string }) => (
+    <div data-testid="chart-line" data-key={dataKey} data-yaxis={yAxisId ?? ''} />
+  ),
+  ReferenceLine: ({ y, yAxisId }: { y?: number; yAxisId?: string }) => (
+    <div data-testid="chart-ref-line" data-y={String(y ?? '')} data-yaxis={yAxisId ?? ''} />
+  ),
   CartesianGrid: () => null,
   XAxis: () => null,
-  YAxis: () => null,
+  YAxis: ({ yAxisId }: { yAxisId?: string }) => (
+    <div data-testid="chart-yaxis" data-yaxis={yAxisId ?? ''} />
+  ),
 }));
 
 import {
@@ -197,5 +208,88 @@ describe('DivisionAreaChart period filter, rollover & persistence', () => {
 
     // Since FY 2025 has no data, it should fall back to This Fiscal Year instead of showing an empty Prev FY
     expect(screen.getByText(/This Fiscal Year \(Mar 2026 – Feb 2027\)/i)).toBeTruthy();
+  });
+
+  it('renders distinct Bar, Line (Net Profit, Expenses, Profit Margin %), and Both combo series', () => {
+    const fy2026 = makeFySeries(2026, {
+      '2026-03': { invoiced: 15000, revenue: 10000, expenses: 2500, ar: 5000 },
+      '2026-04': { invoiced: 8000, revenue: 4000, expenses: 6000, ar: 9000 }, // negative profit (-2000)
+    });
+
+    render(<DivisionAreaChart data={fy2026} fiscalYear={2026} />);
+
+    // Default Bar mode: 4 bars, 0 lines, left Y-axis only, no zero reference line
+    const initialBars = screen.getAllByTestId('chart-bar').map((el) => el.getAttribute('data-key'));
+    expect(initialBars).toEqual(['invoiced', 'revenue', 'ar', 'expenses']);
+    expect(screen.queryAllByTestId('chart-line')).toHaveLength(0);
+    expect(screen.queryAllByTestId('chart-ref-line')).toHaveLength(0);
+    expect(screen.getAllByTestId('chart-yaxis').map((el) => el.getAttribute('data-yaxis'))).toEqual(
+      ['left'],
+    );
+
+    // Verify derived profit & profitMargin in chartData (and future month omitted)
+    const chartEl = screen.getByTestId('composed-chart');
+    const points = JSON.parse(chartEl.getAttribute('data-points') ?? '[]') as Array<{
+      month: string;
+      profit?: number;
+      profitMargin?: number;
+    }>;
+    const mar = points.find((p) => p.month === '2026-03');
+    const apr = points.find((p) => p.month === '2026-04');
+    const dec = points.find((p) => p.month === '2026-12'); // future relative to Nov 2026
+    expect(mar?.profit).toBe(7500);
+    expect(mar?.profitMargin).toBe(75);
+    expect(apr?.profit).toBe(-2000);
+    expect(apr?.profitMargin).toBe(-50);
+    expect(dec?.profit).toBeUndefined();
+    expect(dec?.profitMargin).toBeUndefined();
+
+    // Switch to Line mode: 0 bars, 4 lines (invoiced/Revenue on top, profit, expenses, profitMargin), dual Y-axes, zero ref line
+    fireEvent.click(screen.getByRole('button', { name: 'Line' }));
+    expect(screen.queryAllByTestId('chart-bar')).toHaveLength(0);
+    const lines = screen.getAllByTestId('chart-line').map((el) => ({
+      key: el.getAttribute('data-key'),
+      yAxis: el.getAttribute('data-yaxis'),
+    }));
+    expect(lines).toEqual([
+      { key: 'invoiced', yAxis: 'left' },
+      { key: 'profit', yAxis: 'left' },
+      { key: 'expenses', yAxis: 'left' },
+      { key: 'profitMargin', yAxis: 'right' },
+    ]);
+    expect(screen.getAllByTestId('chart-yaxis').map((el) => el.getAttribute('data-yaxis'))).toEqual(
+      ['left', 'right'],
+    );
+    expect(screen.getByTestId('chart-ref-line').getAttribute('data-y')).toBe('0');
+
+    // Switch to Both mode: non-expense bars + 4 trend lines (Revenue on top, no duplicate expenses bar)
+    fireEvent.click(screen.getByRole('button', { name: 'Both' }));
+    const bothBars = screen.getAllByTestId('chart-bar').map((el) => el.getAttribute('data-key'));
+    const bothLines = screen.getAllByTestId('chart-line').map((el) => el.getAttribute('data-key'));
+    expect(bothBars).toEqual(['invoiced', 'revenue', 'ar']);
+    expect(bothLines).toEqual(['invoiced', 'profit', 'expenses', 'profitMargin']);
+    expect(screen.getByTestId('chart-ref-line').getAttribute('data-y')).toBe('0');
+  });
+
+  it('supports Year to Date (ytd) filter showing only elapsed months of the current fiscal year', () => {
+    const fy2026 = makeFySeries(2026, {
+      '2026-03': { invoiced: 15000, revenue: 10000, expenses: 2000, ar: 5000 },
+      '2026-11': { invoiced: 18000, revenue: 16000, expenses: 3000, ar: 7000 },
+    });
+
+    window.localStorage.setItem(PERIOD_STORAGE_KEY, 'ytd');
+
+    render(<DivisionAreaChart data={fy2026} fiscalYear={2026} />);
+
+    expect(screen.getByText(/Year to Date \(Mar 2026 – Nov 2026\)/i)).toBeTruthy();
+
+    const chartEl = screen.getByTestId('composed-chart');
+    const points = JSON.parse(
+      chartEl.getAttribute('data-points') ?? '[]',
+    ) as MonthlyBudgetChartRow[];
+    // Mar 2026 through Nov 2026 = 9 elapsed months (Dec, Jan, Feb omitted)
+    expect(points).toHaveLength(9);
+    expect(points[0]?.month).toBe('2026-03');
+    expect(points[points.length - 1]?.month).toBe('2026-11');
   });
 });
