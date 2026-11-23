@@ -36,15 +36,20 @@ import {
   journalEntries,
   journalLines,
   paymentAllocations,
+  distributionSettings,
   and,
   eq,
   inArray,
+  sql,
   divisions,
   deriveDivisionPrefix,
   ACCOUNT_RATES,
   getNextJournalEntryNumber,
   ensureOpenPeriod,
   reopenPeriod,
+  getTrialBalance,
+  upsertBankReconciliation,
+  type BankAccountCode,
   type ChartAccount,
 } from '@pmg/db';
 
@@ -1259,6 +1264,305 @@ export async function postAssetPurchaseJournalEntry(data: {
     console.error('Failed to auto-post asset purchase journal entry:', err);
     return {
       error: `Asset journal auto-post failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
+// ── Banking, Reconciliation & Owner Withdrawal Journal Helpers ───────────────
+
+async function resolveCorporateDivisionId(db: ReturnType<typeof getDb>, divisionId?: string) {
+  if (divisionId) return divisionId;
+  const allDivs = await db.select({ id: divisions.id, name: divisions.name }).from(divisions);
+  const pmgDiv = allDivs.find((d) => d.name.toLowerCase().includes('playhouse'));
+  return pmgDiv?.id ?? allDivs[0]?.id;
+}
+
+async function postSimpleTwoLineJournal(data: {
+  date: string;
+  debitCode: string;
+  creditCode: string;
+  amount: number;
+  description: string;
+  debitLineDescription: string;
+  creditLineDescription: string;
+  sourceModule: string;
+  createdBy?: string;
+  divisionId?: string;
+}): Promise<{ error?: string; entryId?: string }> {
+  try {
+    const absAmount = Math.abs(data.amount);
+    if (absAmount < 0.01) return {};
+
+    const period = data.date.slice(0, 7);
+    const p = await ensureOpenPeriod(period);
+    if (p.status !== 'open') {
+      return { error: `Accounting period ${period} is ${p.status} and cannot be posted to.` };
+    }
+
+    const db = getDb();
+    const accountMap = await getAccountsByCode([data.debitCode, data.creditCode], db);
+    const debitAccount = accountMap.get(data.debitCode);
+    const creditAccount = accountMap.get(data.creditCode);
+
+    if (!debitAccount || !creditAccount) {
+      return {
+        error: `Required chart accounts not found (${data.debitCode}, ${data.creditCode}).`,
+      };
+    }
+
+    const resolvedDivisionId = await resolveCorporateDivisionId(db, data.divisionId);
+    if (!resolvedDivisionId) {
+      return { error: 'No division found to post journal entry.' };
+    }
+
+    const entryId = randomUUID();
+    const now = new Date();
+    const actor = data.createdBy || 'system';
+
+    await db.transaction(async (tx) => {
+      const entryNumber = await getNextJournalEntryNumber(tx, data.date);
+
+      await tx.insert(journalEntries).values({
+        id: entryId,
+        entryNumber,
+        entryDate: data.date,
+        period,
+        divisionId: resolvedDivisionId,
+        description: data.description,
+        status: 'posted',
+        sourceModule: data.sourceModule,
+        sourceDocumentNumber: entryNumber,
+        postedAt: now,
+        postedBy: actor,
+        createdBy: actor,
+      });
+
+      await tx.insert(journalLines).values([
+        {
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: debitAccount.id,
+          debit: absAmount.toFixed(2),
+          credit: null,
+          description: data.debitLineDescription,
+        },
+        {
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: creditAccount.id,
+          debit: null,
+          credit: absAmount.toFixed(2),
+          description: data.creditLineDescription,
+        },
+      ]);
+    });
+
+    return { entryId };
+  } catch (err) {
+    console.error('Failed to post banking journal entry:', err);
+    return {
+      error: `Journal posting failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
+export type BankReconciliationContraCode = '5110' | '4030' | '1250' | '3010';
+
+/**
+ * Posts a balanced bank reconciliation adjustment entry.
+ * delta = statementBalance - bookBalance:
+ *  - delta > 0: Dr <bank> / Cr <contra>
+ *  - delta < 0: Dr <contra> / Cr <bank>
+ */
+export async function postBankReconciliationAdjustment(data: {
+  accountCode: BankAccountCode;
+  date: string;
+  delta: number;
+  contraCode: BankReconciliationContraCode;
+  description: string;
+  createdBy?: string;
+}): Promise<{ error?: string; entryId?: string }> {
+  const isIncrease = data.delta > 0;
+  return postSimpleTwoLineJournal({
+    date: data.date,
+    debitCode: isIncrease ? data.accountCode : data.contraCode,
+    creditCode: isIncrease ? data.contraCode : data.accountCode,
+    amount: Math.abs(data.delta),
+    description: data.description,
+    debitLineDescription: `Bank reconciliation adjustment (${data.accountCode})`,
+    creditLineDescription: `Bank reconciliation adjustment (${data.contraCode})`,
+    sourceModule: 'banking',
+    createdBy: data.createdBy,
+  });
+}
+
+export type OwnerWithdrawalMode = 'director_loan' | 'loan_repayment' | 'salary_advance';
+
+/**
+ * Posts a Director's Loan withdrawal (Dr 1250 / Cr 1010), Director's Loan repayment
+ * (Dr 1010 / Cr 1250), or Director Salary / Advance (Dr 5120 / Cr 1010).
+ */
+export async function postOwnerWithdrawalJournalEntry(data: {
+  date: string;
+  amount: number;
+  mode: OwnerWithdrawalMode;
+  description: string;
+  createdBy?: string;
+}): Promise<{ error?: string; entryId?: string }> {
+  const mapping: Record<
+    OwnerWithdrawalMode,
+    { debitCode: string; creditCode: string; label: string }
+  > = {
+    director_loan: {
+      debitCode: '1250',
+      creditCode: BANK_ACCOUNT_CODE,
+      label: "Director's Loan withdrawal",
+    },
+    loan_repayment: {
+      debitCode: BANK_ACCOUNT_CODE,
+      creditCode: '1250',
+      label: "Director's Loan repayment",
+    },
+    salary_advance: {
+      debitCode: '5120',
+      creditCode: BANK_ACCOUNT_CODE,
+      label: 'Director remuneration / advance',
+    },
+  };
+
+  const selected = mapping[data.mode];
+  return postSimpleTwoLineJournal({
+    date: data.date,
+    debitCode: selected.debitCode,
+    creditCode: selected.creditCode,
+    amount: data.amount,
+    description: data.description || selected.label,
+    debitLineDescription: selected.label,
+    creditLineDescription: selected.label,
+    sourceModule: 'banking',
+    createdBy: data.createdBy,
+  });
+}
+
+/**
+ * Posts a 1-click Bank Fee (Dr 5110 / Cr <bank>) or Interest Received (Dr <bank> / Cr 4030).
+ */
+export async function postQuickBankEntry(data: {
+  type: 'bank_fee' | 'interest';
+  accountCode: BankAccountCode;
+  date: string;
+  amount: number;
+  description: string;
+  createdBy?: string;
+}): Promise<{ error?: string; entryId?: string }> {
+  const isFee = data.type === 'bank_fee';
+  return postSimpleTwoLineJournal({
+    date: data.date,
+    debitCode: isFee ? '5110' : data.accountCode,
+    creditCode: isFee ? data.accountCode : '4030',
+    amount: data.amount,
+    description: data.description || (isFee ? 'Monthly bank charges' : 'Bank interest received'),
+    debitLineDescription: isFee ? 'Bank charges' : `Interest credited to ${data.accountCode}`,
+    creditLineDescription: isFee ? `Bank fee deducted from ${data.accountCode}` : 'Interest income',
+    sourceModule: 'banking',
+    createdBy: data.createdBy,
+  });
+}
+
+/**
+ * Runs the FY2027/28 Year-End Bank True-Up (2027-02-28) & Opening Balance Transition:
+ * 1. Computes book balances strictly as of 2027-02-28 (ignoring March 2027+ entries).
+ * 2. Posts any variance for 1010 and 1020 against 1250 Director's Loan (drawdown) or
+ *    3010 Owner's Capital (injection) on 2027-02-28.
+ * 3. Records reconciled 2027-02 bank_reconciliations rows.
+ * 4. Inserts a date-effective pmg_share = 0% row effective 2027-03-01 (idempotent).
+ */
+export async function postFy2027OpeningBalanceTrueUp(data: {
+  realChequeBalance: number;
+  realSavingsBalance: number;
+  createdBy?: string;
+}): Promise<{ error?: string; postedEntries: number }> {
+  try {
+    const trueUpDate = '2027-02-28';
+    const trueUpPeriod = '2027-02';
+    const tb = await getTrialBalance(undefined, undefined, undefined, trueUpDate);
+    const byCode = new Map(tb.map((r) => [r.accountCode, r.balance]));
+
+    const bookCheque = byCode.get('1010') ?? 0;
+    const bookSavings = byCode.get('1020') ?? 0;
+
+    let postedEntries = 0;
+
+    const accounts: Array<{ code: BankAccountCode; book: number; real: number; label: string }> = [
+      { code: '1010', book: bookCheque, real: data.realChequeBalance, label: 'Cheque Account' },
+      { code: '1020', book: bookSavings, real: data.realSavingsBalance, label: 'Savings Account' },
+    ];
+
+    for (const acc of accounts) {
+      const delta = acc.real - acc.book;
+      let adjustmentJournalId: string | null = null;
+
+      if (Math.abs(delta) >= 0.01) {
+        const contraCode: BankReconciliationContraCode = delta < 0 ? '1250' : '3010';
+        const res = await postBankReconciliationAdjustment({
+          accountCode: acc.code,
+          date: trueUpDate,
+          delta,
+          contraCode,
+          description: `FY2026/27 Year-End True-Up (${acc.label}) for FY2027/28 Opening Balance`,
+          createdBy: data.createdBy,
+        });
+        if (res.error) return { error: res.error, postedEntries };
+        adjustmentJournalId = res.entryId ?? null;
+        postedEntries++;
+      }
+
+      await upsertBankReconciliation({
+        period: trueUpPeriod,
+        accountCode: acc.code,
+        statementDate: trueUpDate,
+        statementBalance: acc.real,
+        bookBalance: acc.real,
+        variance: 0,
+        adjustmentJournalId,
+        status: 'reconciled',
+        notes: 'FY2026/27 Year-End True-Up & FY2027/28 Opening Balance confirmation',
+        reconciledBy: data.createdBy ?? 'system',
+      });
+    }
+
+    // Sunset pmg_share to 0% effective 2027-03-01 (idempotent)
+    const db = getDb();
+    const existingSunset = await db
+      .select({ id: distributionSettings.id })
+      .from(distributionSettings)
+      .where(
+        and(
+          eq(distributionSettings.rateKey, 'pmg_share'),
+          sql`${distributionSettings.effectiveFrom} >= '2027-03-01'`,
+          sql`${distributionSettings.rateValue}::numeric = 0`,
+        ),
+      )
+      .limit(1);
+
+    if (existingSunset.length === 0) {
+      await db.insert(distributionSettings).values({
+        rateKey: 'pmg_share',
+        rateValue: '0.0000',
+        effectiveFrom: new Date('2027-03-01T00:00:00Z'),
+        effectiveTo: null,
+        description: 'FY2027/28 (Pty) Ltd governance transition — PMG Share sunsetted (0%)',
+        distributionBasis: 'net_profit',
+        isActive: true,
+      });
+    }
+
+    return { postedEntries };
+  } catch (err) {
+    console.error('Failed to run FY2027 opening balance true-up:', err);
+    return {
+      error: `FY2027 transition failed: ${err instanceof Error ? err.message : String(err)}`,
+      postedEntries: 0,
     };
   }
 }

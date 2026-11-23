@@ -2,19 +2,12 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Pencil } from 'lucide-react';
+import { Plus, Pencil, Boxes, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -25,7 +18,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { createSavingsGoal, updateSavingsGoal } from '@/app/actions/savings';
-import { SPEND_TRACKER_OPTIONS } from '@/lib/spend-trackers';
 import { roundTarget } from '@/lib/savings';
 import { formatZAR } from '@/lib/format';
 
@@ -37,7 +29,6 @@ type GoalDefaults = {
   actualPrice: string | null;
   vendor: string | null;
   productUrl: string | null;
-  spendTrackerKey: string | null;
   targetDate: string | null;
   notes: string | null;
 };
@@ -54,22 +45,14 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
   const [targetAmount, setTargetAmount] = React.useState(goal?.targetAmount ?? '');
   const [vendor, setVendor] = React.useState(goal?.vendor ?? '');
   const [productUrl, setProductUrl] = React.useState(goal?.productUrl ?? '');
-  const [spendTrackerKey, setSpendTrackerKey] = React.useState(goal?.spendTrackerKey ?? 'none');
   const [targetDate, setTargetDate] = React.useState(goal?.targetDate ?? '');
   const [notes, setNotes] = React.useState(goal?.notes ?? '');
 
-  // The target is what you save toward; the price is what it actually costs.
-  // Rounding up to the nearest R500 gives a round number to aim at and a small
-  // buffer for delivery or a price rise. Only auto-fills while untouched.
+  // Auto-suggest a target rounded up to the nearest R500 for delivery/price buffer
+  // until the user edits Target directly.
   const [targetTouched, setTargetTouched] = React.useState(isEdit);
   const suggested = roundTarget(parseFloat(actualPrice) || 0);
 
-  // Sync targetAmount to the rounded suggestion until the user edits it
-  // directly, adjusted during render - React's recommended pattern for
-  // "derive state until overridden" - rather than in an effect, so there's
-  // no extra post-commit render pass. -1 is a sentinel roundTarget never
-  // returns, so the very first render (mount) still syncs once if a price
-  // is already present, matching the previous effect-based behaviour.
   const [prevSuggested, setPrevSuggested] = React.useState(-1);
   if (!targetTouched && suggested > 0 && suggested !== prevSuggested) {
     setPrevSuggested(suggested);
@@ -79,12 +62,12 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error('A name is required.');
+      toast.error('Please enter an item or asset name.');
       return;
     }
     const target = parseFloat(targetAmount);
     if (!target || target <= 0) {
-      toast.error('Target amount must be greater than zero.');
+      toast.error('Savings target must be greater than zero.');
       return;
     }
 
@@ -95,7 +78,7 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
     fd.set('actualPrice', actualPrice.trim());
     fd.set('vendor', vendor.trim());
     fd.set('productUrl', productUrl.trim());
-    fd.set('spendTrackerKey', spendTrackerKey);
+    fd.set('spendTrackerKey', 'none');
     fd.set('targetDate', targetDate);
     fd.set('notes', notes.trim());
 
@@ -113,7 +96,6 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
         setTargetAmount('');
         setVendor('');
         setProductUrl('');
-        setSpendTrackerKey('none');
         setTargetDate('');
         setNotes('');
         setTargetTouched(false);
@@ -131,11 +113,11 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {isEdit ? (
-          <Button variant="outline" size="sm">
-            <Pencil className="size-4" /> Edit
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <Pencil className="size-3.5" /> Edit
           </Button>
         ) : (
-          <Button size="sm">
+          <Button size="sm" className="gap-1.5">
             <Plus className="size-4" /> Add Planned Item
           </Button>
         )}
@@ -145,35 +127,38 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
           <DialogHeader>
             <DialogTitle>{isEdit ? 'Edit planned item' : 'Add planned business item'}</DialogTitle>
             <DialogDescription>
-              Track equipment or assets you intend to buy for the business, then convert them to the
-              Assets Register once purchased.
+              Log equipment, hardware, or assets you intend to buy for the business, save toward
+              them, and convert them to the Assets Register once purchased.
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4 max-h-[68vh] overflow-y-auto pr-1">
             <Field>
-              <FieldLabel htmlFor="goal-name">What are you buying?</FieldLabel>
+              <FieldLabel htmlFor="goal-name">
+                Item / Asset Name <span className="text-destructive">*</span>
+              </FieldLabel>
               <Input
                 id="goal-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="HP Smart Tank 530 printer"
+                placeholder="e.g. Dell Latitude 5420 / HP Smart Tank 530"
+                required
               />
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="goal-description">Description</FieldLabel>
+              <FieldLabel htmlFor="goal-description">Short Description / Specs</FieldLabel>
               <Input
                 id="goal-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="3-in-1 colour ink tank with 35-page ADF"
+                placeholder="e.g. 16GB RAM, 512GB SSD — primary dev workstation"
               />
             </Field>
 
             <div className="grid grid-cols-2 gap-4">
               <Field>
-                <FieldLabel htmlFor="goal-price">Actual price</FieldLabel>
+                <FieldLabel htmlFor="goal-price">Estimated Price (R)</FieldLabel>
                 <Input
                   id="goal-price"
                   type="number"
@@ -185,46 +170,73 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="goal-target">Target to save</FieldLabel>
+                <FieldLabel htmlFor="goal-target">
+                  Savings Target (R) <span className="text-destructive">*</span>
+                </FieldLabel>
                 <Input
                   id="goal-target"
                   type="number"
                   step="0.01"
-                  min="0"
+                  min="0.01"
                   value={targetAmount}
                   onChange={(e) => {
                     setTargetTouched(true);
                     setTargetAmount(e.target.value);
                   }}
                   placeholder="4500.00"
+                  required
                 />
               </Field>
             </div>
+
             {suggested > 0 && !targetTouched && (
               <p className="-mt-2 text-xs text-muted-foreground">
-                Rounded up to the nearest R500 — {formatZAR(suggested)}. Edit to override.
+                Auto-rounded to nearest R500 ({formatZAR(suggested)}) for delivery/price buffer.
               </p>
             )}
+
             {effectiveCost > 0 && (
-              <p className="-mt-1 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                {isCapitalisedPpe
-                  ? 'SARS Treatment (≥ R7,000): Capitalised Fixed Asset (GL 1500 PPE) when purchased.'
-                  : 'SARS Treatment (< R7,000): Small Asset — 100% immediate tax write-off (GL 5030) when purchased.'}
-              </p>
+              <div
+                className={`flex items-start gap-2.5 rounded-lg border px-3 py-2.5 text-xs ${
+                  isCapitalisedPpe
+                    ? 'border-indigo-500/20 bg-indigo-500/5 text-indigo-700 dark:text-indigo-300'
+                    : 'border-emerald-500/20 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300'
+                }`}
+              >
+                {isCapitalisedPpe ? (
+                  <Boxes className="size-4 shrink-0 mt-0.5" />
+                ) : (
+                  <Wrench className="size-4 shrink-0 mt-0.5" />
+                )}
+                <span>
+                  {isCapitalisedPpe ? (
+                    <>
+                      <strong>Capitalised PPE (≥ R7,000):</strong> Posts to{' '}
+                      <span className="font-mono">1500 PPE</span> when converted to the Assets
+                      Register.
+                    </>
+                  ) : (
+                    <>
+                      <strong>SARS Small Asset (&lt; R7,000):</strong> Eligible for 100% immediate
+                      write-off (<span className="font-mono">5030</span>) when purchased.
+                    </>
+                  )}
+                </span>
+              </div>
             )}
 
             <div className="grid grid-cols-2 gap-4">
               <Field>
-                <FieldLabel htmlFor="goal-vendor">Vendor</FieldLabel>
+                <FieldLabel htmlFor="goal-vendor">Vendor / Store</FieldLabel>
                 <Input
                   id="goal-vendor"
                   value={vendor}
                   onChange={(e) => setVendor(e.target.value)}
-                  placeholder="Takealot"
+                  placeholder="e.g. Takealot, Evetech"
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="goal-date">Target date</FieldLabel>
+                <FieldLabel htmlFor="goal-date">Target Purchase Date</FieldLabel>
                 <Input
                   id="goal-date"
                   type="date"
@@ -235,33 +247,14 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
             </div>
 
             <Field>
-              <FieldLabel htmlFor="goal-url">Product link</FieldLabel>
+              <FieldLabel htmlFor="goal-url">Product Link</FieldLabel>
               <Input
                 id="goal-url"
+                type="url"
                 value={productUrl}
                 onChange={(e) => setProductUrl(e.target.value)}
                 placeholder="https://www.takealot.com/..."
               />
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="goal-tracker">What does this replace?</FieldLabel>
-              <Select value={spendTrackerKey} onValueChange={setSpendTrackerKey}>
-                <SelectTrigger id="goal-tracker">
-                  <SelectValue placeholder="Nothing — just a savings goal" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Nothing — just a savings goal</SelectItem>
-                  {SPEND_TRACKER_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Links current spend to the goal so it can show what the purchase saves.
-              </p>
             </Field>
 
             <Field>
@@ -270,7 +263,7 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
                 id="goal-notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="35-page ADF, ink tank, colour"
+                placeholder="Optional warranty, quote reference, or priority notes"
                 rows={2}
               />
             </Field>
@@ -281,7 +274,7 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
               Cancel
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? 'Saving…' : isEdit ? 'Save changes' : 'Create goal'}
+              {isPending ? 'Saving…' : isEdit ? 'Save changes' : 'Add planned item'}
             </Button>
           </DialogFooter>
         </form>
