@@ -446,10 +446,12 @@ export async function recordClientPayment(
       }
 
       // E. Auto-post double-entry journal entries
+      // Only transfer PMG Share to Savings (Dr 1020 / Cr 1010) inside this atomic transaction
+      // when autoTransferPmgShare is requested, avoiding duplicate transfers.
       const journalResult = await postPaymentJournalEntries({
         incomeId: incomeRow.id,
         amount: data.amount,
-        pmgShareAmount: calculatedPmgShare,
+        pmgShareAmount: data.autoTransferPmgShare ? calculatedPmgShare : 0,
         date: data.date,
         description: autoReference,
         divisionId: finalDivisionId,
@@ -462,39 +464,7 @@ export async function recordClientPayment(
       return { incomeId: incomeRow.id, pmgShareAmount: calculatedPmgShare };
     });
 
-    // 5. Automatic PMG Share physical cash transfer if requested
-    if (data.autoTransferPmgShare && data.amount > 0) {
-      try {
-        const pmgShareAmount = recordedIncomeId.pmgShareAmount;
-        const { chartAccounts } = await import('@pmg/db');
-        const { recordCashTransfer } = await import('@/actions/accounting/journals');
-
-        const cheque = await db
-          .select({ id: chartAccounts.id })
-          .from(chartAccounts)
-          .where(eq(chartAccounts.code, '1010'))
-          .limit(1);
-        const savings = await db
-          .select({ id: chartAccounts.id })
-          .from(chartAccounts)
-          .where(eq(chartAccounts.code, '1020'))
-          .limit(1);
-
-        if (cheque[0] && savings[0] && pmgShareAmount > 0) {
-          await recordCashTransfer({
-            fromAccountId: cheque[0].id,
-            toAccountId: savings[0].id,
-            amount: pmgShareAmount,
-            date: data.date,
-            description: `Auto-transfer PMG Share for income (${autoReference.slice(0, 40)})`,
-          });
-        }
-      } catch (err) {
-        console.error('Auto cash transfer of PMG Share failed:', err);
-      }
-    }
-
-    // 6. Revalidate cache
+    // 5. Revalidate cache
     revalidatePath('/billing/invoices');
     revalidatePath('/billing/payments');
     revalidatePath('/dashboard');
