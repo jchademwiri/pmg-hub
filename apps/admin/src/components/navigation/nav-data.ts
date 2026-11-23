@@ -131,6 +131,7 @@ export const GROUPS: NavGroup[] = [
     items: [
       { title: 'Overview', url: '/finance', icon: LayoutGrid },
       { title: 'Banking & Recon', url: '/finance/banking', icon: Scale },
+      { title: 'Projections & Budgets', url: '/finance/projections', icon: TrendingUp },
       { title: 'Expenses', url: '/finance/expenses', icon: TrendingDown },
       { title: 'Recurring', url: '/finance/recurring', icon: CalendarClock },
       { title: 'Assets Register', url: '/assets', icon: Building2 },

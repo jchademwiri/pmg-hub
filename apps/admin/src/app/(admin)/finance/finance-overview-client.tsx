@@ -523,6 +523,13 @@ export function FinanceOverviewClient({
               icon: Building2,
             },
             {
+              href: '/finance/projections',
+              label: 'Projections & Budgets',
+              description: 'FY targets, budgets & variance tracking',
+              color: 'bg-emerald-500/10 text-emerald-600',
+              icon: TrendingUp,
+            },
+            {
               href: '/finance/expenses',
               label: 'Expenses',
               description: 'Record and categorize expenses',

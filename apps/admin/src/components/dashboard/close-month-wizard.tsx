@@ -146,7 +146,6 @@ export function CloseMonthWizard({ open, onOpenChange, period, summary }: CloseM
             hasWarnings={hasWarnings}
             notes={notes}
             onNotesChange={setNotes}
-            period={period}
             periodLabel={periodLabel}
           />
         )}
@@ -237,14 +236,12 @@ function ChecksAndConfirm({
   hasWarnings,
   notes,
   onNotesChange,
-  period,
   periodLabel,
 }: {
   checks: PreCloseChecks | null;
   hasWarnings: boolean;
   notes: string;
   onNotesChange: (value: string) => void;
-  period: string;
   periodLabel: string;
 }) {
   const checkItems = checks
@@ -301,19 +298,6 @@ function ChecksAndConfirm({
             : 'The checks passed and the period can be locked.'}
         </AlertDescription>
       </Alert>
-
-      {period === '2027-02' && (
-        <Alert>
-          <AlertTitle>FY2027/28 Year-End Transition</AlertTitle>
-          <AlertDescription>
-            After closing February 2027, open{' '}
-            <Link href="/finance/banking" className="font-medium underline">
-              Banking &amp; Reconciliation
-            </Link>{' '}
-            to run the FY2027/28 Opening Bank Balance Wizard.
-          </AlertDescription>
-        </Alert>
-      )}
 
       <div className="flex flex-col gap-2">
         {checkItems.map((item) => (
