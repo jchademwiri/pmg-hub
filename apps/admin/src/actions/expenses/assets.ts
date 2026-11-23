@@ -44,7 +44,9 @@ type AssetInput = z.input<typeof AssetSchema>;
 
 // ── createAsset ───────────────────────────────────────────────────────────────
 
-export async function createAsset(data: AssetInput): Promise<{ error?: string; id?: string }> {
+export async function createAsset(
+  data: AssetInput,
+): Promise<{ error?: string; warning?: string; id?: string }> {
   try {
     await getSessionOrRedirect();
 
@@ -71,6 +73,7 @@ export async function createAsset(data: AssetInput): Promise<{ error?: string; i
       unitType: null,
     });
 
+    let warning: string | undefined;
     if (v.postToAccounting && v.cost > 0) {
       const journalResult = await postAssetPurchaseJournalEntry({
         assetId: created.id,
@@ -80,16 +83,18 @@ export async function createAsset(data: AssetInput): Promise<{ error?: string; i
       });
       if (journalResult.error) {
         console.warn('Asset purchase auto-post warning:', journalResult.error);
+        warning = `Asset saved, but GL journal was not posted: ${journalResult.error}`;
       }
     }
 
     revalidatePath('/assets');
     revalidatePath('/finance');
+    revalidatePath('/accounting');
     revalidatePath('/accounting/journals');
     revalidatePath('/accounting/trial-balance');
     revalidatePath('/accounting/general-ledger');
     revalidatePath('/accounting/profit-and-loss');
-    return { id: created.id };
+    return { id: created.id, ...(warning ? { warning } : {}) };
   } catch {
     return { error: 'Failed to save. Please try again.' };
   }

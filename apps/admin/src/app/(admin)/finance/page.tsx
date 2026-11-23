@@ -9,7 +9,6 @@ import {
   getActiveRates,
   getTrialBalance,
   getActiveChartAccounts,
-  getCurrentOpenPeriod,
   getAllAccountingPeriods,
   getProfitAndLoss,
 } from '@pmg/db';
@@ -38,7 +37,6 @@ export default async function FinanceOverviewPage({
     invoiceData,
     trialBalance,
     allAccounts,
-    currentPeriod,
     allPeriods,
     profitAndLoss,
   ] = await Promise.all([
@@ -51,7 +49,6 @@ export default async function FinanceOverviewPage({
     getAllInvoices({}, { page: 1, pageSize: 5 }),
     getTrialBalance(period),
     getActiveChartAccounts(),
-    getCurrentOpenPeriod(),
     getAllAccountingPeriods(),
     getProfitAndLoss(period),
   ]);
@@ -79,23 +76,19 @@ export default async function FinanceOverviewPage({
       />
 
       <div>
-        <h2 className="text-lg font-semibold">Finance & Accounting Overview</h2>
+        <h2 className="text-lg font-semibold">Finance Overview</h2>
         <p className="text-sm text-muted-foreground">
-          Cash liquidity, operational spend, P&amp;L performance, and double-entry ledger health.
+          Cash liquidity, operational spend, division revenue, and treasury management.
         </p>
       </div>
 
       <FinanceOverviewClient
         periods={periodList}
         selectedPeriod={period || ''}
-        currentPeriod={
-          currentPeriod ? { period: currentPeriod.period, status: currentPeriod.status } : null
-        }
         summary={{ revenue, expenses, pmgShare, profitPool }}
         liquidBalances={{ cheque: chequeBalance, savings: savingsBalance }}
         liquidAccounts={liquidAccounts}
         accountsReceivableBalance={accountsReceivableBalance}
-        trialBalance={trialBalance}
         profitAndLoss={profitAndLoss}
         revenueByDivision={revenueByDivision}
         recentInvoices={invoiceData.data.map((inv) => ({

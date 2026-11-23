@@ -1167,14 +1167,24 @@ export async function postAssetPurchaseJournalEntry(data: {
     // Ensure 1500 PPE and 5030 Small Equipment exist before lookup
     await db
       .insert(chartAccounts)
-      .values({
-        code: FIXED_ASSETS_PPE_CODE,
-        name: 'Property, Plant & Equipment',
-        type: 'asset',
-        description: 'Capitalized fixed assets costing R7,000 or more',
-        isActive: true,
-        isPostingAccount: true,
-      })
+      .values([
+        {
+          code: FIXED_ASSETS_PPE_CODE,
+          name: 'Property, Plant & Equipment',
+          type: 'asset',
+          description: 'Capitalized fixed assets costing R7,000 or more',
+          isActive: true,
+          isPostingAccount: true,
+        },
+        {
+          code: SMALL_EQUIPMENT_EXPENSE_CODE,
+          name: 'Office & Small Equipment',
+          type: 'expense',
+          description: 'Office supplies and small assets under R7,000 (SARS immediate write-off)',
+          isActive: true,
+          isPostingAccount: true,
+        },
+      ])
       .onConflictDoNothing({ target: chartAccounts.code });
 
     const accountMap = await getAccountsByCode([BANK_ACCOUNT_CODE, debitCode], db);

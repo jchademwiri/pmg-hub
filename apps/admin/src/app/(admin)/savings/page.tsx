@@ -1,6 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { PiggyBank, Target, Wallet, CheckCircle2 } from 'lucide-react';
+import {
+  PiggyBank,
+  Target,
+  Wallet,
+  CheckCircle2,
+  CalendarDays,
+  ExternalLink,
+  PackageCheck,
+} from 'lucide-react';
 import { getAllSavingsGoals } from '@pmg/db';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -9,6 +17,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { StickyPageHeader } from '@/components/ui/sticky-page-header';
 import { GoalFormDialog } from '@/components/savings/goal-form-dialog';
 import { computeProgress, computeSavingRate } from '@/lib/savings';
+import { SARS_SMALL_ASSET_THRESHOLD } from '@/lib/accounting/posting';
 import { formatZAR, fmtDate } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -20,29 +29,54 @@ const statusVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
   cancelled: 'outline',
 };
 
-export default async function SavingsPage() {
+interface SavingsPageProps {
+  searchParams: Promise<{ status?: string }>;
+}
+
+export default async function SavingsPage({ searchParams }: SavingsPageProps) {
+  const { status } = await searchParams;
+  const activeTab = status === 'purchased' || status === 'all' ? status : 'saving';
+
   const goals = await getAllSavingsGoals().catch((e) => {
     console.error('getAllSavingsGoals failed:', e);
     return [];
   });
 
-  const active = goals.filter((g) => g.status === 'saving');
-  const totalSaved = active.reduce((s, g) => s + g.saved, 0);
-  const totalTarget = active.reduce((s, g) => s + Number(g.targetAmount), 0);
-  const purchased = goals.filter((g) => g.status === 'purchased').length;
+  const savingGoals = goals.filter((g) => g.status === 'saving');
+  const purchasedGoals = goals.filter((g) => g.status === 'purchased');
+  const totalSaved = savingGoals.reduce((s, g) => s + g.saved, 0);
+  const totalTarget = savingGoals.reduce((s, g) => s + Number(g.targetAmount), 0);
+  const overallPercent = totalTarget > 0 ? Math.min(100, (totalSaved / totalTarget) * 100) : 0;
+  const readyToBuyCount = savingGoals.filter(
+    (g) => computeProgress(g.saved, Number(g.targetAmount)).isFunded,
+  ).length;
+
+  const filteredGoals =
+    activeTab === 'saving' ? savingGoals : activeTab === 'purchased' ? purchasedGoals : goals;
+
+  const tabs = [
+    { key: 'saving', label: 'Saving', count: savingGoals.length, href: '/savings' },
+    {
+      key: 'purchased',
+      label: 'Purchased',
+      count: purchasedGoals.length,
+      href: '/savings?status=purchased',
+    },
+    { key: 'all', label: 'All', count: goals.length, href: '/savings?status=all' },
+  ] as const;
 
   return (
     <div className="flex flex-col gap-6">
       <StickyPageHeader
         title="Savings Goals"
-        description="Put money aside for what the business needs next"
+        description="Plan and fund equipment, hardware, and business assets you intend to buy"
         actions={<GoalFormDialog />}
       />
 
       {goals.length === 0 ? (
         <EmptyState
-          title="No savings goals yet"
-          message="Create a goal for something you want to buy, then add what you put away as you go."
+          title="No planned items yet"
+          message="Add equipment or assets you intend to buy for the business, set a target price, and track savings until you convert them into the Assets Register."
         />
       ) : (
         <>
@@ -55,120 +89,210 @@ export default async function SavingsPage() {
                 <Wallet className="size-4 text-primary" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatZAR(totalSaved)}</div>
+                <div className="text-2xl font-bold tabular-nums">{formatZAR(totalSaved)}</div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Across {active.length} active {active.length === 1 ? 'goal' : 'goals'}
+                  {overallPercent.toFixed(0)}% funded across {savingGoals.length} active{' '}
+                  {savingGoals.length === 1 ? 'item' : 'items'}
                 </p>
               </CardContent>
             </Card>
             <Card className="shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Still to go
+                  Remaining to fund
                 </CardTitle>
                 <Target className="size-4 text-amber-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-bold tabular-nums">
                   {formatZAR(Math.max(0, totalTarget - totalSaved))}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Of {formatZAR(totalTarget)} targeted
+                  Of {formatZAR(totalTarget)} planned budget
                 </p>
               </CardContent>
             </Card>
             <Card className="shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Purchased
+                  Ready / Purchased
                 </CardTitle>
                 <CheckCircle2 className="size-4 text-emerald-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                  {purchased}
+                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                  {readyToBuyCount > 0 ? `${readyToBuyCount} ready` : purchasedGoals.length}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Goals reached and bought</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {readyToBuyCount > 0
+                    ? `${purchasedGoals.length} already converted to assets`
+                    : 'Items converted to Assets Register'}
+                </p>
               </CardContent>
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {goals.map((g) => {
-              const target = Number(g.targetAmount);
-              const progress = computeProgress(g.saved, target);
-              const rate = computeSavingRate(
-                g.saved,
-                target,
-                g.firstContribution,
-                g.lastContribution,
-              );
+          {/* Filter Tabs */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="inline-flex gap-1 rounded-lg border bg-card p-1">
+              {tabs.map((tab) => (
+                <Link
+                  key={tab.key}
+                  href={tab.href}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    activeTab === tab.key
+                      ? 'bg-foreground text-background'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {tab.label} ({tab.count})
+                </Link>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground hidden sm:block">
+              Click any item to log contributions or convert to a Fixed Asset
+            </p>
+          </div>
 
-              return (
-                <Link key={g.id} href={`/savings/${g.id}`} className="group">
-                  <Card className="h-full shadow-sm transition-colors group-hover:border-primary/40">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <CardTitle className="truncate text-base">{g.name}</CardTitle>
-                          {g.vendor && (
-                            <p className="text-xs text-muted-foreground mt-0.5">{g.vendor}</p>
+          {filteredGoals.length === 0 ? (
+            <EmptyState
+              title={`No ${activeTab} items`}
+              message={
+                activeTab === 'purchased'
+                  ? 'Items you mark as purchased will appear here and link directly to the Assets Register.'
+                  : 'All planned items are currently completed. Add a new planned item above.'
+              }
+            />
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {filteredGoals.map((g) => {
+                const target = Number(g.targetAmount);
+                const actualPrice = g.actualPrice !== null ? Number(g.actualPrice) : null;
+                const effectiveCost = actualPrice ?? target;
+                const isCapitalisedPpe = effectiveCost >= SARS_SMALL_ASSET_THRESHOLD;
+                const progress = computeProgress(g.saved, target);
+                const rate = computeSavingRate(
+                  g.saved,
+                  target,
+                  g.firstContribution,
+                  g.lastContribution,
+                );
+
+                return (
+                  <Link key={g.id} href={`/savings/${g.id}`} className="group">
+                    <Card className="h-full shadow-sm transition-colors group-hover:border-primary/40">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <CardTitle className="truncate text-base">{g.name}</CardTitle>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+                              {g.vendor && (
+                                <span className="text-xs text-muted-foreground">{g.vendor}</span>
+                              )}
+                              {g.productUrl && (
+                                <span className="inline-flex items-center gap-0.5 text-[11px] text-primary">
+                                  <ExternalLink className="size-3" /> Link saved
+                                </span>
+                              )}
+                            </div>
+                            {g.description && (
+                              <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                                {g.description}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                isCapitalisedPpe
+                                  ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                                  : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                              }`}
+                            >
+                              {isCapitalisedPpe ? 'PPE ≥ R7k' : 'Small Asset < R7k'}
+                            </span>
+                            <Badge
+                              variant={statusVariant[g.status] ?? 'outline'}
+                              className="capitalize"
+                            >
+                              {g.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="flex flex-col gap-3">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="text-2xl font-bold tabular-nums">
+                            {formatZAR(g.saved)}
+                          </span>
+                          <span className="text-sm text-muted-foreground tabular-nums">
+                            of {formatZAR(target)}
+                            {actualPrice !== null && actualPrice !== target && (
+                              <span className="text-xs ml-1">(est. {formatZAR(actualPrice)})</span>
+                            )}
+                          </span>
+                        </div>
+
+                        <Progress
+                          value={progress.fraction * 100}
+                          indicatorClassName={progress.isFunded ? 'bg-emerald-500' : 'bg-primary'}
+                        />
+
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>{progress.percent.toFixed(0)}% funded</span>
+                          {progress.isFunded && g.status === 'saving' ? (
+                            <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                              Target reached — ready to buy
+                            </span>
+                          ) : g.status === 'purchased' ? (
+                            <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
+                              <PackageCheck className="size-3.5" />
+                              {g.assetId ? 'In Assets Register' : 'Purchased'}
+                            </span>
+                          ) : (
+                            <span>{formatZAR(progress.remaining)} to go</span>
                           )}
                         </div>
-                        <Badge
-                          variant={statusVariant[g.status] ?? 'outline'}
-                          className="shrink-0 capitalize"
-                        >
-                          {g.status}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="flex flex-col gap-3">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-2xl font-bold tabular-nums">
-                          {formatZAR(g.saved)}
-                        </span>
-                        <span className="text-sm text-muted-foreground tabular-nums">
-                          of {formatZAR(target)}
-                        </span>
-                      </div>
 
-                      <Progress
-                        value={progress.fraction * 100}
-                        indicatorClassName="bg-emerald-500"
-                      />
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground border-t pt-3">
+                          {g.status === 'saving' && rate.projectedDate ? (
+                            <span>
+                              At {formatZAR(rate.perMonth)}/mo, on track for{' '}
+                              <span className="font-medium text-foreground">
+                                {fmtDate(rate.projectedDate)}
+                              </span>
+                            </span>
+                          ) : g.status === 'saving' && !progress.isFunded ? (
+                            <span>
+                              <PiggyBank className="inline size-3.5 mr-1 -mt-0.5" />
+                              Open to log savings contribution
+                            </span>
+                          ) : g.status === 'saving' && progress.isFunded ? (
+                            <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                              Open to mark purchased &amp; post to GL
+                            </span>
+                          ) : (
+                            <span>
+                              {g.purchasedAt
+                                ? `Purchased on ${fmtDate(g.purchasedAt)}`
+                                : 'Completed'}
+                            </span>
+                          )}
 
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>{progress.percent.toFixed(0)}% funded</span>
-                        {progress.isFunded ? (
-                          <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                            Target reached
-                          </span>
-                        ) : (
-                          <span>{formatZAR(progress.remaining)} to go</span>
-                        )}
-                      </div>
-
-                      {g.status === 'saving' && rate.projectedDate && (
-                        <p className="text-xs text-muted-foreground border-t pt-3">
-                          At {formatZAR(rate.perMonth)}/month, on track for{' '}
-                          <span className="font-medium text-foreground">
-                            {fmtDate(rate.projectedDate)}
-                          </span>
-                        </p>
-                      )}
-                      {g.status === 'saving' && !rate.projectedDate && !progress.isFunded && (
-                        <p className="text-xs text-muted-foreground border-t pt-3">
-                          <PiggyBank className="inline size-3.5 mr-1 -mt-0.5" />
-                          Add a contribution to project a date
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
+                          {g.targetDate && g.status === 'saving' && (
+                            <span className="inline-flex items-center gap-1 shrink-0">
+                              <CalendarDays className="size-3" />
+                              Target {fmtDate(g.targetDate)}
+                            </span>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </>
       )}
     </div>

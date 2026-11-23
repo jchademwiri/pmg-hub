@@ -85,7 +85,11 @@ export function AddAssetDialog() {
       if (res.error) {
         toast.error(res.error);
       } else {
-        toast.success(`Asset "${name}" registered!`);
+        if (res.warning) {
+          toast.warning(res.warning);
+        } else {
+          toast.success(`Asset "${name}" registered!`);
+        }
         resetForm();
         setOpen(false);
         router.refresh();
@@ -105,8 +109,7 @@ export function AddAssetDialog() {
           <DialogHeader>
             <DialogTitle>Register New Fixed Asset</DialogTitle>
             <DialogDescription>
-              Add a fixed asset (equipment, vehicle, computer) to the register. Investments are
-              synced automatically from Luno.
+              Add a fixed asset (equipment, hardware, vehicle, or office item) to the register.
             </DialogDescription>
           </DialogHeader>
 
