@@ -25,7 +25,12 @@ If there is an open PR targeting `dev` from the working branch or recent task:
    ```bash
    gh pr merge <pr-number> --merge
    ```
-3. Report in summary: `Merged feature PR #<number> into dev before release.`
+3. If the merged PR touched `packages/db/src/migrations/**` or `packages/db/src/schema/**`, verify the post-merge `DB Migrate` workflow run on `dev` succeeded before proceeding:
+   ```bash
+   gh run list --workflow=db-migrate.yml --branch dev --limit 1
+   ```
+   (And remind the developer to verify the post-merge `DB Migrate` run on `master` after the Release PR is merged.)
+4. Report in summary: `Merged feature PR #<number> into dev before release.`
 
 ### 2. Sync & Audit
 

@@ -80,6 +80,13 @@ gh pr create --base <target> --head <branch> --title "<type>(<scope>): <summary>
    - **Evaluate critically:** Fix all valid P1/P2 bugs, missing exports, edge cases, and security/accounting catches; commit, push, and re-verify CI.
    - **Skip noise:** Briefly note any stylistic nitpicks or out-of-scope suggestions that were intentionally skipped.
 
+3. **Post-Merge `DB Migrate` Verification (Mandatory for Schema/Migration PRs):**
+   Whenever a PR touching `packages/db/src/migrations/**` or `packages/db/src/schema/**` is merged into `dev` or `master`, immediately verify the triggered `DB Migrate` GitHub Action run:
+   ```bash
+   gh run list --workflow=db-migrate.yml --branch <target> --limit 1
+   ```
+   If the run fails, inspect `gh run view <run-id> --log-failed` and immediately fix or report the exact error before moving on to the next task.
+
 ### 6. Summary & Next Step Guidance
 
 Once CI is green and bot review comments are triaged, **always return the full clickable PR URL prominently** (same as `/release`) with a brief bot-review triage note, and clearly distinguish merging to `dev` (staging) vs. `/release` (production):
