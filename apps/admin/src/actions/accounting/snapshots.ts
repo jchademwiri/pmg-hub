@@ -96,6 +96,7 @@ export async function closeMonth(
     await closePeriod(period, session.user.id);
     revalidatePath('/dashboard');
     revalidatePath('/insights/snapshots');
+    revalidatePath('/finance/projections');
     return {};
   } catch (err) {
     return { error: (err as Error).message };

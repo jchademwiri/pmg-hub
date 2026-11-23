@@ -8,7 +8,6 @@ import {
   AlertTriangle,
   ArrowRightLeft,
   ArrowUpRight,
-  BadgeCheck,
   Building2,
   CheckCircle2,
   Landmark,
@@ -17,7 +16,6 @@ import {
   Receipt,
   Scale,
   ShieldAlert,
-  Sparkles,
   UserRound,
   Wallet,
 } from 'lucide-react';
@@ -46,7 +44,6 @@ import {
   reconcileBankAccount,
   recordOwnerWithdrawal,
   recordQuickBankEntry,
-  runFy2027TransitionWizard,
 } from '@/actions/finance/banking';
 import { formatZAR, fmtDate, fmtMonthYear } from '@/lib/format';
 
@@ -108,7 +105,6 @@ export function BankingClient({ overview, liquidAccounts, today }: BankingClient
   const [withdrawalOpen, setWithdrawalOpen] = React.useState(false);
   const [quickEntryMode, setQuickEntryMode] = React.useState<'bank_fee' | 'interest' | null>(null);
   const [transferOpen, setTransferOpen] = React.useState(false);
-  const [fyWizardOpen, setFyWizardOpen] = React.useState(false);
 
   // Reconcile form
   const [recAccount, setRecAccount] = React.useState<'1010' | '1020' | '1030'>('1010');
@@ -132,10 +128,6 @@ export function BankingClient({ overview, liquidAccounts, today }: BankingClient
   const [qeDate, setQeDate] = React.useState(today);
   const [qeAmount, setQeAmount] = React.useState('');
   const [qeDesc, setQeDesc] = React.useState('');
-
-  // FY2027 Transition Wizard form
-  const [fyCheque, setFyCheque] = React.useState('0.00');
-  const [fySavings, setFySavings] = React.useState('0.00');
 
   const currentBookForRec =
     recAccount === '1010'
@@ -247,38 +239,6 @@ export function BankingClient({ overview, liquidAccounts, today }: BankingClient
       router.refresh();
     });
   }
-
-  function handleFyWizardSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const cheque = parseFloat(fyCheque);
-    const savings = parseFloat(fySavings);
-    if (isNaN(cheque) || isNaN(savings)) {
-      toast.error('Enter valid numeric opening balances.');
-      return;
-    }
-
-    startTransition(async () => {
-      const res = await runFy2027TransitionWizard({
-        realChequeBalance: cheque,
-        realSavingsBalance: savings,
-      });
-
-      if (res.error) {
-        toast.error(res.error);
-        return;
-      }
-
-      toast.success(
-        `FY2027/28 transition complete (${res.postedEntries ?? 0} true-up journal${
-          res.postedEntries === 1 ? '' : 's'
-        } posted, PMG Share sunset to 0% effective 1 Mar 2027).`,
-      );
-      setFyWizardOpen(false);
-      router.refresh();
-    });
-  }
-
-  const fyTransitionDone = overview.isFy2027PmgShareSunset && overview.isFy2027OpeningReconciled;
 
   return (
     <div className="flex flex-col gap-6">
@@ -441,43 +401,6 @@ export function BankingClient({ overview, liquidAccounts, today }: BankingClient
         </div>
       </div>
 
-      {/* FY2027/28 Opening Bank Balance Transition Banner */}
-      <div
-        className={`rounded-xl border px-5 py-4 flex flex-wrap items-center justify-between gap-4 ${
-          fyTransitionDone
-            ? 'bg-emerald-500/5 border-emerald-500/20'
-            : 'bg-blue-500/5 border-blue-500/20'
-        }`}
-      >
-        <div className="flex items-start gap-3">
-          {fyTransitionDone ? (
-            <BadgeCheck className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-          ) : (
-            <Sparkles className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-          )}
-          <div>
-            <p className="text-sm font-semibold text-foreground">
-              {fyTransitionDone
-                ? 'FY2027/28 Opening Bank Balance & Governance Transition Complete'
-                : 'FY2027/28 Year-End True-Up & Opening Bank Balance Wizard'}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {fyTransitionDone
-                ? '2027-02-28 bank true-up is reconciled and PMG Share is sunset to 0% effective 1 March 2027.'
-                : 'When transitioning to your dedicated business bank account on 1 March 2027, run this wizard to true up 28 Feb 2027 book cash and sunset PMG Share to 0%.'}
-            </p>
-          </div>
-        </div>
-        <Button
-          size="sm"
-          variant={fyTransitionDone ? 'outline' : 'default'}
-          onClick={() => setFyWizardOpen(true)}
-          className="shrink-0"
-        >
-          {fyTransitionDone ? 'Review / Re-run Wizard' : 'Run Transition Wizard'}
-        </Button>
-      </div>
-
       {/* Row 1: Reconciliation History + Recent Bank Movements */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Reconciliation History */}
@@ -498,7 +421,7 @@ export function BankingClient({ overview, liquidAccounts, today }: BankingClient
             </div>
           ) : (
             <div className="divide-y">
-              {overview.reconciliations.map((rec) => {
+              {overview.reconciliations.slice(0, 6).map((rec) => {
                 const isOk = rec.status === 'reconciled';
                 return (
                   <div
@@ -563,7 +486,7 @@ export function BankingClient({ overview, liquidAccounts, today }: BankingClient
             </div>
           ) : (
             <div className="divide-y">
-              {overview.recentMovements.map((m) => {
+              {overview.recentMovements.slice(0, 6).map((m) => {
                 const net = m.debit - m.credit;
                 const isInflow = net >= 0;
                 return (
@@ -626,12 +549,12 @@ export function BankingClient({ overview, liquidAccounts, today }: BankingClient
                   </Select>
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="rec-period">Period (YYYY-MM)</FieldLabel>
+                  <FieldLabel htmlFor="rec-period">Period</FieldLabel>
                   <Input
                     id="rec-period"
+                    type="month"
                     value={recPeriod}
                     onChange={(e) => setRecPeriod(e.target.value)}
-                    placeholder="2026-12"
                     required
                   />
                 </Field>
@@ -754,6 +677,34 @@ export function BankingClient({ overview, liquidAccounts, today }: BankingClient
             </DialogHeader>
 
             <div className="grid gap-4 py-4">
+              {/* Live Available Balance Summary */}
+              <div className="rounded-lg border bg-muted/40 p-3 text-xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Available in 1010 · Cheque Account:</span>
+                  <span className="font-semibold tabular-nums text-foreground">
+                    {formatZAR(overview.chequeBalance)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    True Spendable Cash (All Banks − SARS):
+                  </span>
+                  <span className="font-semibold tabular-nums text-primary">
+                    {formatZAR(overview.trueSpendableCash)}
+                  </span>
+                </div>
+                {wdMode === 'loan_repayment' && (
+                  <div className="flex items-center justify-between border-t pt-1.5">
+                    <span className="text-muted-foreground">
+                      Current Director&apos;s Loan (1250):
+                    </span>
+                    <span className="font-semibold tabular-nums text-amber-600">
+                      {formatZAR(overview.directorsLoanBalance)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
               <Field>
                 <FieldLabel htmlFor="wd-mode">Transaction Type</FieldLabel>
                 <Select
@@ -913,62 +864,6 @@ export function BankingClient({ overview, liquidAccounts, today }: BankingClient
               </Button>
               <Button type="submit" disabled={isPending}>
                 {isPending ? 'Posting…' : 'Post Entry'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* FY2027/28 Opening Bank Balance Wizard Dialog */}
-      <Dialog open={fyWizardOpen} onOpenChange={setFyWizardOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <form onSubmit={handleFyWizardSubmit}>
-            <DialogHeader>
-              <DialogTitle>FY2027/28 Opening Bank Balance Wizard</DialogTitle>
-              <DialogDescription>
-                Enter the exact physical balances in your dedicated business bank accounts on 28
-                February 2027. This posts the 2027-02-28 true-up against 1250 Director&apos;s Loan
-                (or 3010 Owner&apos;s Capital) and sunsets PMG Share to 0% effective 1 March 2027.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-3">
-                <Field>
-                  <FieldLabel htmlFor="fy-cheque">1010 Cheque Balance (28 Feb 2027)</FieldLabel>
-                  <Input
-                    id="fy-cheque"
-                    type="number"
-                    step="0.01"
-                    value={fyCheque}
-                    onChange={(e) => setFyCheque(e.target.value)}
-                    required
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="fy-savings">1020 Savings Balance (28 Feb 2027)</FieldLabel>
-                  <Input
-                    id="fy-savings"
-                    type="number"
-                    step="0.01"
-                    value={fySavings}
-                    onChange={(e) => setFySavings(e.target.value)}
-                    required
-                  />
-                </Field>
-              </div>
-              <p className="text-xs text-muted-foreground rounded-lg border bg-muted/40 p-3">
-                Book balances are calculated strictly as of <strong>2027-02-28</strong> so any March
-                2027 entries are unaffected. Historical FY2026/27 snapshots remain untouched.
-              </p>
-            </div>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setFyWizardOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? 'Running Transition…' : 'Confirm & Transition to FY2027/28'}
               </Button>
             </DialogFooter>
           </form>
