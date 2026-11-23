@@ -37,20 +37,27 @@ git push origin <branch>
 
 ### 4. Create Pull Request
 
-Write a clean, well-structured Markdown PR description (using headings, bullet points, code spans, and a verification checklist). **Always pass the PR body via `--body-file` (e.g. a UTF-8 `.md` file or stdin) instead of inline `--body "..."`** so PowerShell/shell escaping never mangles backticks or turns `\b`/`\f`/`\t`/`\a` into control characters.
+Write a clean, well-structured Markdown PR description matching `.github/pull_request_template.md` — **never leave empty `<!-- ... -->` placeholder comments or unchecked boxes**. **Always pass the PR body via `--body-file` (e.g. a UTF-8 `.md` file or stdin) instead of inline `--body "..."`** so PowerShell/shell escaping never mangles backticks or turns `\b`/`\f`/`\t`/`\a` into control characters.
 
-Recommended PR Markdown template:
+Required PR Markdown template:
 
 ```markdown
 ## Summary
-- <concise bullet describing the main change and affected modules>
-- <additional bullets for secondary changes>
+<1–2 sentences explaining what this PR does and why>
 
-## Verification
-- [x] `bun run check-types`
-- [x] `bunx prettier --check` on changed files
-- [x] `bun run test`
-- [x] `bun run build`
+## Changes
+- **<Area / Module>** (`path/to/file.ts`): <concise description of change>
+- **<Area / Module>** (`path/to/file.tsx`): <concise description of change>
+
+## Test plan
+- [x] `bun run check-types` clean
+- [x] `bunx prettier --check` clean on changed files
+- [x] `bun run test` passed (<test count / suites>)
+- [x] `bun run build` succeeded locally
+- [ ] Staging verification on `dev` (<what to click & verify after merging to `dev`>)
+
+## Related
+- Target branch: `dev` (staging)
 ```
 
 ```bash
@@ -61,20 +68,20 @@ gh pr create --base <target> --head <branch> --title "<type>(<scope>): <summary>
 ### 5. Monitor CI Checks
 
 ```bash
-gh pr checks
+gh pr checks <pr-number> --watch --interval 10
 ```
 
-Fix any failures until all checks are green.
+Fix any failures until all core checks are green.
 
 ### 6. Summary & Next Step Guidance
 
-Present the PR link and remind the user of the next pipeline command:
+Once CI is green and the PR is ready to merge, **always return the full clickable PR URL prominently** (same as `/release`) and clearly distinguish merging to `dev` (staging) vs. `/release` (production):
 
 ```
-✅ Pull Request #<number> created: <url>
+✅ Pull Request #<number> ready to merge: <url>
 All CI checks passed!
 
-👉 Next Step: Review & merge the PR into dev (or run `/release` to auto-merge and prepare release).
+👉 Next Step: Merge PR #<number> into `dev` to deploy to staging for testing (click Merge on GitHub or tell me "merge to dev"). Only run `/release` later when you are ready to promote `dev` → `master` (production).
 ```
 
 ## Rules
