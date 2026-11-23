@@ -62,6 +62,10 @@ export type GovernanceOverviewResult = {
   gates: {
     ytdNetProfit: number;
     trueSpendableCash: number;
+    chequeBalance: number;
+    savingsBalance: number;
+    taxReserveBalance: number;
+    recommendedAccountCode: '1010' | '1020' | '1030';
     directorsLoanBalance: number;
     profitGatePassed: boolean;
     cashGatePassed: boolean;
@@ -199,6 +203,15 @@ export async function getGovernanceOverview(fiscalYear: number): Promise<Governa
     gates: {
       ytdNetProfit: pnl.netProfit,
       trueSpendableCash: banking.trueSpendableCash,
+      chequeBalance: banking.chequeBalance,
+      savingsBalance: banking.savingsBalance,
+      taxReserveBalance: banking.taxReserveBalance,
+      recommendedAccountCode:
+        banking.chequeBalance >= maxSafeDistribution && banking.chequeBalance > 0
+          ? '1010'
+          : banking.savingsBalance > banking.chequeBalance
+            ? '1020'
+            : '1010',
       directorsLoanBalance: banking.directorsLoanBalance,
       profitGatePassed,
       cashGatePassed,

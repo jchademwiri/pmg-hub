@@ -2,7 +2,13 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { db, dividendPayouts, upsertDividendPolicy } from '@pmg/db';
+import {
+  db,
+  dividendPayouts,
+  getTrialBalance,
+  upsertDividendPolicy,
+  type BankAccountCode,
+} from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import {
   postMonthlyTaxProvisionEntry,
@@ -52,6 +58,7 @@ const RecordDistributionSchema = z.object({
   quarter: z.enum(['Q1', 'Q2', 'Q3', 'Q4']),
   payoutDate: z.string().min(10, 'Payout date is required'),
   payoutType: z.enum(['director_bonus', 'dividend']),
+  accountCode: z.enum(['1010', '1020', '1030']).default('1010'),
   grossAmount: z.coerce.number().positive('Gross amount must be greater than zero'),
   dwtRatePercent: z.coerce.number().min(0).max(100).default(20),
   loanOffsetAmount: z.coerce.number().min(0).default(0),
@@ -85,10 +92,21 @@ export async function recordQuarterlyDistribution(
     const loanOffset = Math.min(d.loanOffsetAmount, afterTax);
     const netCashPaid = Number((afterTax - loanOffset).toFixed(2));
 
+    if (netCashPaid > 0) {
+      const tb = await getTrialBalance();
+      const avail = tb.find((r) => r.accountCode === d.accountCode)?.balance ?? 0;
+      if (netCashPaid > avail + 0.005) {
+        return {
+          error: `Insufficient funds in ${d.accountCode}: available ${avail.toFixed(2)}, net cash payout ${netCashPaid.toFixed(2)}. Transfer cash or choose another bank account.`,
+        };
+      }
+    }
+
     const glRes = await postQuarterlyDistributionEntry({
       date: d.payoutDate,
       quarter: d.quarter,
       payoutType: d.payoutType,
+      accountCode: d.accountCode as BankAccountCode,
       grossAmount: d.grossAmount,
       dwtWithheld,
       loanOffsetAmount: loanOffset,

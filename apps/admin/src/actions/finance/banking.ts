@@ -103,6 +103,7 @@ const OwnerWithdrawalSchema = z.object({
   date: z.string().min(10, 'Date is required'),
   amount: z.coerce.number().positive('Amount must be greater than zero'),
   mode: z.enum(['director_loan', 'loan_repayment', 'salary_advance']),
+  accountCode: z.enum(['1010', '1020', '1030']).default('1010'),
   description: z.string().max(300).optional(),
 });
 
@@ -117,10 +118,22 @@ export async function recordOwnerWithdrawal(
     }
     const d = parsed.data;
 
+    // Prevent accidental overdraft on cash withdrawals (director_loan or salary_advance)
+    if (d.mode !== 'loan_repayment') {
+      const tb = await getTrialBalance();
+      const avail = tb.find((r) => r.accountCode === d.accountCode)?.balance ?? 0;
+      if (d.amount > avail + 0.005) {
+        return {
+          error: `Insufficient funds in ${d.accountCode}: available ${avail.toFixed(2)}, requested ${d.amount.toFixed(2)}. Transfer cash or choose another bank account.`,
+        };
+      }
+    }
+
     const res = await postOwnerWithdrawalJournalEntry({
       date: d.date,
       amount: d.amount,
       mode: d.mode as OwnerWithdrawalMode,
+      accountCode: d.accountCode as BankAccountCode,
       description: d.description?.trim() || '',
       createdBy: session.user.id,
     });
@@ -152,6 +165,16 @@ export async function recordQuickBankEntry(
       return { error: parsed.error.issues[0]?.message ?? 'Invalid input.' };
     }
     const d = parsed.data;
+
+    if (d.type === 'bank_fee') {
+      const tb = await getTrialBalance();
+      const avail = tb.find((r) => r.accountCode === d.accountCode)?.balance ?? 0;
+      if (d.amount > avail + 0.005) {
+        return {
+          error: `Insufficient funds in ${d.accountCode}: available ${avail.toFixed(2)}, bank fee ${d.amount.toFixed(2)}.`,
+        };
+      }
+    }
 
     const res = await postQuickBankEntry({
       type: d.type,
