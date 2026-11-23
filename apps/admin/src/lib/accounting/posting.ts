@@ -1566,3 +1566,186 @@ export async function postFy2027OpeningBalanceTrueUp(data: {
     };
   }
 }
+
+// ── Phase 5: Monthly SARS Tax Provisioning & Quarterly Dividend / Bonus GL ──
+
+/**
+ * Posts a monthly or periodic SARS Corporate Income Tax provision:
+ *   Dr 5160 Income Tax Expense / Cr 2160 SARS Income Tax & DWT Payable
+ */
+export async function postMonthlyTaxProvisionEntry(data: {
+  date: string;
+  amount: number;
+  description?: string;
+  createdBy?: string;
+}): Promise<{ error?: string; entryId?: string }> {
+  return postSimpleTwoLineJournal({
+    date: data.date,
+    debitCode: '5160',
+    creditCode: '2160',
+    amount: data.amount,
+    description: data.description || `SARS Income Tax provision (${data.date.slice(0, 7)})`,
+    debitLineDescription: 'Corporate Income Tax provision',
+    creditLineDescription: 'SARS Income Tax payable accrual',
+    sourceModule: 'governance',
+    createdBy: data.createdBy,
+  });
+}
+
+/**
+ * Posts a balanced multi-line journal entry for a quarterly distribution:
+ * - director_bonus (0% PAYE within threshold):
+ *     Dr 5120 Staff Costs & Director Remuneration = grossAmount
+ *     Cr 1250 Director's Loan Account = loanOffsetAmount (if > 0)
+ *     Cr 1010 Business Cheque Account = netCashPaid (if > 0)
+ * - dividend (Companies Act s46 + 20% DWT):
+ *     Dr 3040 Dividends Declared = grossAmount
+ *     Cr 2160 SARS Income Tax & DWT Payable = dwtWithheld (if > 0)
+ *     Cr 1250 Director's Loan Account = loanOffsetAmount (if > 0)
+ *     Cr 1010 Business Cheque Account = netCashPaid (if > 0)
+ */
+export async function postQuarterlyDistributionEntry(data: {
+  date: string;
+  quarter: string;
+  payoutType: 'director_bonus' | 'dividend';
+  grossAmount: number;
+  dwtWithheld: number;
+  loanOffsetAmount: number;
+  netCashPaid: number;
+  description?: string;
+  createdBy?: string;
+}): Promise<{ error?: string; entryId?: string }> {
+  try {
+    if (data.grossAmount < 0.01) {
+      return { error: 'Gross distribution amount must be greater than zero.' };
+    }
+
+    const totalCredits = Number(
+      (data.dwtWithheld + data.loanOffsetAmount + data.netCashPaid).toFixed(2),
+    );
+    if (Math.abs(data.grossAmount - totalCredits) >= 0.01) {
+      return {
+        error: `Distribution lines do not balance (gross ${data.grossAmount.toFixed(2)} vs credits ${totalCredits.toFixed(2)}).`,
+      };
+    }
+
+    const period = data.date.slice(0, 7);
+    const p = await ensureOpenPeriod(period);
+    if (p.status !== 'open') {
+      return { error: `Accounting period ${period} is ${p.status} and cannot be posted to.` };
+    }
+
+    const debitCode = data.payoutType === 'director_bonus' ? '5120' : '3040';
+    const codes = [debitCode, BANK_ACCOUNT_CODE];
+    if (data.dwtWithheld > 0) codes.push('2160');
+    if (data.loanOffsetAmount > 0) codes.push('1250');
+
+    const db = getDb();
+    const accountMap = await getAccountsByCode(codes, db);
+    const debitAccount = accountMap.get(debitCode);
+    const bankAccount = accountMap.get(BANK_ACCOUNT_CODE);
+    const sarsAccount = data.dwtWithheld > 0 ? accountMap.get('2160') : null;
+    const loanAccount = data.loanOffsetAmount > 0 ? accountMap.get('1250') : null;
+
+    if (
+      !debitAccount ||
+      (data.netCashPaid > 0 && !bankAccount) ||
+      (data.dwtWithheld > 0 && !sarsAccount) ||
+      (data.loanOffsetAmount > 0 && !loanAccount)
+    ) {
+      return { error: `Required chart accounts not found (${codes.join(', ')}).` };
+    }
+
+    const resolvedDivisionId = await resolveCorporateDivisionId(db);
+    if (!resolvedDivisionId) {
+      return { error: 'No division found to post distribution journal entry.' };
+    }
+
+    const entryId = randomUUID();
+    const now = new Date();
+    const actor = data.createdBy || 'system';
+    const label =
+      data.payoutType === 'director_bonus'
+        ? `${data.quarter} Director Bonus (0% PAYE)`
+        : `${data.quarter} Dividend Declared (Companies Act s46)`;
+
+    await db.transaction(async (tx) => {
+      const entryNumber = await getNextJournalEntryNumber(tx, data.date);
+
+      await tx.insert(journalEntries).values({
+        id: entryId,
+        entryNumber,
+        entryDate: data.date,
+        period,
+        divisionId: resolvedDivisionId,
+        description: data.description?.trim() || label,
+        status: 'posted',
+        sourceModule: 'governance',
+        sourceDocumentNumber: entryNumber,
+        postedAt: now,
+        postedBy: actor,
+        createdBy: actor,
+      });
+
+      const lines: Array<{
+        id: string;
+        journalEntryId: string;
+        accountId: string;
+        debit: string | null;
+        credit: string | null;
+        description: string;
+      }> = [
+        {
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: debitAccount.id,
+          debit: data.grossAmount.toFixed(2),
+          credit: null,
+          description: label,
+        },
+      ];
+
+      if (data.dwtWithheld > 0 && sarsAccount) {
+        lines.push({
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: sarsAccount.id,
+          debit: null,
+          credit: data.dwtWithheld.toFixed(2),
+          description: `20% Dividends Withholding Tax (DWT) — ${data.quarter}`,
+        });
+      }
+
+      if (data.loanOffsetAmount > 0 && loanAccount) {
+        lines.push({
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: loanAccount.id,
+          debit: null,
+          credit: data.loanOffsetAmount.toFixed(2),
+          description: `Offset against Director's Loan Account (1250) — ${data.quarter}`,
+        });
+      }
+
+      if (data.netCashPaid > 0 && bankAccount) {
+        lines.push({
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: bankAccount.id,
+          debit: null,
+          credit: data.netCashPaid.toFixed(2),
+          description: `Net cash payout from Cheque Account — ${data.quarter}`,
+        });
+      }
+
+      await tx.insert(journalLines).values(lines);
+    });
+
+    return { entryId };
+  } catch (err) {
+    console.error('Failed to post quarterly distribution journal entry:', err);
+    return {
+      error: `Distribution posting failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
