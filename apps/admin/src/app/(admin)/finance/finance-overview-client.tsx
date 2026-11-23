@@ -366,289 +366,282 @@ export function FinanceOverviewClient({
         </Link>
       </div>
 
-      {/* Two-Column Deep Dive */}
+      {/* Row 1: Profit & Loss Summary + Revenue by Division (side by side) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column: P&L Statement & Division Revenue */}
-        <div className="flex flex-col gap-6">
-          {/* Mini P&L Statement */}
-          <div className="rounded-xl border bg-card overflow-hidden">
-            <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
-              <h3 className="text-sm font-semibold flex items-center gap-2">
-                <LineChart className="h-4 w-4 text-emerald-600" />
-                Profit &amp; Loss Summary
-              </h3>
-              <Link
-                href={`/accounting/profit-and-loss${selectedPeriod ? `?period=${selectedPeriod}` : ''}`}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-              >
-                Full report <ArrowUpRight className="h-3 w-3" />
-              </Link>
+        {/* Mini P&L Statement */}
+        <div className="rounded-xl border bg-card overflow-hidden">
+          <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <LineChart className="h-4 w-4 text-emerald-600" />
+              Profit &amp; Loss Summary
+            </h3>
+            <Link
+              href={`/accounting/profit-and-loss${selectedPeriod ? `?period=${selectedPeriod}` : ''}`}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              Full report <ArrowUpRight className="h-3 w-3" />
+            </Link>
+          </div>
+
+          {profitAndLoss.revenue.length === 0 && profitAndLoss.expenses.length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-muted-foreground">
+              No financial data for the selected period.
             </div>
-
-            {profitAndLoss.revenue.length === 0 && profitAndLoss.expenses.length === 0 ? (
-              <div className="px-5 py-8 text-center text-sm text-muted-foreground">
-                No financial data for the selected period.
-              </div>
-            ) : (
-              <div className="divide-y">
-                {/* Revenue lines */}
-                {profitAndLoss.revenue.slice(0, 3).map((r) => (
-                  <div
-                    key={r.accountId}
-                    className="px-5 py-2.5 flex items-center justify-between hover:bg-muted/20 transition-colors"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-mono text-xs text-muted-foreground">
-                        {r.accountCode}
-                      </span>
-                      <span className="text-sm truncate">{r.accountName}</span>
-                    </div>
-                    <span className="text-sm font-medium tabular-nums text-emerald-600">
-                      {formatZAR(r.amount)}
-                    </span>
-                  </div>
-                ))}
-
-                {/* Separator */}
-                <div className="border-t-2 border-dashed" />
-
-                {/* Expense lines */}
-                {profitAndLoss.expenses.slice(0, 3).map((e) => (
-                  <div
-                    key={e.accountId}
-                    className="px-5 py-2.5 flex items-center justify-between hover:bg-muted/20 transition-colors"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-mono text-xs text-muted-foreground">
-                        {e.accountCode}
-                      </span>
-                      <span className="text-sm truncate">{e.accountName}</span>
-                    </div>
-                    <span className="text-sm font-medium tabular-nums text-red-600">
-                      {formatZAR(e.amount)}
-                    </span>
-                  </div>
-                ))}
-
-                {/* Net result */}
+          ) : (
+            <div className="divide-y">
+              {/* Revenue lines */}
+              {profitAndLoss.revenue.slice(0, 3).map((r) => (
                 <div
-                  className={`px-5 py-3 flex items-center justify-between ${
-                    isProfitable ? 'bg-emerald-500/5' : 'bg-red-500/5'
-                  }`}
+                  key={r.accountId}
+                  className="px-5 py-2.5 flex items-center justify-between hover:bg-muted/20 transition-colors"
                 >
-                  <span className="text-sm font-semibold">
-                    Net {isProfitable ? 'Profit' : 'Loss'}
-                  </span>
-                  <span
-                    className={`text-base font-bold tabular-nums ${
-                      isProfitable ? 'text-emerald-600' : 'text-red-600'
-                    }`}
-                  >
-                    {formatZAR(profitAndLoss.netProfit)}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-mono text-xs text-muted-foreground">{r.accountCode}</span>
+                    <span className="text-sm truncate">{r.accountName}</span>
+                  </div>
+                  <span className="text-sm font-medium tabular-nums text-emerald-600">
+                    {formatZAR(r.amount)}
                   </span>
                 </div>
-              </div>
-            )}
-          </div>
+              ))}
 
-          {/* Revenue by Division */}
-          <div className="rounded-xl border bg-card overflow-hidden">
-            <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
-              <h3 className="text-sm font-semibold flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-blue-600" />
-                Revenue by Division
-              </h3>
-              <Link
-                href="/billing/reports"
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+              {/* Separator */}
+              <div className="border-t-2 border-dashed" />
+
+              {/* Expense lines */}
+              {profitAndLoss.expenses.slice(0, 3).map((e) => (
+                <div
+                  key={e.accountId}
+                  className="px-5 py-2.5 flex items-center justify-between hover:bg-muted/20 transition-colors"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-mono text-xs text-muted-foreground">{e.accountCode}</span>
+                    <span className="text-sm truncate">{e.accountName}</span>
+                  </div>
+                  <span className="text-sm font-medium tabular-nums text-red-600">
+                    {formatZAR(e.amount)}
+                  </span>
+                </div>
+              ))}
+
+              {/* Net result */}
+              <div
+                className={`px-5 py-3 flex items-center justify-between ${
+                  isProfitable ? 'bg-emerald-500/5' : 'bg-red-500/5'
+                }`}
               >
-                View reports <ArrowUpRight className="h-3 w-3" />
-              </Link>
+                <span className="text-sm font-semibold">
+                  Net {isProfitable ? 'Profit' : 'Loss'}
+                </span>
+                <span
+                  className={`text-base font-bold tabular-nums ${
+                    isProfitable ? 'text-emerald-600' : 'text-red-600'
+                  }`}
+                >
+                  {formatZAR(profitAndLoss.netProfit)}
+                </span>
+              </div>
             </div>
-            {revenueByDivision.length === 0 ? (
-              <div className="px-5 py-6">
-                <EmptyState message="No revenue recorded yet for divisions." filtered={false} />
-              </div>
-            ) : (
-              <div className="divide-y">
-                {revenueByDivision.map((div) => {
-                  const pct = summary.revenue > 0 ? (div.total / summary.revenue) * 100 : 0;
-                  return (
-                    <div
-                      key={div.divisionName}
-                      className="px-5 py-3 hover:bg-muted/20 transition-colors"
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">{div.divisionName}</span>
-                        <span className="text-sm font-semibold tabular-nums text-emerald-600">
-                          {formatZAR(div.total)}
-                        </span>
-                      </div>
-                      <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-emerald-500 rounded-full transition-all"
-                          style={{ width: `${Math.max(pct, 1)}%` }}
-                        />
-                      </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        {pct.toFixed(1)}% of total
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
-        {/* Right Column: Recent Invoices & Recent Cash Movement */}
-        <div className="flex flex-col gap-6">
-          {/* Recent Invoices */}
-          <div className="rounded-xl border bg-card overflow-hidden">
-            <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
-              <h3 className="text-sm font-semibold flex items-center gap-2">
-                <FileText className="h-4 w-4 text-blue-600" />
-                Recent Invoices
-              </h3>
-              <Link
-                href="/billing/invoices"
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-              >
-                View all <ArrowUpRight className="h-3 w-3" />
-              </Link>
-            </div>
-            {recentInvoices.length === 0 ? (
-              <div className="px-5 py-6">
-                <EmptyState message="No invoices recorded yet." filtered={false} />
-              </div>
-            ) : (
-              <div className="divide-y">
-                {recentInvoices.map((inv) => (
-                  <Link
-                    key={inv.id}
-                    href={`/billing/invoices/${inv.id}`}
-                    className="px-5 py-3 flex items-start justify-between hover:bg-muted/20 transition-colors block"
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-semibold text-foreground">
-                          {inv.documentNumber}
-                        </span>
-                        <BillingStatusBadge status={inv.status} />
-                      </div>
-                      <p className="text-sm text-foreground mt-0.5 truncate">
-                        {inv.clientName ?? (
-                          <span className="italic text-muted-foreground">No client</span>
-                        )}
-                      </p>
-                      <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
-                        <span>{fmtDate(inv.invoiceDate)}</span>
-                        {inv.divisionName && (
-                          <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/10 text-blue-600">
-                            {inv.divisionName}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <p className="text-sm font-semibold tabular-nums text-foreground shrink-0 ml-4">
-                      {formatZAR(inv.total)}
-                    </p>
-                  </Link>
-                ))}
-              </div>
-            )}
+        {/* Revenue by Division */}
+        <div className="rounded-xl border bg-card overflow-hidden">
+          <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-blue-600" />
+              Revenue by Division
+            </h3>
+            <Link
+              href="/billing/reports"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              View reports <ArrowUpRight className="h-3 w-3" />
+            </Link>
           </div>
-
-          {/* Recent Income */}
-          <div className="rounded-xl border bg-card overflow-hidden">
-            <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
-              <h3 className="text-sm font-semibold flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-emerald-600" />
-                Recent Income
-              </h3>
-              <Link
-                href="/billing/payments"
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-              >
-                View all <ArrowUpRight className="h-3 w-3" />
-              </Link>
+          {revenueByDivision.length === 0 ? (
+            <div className="px-5 py-6">
+              <EmptyState message="No revenue recorded yet for divisions." filtered={false} />
             </div>
-            {recentIncome.length === 0 ? (
-              <div className="px-5 py-6">
-                <EmptyState message="No income recorded yet." filtered={false} />
-              </div>
-            ) : (
-              <div className="divide-y">
-                {recentIncome.map((inc) => (
+          ) : (
+            <div className="divide-y">
+              {revenueByDivision.map((div) => {
+                const pct = summary.revenue > 0 ? (div.total / summary.revenue) * 100 : 0;
+                return (
                   <div
-                    key={inc.id}
-                    className="px-5 py-3 flex items-start justify-between hover:bg-muted/20 transition-colors"
+                    key={div.divisionName}
+                    className="px-5 py-3 hover:bg-muted/20 transition-colors"
                   >
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {inc.description || 'Income entry'}
-                      </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-muted-foreground">{fmtDate(inc.date)}</span>
-                        <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-emerald-500/10 text-emerald-600">
-                          {inc.divisionName}
-                        </span>
-                      </div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium">{div.divisionName}</span>
+                      <span className="text-sm font-semibold tabular-nums text-emerald-600">
+                        {formatZAR(div.total)}
+                      </span>
                     </div>
-                    <p className="text-sm font-medium tabular-nums text-emerald-600 shrink-0 ml-4">
-                      {formatZAR(inc.amount)}
+                    <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-500 rounded-full transition-all"
+                        style={{ width: `${Math.max(pct, 1)}%` }}
+                      />
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {pct.toFixed(1)}% of total
                     </p>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Recent Expenses */}
-          <div className="rounded-xl border bg-card overflow-hidden">
-            <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
-              <h3 className="text-sm font-semibold flex items-center gap-2">
-                <Receipt className="h-4 w-4 text-red-600" />
-                Recent Expenses
-              </h3>
-              <Link
-                href="/finance/expenses"
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-              >
-                View all <ArrowUpRight className="h-3 w-3" />
-              </Link>
+                );
+              })}
             </div>
-            {recentExpenses.length === 0 ? (
-              <div className="px-5 py-6">
-                <EmptyState message="No expenses recorded yet." filtered={false} />
-              </div>
-            ) : (
-              <div className="divide-y">
-                {recentExpenses.map((exp) => (
-                  <div
-                    key={exp.id}
-                    className="px-5 py-3 flex items-start justify-between hover:bg-muted/20 transition-colors"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {exp.description || 'Expense entry'}
-                      </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-muted-foreground">{fmtDate(exp.date)}</span>
-                        <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-red-500/10 text-red-600">
-                          {exp.category}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-sm font-medium tabular-nums text-red-600 shrink-0 ml-4">
-                      {formatZAR(exp.amount)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          )}
         </div>
+      </div>
+
+      {/* Row 2: Recent Income + Recent Expenses (side by side) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Income */}
+        <div className="rounded-xl border bg-card overflow-hidden">
+          <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-emerald-600" />
+              Recent Income
+            </h3>
+            <Link
+              href="/billing/payments"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              View all <ArrowUpRight className="h-3 w-3" />
+            </Link>
+          </div>
+          {recentIncome.length === 0 ? (
+            <div className="px-5 py-6">
+              <EmptyState message="No income recorded yet." filtered={false} />
+            </div>
+          ) : (
+            <div className="divide-y">
+              {recentIncome.map((inc) => (
+                <div
+                  key={inc.id}
+                  className="px-5 py-3 flex items-start justify-between hover:bg-muted/20 transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {inc.description || 'Income entry'}
+                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-muted-foreground">{fmtDate(inc.date)}</span>
+                      <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-emerald-500/10 text-emerald-600">
+                        {inc.divisionName}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-sm font-medium tabular-nums text-emerald-600 shrink-0 ml-4">
+                    {formatZAR(inc.amount)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Recent Expenses */}
+        <div className="rounded-xl border bg-card overflow-hidden">
+          <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <Receipt className="h-4 w-4 text-red-600" />
+              Recent Expenses
+            </h3>
+            <Link
+              href="/finance/expenses"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              View all <ArrowUpRight className="h-3 w-3" />
+            </Link>
+          </div>
+          {recentExpenses.length === 0 ? (
+            <div className="px-5 py-6">
+              <EmptyState message="No expenses recorded yet." filtered={false} />
+            </div>
+          ) : (
+            <div className="divide-y">
+              {recentExpenses.map((exp) => (
+                <div
+                  key={exp.id}
+                  className="px-5 py-3 flex items-start justify-between hover:bg-muted/20 transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {exp.description || 'Expense entry'}
+                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-muted-foreground">{fmtDate(exp.date)}</span>
+                      <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-red-500/10 text-red-600">
+                        {exp.category}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-sm font-medium tabular-nums text-red-600 shrink-0 ml-4">
+                    {formatZAR(exp.amount)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Row 3: Recent Invoices */}
+      <div className="rounded-xl border bg-card overflow-hidden">
+        <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
+            <FileText className="h-4 w-4 text-blue-600" />
+            Recent Invoices
+          </h3>
+          <Link
+            href="/billing/invoices"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            View all <ArrowUpRight className="h-3 w-3" />
+          </Link>
+        </div>
+        {recentInvoices.length === 0 ? (
+          <div className="px-5 py-6">
+            <EmptyState message="No invoices recorded yet." filtered={false} />
+          </div>
+        ) : (
+          <div className="divide-y">
+            {recentInvoices.map((inv) => (
+              <Link
+                key={inv.id}
+                href={`/billing/invoices/${inv.id}`}
+                className="px-5 py-3 flex items-start justify-between hover:bg-muted/20 transition-colors block"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-semibold text-foreground">
+                      {inv.documentNumber}
+                    </span>
+                    <BillingStatusBadge status={inv.status} />
+                  </div>
+                  <p className="text-sm text-foreground mt-0.5 truncate">
+                    {inv.clientName ?? (
+                      <span className="italic text-muted-foreground">No client</span>
+                    )}
+                  </p>
+                  <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                    <span>{fmtDate(inv.invoiceDate)}</span>
+                    {inv.divisionName && (
+                      <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/10 text-blue-600">
+                        {inv.divisionName}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <p className="text-sm font-semibold tabular-nums text-foreground shrink-0 ml-4">
+                  {formatZAR(inv.total)}
+                </p>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Modules Quick-Access Deck */}

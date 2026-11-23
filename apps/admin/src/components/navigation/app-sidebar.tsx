@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, ChevronDown, Settings } from 'lucide-react';
+import { ChevronDown, Settings } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -204,20 +204,22 @@ export const AppSidebar = React.memo(function AppSidebar({ user }: AppSidebarPro
 
   return (
     <Sidebar variant="inset">
-      <SidebarHeader>
+      <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3 py-0">
         <Link
           href="/dashboard"
           onClick={handleNavigate}
-          className="flex items-center gap-3 px-2 py-3 hover:opacity-80 transition-opacity"
+          className="flex items-center gap-2.5 rounded-lg px-1 py-1 hover:opacity-85 transition-opacity"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo/pmg-logo.svg" alt="PMG" width={28} height={28} className="shrink-0" />
-          <div className="flex flex-col gap-0 min-w-0">
-            <span className="text-sidebar-foreground text-sm font-semibold leading-tight truncate">
-              Control Center
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 border border-amber-500/25">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo/pmg-logo.svg" alt="PMG" width={20} height={20} className="shrink-0" />
+          </div>
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <span className="text-sidebar-foreground text-sm font-semibold leading-none tracking-tight truncate">
+              PMG Hub
             </span>
-            <span className="text-sidebar-foreground/50 text-[10px] font-mono tracking-wider truncate">
-              {APP_VERSION}
+            <span className="text-sidebar-foreground/55 text-[11px] leading-none truncate">
+              Control Center
             </span>
           </div>
         </Link>
@@ -226,8 +228,7 @@ export const AppSidebar = React.memo(function AppSidebar({ user }: AppSidebarPro
       <SidebarContent>
         {/* Overview - static, no toggle */}
         <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-2">
-            <Home className="size-3.5" />
+          <SidebarGroupLabel className="text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/50">
             Overview
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -283,6 +284,9 @@ export const AppSidebar = React.memo(function AppSidebar({ user }: AppSidebarPro
                       {user.role}
                     </span>
                   </div>
+                  <span className="shrink-0 rounded bg-sidebar-accent px-1.5 py-0.5 font-mono text-[10px] text-sidebar-foreground/60">
+                    {APP_VERSION}
+                  </span>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="top" align="start" className="w-56">
