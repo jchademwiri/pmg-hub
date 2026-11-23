@@ -106,28 +106,28 @@ export function JournalsTable({ entries, postAction, voidAction }: JournalsTable
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       {entry.status === 'draft' && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => handlePost(entry.id)}
-                            disabled={processing === entry.id}
-                            title="Post entry"
-                            aria-label="Post entry"
-                          >
-                            <Send className="h-3.5 w-3.5 text-emerald-600" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => handleVoid(entry.id)}
-                            disabled={processing === entry.id}
-                            title="Void entry"
-                            aria-label="Void entry"
-                          >
-                            <Ban className="h-3.5 w-3.5 text-destructive" />
-                          </Button>
-                        </>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => handlePost(entry.id)}
+                          disabled={processing === entry.id}
+                          title="Post entry"
+                          aria-label="Post entry"
+                        >
+                          <Send className="h-3.5 w-3.5 text-emerald-600" />
+                        </Button>
+                      )}
+                      {entry.status !== 'void' && (
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => handleVoid(entry.id)}
+                          disabled={processing === entry.id}
+                          title="Void entry"
+                          aria-label="Void entry"
+                        >
+                          <Ban className="h-3.5 w-3.5 text-destructive" />
+                        </Button>
                       )}
                     </div>
                   </TableCell>

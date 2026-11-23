@@ -296,6 +296,13 @@ export async function voidJournalEntry(id: string, reason: string): Promise<{ er
     if (!entry) return { error: 'Journal entry not found.' };
     if (entry.status === 'void') return { error: 'Entry is already voided.' };
 
+    // Prevent voiding entries in closed or locked periods
+    if (!(await isPeriodOpen(entry.period))) {
+      return {
+        error: `Period ${entry.period} is closed or locked and entries cannot be voided.`,
+      };
+    }
+
     await db
       .update(journalEntries)
       .set({
@@ -307,7 +314,10 @@ export async function voidJournalEntry(id: string, reason: string): Promise<{ er
       })
       .where(eq(journalEntries.id, id));
 
+    revalidatePath('/accounting');
     revalidatePath('/accounting/journals');
+    revalidatePath('/finance');
+    revalidatePath('/finance/banking');
     // Only revalidate report pages if the entry was posted (affects balances)
     if (entry.status === 'posted') {
       revalidatePath('/accounting/trial-balance');

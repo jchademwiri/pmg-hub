@@ -490,27 +490,33 @@ export function BankingClient({ overview, liquidAccounts, today }: BankingClient
                 const net = m.debit - m.credit;
                 const isInflow = net >= 0;
                 return (
-                  <div
+                  <Link
                     key={m.id}
-                    className="px-5 py-3 flex items-start justify-between hover:bg-muted/20 transition-colors"
+                    href={`/accounting/journals?period=${m.period}`}
+                    className="group px-5 py-3 flex items-start justify-between hover:bg-muted/30 transition-colors"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{m.description}</p>
+                      <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                        {m.description}
+                      </p>
                       <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
                         <span>{fmtDate(m.entryDate)}</span>
                         <span className="font-mono text-[11px]">{m.accountCode}</span>
                         <span className="font-mono text-[11px]">{m.entryNumber}</span>
                       </div>
                     </div>
-                    <span
-                      className={`text-sm font-semibold tabular-nums shrink-0 ml-4 ${
-                        isInflow ? 'text-emerald-600' : 'text-red-600'
-                      }`}
-                    >
-                      {isInflow ? '+' : '−'}
-                      {formatZAR(Math.abs(net))}
-                    </span>
-                  </div>
+                    <div className="flex items-center gap-1.5 shrink-0 ml-4">
+                      <span
+                        className={`text-sm font-semibold tabular-nums ${
+                          isInflow ? 'text-emerald-600' : 'text-red-600'
+                        }`}
+                      >
+                        {isInflow ? '+' : '−'}
+                        {formatZAR(Math.abs(net))}
+                      </span>
+                      <ArrowUpRight className="size-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </Link>
                 );
               })}
             </div>

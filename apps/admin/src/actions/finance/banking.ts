@@ -15,6 +15,7 @@ import {
 
 function revalidateBankingPaths() {
   revalidatePath('/finance/banking');
+  revalidatePath('/finance/expenses');
   revalidatePath('/finance');
   revalidatePath('/accounting');
   revalidatePath('/accounting/trial-balance');

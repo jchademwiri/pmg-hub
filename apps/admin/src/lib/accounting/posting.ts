@@ -35,6 +35,7 @@ import {
   chartAccounts,
   journalEntries,
   journalLines,
+  expenses,
   paymentAllocations,
   distributionSettings,
   and,
@@ -1286,6 +1287,7 @@ async function postSimpleTwoLineJournal(data: {
   debitLineDescription: string;
   creditLineDescription: string;
   sourceModule: string;
+  expenseMirror?: { category: string };
   createdBy?: string;
   divisionId?: string;
 }): Promise<{ error?: string; entryId?: string }> {
@@ -1322,6 +1324,19 @@ async function postSimpleTwoLineJournal(data: {
     await db.transaction(async (tx) => {
       const entryNumber = await getNextJournalEntryNumber(tx, data.date);
 
+      let expenseId: string | undefined;
+      if (data.expenseMirror) {
+        expenseId = randomUUID();
+        await tx.insert(expenses).values({
+          id: expenseId,
+          date: data.date,
+          divisionId: resolvedDivisionId,
+          category: data.expenseMirror.category,
+          description: data.description,
+          amount: absAmount.toFixed(2),
+        });
+      }
+
       await tx.insert(journalEntries).values({
         id: entryId,
         entryNumber,
@@ -1330,7 +1345,9 @@ async function postSimpleTwoLineJournal(data: {
         divisionId: resolvedDivisionId,
         description: data.description,
         status: 'posted',
-        sourceModule: data.sourceModule,
+        sourceModule: data.expenseMirror ? 'expenses' : data.sourceModule,
+        sourceTable: expenseId ? 'expenses' : null,
+        sourceId: expenseId ?? null,
         sourceDocumentNumber: entryNumber,
         postedAt: now,
         postedBy: actor,
@@ -1440,6 +1457,7 @@ export async function postOwnerWithdrawalJournalEntry(data: {
     debitLineDescription: selected.label,
     creditLineDescription: selected.label,
     sourceModule: 'banking',
+    expenseMirror: data.mode === 'salary_advance' ? { category: 'Director Salary' } : undefined,
     createdBy: data.createdBy,
   });
 }
@@ -1465,6 +1483,7 @@ export async function postQuickBankEntry(data: {
     debitLineDescription: isFee ? 'Bank charges' : `Interest credited to ${data.accountCode}`,
     creditLineDescription: isFee ? `Bank fee deducted from ${data.accountCode}` : 'Interest income',
     sourceModule: 'banking',
+    expenseMirror: isFee ? { category: 'Bank Charges' } : undefined,
     createdBy: data.createdBy,
   });
 }
