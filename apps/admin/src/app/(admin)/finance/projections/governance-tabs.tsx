@@ -350,7 +350,7 @@ export function DividendsTab({
 
       {/* Policy Settings Dialog */}
       <Dialog open={policyOpen} onOpenChange={setPolicyOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <form onSubmit={handleSavePolicy}>
             <DialogHeader>
               <DialogTitle>Governance Policy — {label}</DialogTitle>
@@ -359,7 +359,7 @@ export function DividendsTab({
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field>
                   <FieldLabel htmlFor="pol-reserve">Min Cash Reserve (R)</FieldLabel>
                   <Input
@@ -383,7 +383,7 @@ export function DividendsTab({
                   />
                 </Field>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field>
                   <FieldLabel htmlFor="pol-paye">0% PAYE Threshold (R)</FieldLabel>
                   <Input
@@ -429,7 +429,7 @@ export function DividendsTab({
 
       {/* Declare Payout Dialog */}
       <Dialog open={payoutOpen} onOpenChange={setPayoutOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-xl">
           <form onSubmit={handleRecordPayout}>
             <DialogHeader>
               <DialogTitle>Declare Quarterly Distribution ({label})</DialogTitle>
@@ -439,15 +439,15 @@ export function DividendsTab({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid gap-4 py-4 max-h-[68vh] overflow-y-auto pr-1">
-              <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-4 py-4 max-h-[72vh] overflow-y-auto overflow-x-hidden px-0.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field>
                   <FieldLabel htmlFor="pay-quarter">Quarter</FieldLabel>
                   <Select
                     value={quarter}
                     onValueChange={(v) => setQuarter(v as 'Q1' | 'Q2' | 'Q3' | 'Q4')}
                   >
-                    <SelectTrigger id="pay-quarter">
+                    <SelectTrigger id="pay-quarter" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -470,13 +470,13 @@ export function DividendsTab({
                 </Field>
               </div>
 
-              <Field>
+              <Field className="min-w-0">
                 <FieldLabel htmlFor="pay-type">Distribution Method</FieldLabel>
                 <Select
                   value={payoutType}
                   onValueChange={(v) => setPayoutType(v as 'director_bonus' | 'dividend')}
                 >
-                  <SelectTrigger id="pay-type">
+                  <SelectTrigger id="pay-type" className="w-full truncate">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -491,7 +491,7 @@ export function DividendsTab({
                 </Select>
               </Field>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field>
                   <FieldLabel htmlFor="pay-gross">Gross Amount (R)</FieldLabel>
                   <Input
@@ -520,26 +520,26 @@ export function DividendsTab({
               </div>
 
               {/* Live GL Preview */}
-              <div className="rounded-lg border bg-muted/40 p-3 text-xs space-y-1">
-                <div className="flex justify-between">
+              <div className="rounded-lg border bg-muted/40 p-3.5 text-xs space-y-1.5">
+                <div className="flex justify-between gap-2">
                   <span className="text-muted-foreground">Gross Declared:</span>
                   <span className="font-semibold tabular-nums">{formatZAR(parsedGross)}</span>
                 </div>
                 {previewDwt > 0 && (
-                  <div className="flex justify-between text-amber-600">
+                  <div className="flex justify-between gap-2 text-amber-600">
                     <span>Less {policy.dwtRatePercent}% DWT (Cr 2160 SARS Payable):</span>
                     <span className="font-semibold tabular-nums">−{formatZAR(previewDwt)}</span>
                   </div>
                 )}
                 {previewLoanOffset > 0 && (
-                  <div className="flex justify-between text-blue-600">
+                  <div className="flex justify-between gap-2 text-blue-600">
                     <span>Less Director&apos;s Loan Offset (Cr 1250):</span>
                     <span className="font-semibold tabular-nums">
                       −{formatZAR(previewLoanOffset)}
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between border-t pt-1 font-semibold text-emerald-600">
+                <div className="flex justify-between gap-2 border-t pt-1.5 font-semibold text-emerald-600">
                   <span>Net Cash Paid (Cr 1010 Cheque):</span>
                   <span className="tabular-nums">{formatZAR(previewNetCash)}</span>
                 </div>
@@ -556,7 +556,7 @@ export function DividendsTab({
               </Field>
 
               {/* Mandatory Companies Act s46 Sign-Off */}
-              <label className="flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs cursor-pointer">
+              <label className="flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3.5 text-xs leading-relaxed cursor-pointer">
                 <input
                   type="checkbox"
                   checked={solvencySignedOff}

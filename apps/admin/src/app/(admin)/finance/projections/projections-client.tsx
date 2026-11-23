@@ -9,7 +9,6 @@ import {
   Lock,
   Pencil,
   Receipt,
-  Sparkles,
   Target,
   TrendingDown,
   TrendingUp,
@@ -42,16 +41,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { saveMonthlyBudget, seedFyBudgetAction } from '@/actions/finance/budgets';
+import { saveMonthlyBudget } from '@/actions/finance/budgets';
 import { formatZAR, fmtMonthYear } from '@/lib/format';
 import { DividendsTab, TaxProvisionTab } from './governance-tabs';
 import type { BudgetMonthRow, FiscalYearBudgetOverview, GovernanceOverviewResult } from '@pmg/db';
-
-const FISCAL_YEAR_OPTIONS = [
-  { value: '2027', label: 'FY2026/27 (Mar 2026 – Feb 2027)' },
-  { value: '2028', label: 'FY2027/28 (Mar 2027 – Feb 2028)' },
-  { value: '2029', label: 'FY2028/29 (Mar 2028 – Feb 2029)' },
-];
 
 export function ProjectionsClient({
   overview,
@@ -95,20 +88,6 @@ export function ProjectionsClient({
       map[dt.divisionId] = String(dt.targetAmount);
     }
     setEditDivAmounts(map);
-  }
-
-  function handleSeedPlan() {
-    startTransition(async () => {
-      const res = await seedFyBudgetAction(overview.fiscalYear);
-      if (res.error) {
-        toast.error(res.error);
-        return;
-      }
-      toast.success(
-        `Seeded seasonalized R240,000 plan for ${overview.label} (TES R210k · AWS R18k · PMG R12k).`,
-      );
-      router.refresh();
-    });
   }
 
   function handleSaveMonth(e: React.FormEvent) {
@@ -162,8 +141,8 @@ export function ProjectionsClient({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {FISCAL_YEAR_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
+              {overview.availableFiscalYears.map((opt) => (
+                <SelectItem key={opt.value} value={String(opt.value)}>
                   {opt.label}
                 </SelectItem>
               ))}
@@ -171,20 +150,11 @@ export function ProjectionsClient({
           </Select>
         </div>
 
-        {activeTab === 'budgets' && (
-          <Button
-            size="sm"
-            variant={overview.hasBudget ? 'outline' : 'default'}
-            onClick={handleSeedPlan}
-            disabled={isPending}
-            className="gap-1.5"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            {overview.hasBudget
-              ? `Reset ${overview.label} to R240k Plan`
-              : `Seed ${overview.label} R240k Plan`}
-          </Button>
-        )}
+        <span className="text-xs text-muted-foreground">
+          {overview.hasBudget
+            ? `${overview.label} Budget Active · Click any month's edit icon to adjust targets`
+            : `${overview.label} Actuals View · Click any month's edit icon to set a budget`}
+        </span>
       </div>
 
       {/* 3-Tab Governance Switcher */}
@@ -316,8 +286,10 @@ export function ProjectionsClient({
                 <Building2 className="h-4 w-4 text-blue-600" />
                 Division Revenue Targets ({overview.label})
               </h3>
-              <span className="text-xs text-muted-foreground">
-                Annual Split: TES R210k · AWS R18k · PMG R12k
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {overview.hasBudget
+                  ? `${formatZAR(totals.actualRevenue)} of ${formatZAR(totals.revenueTarget)} (${totals.revenueAttainmentPercent.toFixed(1)}%)`
+                  : `YTD Actual: ${formatZAR(totals.actualRevenue)}`}
               </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x">
@@ -376,62 +348,105 @@ export function ProjectionsClient({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {overview.months.map((m) => (
-                    <TableRow key={m.period}>
-                      <TableCell className="font-medium whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <span>{fmtMonthYear(m.period, { short: true })}</span>
-                          {m.isClosed ? (
-                            <Badge variant="secondary" className="text-[10px] gap-1 py-0">
-                              <Lock className="size-2.5" /> Closed
-                            </Badge>
+                  {overview.months.map((m) => {
+                    const currentPeriod = today.slice(0, 7);
+                    const isUpcoming =
+                      !m.isClosed &&
+                      m.period > currentPeriod &&
+                      m.actualRevenue === 0 &&
+                      m.actualExpenses === 0;
+
+                    return (
+                      <TableRow key={m.period} className={isUpcoming ? 'opacity-75' : undefined}>
+                        <TableCell className="font-medium whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <span>{fmtMonthYear(m.period, { short: true })}</span>
+                            {m.isClosed ? (
+                              <Badge variant="secondary" className="text-[10px] gap-1 py-0">
+                                <Lock className="size-2.5" /> Closed
+                              </Badge>
+                            ) : isUpcoming ? (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] py-0 text-muted-foreground border-dashed"
+                              >
+                                Upcoming
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] py-0 border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
+                              >
+                                Live
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground">
+                          {formatZAR(m.revenueTarget)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums font-medium">
+                          {isUpcoming ? (
+                            <span className="text-muted-foreground">—</span>
                           ) : (
-                            <Badge variant="outline" className="text-[10px] py-0">
-                              Live
-                            </Badge>
+                            formatZAR(m.actualRevenue)
                           )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums text-muted-foreground">
-                        {formatZAR(m.revenueTarget)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums font-medium">
-                        {formatZAR(m.actualRevenue)}
-                      </TableCell>
-                      <TableCell
-                        className={`text-right tabular-nums text-xs font-medium ${
-                          m.revenueVariance >= 0 ? 'text-emerald-600' : 'text-amber-600'
-                        }`}
-                      >
-                        {m.revenueVariance >= 0 ? '+' : '−'}
-                        {formatZAR(Math.abs(m.revenueVariance))}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums text-muted-foreground">
-                        {formatZAR(m.totalExpenseBudget)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatZAR(m.actualExpenses)}
-                      </TableCell>
-                      <TableCell
-                        className={`text-right tabular-nums font-semibold ${
-                          m.actualProfit >= 0 ? 'text-emerald-600' : 'text-red-600'
-                        }`}
-                      >
-                        {formatZAR(m.actualProfit)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7"
-                          onClick={() => openEditDialog(m)}
-                          title={`Edit ${fmtMonthYear(m.period)} budget`}
+                        </TableCell>
+                        <TableCell
+                          className={`text-right tabular-nums text-xs font-medium ${
+                            isUpcoming
+                              ? 'text-muted-foreground'
+                              : m.revenueVariance >= 0
+                                ? 'text-emerald-600'
+                                : 'text-amber-600'
+                          }`}
                         >
-                          <Pencil className="size-3.5" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                          {isUpcoming ? (
+                            '—'
+                          ) : (
+                            <>
+                              {m.revenueVariance >= 0 ? '+' : '−'}
+                              {formatZAR(Math.abs(m.revenueVariance))}
+                            </>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground">
+                          {formatZAR(m.totalExpenseBudget)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {isUpcoming ? (
+                            <span className="text-muted-foreground">—</span>
+                          ) : (
+                            formatZAR(m.actualExpenses)
+                          )}
+                        </TableCell>
+                        <TableCell
+                          className={`text-right tabular-nums font-semibold ${
+                            isUpcoming
+                              ? 'text-muted-foreground font-normal text-xs'
+                              : m.actualProfit >= 0
+                                ? 'text-emerald-600'
+                                : 'text-red-600'
+                          }`}
+                        >
+                          {isUpcoming
+                            ? `Est. ${formatZAR(m.budgetedProfit)}`
+                            : formatZAR(m.actualProfit)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7"
+                            onClick={() => openEditDialog(m)}
+                            title={`Edit ${fmtMonthYear(m.period)} budget`}
+                          >
+                            <Pencil className="size-3.5" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
 
                   {/* Totals Row */}
                   <TableRow className="bg-muted/40 font-semibold">
@@ -477,7 +492,7 @@ export function ProjectionsClient({
             open={editingMonth !== null}
             onOpenChange={(open) => !open && setEditingMonth(null)}
           >
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="sm:max-w-xl">
               {editingMonth && (
                 <form onSubmit={handleSaveMonth}>
                   <DialogHeader>
@@ -488,7 +503,7 @@ export function ProjectionsClient({
                     </DialogDescription>
                   </DialogHeader>
 
-                  <div className="grid gap-4 py-4 max-h-[68vh] overflow-y-auto pr-1">
+                  <div className="grid gap-4 py-4 max-h-[72vh] overflow-y-auto overflow-x-hidden px-0.5">
                     {editingMonth.divisionTargets.length > 0 ? (
                       <div className="space-y-3">
                         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">

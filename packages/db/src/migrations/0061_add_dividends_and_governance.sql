@@ -48,4 +48,7 @@ DROP POLICY IF EXISTS dividend_payouts_admin_only ON "dividend_payouts";--> stat
 CREATE POLICY dividend_payouts_admin_only ON "dividend_payouts"
   FOR ALL
   USING (app_is_admin() OR (app_current_client_id() IS NULL AND NOT app_is_client_mode()))
-  WITH CHECK (app_is_admin() OR (app_current_client_id() IS NULL AND NOT app_is_client_mode()));
+  WITH CHECK (app_is_admin() OR (app_current_client_id() IS NULL AND NOT app_is_client_mode()));--> statement-breakpoint
+UPDATE "journal_entries"
+SET "period" = TO_CHAR("entry_date"::date, 'YYYY-MM')
+WHERE "period" != TO_CHAR("entry_date"::date, 'YYYY-MM');

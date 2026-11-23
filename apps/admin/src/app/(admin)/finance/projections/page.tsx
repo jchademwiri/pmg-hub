@@ -1,5 +1,9 @@
 import type { Metadata } from 'next';
-import { getBudgetVsActualsForFiscalYear, getGovernanceOverview } from '@pmg/db';
+import {
+  getBudgetVsActualsForFiscalYear,
+  getCurrentFiscalYear,
+  getGovernanceOverview,
+} from '@pmg/db';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
 import { formatZAR, getSASTToday } from '@/lib/format';
 import { ProjectionsClient } from './projections-client';
@@ -13,10 +17,12 @@ interface ProjectionsPageProps {
 
 export default async function ProjectionsPage({ searchParams }: ProjectionsPageProps) {
   const { fy, tab } = await searchParams;
-  // Default to FY2027/28 (ending year 2028) unless user selects another fiscal year
-  const parsedFy = fy ? parseInt(fy, 10) : 2028;
+  const today = getSASTToday();
+  const currentFy = getCurrentFiscalYear(today);
+  // Default to the current South African financial year unless user selects another fiscal year
+  const parsedFy = fy ? parseInt(fy, 10) : currentFy;
   const fiscalYear =
-    Number.isInteger(parsedFy) && parsedFy >= 2024 && parsedFy <= 2040 ? parsedFy : 2028;
+    Number.isInteger(parsedFy) && parsedFy >= 2027 && parsedFy <= 2040 ? parsedFy : currentFy;
   const activeTab = tab === 'dividends' || tab === 'tax' ? tab : 'budgets';
 
   const [overview, governance] = await Promise.all([
@@ -27,7 +33,7 @@ export default async function ProjectionsPage({ searchParams }: ProjectionsPageP
   return (
     <div className="flex flex-col gap-6">
       <SetPageTotal
-        value={`Target ${formatZAR(overview.totals.revenueTarget)}`}
+        value={`${formatZAR(overview.totals.actualRevenue)} / ${formatZAR(overview.totals.revenueTarget)} (${overview.totals.revenueAttainmentPercent.toFixed(1)}%)`}
         variant={overview.totals.actualProfit >= 0 ? 'green' : 'red'}
       />
 

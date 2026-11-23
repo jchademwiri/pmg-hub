@@ -1,4 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "ignoreCommand": "npx turbo-ignore"
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- ./ ../../packages/emails ../../packages/tailwind-config ../../packages/utils ../../packages/db/src/client.ts ../../packages/db/src/env.ts ../../packages/db/src/schema/leads.ts ../../packages/db/src/schema/divisions.ts ../../packages/db/src/schema/onboarding.ts"
 }
