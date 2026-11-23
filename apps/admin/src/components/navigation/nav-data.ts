@@ -37,6 +37,9 @@ import {
   UserCheck,
   Clock,
   Camera,
+  PiggyBank,
+  Scale,
+  Folders,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Role } from '@/lib/roles';
@@ -129,8 +132,22 @@ export const GROUPS: NavGroup[] = [
       { title: 'Overview', url: '/finance', icon: LayoutGrid },
       { title: 'Expenses', url: '/finance/expenses', icon: TrendingDown },
       { title: 'Recurring', url: '/finance/recurring', icon: CalendarClock },
+      { title: 'Assets Register', url: '/assets', icon: Building2 },
+      { title: 'Savings Goals', url: '/savings', icon: PiggyBank },
+      { title: 'Categories', url: '/finance/categories', icon: Folders },
+    ],
+  },
+  {
+    key: 'accounting',
+    label: 'Accounting',
+    icon: Calculator,
+    items: [
       { title: 'Profit & Loss', url: '/accounting/profit-and-loss', icon: LineChart },
+      { title: 'Trial Balance', url: '/accounting/trial-balance', icon: Scale },
       { title: 'General Ledger', url: '/accounting/general-ledger', icon: BookMarked },
+      { title: 'Journal Entries', url: '/accounting/journals', icon: Receipt },
+      { title: 'Chart of Accounts', url: '/accounting/chart-of-accounts', icon: Folders },
+      { title: 'Accounting Periods', url: '/accounting/periods', icon: CalendarClock },
     ],
   },
   {
@@ -140,6 +157,7 @@ export const GROUPS: NavGroup[] = [
     items: [
       { title: 'Overview', url: '/insights', icon: LayoutGrid },
       { title: 'Business Analysis', url: '/insights/analysis', icon: TrendingUp },
+      { title: 'Financial Reports (AFS)', url: '/insights/financial-reports', icon: FileText },
       { title: 'Snapshots', url: '/insights/snapshots', icon: Camera },
     ],
   },

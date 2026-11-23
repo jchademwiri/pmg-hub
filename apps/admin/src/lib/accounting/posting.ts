@@ -56,6 +56,14 @@ const VAT_OUTPUT_CODE = '2150'; // VAT Output Control (Liability)
 const SALES_REVENUE_CODE = '4010'; // Sales Revenue
 const MISC_EXPENSE_CODE = '5140'; // Miscellaneous Expense (fallback)
 const BAD_DEBT_EXPENSE_CODE = '5150'; // Bad Debt Expense
+const SMALL_EQUIPMENT_EXPENSE_CODE = '5030'; // Office & Small Equipment (< R7,000 SARS write-off)
+const FIXED_ASSETS_PPE_CODE = '1500'; // Property, Plant & Equipment (>= R7,000 capitalized)
+
+export const SARS_SMALL_ASSET_THRESHOLD = 7000;
+
+export function resolveAssetPurchaseAccountCode(cost: number): '5030' | '1500' {
+  return cost < SARS_SMALL_ASSET_THRESHOLD ? SMALL_EQUIPMENT_EXPENSE_CODE : FIXED_ASSETS_PPE_CODE;
+}
 
 // ── Expense category → chart account mapping ────────────────────────────────
 const EXPENSE_ACCOUNT_MAP: { keywords: string[]; code: string }[] = [
@@ -72,7 +80,10 @@ const EXPENSE_ACCOUNT_MAP: { keywords: string[]; code: string }[] = [
   { keywords: ['shipping', 'shipment', 'delivery', 'courier'], code: '5070' },
   { keywords: ['utility', 'electricity', 'water', 'municipal'], code: '5100' },
   { keywords: ['bank', 'charge', 'fee', 'processing'], code: '5110' },
-  { keywords: ['staff', 'salary', 'wage', 'employee'], code: '5120' },
+  {
+    keywords: ['staff', 'salary', 'wage', 'employee', 'director', 'remuneration', 'bonus'],
+    code: '5120',
+  },
   { keywords: ['reinvest', 'growth', 'development'], code: '5130' },
 ];
 
@@ -1121,5 +1132,123 @@ export async function voidInvoiceWriteOffJournalEntries(
   } catch (err) {
     console.error('Failed to void write-off journal entries:', err);
     return { error: 'Failed to void write-off journal entries.' };
+  }
+}
+
+// ── Post Journal Entry for Fixed Asset Purchase (SARS R7,000 Rule) ──────────
+
+/**
+ * Posts a balanced double-entry journal entry when a fixed asset is purchased:
+ *   - cost < R7,000 (SARS small-asset write-off):
+ *       Dr 5030 Office & Small Equipment / Cr 1010 Business Cheque Account
+ *   - cost >= R7,000 (capitalized PPE):
+ *       Dr 1500 Property, Plant & Equipment / Cr 1010 Business Cheque Account
+ */
+export async function postAssetPurchaseJournalEntry(data: {
+  assetId: string;
+  name: string;
+  cost: number;
+  date: string;
+  divisionId?: string;
+}): Promise<{ error?: string; entryId?: string; accountCode?: string }> {
+  try {
+    const { assetId, name, cost, date } = data;
+    if (cost <= 0) return {};
+
+    const period = date.slice(0, 7);
+    const p = await ensureOpenPeriod(period);
+    if (p.status !== 'open') {
+      return { error: `Accounting period ${period} is closed.` };
+    }
+
+    const db = getDb();
+    const debitCode = resolveAssetPurchaseAccountCode(cost);
+
+    // Ensure 1500 PPE and 5030 Small Equipment exist before lookup
+    await db
+      .insert(chartAccounts)
+      .values({
+        code: FIXED_ASSETS_PPE_CODE,
+        name: 'Property, Plant & Equipment',
+        type: 'asset',
+        description: 'Capitalized fixed assets costing R7,000 or more',
+        isActive: true,
+        isPostingAccount: true,
+      })
+      .onConflictDoNothing({ target: chartAccounts.code });
+
+    const accountMap = await getAccountsByCode([BANK_ACCOUNT_CODE, debitCode], db);
+    const bankAccount = accountMap.get(BANK_ACCOUNT_CODE);
+    const debitAccount = accountMap.get(debitCode);
+
+    if (!bankAccount || !debitAccount) {
+      return {
+        error: `Required chart accounts not found (${BANK_ACCOUNT_CODE}, ${debitCode}).`,
+      };
+    }
+
+    // Resolve corporate division (prefer Playhouse Media Group, fallback to first active division)
+    let resolvedDivisionId = data.divisionId;
+    if (!resolvedDivisionId) {
+      const allDivs = await db.select({ id: divisions.id, name: divisions.name }).from(divisions);
+      const pmgDiv = allDivs.find((d) => d.name.toLowerCase().includes('playhouse'));
+      resolvedDivisionId = pmgDiv?.id ?? allDivs[0]?.id;
+    }
+    if (!resolvedDivisionId) {
+      return { error: 'No division found to post asset purchase journal entry.' };
+    }
+
+    const entryId = randomUUID();
+    const now = new Date();
+    const isSmallAsset = cost < SARS_SMALL_ASSET_THRESHOLD;
+
+    await db.transaction(async (tx) => {
+      const entryNumber = await getNextJournalEntryNumber(tx, date);
+      const desc = isSmallAsset
+        ? `Small asset write-off (<R7k): ${name}`
+        : `Fixed asset purchase (PPE): ${name}`;
+
+      await tx.insert(journalEntries).values({
+        id: entryId,
+        entryNumber,
+        entryDate: date,
+        period,
+        divisionId: resolvedDivisionId!,
+        description: desc,
+        status: 'posted',
+        sourceModule: 'assets',
+        sourceTable: 'assets',
+        sourceId: assetId,
+        sourceDocumentNumber: entryNumber,
+        postedAt: now,
+        postedBy: 'system',
+        createdBy: 'system',
+      });
+
+      await tx.insert(journalLines).values({
+        id: randomUUID(),
+        journalEntryId: entryId,
+        accountId: debitAccount.id,
+        debit: String(cost.toFixed(2)),
+        credit: null,
+        description: isSmallAsset ? `Small asset (<R7k) — ${name}` : `Capitalized PPE — ${name}`,
+      });
+
+      await tx.insert(journalLines).values({
+        id: randomUUID(),
+        journalEntryId: entryId,
+        accountId: bankAccount.id,
+        debit: null,
+        credit: String(cost.toFixed(2)),
+        description: `Asset purchase paid from Cheque — ${name}`,
+      });
+    });
+
+    return { entryId, accountCode: debitCode };
+  } catch (err) {
+    console.error('Failed to auto-post asset purchase journal entry:', err);
+    return {
+      error: `Asset journal auto-post failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
   }
 }

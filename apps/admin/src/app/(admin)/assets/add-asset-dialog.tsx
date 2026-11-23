@@ -32,6 +32,7 @@ export function AddAssetDialog() {
   const [serialNumber, setSerialNumber] = React.useState('');
   const [location, setLocation] = React.useState('');
   const [assignedTo, setAssignedTo] = React.useState('');
+  const [postToAccounting, setPostToAccounting] = React.useState(true);
 
   function resetForm() {
     setName('');
@@ -43,6 +44,7 @@ export function AddAssetDialog() {
     setSerialNumber('');
     setLocation('');
     setAssignedTo('');
+    setPostToAccounting(true);
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -77,6 +79,7 @@ export function AddAssetDialog() {
         serialNumber: serialNumber.trim() || undefined,
         location: location.trim() || undefined,
         assignedTo: assignedTo.trim() || undefined,
+        postToAccounting,
       });
 
       if (res.error) {
@@ -240,6 +243,26 @@ export function AddAssetDialog() {
                 disabled={isPending}
               />
             </Field>
+
+            <div className="rounded-lg border bg-muted/30 p-3 flex flex-col gap-1.5">
+              <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={postToAccounting}
+                  onChange={(e) => setPostToAccounting(e.target.checked)}
+                  disabled={isPending}
+                  className="h-4 w-4 rounded border-input accent-primary"
+                />
+                Post Purchase to Accounting (General Ledger)
+              </label>
+              {postToAccounting && (
+                <p className="text-xs text-muted-foreground pl-6">
+                  {(parseFloat(cost) || 0) >= 7000
+                    ? 'Capitalized PPE (≥ R7,000): Posts Dr 1500 Property, Plant & Equipment / Cr 1010 Business Cheque.'
+                    : 'SARS Small-Asset Write-Off (< R7,000): Posts Dr 5030 Office & Small Equipment / Cr 1010 Business Cheque (100% immediate deduction).'}
+                </p>
+              )}
+            </div>
 
             <DialogFooter className="mt-2">
               <Button
