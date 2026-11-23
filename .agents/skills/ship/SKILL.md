@@ -37,7 +37,7 @@ git push origin <branch>
 
 ### 4. Create Pull Request
 
-Write a clean, well-structured Markdown PR description matching `.github/pull_request_template.md` — **never leave empty `<!-- ... -->` placeholder comments or unchecked boxes**. **Always pass the PR body via `--body-file` (e.g. a UTF-8 `.md` file or stdin) instead of inline `--body "..."`** so PowerShell/shell escaping never mangles backticks or turns `\b`/`\f`/`\t`/`\a` into control characters.
+Write a clean, well-structured Markdown PR description matching `.github/pull_request_template.md` — **never leave empty `<!-- ... -->` placeholder comments** (all completed local gates must be checked `[x]`; only the post-merge staging verification item remains `[ ]` until tested on `dev`). **Always pass the PR body via `--body-file` (e.g. a UTF-8 `.md` file or stdin) instead of inline `--body "..."`** so PowerShell/shell escaping never mangles backticks or turns `\b`/`\f`/`\t`/`\a` into control characters.
 
 Required PR Markdown template:
 
@@ -65,17 +65,24 @@ gh pr create --base <target> --head <branch> --title "<type>(<scope>): <summary>
 ```
 (Remove any temporary `<pr-body.md>` file after `gh pr create` completes.)
 
-### 5. Monitor CI Checks
+### 5. Monitor CI Checks & Triage AI Bot Reviews (CodeRabbit & Codex)
 
-```bash
-gh pr checks <pr-number> --watch --interval 10
-```
+1. Wait for all CI checks to finish:
+   ```bash
+   gh pr checks <pr-number> --watch --interval 10
+   ```
+   Fix any failing checks until all checks are green.
 
-Fix any failures until all core checks are green.
+2. Fetch and evaluate all review comments from **CodeRabbit** (`coderabbitai[bot]`) and **ChatGPT Codex Connector** (`chatgpt-codex-connector[bot]`):
+   ```bash
+   gh api repos/{owner}/{repo}/pulls/<pr-number>/comments --jq '.[] | {user: .user.login, path: .path, line: .line, body: .body}'
+   ```
+   - **Evaluate critically:** Fix all valid P1/P2 bugs, missing exports, edge cases, and security/accounting catches; commit, push, and re-verify CI.
+   - **Skip noise:** Briefly note any stylistic nitpicks or out-of-scope suggestions that were intentionally skipped.
 
 ### 6. Summary & Next Step Guidance
 
-Once CI is green and the PR is ready to merge, **always return the full clickable PR URL prominently** (same as `/release`) and clearly distinguish merging to `dev` (staging) vs. `/release` (production):
+Once CI is green and bot review comments are triaged, **always return the full clickable PR URL prominently** (same as `/release`) with a brief bot-review triage note, and clearly distinguish merging to `dev` (staging) vs. `/release` (production):
 
 ```
 ✅ Pull Request #<number> ready to merge: <url>
