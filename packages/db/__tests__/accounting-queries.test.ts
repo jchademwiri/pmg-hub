@@ -599,3 +599,36 @@ describe('getProfitAndLoss', () => {
     });
   });
 });
+
+describe('CORE_CHART_ACCOUNTS — (Pty) Ltd, SARS & PPE coverage', () => {
+  it('includes all required SARS, PPE, Director Loan, and Dividend codes without colliding with 1200 or 4020', async () => {
+    const { CORE_CHART_ACCOUNTS } = await import('../src/queries/accounting');
+    const codes = new Set(CORE_CHART_ACCOUNTS.map((a) => a.code));
+
+    for (const required of [
+      '1010',
+      '1020',
+      '1030',
+      '1100',
+      '1250',
+      '1500',
+      '1510',
+      '2160',
+      '3010',
+      '3040',
+      '4010',
+      '4030',
+      '5030',
+      '5110',
+      '5120',
+      '5160',
+      '5170',
+    ]) {
+      expect(codes.has(required)).toBe(true);
+    }
+
+    // Must never overwrite existing live codes 1200 (Client Deposits) or 4020 (PMG Share Revenue)
+    expect(codes.has('1200')).toBe(false);
+    expect(codes.has('4020')).toBe(false);
+  });
+});

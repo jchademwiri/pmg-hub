@@ -11,6 +11,7 @@ import {
   hasAssetHistory,
 } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
+import { postAssetPurchaseJournalEntry } from '@/lib/accounting/posting';
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
@@ -32,13 +33,14 @@ const AssetSchema = z
     assignedTo: z.string().optional().nullable(),
     quantity: z.coerce.number().min(0, 'Quantity cannot be negative').optional().nullable(),
     unitType: z.string().optional().nullable(),
+    postToAccounting: z.boolean().optional().default(true),
   })
   .refine((d) => d.kind !== 'investment' || (d.quantity != null && !!d.unitType?.trim()), {
     message: 'Quantity and unit type are required for investments.',
     path: ['quantity'],
   });
 
-type AssetInput = z.infer<typeof AssetSchema>;
+type AssetInput = z.input<typeof AssetSchema>;
 
 // ── createAsset ───────────────────────────────────────────────────────────────
 
@@ -69,7 +71,24 @@ export async function createAsset(data: AssetInput): Promise<{ error?: string; i
       unitType: null,
     });
 
+    if (v.postToAccounting && v.cost > 0) {
+      const journalResult = await postAssetPurchaseJournalEntry({
+        assetId: created.id,
+        name: v.name,
+        cost: v.cost,
+        date: v.acquisitionDate,
+      });
+      if (journalResult.error) {
+        console.warn('Asset purchase auto-post warning:', journalResult.error);
+      }
+    }
+
     revalidatePath('/assets');
+    revalidatePath('/finance');
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
+    revalidatePath('/accounting/profit-and-loss');
     return { id: created.id };
   } catch {
     return { error: 'Failed to save. Please try again.' };
