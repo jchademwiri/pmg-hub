@@ -120,6 +120,9 @@ export async function ensureCoreChartAccounts() {
         });
     }
 
+    // Repair any historical PMG Share journal lines that erroneously credited
+    // Equity Reserve (3150) instead of Business Cheque Account (1010), which
+    // overstated combined liquid cash (1010 + 1020) and equity.
     const [pmgAccount] = await db
       .select({ id: chartAccounts.id })
       .from(chartAccounts)
@@ -143,11 +146,11 @@ export async function ensureCoreChartAccounts() {
           const entryIds = pmgEntries.map((e) => e.id);
           await db
             .update(journalLines)
-            .set({ accountId: pmgAccount.id })
+            .set({ accountId: bankAccount.id })
             .where(
               and(
                 inArray(journalLines.journalEntryId, entryIds),
-                eq(journalLines.accountId, bankAccount.id),
+                eq(journalLines.accountId, pmgAccount.id),
                 sql`${journalLines.credit} IS NOT NULL`,
               ),
             );
