@@ -178,7 +178,7 @@ CREATE POLICY billing_line_items_tenant_isolation ON "billing_line_items"
           WHERE "invoices".id = "billing_line_items".document_id
             AND "invoices".client_id = app_current_client_id()
         ))
-        OR (document_type = 'quotation' AND EXISTS (
+        OR (document_type = 'quote' AND EXISTS (
           SELECT 1 FROM "quotations"
           WHERE "quotations".id = "billing_line_items".document_id
             AND "quotations".client_id = app_current_client_id()
@@ -196,7 +196,7 @@ CREATE POLICY billing_line_items_tenant_isolation ON "billing_line_items"
           WHERE "invoices".id = "billing_line_items".document_id
             AND "invoices".client_id = app_current_client_id()
         ))
-        OR (document_type = 'quotation' AND EXISTS (
+        OR (document_type = 'quote' AND EXISTS (
           SELECT 1 FROM "quotations"
           WHERE "quotations".id = "billing_line_items".document_id
             AND "quotations".client_id = app_current_client_id()

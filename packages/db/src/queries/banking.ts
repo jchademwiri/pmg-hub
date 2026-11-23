@@ -79,7 +79,7 @@ export async function getBankingOverview(asOfDate?: string): Promise<BankingOver
           ...(asOfDate ? [sql`${journalEntries.entryDate} <= ${asOfDate}`] : []),
         ),
       )
-      .orderBy(desc(journalEntries.entryDate), desc(journalEntries.entryNumber))
+      .orderBy(desc(journalEntries.entryDate), desc(journalEntries.createdAt))
       .limit(15),
     db
       .select()

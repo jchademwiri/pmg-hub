@@ -428,6 +428,13 @@
       "when": 1795439500820,
       "tag": "0060_add_budgets_and_projections",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1795441679989,
+      "tag": "0061_add_dividends_and_governance",
+      "breakpoints": true
     }
   ]
 }
