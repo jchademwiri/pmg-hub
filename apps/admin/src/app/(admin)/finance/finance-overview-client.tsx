@@ -516,6 +516,13 @@ export function FinanceOverviewClient({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[
             {
+              href: '/finance/banking',
+              label: 'Banking & Recon',
+              description: 'Bank balances, recon & director loan',
+              color: 'bg-indigo-500/10 text-indigo-600',
+              icon: Building2,
+            },
+            {
               href: '/finance/expenses',
               label: 'Expenses',
               description: 'Record and categorize expenses',

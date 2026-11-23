@@ -228,6 +228,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
   );
   const netMarginPct = totals.income > 0 ? (totals.profitPool / totals.income) * 100 : 0;
   const collectionEfficiency = totals.revenue > 0 ? (totals.income / totals.revenue) * 100 : 0;
+  const isFy2027Plus = fyStartPeriod >= '2027-03';
 
   if (rows.length === 0) {
     return (
@@ -283,12 +284,16 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             subtext="Cash net profit"
           />
           <SummaryMetric
-            label="PMG Share"
+            label={isFy2027Plus ? 'Reserve / Tax Alloc.' : 'PMG Share'}
             value={formatZAR(totals.pmgShare)}
             icon={TrendingUp}
             tone="share"
-            hint="PMG cross-divisional growth & investment reserve."
-            subtext="25% reserve pool"
+            hint={
+              isFy2027Plus
+                ? 'FY2027/28+ retained reserve allocation (legacy PMG Share sunset to 0%).'
+                : 'PMG cross-divisional growth & investment reserve.'
+            }
+            subtext={isFy2027Plus ? 'FY2027/28 governance' : '25% reserve pool'}
           />
           <SummaryMetric
             badge={`${netMarginPct.toFixed(0)}%`}
@@ -324,7 +329,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                       Expenses
                     </TableHead>
                     <TableHead className="text-right font-semibold text-foreground py-4">
-                      PMG Share
+                      {isFy2027Plus ? 'Reserve / Tax' : 'PMG Share'}
                     </TableHead>
                     <TableHead className="text-right font-semibold text-foreground py-4">
                       Profit/Loss

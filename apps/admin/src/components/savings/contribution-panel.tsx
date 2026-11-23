@@ -39,10 +39,12 @@ export function ContributionPanel({
   goalId,
   contributions,
   today,
+  readOnly = false,
 }: {
   goalId: string;
   contributions: Contribution[];
   today: string;
+  readOnly?: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
@@ -120,64 +122,66 @@ export function ContributionPanel({
         <CardTitle className="text-base">Savings history</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
-        <form onSubmit={handleAdd} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-          <div className="sm:col-span-3">
-            <Field>
-              <FieldLabel htmlFor="c-amount">Amount</FieldLabel>
-              <Input
-                id="c-amount"
-                type="number"
-                step="0.01"
-                min="0"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="500.00"
-              />
-            </Field>
-          </div>
-          <div className="sm:col-span-3">
-            <Field>
-              <FieldLabel htmlFor="c-date">Date</FieldLabel>
-              <Input
-                id="c-date"
-                type="date"
-                value={date}
-                max={today}
-                onChange={(e) => setDate(e.target.value)}
-              />
-            </Field>
-          </div>
-          <div className="sm:col-span-2">
-            <Field>
-              <FieldLabel htmlFor="c-type">Type</FieldLabel>
-              <Select value={type} onValueChange={(v) => setType(v as 'deposit' | 'withdrawal')}>
-                <SelectTrigger id="c-type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="deposit">Deposit</SelectItem>
-                  <SelectItem value="withdrawal">Withdrawal</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-          </div>
-          <div className="sm:col-span-2">
-            <Field>
-              <FieldLabel htmlFor="c-notes">Note</FieldLabel>
-              <Input
-                id="c-notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Optional"
-              />
-            </Field>
-          </div>
-          <div className="sm:col-span-2">
-            <Button type="submit" disabled={isPending} className="w-full">
-              <Plus className="size-4" /> Add
-            </Button>
-          </div>
-        </form>
+        {!readOnly && (
+          <form onSubmit={handleAdd} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            <div className="sm:col-span-3">
+              <Field>
+                <FieldLabel htmlFor="c-amount">Amount</FieldLabel>
+                <Input
+                  id="c-amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="500.00"
+                />
+              </Field>
+            </div>
+            <div className="sm:col-span-3">
+              <Field>
+                <FieldLabel htmlFor="c-date">Date</FieldLabel>
+                <Input
+                  id="c-date"
+                  type="date"
+                  value={date}
+                  max={today}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </Field>
+            </div>
+            <div className="sm:col-span-2">
+              <Field>
+                <FieldLabel htmlFor="c-type">Type</FieldLabel>
+                <Select value={type} onValueChange={(v) => setType(v as 'deposit' | 'withdrawal')}>
+                  <SelectTrigger id="c-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="deposit">Deposit</SelectItem>
+                    <SelectItem value="withdrawal">Withdrawal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
+            <div className="sm:col-span-2">
+              <Field>
+                <FieldLabel htmlFor="c-notes">Note</FieldLabel>
+                <Input
+                  id="c-notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Optional"
+                />
+              </Field>
+            </div>
+            <div className="sm:col-span-2">
+              <Button type="submit" disabled={isPending} className="w-full">
+                <Plus className="size-4" /> Add
+              </Button>
+            </div>
+          </form>
+        )}
 
         {rows.length === 0 ? (
           <p className="text-sm text-muted-foreground border rounded-md p-8 text-center">
