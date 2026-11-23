@@ -1949,11 +1949,15 @@ export async function getAnnualFinancialStatements(
   const currentClosingRetained =
     currentOpeningRetained + currentNetProfit - currentDividendsDeclared;
 
-  // Income Tax Expense (5160)
+  // Income Tax Expense (5160) & Interest / Investment Revenues (4030)
   const currentIncomeTax = pnl.expenses.find((e) => e.accountCode === '5160')?.amount ?? 0;
   const priorIncomeTax = priorPnl.expenses.find((e) => e.accountCode === '5160')?.amount ?? 0;
   const currentProfitBeforeTax = pnl.netProfit + currentIncomeTax;
   const priorProfitBeforeTax = priorPnl.netProfit + priorIncomeTax;
+  const currentInterestIncome = pnl.revenue.find((r) => r.accountCode === '4030')?.amount ?? 0;
+  const priorInterestIncome = priorPnl.revenue.find((r) => r.accountCode === '4030')?.amount ?? 0;
+  const currentOperatingProfit = currentProfitBeforeTax - currentInterestIncome;
+  const priorOperatingProfit = priorProfitBeforeTax - priorInterestIncome;
 
   // Notes data
   const revenueNotes: AfsNoteRow[] = divisionBreakdown.map((div) => ({
@@ -2013,7 +2017,7 @@ export async function getAnnualFinancialStatements(
         'The directors are not aware of any material matter or circumstance arising since the end of the financial year that would significantly impact these financial statements.',
       businessActivities: {
         revenue: { current: pnl.totalRevenue, prior: priorPnl.totalRevenue },
-        operatingProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
+        operatingProfit: { current: currentOperatingProfit, prior: priorOperatingProfit },
         netProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
         totalAssets: { current: balanceSheet.totalAssets, prior: priorBalanceSheet.totalAssets },
         totalLiabilities: {
@@ -2069,10 +2073,10 @@ export async function getAnnualFinancialStatements(
       },
       expenses: pnl.expenses,
       totalExpenses: { current: pnl.totalExpenses, prior: priorPnl.totalExpenses },
-      operatingProfit: { current: currentProfitBeforeTax, prior: priorProfitBeforeTax },
+      operatingProfit: { current: currentOperatingProfit, prior: priorOperatingProfit },
       investmentRevenues: {
-        current: pnl.revenue.find((r) => r.accountCode === '4030')?.amount ?? 0,
-        prior: priorPnl.revenue.find((r) => r.accountCode === '4030')?.amount ?? 0,
+        current: currentInterestIncome,
+        prior: priorInterestIncome,
       },
       financeCosts: { current: 0, prior: 0 },
       profitBeforeTax: { current: currentProfitBeforeTax, prior: priorProfitBeforeTax },
@@ -2101,7 +2105,7 @@ export async function getAnnualFinancialStatements(
       divisionBreakdown,
       expenses: pnl.expenses,
       totalExpenses: { current: pnl.totalExpenses, prior: priorPnl.totalExpenses },
-      operatingProfit: { current: currentProfitBeforeTax, prior: priorProfitBeforeTax },
+      operatingProfit: { current: currentOperatingProfit, prior: priorOperatingProfit },
       financeCosts: { current: 0, prior: 0 },
       profitBeforeTax: { current: currentProfitBeforeTax, prior: priorProfitBeforeTax },
       incomeTaxExpense: { current: currentIncomeTax, prior: priorIncomeTax },

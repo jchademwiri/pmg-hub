@@ -105,11 +105,27 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
         toast.error(res.error);
         return;
       }
-      toast.success(isEdit ? 'Goal updated.' : 'Goal created.');
+      toast.success(isEdit ? 'Planned item updated.' : 'Planned item added.');
+      if (!isEdit) {
+        setName('');
+        setDescription('');
+        setActualPrice('');
+        setTargetAmount('');
+        setVendor('');
+        setProductUrl('');
+        setSpendTrackerKey('none');
+        setTargetDate('');
+        setNotes('');
+        setTargetTouched(false);
+        setPrevSuggested(-1);
+      }
       setOpen(false);
       router.refresh();
     });
   }
+
+  const effectiveCost = parseFloat(actualPrice) || parseFloat(targetAmount) || 0;
+  const isCapitalisedPpe = effectiveCost >= 7000;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -120,20 +136,21 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
           </Button>
         ) : (
           <Button size="sm">
-            <Plus className="size-4" /> New goal
+            <Plus className="size-4" /> Add Planned Item
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{isEdit ? 'Edit goal' : 'New savings goal'}</DialogTitle>
+            <DialogTitle>{isEdit ? 'Edit planned item' : 'Add planned business item'}</DialogTitle>
             <DialogDescription>
-              Something the business wants to buy. Save toward it bit by bit.
+              Track equipment or assets you intend to buy for the business, then convert them to the
+              Assets Register once purchased.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 max-h-[68vh] overflow-y-auto pr-1">
             <Field>
               <FieldLabel htmlFor="goal-name">What are you buying?</FieldLabel>
               <Input
@@ -186,6 +203,13 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
             {suggested > 0 && !targetTouched && (
               <p className="-mt-2 text-xs text-muted-foreground">
                 Rounded up to the nearest R500 — {formatZAR(suggested)}. Edit to override.
+              </p>
+            )}
+            {effectiveCost > 0 && (
+              <p className="-mt-1 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                {isCapitalisedPpe
+                  ? 'SARS Treatment (≥ R7,000): Capitalised Fixed Asset (GL 1500 PPE) when purchased.'
+                  : 'SARS Treatment (< R7,000): Small Asset — 100% immediate tax write-off (GL 5030) when purchased.'}
               </p>
             )}
 

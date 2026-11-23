@@ -41,6 +41,10 @@ export function MarkPurchasedDialog({ goalId, goalName, suggestedCost }: Props) 
   const [category, setCategory] = React.useState('Equipment');
   const [serialNumber, setSerialNumber] = React.useState('');
   const [location, setLocation] = React.useState('');
+  const [postToAccounting, setPostToAccounting] = React.useState(true);
+
+  const parsedCost = parseFloat(cost) || 0;
+  const isSmallAsset = parsedCost > 0 && parsedCost < 7000;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,6 +68,7 @@ export function MarkPurchasedDialog({ goalId, goalName, suggestedCost }: Props) 
     fd.set('category', category.trim());
     fd.set('serialNumber', serialNumber.trim());
     fd.set('location', location.trim());
+    fd.set('postToAccounting', String(postToAccounting));
 
     startTransition(async () => {
       const res = await convertGoalToAsset(goalId, fd);
@@ -71,7 +76,11 @@ export function MarkPurchasedDialog({ goalId, goalName, suggestedCost }: Props) 
         toast.error(res.error);
         return;
       }
-      toast.success(`${goalName} added to the asset register.`);
+      if (res.warning) {
+        toast.warning(res.warning);
+      } else {
+        toast.success(`${goalName} added to the asset register.`);
+      }
       setOpen(false);
       router.push('/assets');
       router.refresh();
@@ -149,6 +158,25 @@ export function MarkPurchasedDialog({ goalId, goalName, suggestedCost }: Props) 
                   placeholder="Optional"
                 />
               </Field>
+            </div>
+
+            <div className="rounded-lg border bg-muted/30 p-3 flex flex-col gap-1.5">
+              <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={postToAccounting}
+                  onChange={(e) => setPostToAccounting(e.target.checked)}
+                  className="size-4 rounded border-input accent-primary"
+                />
+                Post purchase to Accounting (General Ledger)
+              </label>
+              {postToAccounting && parsedCost > 0 && (
+                <p className="text-xs text-muted-foreground pl-6">
+                  {isSmallAsset
+                    ? 'SARS Small Asset (< R7,000): Dr 5030 Office & Small Equipment / Cr 1010 Business Cheque'
+                    : 'Capitalised PPE (≥ R7,000): Dr 1500 Property, Plant & Equipment / Cr 1010 Business Cheque'}
+                </p>
+              )}
             </div>
           </div>
 

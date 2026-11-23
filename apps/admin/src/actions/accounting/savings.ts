@@ -12,6 +12,7 @@ import {
   getSavingsGoalById,
 } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
+import { postAssetPurchaseJournalEntry } from '@/lib/accounting/posting';
 
 const GoalSchema = z.object({
   name: z.string().min(1).max(200),
@@ -200,7 +201,7 @@ export async function deleteContribution(id: string, goalId: string): Promise<{ 
 export async function convertGoalToAsset(
   id: string,
   formData: FormData,
-): Promise<{ error?: string; assetId?: string }> {
+): Promise<{ error?: string; warning?: string; assetId?: string }> {
   await getSessionOrRedirect();
   try {
     const schema = z.object({
@@ -209,6 +210,10 @@ export async function convertGoalToAsset(
       category: z.string().min(1),
       serialNumber: z.string().optional(),
       location: z.string().optional(),
+      postToAccounting: z
+        .string()
+        .optional()
+        .transform((v) => v !== 'false'),
     });
     const parsed = schema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) {
@@ -248,9 +253,29 @@ export async function convertGoalToAsset(
       return asset!.id;
     });
 
+    let warning: string | undefined;
+    if (d.postToAccounting && d.cost > 0) {
+      const journalResult = await postAssetPurchaseJournalEntry({
+        assetId,
+        name: goal.name,
+        cost: d.cost,
+        date: d.acquisitionDate,
+      });
+      if (journalResult.error) {
+        console.warn('Converted asset purchase auto-post warning:', journalResult.error);
+        warning = `Asset registered, but GL journal was not posted: ${journalResult.error}`;
+      }
+    }
+
     revalidate(id);
     revalidatePath('/assets');
-    return { assetId };
+    revalidatePath('/finance');
+    revalidatePath('/accounting');
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
+    revalidatePath('/accounting/profit-and-loss');
+    return { assetId, ...(warning ? { warning } : {}) };
   } catch {
     return { error: 'Failed to save. Please try again.' };
   }

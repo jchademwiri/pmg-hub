@@ -142,6 +142,7 @@ export const GROUPS: NavGroup[] = [
     label: 'Accounting',
     icon: Calculator,
     items: [
+      { title: 'Overview', url: '/accounting', icon: LayoutGrid },
       { title: 'Profit & Loss', url: '/accounting/profit-and-loss', icon: LineChart },
       { title: 'Trial Balance', url: '/accounting/trial-balance', icon: Scale },
       { title: 'General Ledger', url: '/accounting/general-ledger', icon: BookMarked },
