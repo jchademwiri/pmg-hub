@@ -1,5 +1,5 @@
 import { db } from '../client';
-import { expenses, divisions, clients, expenseCategories } from '../schema/index';
+import { expenses, divisions, clients, expenseCategories, chartAccounts } from '../schema/index';
 import { ExpenseCategory } from '../schema/expense-categories';
 import { sql, eq, desc, asc, and } from 'drizzle-orm';
 
@@ -175,14 +175,30 @@ export async function ensureCoreExpenseCategories(): Promise<void> {
   }
 }
 
+export type ExpenseCategoryWithAccount = {
+  id: string;
+  name: string;
+  chartAccountId: string | null;
+  chartAccountCode: string | null;
+  chartAccountName: string | null;
+};
+
 /**
- * Returns all expense categories ordered by name ascending.
+ * Returns all expense categories ordered by name ascending,
+ * with their optional mapped GL chart account.
  */
-export async function getAllExpenseCategories(): Promise<{ id: string; name: string }[]> {
+export async function getAllExpenseCategories(): Promise<ExpenseCategoryWithAccount[]> {
   await ensureCoreExpenseCategories();
   return db
-    .select({ id: expenseCategories.id, name: expenseCategories.name })
+    .select({
+      id: expenseCategories.id,
+      name: expenseCategories.name,
+      chartAccountId: expenseCategories.chartAccountId,
+      chartAccountCode: chartAccounts.code,
+      chartAccountName: chartAccounts.name,
+    })
     .from(expenseCategories)
+    .leftJoin(chartAccounts, eq(expenseCategories.chartAccountId, chartAccounts.id))
     .orderBy(asc(expenseCategories.name));
 }
 

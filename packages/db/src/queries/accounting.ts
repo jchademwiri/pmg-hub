@@ -1773,6 +1773,48 @@ export async function getUnpostedPaymentsReconciliation(): Promise<
   }));
 }
 
+export type UnpostedExpenseReconciliationRow = {
+  id: string;
+  date: string;
+  category: string;
+  description: string | null;
+  amount: number;
+  divisionId: string;
+};
+
+/**
+ * Sweeps for recorded expenses (`expenses`) that have no posted journal entry
+ * in the general ledger, preventing silent Expense/Cash drift.
+ */
+export async function getUnpostedExpensesReconciliation(): Promise<
+  UnpostedExpenseReconciliationRow[]
+> {
+  const result = await db.execute(sql`
+    SELECT
+      e.id,
+      e.date::text AS date,
+      e.category,
+      e.description,
+      CAST(e.amount AS NUMERIC) AS amount,
+      e.division_id AS "divisionId"
+    FROM expenses e
+    WHERE NOT EXISTS (
+      SELECT 1 FROM journal_entries je
+      WHERE je.source_table = 'expenses' AND je.source_id = e.id AND je.status = 'posted'
+    )
+    ORDER BY e.date ASC
+  `);
+
+  return (result.rows as any[]).map((r) => ({
+    id: String(r.id),
+    date: String(r.date),
+    category: String(r.category),
+    description: r.description ? String(r.description) : null,
+    amount: Number(r.amount),
+    divisionId: String(r.divisionId),
+  }));
+}
+
 // ── Annual Financial Statements (AFS) ─────────────────────────────────────────
 
 export type AfsNoteRow = {

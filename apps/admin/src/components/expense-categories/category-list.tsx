@@ -28,17 +28,42 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 
-interface CategoryListProps {
-  initialCategories: { id: string; name: string }[];
+export interface CategoryListItem {
+  id: string;
+  name: string;
+  chartAccountId?: string | null;
+  chartAccountCode?: string | null;
+  chartAccountName?: string | null;
 }
 
-export function CategoryList({ initialCategories }: CategoryListProps) {
+export interface ExpenseAccountOption {
+  id: string;
+  code: string;
+  name: string;
+}
+
+interface CategoryListProps {
+  initialCategories: CategoryListItem[];
+  expenseAccounts?: ExpenseAccountOption[];
+}
+
+export function CategoryList({ initialCategories, expenseAccounts = [] }: CategoryListProps) {
   const [categories, setCategories] = React.useState(initialCategories);
   const [isAdding, setIsAdding] = React.useState(false);
   const [newName, setNewName] = React.useState('');
+  const [newChartAccountId, setNewChartAccountId] = React.useState<string>('auto');
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [editName, setEditName] = React.useState('');
+  const [editChartAccountId, setEditChartAccountId] = React.useState<string>('auto');
   const [isSaving, startTransition] = React.useTransition();
 
   React.useEffect(() => {
@@ -50,40 +75,57 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
     startTransition(async () => {
       const fd = new FormData();
       fd.set('name', newName.trim());
+      fd.set('chartAccountId', newChartAccountId === 'auto' ? '' : newChartAccountId);
       const res = await createExpenseCategory(fd);
       if (res.error) toast.error(res.error);
       else {
         toast.success('Category created');
         setNewName('');
+        setNewChartAccountId('auto');
         setIsAdding(false);
       }
     });
   };
 
-  const handleUpdate = (id: string, oldName: string) => {
+  const handleUpdate = (c: CategoryListItem) => {
     if (!editName.trim()) return;
-    if (oldName === editName.trim()) {
+    const nextChartAccountId = editChartAccountId === 'auto' ? null : editChartAccountId;
+    const nameChanged = c.name !== editName.trim();
+    const accountChanged = (c.chartAccountId ?? null) !== nextChartAccountId;
+
+    if (!nameChanged && !accountChanged) {
       setEditingId(null);
       return;
     }
-    confirm({
-      title: 'Modify Category Name?',
-      description:
-        'Renaming this category will update all historical expenses linked to it. Future auto-postings might also use a different general ledger account if the category keywords are affected.',
-      confirmText: 'Rename',
-      variant: 'destructive',
-    }).then((confirmed) => {
-      if (!confirmed) return;
+
+    const executeUpdate = () => {
       startTransition(async () => {
         const fd = new FormData();
         fd.set('name', editName.trim());
-        const res = await updateExpenseCategory(id, fd);
+        fd.set('chartAccountId', nextChartAccountId ?? '');
+        const res = await updateExpenseCategory(c.id, fd);
         if (res.error) toast.error(res.error);
         else {
           toast.success('Category updated');
           setEditingId(null);
         }
       });
+    };
+
+    if (!nameChanged) {
+      executeUpdate();
+      return;
+    }
+
+    confirm({
+      title: 'Modify Category Name?',
+      description:
+        'Renaming this category will update all historical expenses linked to it. Future auto-postings will use the selected General Ledger account.',
+      confirmText: 'Rename',
+      variant: 'destructive',
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      executeUpdate();
     });
   };
 
@@ -142,6 +184,31 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
                   />
                 </div>
 
+                {expenseAccounts.length > 0 && (
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                      GL Expense Account (5xxx)
+                    </label>
+                    <Select
+                      value={newChartAccountId}
+                      onValueChange={setNewChartAccountId}
+                      disabled={isSaving}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Auto-match by category name" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto">Auto-match by keyword</SelectItem>
+                        {expenseAccounts.map((acc) => (
+                          <SelectItem key={acc.id} value={acc.id}>
+                            {acc.code} · {acc.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <DialogFooter className="mt-2">
                   <Button variant="outline" onClick={() => setIsAdding(false)} disabled={isSaving}>
                     Cancel
@@ -160,13 +227,14 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
         <TableHeader>
           <TableRow>
             <TableHead>Category Name</TableHead>
+            <TableHead>GL Account</TableHead>
             <TableHead className="w-[150px] text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {categories.length === 0 && !isAdding ? (
             <TableRow>
-              <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
                 No categories found. Add one to get started.
               </TableCell>
             </TableRow>
@@ -179,11 +247,38 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
                       autoFocus
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleUpdate(c.id, c.name)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleUpdate(c)}
                       disabled={isSaving}
                     />
                   ) : (
                     c.name
+                  )}
+                </TableCell>
+                <TableCell>
+                  {editingId === c.id ? (
+                    <Select
+                      value={editChartAccountId}
+                      onValueChange={setEditChartAccountId}
+                      disabled={isSaving}
+                    >
+                      <SelectTrigger className="w-[260px]">
+                        <SelectValue placeholder="Auto-match by keyword" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto">Auto-match by keyword</SelectItem>
+                        {expenseAccounts.map((acc) => (
+                          <SelectItem key={acc.id} value={acc.id}>
+                            {acc.code} · {acc.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : c.chartAccountCode ? (
+                    <Badge variant="secondary" className="font-mono text-xs font-normal">
+                      {c.chartAccountCode} · {c.chartAccountName}
+                    </Badge>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Auto-match</span>
                   )}
                 </TableCell>
                 <TableCell className="text-right">
@@ -191,7 +286,7 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
                     <div className="flex justify-end gap-2">
                       <Button
                         size="sm"
-                        onClick={() => handleUpdate(c.id, c.name)}
+                        onClick={() => handleUpdate(c)}
                         disabled={!editName.trim() || isSaving}
                       >
                         <Check className="h-4 w-4" />
@@ -213,6 +308,7 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
                         onClick={() => {
                           setEditingId(c.id);
                           setEditName(c.name);
+                          setEditChartAccountId(c.chartAccountId ?? 'auto');
                         }}
                         disabled={isSaving}
                       >

@@ -33,6 +33,7 @@ import { randomUUID } from 'crypto';
 import {
   getDb,
   chartAccounts,
+  expenseCategories,
   journalEntries,
   journalLines,
   expenses,
@@ -48,6 +49,8 @@ import {
   ACCOUNT_RATES,
   getNextJournalEntryNumber,
   ensureOpenPeriod,
+  getCurrentOpenPeriod,
+  getUnpostedExpensesReconciliation,
   reopenPeriod,
   getTrialBalance,
   upsertBankReconciliation,
@@ -95,7 +98,7 @@ const EXPENSE_ACCOUNT_MAP: { keywords: string[]; code: string }[] = [
   { keywords: ['reinvest', 'growth', 'development'], code: '5130' },
 ];
 
-function findExpenseAccountCode(category: string): string {
+export function findExpenseAccountCode(category: string): string {
   const lower = category.toLowerCase();
   for (const mapping of EXPENSE_ACCOUNT_MAP) {
     if (mapping.keywords.some((kw) => lower.includes(kw))) {
@@ -103,6 +106,34 @@ function findExpenseAccountCode(category: string): string {
     }
   }
   return MISC_EXPENSE_CODE;
+}
+
+/**
+ * Resolves the expense GL chart account for a given category name:
+ * 1. Checks `expense_categories.chart_account_id` first (explicit mapping).
+ * 2. Falls back to keyword-based `findExpenseAccountCode(category)` when unmapped.
+ */
+async function resolveExpenseChartAccount(
+  category: string,
+  db: any,
+): Promise<{ account: ChartAccount | undefined; resolvedCode: string }> {
+  const mappedRows = await db
+    .select({
+      account: chartAccounts,
+    })
+    .from(expenseCategories)
+    .innerJoin(chartAccounts, eq(expenseCategories.chartAccountId, chartAccounts.id))
+    .where(eq(expenseCategories.name, category))
+    .limit(1);
+
+  const explicitAccount = mappedRows[0]?.account as ChartAccount | undefined;
+  if (explicitAccount && explicitAccount.isActive) {
+    return { account: explicitAccount, resolvedCode: explicitAccount.code };
+  }
+
+  const fallbackCode = findExpenseAccountCode(category);
+  const fallbackMap = await getAccountsByCode([fallbackCode], db);
+  return { account: fallbackMap.get(fallbackCode), resolvedCode: fallbackCode };
 }
 
 // ── Look up accounts by code ───────────────────────────────────────────────
@@ -931,11 +962,12 @@ export async function postExpenseJournalEntry(data: {
     if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
     const db = data.tx || getDb();
-    const expenseCode = findExpenseAccountCode(category);
-    const accountMap = await getAccountsByCode([BANK_ACCOUNT_CODE, expenseCode], db);
+    const [bankMap, { account: expenseAccount, resolvedCode: expenseCode }] = await Promise.all([
+      getAccountsByCode([BANK_ACCOUNT_CODE], db),
+      resolveExpenseChartAccount(category, db),
+    ]);
 
-    const bankAccount = accountMap.get(BANK_ACCOUNT_CODE);
-    const expenseAccount = accountMap.get(expenseCode);
+    const bankAccount = bankMap.get(BANK_ACCOUNT_CODE);
 
     if (!bankAccount || !expenseAccount) {
       return {
@@ -1075,6 +1107,124 @@ export async function updateExpenseJournalEntry(data: {
   });
 
   return { error: result.error };
+}
+
+// ── Catch-Up Posting for Historical Unposted Expenses ────────────────────────
+
+/**
+ * Posts balanced adjusting journal entries in the current open accounting period
+ * for any historical expenses that have no posted journal entry (e.g. expenses
+ * trapped in closed/locked prior periods).
+ *
+ * Each unposted expense receives a 1-to-1 linked JE (`sourceTable: 'expenses'`,
+ * `sourceId: exp.id`) inside a single atomic transaction so re-running is
+ * idempotent and `getUnpostedExpensesReconciliation()` drops to 0.
+ */
+export async function postUnpostedExpensesCatchUp(createdBy = 'system'): Promise<{
+  error?: string;
+  postedCount?: number;
+  totalAmount?: number;
+  period?: string;
+}> {
+  try {
+    const unposted = await getUnpostedExpensesReconciliation();
+    if (unposted.length === 0) {
+      return { postedCount: 0, totalAmount: 0 };
+    }
+
+    const openPeriod = await getCurrentOpenPeriod();
+    if (!openPeriod || openPeriod.status !== 'open') {
+      return {
+        error: 'No open accounting period found. Open a period before posting catch-up entries.',
+      };
+    }
+
+    const targetPeriod = openPeriod.period;
+    const catchUpDate = `${targetPeriod}-01`;
+    const db = getDb();
+
+    const bankMap = await getAccountsByCode([BANK_ACCOUNT_CODE], db);
+    const bankAccount = bankMap.get(BANK_ACCOUNT_CODE);
+    if (!bankAccount) {
+      return { error: `Required bank chart account (${BANK_ACCOUNT_CODE}) not found.` };
+    }
+
+    let postedCount = 0;
+    let totalAmount = 0;
+    const now = new Date();
+
+    await db.transaction(async (tx) => {
+      for (const exp of unposted) {
+        if (!Number.isFinite(exp.amount) || exp.amount <= 0) continue;
+
+        const { account: expenseAccount, resolvedCode } = await resolveExpenseChartAccount(
+          exp.category,
+          tx,
+        );
+        if (!expenseAccount) {
+          throw new Error(
+            `Required chart account (${resolvedCode}) not found for category "${exp.category}".`,
+          );
+        }
+
+        const entryId = randomUUID();
+        const entryNumber = await getNextJournalEntryNumber(tx, catchUpDate);
+        const amountStr = exp.amount.toFixed(2);
+        const baseDesc = exp.description?.trim() || exp.category;
+        const desc = `[Catch-Up from ${exp.date}] ${baseDesc}`;
+
+        await tx.insert(journalEntries).values({
+          id: entryId,
+          entryNumber,
+          entryDate: catchUpDate,
+          period: targetPeriod,
+          divisionId: exp.divisionId,
+          description: desc,
+          status: 'posted',
+          sourceModule: 'expense',
+          sourceTable: 'expenses',
+          sourceId: exp.id,
+          sourceDocumentNumber: entryNumber,
+          postedAt: now,
+          postedBy: createdBy,
+          createdBy,
+        });
+
+        await tx.insert(journalLines).values([
+          {
+            id: randomUUID(),
+            journalEntryId: entryId,
+            accountId: expenseAccount.id,
+            debit: amountStr,
+            credit: null,
+            description: desc,
+          },
+          {
+            id: randomUUID(),
+            journalEntryId: entryId,
+            accountId: bankAccount.id,
+            debit: null,
+            credit: amountStr,
+            description: desc,
+          },
+        ]);
+
+        postedCount += 1;
+        totalAmount += exp.amount;
+      }
+    });
+
+    return {
+      postedCount,
+      totalAmount: Math.round(totalAmount * 100) / 100,
+      period: targetPeriod,
+    };
+  } catch (err) {
+    console.error('Failed to post unposted expenses catch-up:', err);
+    return {
+      error: `Catch-up posting failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
 }
 
 // ── Void Write-Off Journal Entries ──────────────────────────────────────────
@@ -1347,7 +1497,7 @@ async function postSimpleTwoLineJournal(data: {
         divisionId: resolvedDivisionId,
         description: data.description,
         status: 'posted',
-        sourceModule: data.expenseMirror ? 'expenses' : data.sourceModule,
+        sourceModule: data.expenseMirror ? 'expense' : data.sourceModule,
         sourceTable: expenseId ? 'expenses' : null,
         sourceId: expenseId ?? null,
         sourceDocumentNumber: entryNumber,

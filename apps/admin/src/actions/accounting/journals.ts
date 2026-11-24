@@ -564,3 +564,28 @@ export async function recordCashTransfer(data: {
     return { error: 'Failed to record cash transfer.' };
   }
 }
+
+export async function postUnpostedExpensesCatchUpAction(): Promise<{
+  error?: string;
+  postedCount?: number;
+  totalAmount?: number;
+  period?: string;
+}> {
+  try {
+    const session = await getSessionOrRedirect();
+    const { postUnpostedExpensesCatchUp } = await import('@/lib/accounting/posting');
+    const result = await postUnpostedExpensesCatchUp(session.user.id);
+    if (result.error) return result;
+
+    revalidatePath('/accounting');
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
+    revalidatePath('/accounting/profit-and-loss');
+    revalidatePath('/finance/expenses');
+    return result;
+  } catch (err) {
+    console.error('Failed to run unposted expenses catch-up:', err);
+    return { error: 'Failed to post catch-up journal entries.' };
+  }
+}

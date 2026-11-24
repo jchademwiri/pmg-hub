@@ -7,6 +7,12 @@ import { getSessionOrRedirect } from '@/lib/auth';
 
 const ExpenseCategorySchema = z.object({
   name: z.string().min(1).max(100),
+  chartAccountId: z
+    .string()
+    .uuid()
+    .optional()
+    .nullable()
+    .or(z.literal('').transform(() => null)),
 });
 
 export async function createExpenseCategory(formData: FormData): Promise<{ error?: string }> {
@@ -17,7 +23,10 @@ export async function createExpenseCategory(formData: FormData): Promise<{ error
     if (!result.success) {
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
-    await db.insert(expenseCategories).values({ name: result.data.name });
+    await db.insert(expenseCategories).values({
+      name: result.data.name,
+      chartAccountId: result.data.chartAccountId ?? null,
+    });
     revalidatePath('/finance/categories');
     revalidatePath('/finance/expenses');
     return {};
@@ -38,13 +47,21 @@ export async function updateExpenseCategory(
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
     const newName = result.data.name;
+    const chartAccountId =
+      raw.chartAccountId !== undefined ? (result.data.chartAccountId ?? null) : undefined;
 
     const rows = await db.select().from(expenseCategories).where(eq(expenseCategories.id, id));
     if (rows.length === 0) return { error: 'Category not found.' };
     const oldName = rows[0]!.name;
 
     await db.transaction(async (tx) => {
-      await tx.update(expenseCategories).set({ name: newName }).where(eq(expenseCategories.id, id));
+      await tx
+        .update(expenseCategories)
+        .set({
+          name: newName,
+          ...(chartAccountId !== undefined ? { chartAccountId } : {}),
+        })
+        .where(eq(expenseCategories.id, id));
 
       if (oldName !== newName) {
         await tx.update(expenses).set({ category: newName }).where(eq(expenses.category, oldName));
