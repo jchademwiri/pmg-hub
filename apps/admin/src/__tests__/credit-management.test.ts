@@ -132,6 +132,20 @@ vi.mock('@/lib/date-rules', () => ({
   getMinDateErrorMessage: (...args: any[]) => mockGetMinDateErrorMessage(...args),
 }));
 
+const mockPostCreditNoteIssue = vi.fn().mockResolvedValue({ entryId: 'je-cn-1' });
+const mockPostCreditApplication = vi.fn().mockResolvedValue({ entryId: 'je-app-1' });
+const mockPostCreditRefund = vi.fn().mockResolvedValue({ entryId: 'je-ref-1' });
+const mockVoidCreditNoteJEs = vi.fn().mockResolvedValue({ voidedCount: 1 });
+const mockVoidCreditAppJEs = vi.fn().mockResolvedValue({ voidedCount: 1 });
+
+vi.mock('@/lib/accounting/posting', () => ({
+  postCreditNoteIssueJournalEntry: (...args: any[]) => mockPostCreditNoteIssue(...args),
+  postCreditApplicationJournalEntry: (...args: any[]) => mockPostCreditApplication(...args),
+  postCreditRefundJournalEntry: (...args: any[]) => mockPostCreditRefund(...args),
+  voidCreditNoteJournalEntries: (...args: any[]) => mockVoidCreditNoteJEs(...args),
+  voidCreditApplicationJournalEntries: (...args: any[]) => mockVoidCreditAppJEs(...args),
+}));
+
 // ─── Import Code Under Test ──────────────────────────────────────────────────
 import {
   getClientCreditSummary,
@@ -151,6 +165,11 @@ describe('Credit Management Server Actions', () => {
     mockIsPeriodClosed.mockResolvedValue(false);
     mockGetMinAllowedDate.mockResolvedValue('2026-01-01');
     mockGetMinDateErrorMessage.mockReturnValue('Period is closed.');
+    mockPostCreditNoteIssue.mockResolvedValue({ entryId: 'je-cn-1' });
+    mockPostCreditApplication.mockResolvedValue({ entryId: 'je-app-1' });
+    mockPostCreditRefund.mockResolvedValue({ entryId: 'je-ref-1' });
+    mockVoidCreditNoteJEs.mockResolvedValue({ voidedCount: 1 });
+    mockVoidCreditAppJEs.mockResolvedValue({ voidedCount: 1 });
 
     // Chainable db mocks
     mockDbInsert.mockReturnValue({
@@ -243,6 +262,14 @@ describe('Credit Management Server Actions', () => {
       });
 
       expect(res).toEqual({ creditNoteId: 'new-id' });
+      expect(mockPostCreditNoteIssue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          creditNoteId: 'new-id',
+          type: 'credit_note',
+          amount: 250,
+          divisionId: 'div-1',
+        }),
+      );
     });
 
     it('returns error if amount is zero or negative', async () => {
@@ -316,6 +343,12 @@ describe('Credit Management Server Actions', () => {
       expect(res).toEqual({ success: true, applied: 200 });
       // Exactly one insert: the creditApplications row. No income insert.
       expect(mockDbInsert).toHaveBeenCalledTimes(1);
+      expect(mockPostCreditApplication).toHaveBeenCalledWith(
+        expect.objectContaining({
+          creditApplicationId: 'new-id',
+          amount: 200,
+        }),
+      );
     });
   });
 
@@ -456,6 +489,13 @@ describe('Credit Management Server Actions', () => {
       expect(res).toEqual({ refundId: 'new-id' });
       expect(mockDbInsert).toHaveBeenCalled();
       expect(mockDbUpdate).toHaveBeenCalled();
+      expect(mockPostCreditRefund).toHaveBeenCalledWith(
+        expect.objectContaining({
+          creditRefundId: 'new-id',
+          amount: 200,
+          date: '2026-06-15',
+        }),
+      );
     });
   });
 

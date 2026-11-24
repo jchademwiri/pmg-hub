@@ -21,6 +21,21 @@ import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTToday } from '@/lib/format';
 import { generateCreditNoteNumber, deriveDivisionPrefix } from '@pmg/utils';
+import {
+  postCreditNoteIssueJournalEntry,
+  postCreditApplicationJournalEntry,
+  postCreditRefundJournalEntry,
+  voidCreditNoteJournalEntries,
+  voidCreditApplicationJournalEntries,
+} from '@/lib/accounting/posting';
+
+function revalidateAccountingPaths() {
+  revalidatePath('/accounting');
+  revalidatePath('/accounting/trial-balance');
+  revalidatePath('/accounting/journals');
+  revalidatePath('/accounting/profit-and-loss');
+  revalidatePath('/accounting/balance-sheet');
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -408,12 +423,31 @@ export async function applyCreditToInvoice(
           .where(eq(creditNotes.id, note.id));
 
         // Create credit application record
-        await tx.insert(creditApplications).values({
-          creditNoteId: note.id,
-          invoiceId: invoiceId,
-          amount: String(allocAmount.toFixed(2)),
-          appliedBy: session.user.id,
-        });
+        const [insertedApp] = await tx
+          .insert(creditApplications)
+          .values({
+            creditNoteId: note.id,
+            invoiceId: invoiceId,
+            amount: String(allocAmount.toFixed(2)),
+            appliedBy: session.user.id,
+          })
+          .returning({ id: creditApplications.id });
+
+        if (insertedApp) {
+          const glRes = await postCreditApplicationJournalEntry({
+            creditApplicationId: insertedApp.id,
+            creditNoteDocumentNumber: note.documentNumber,
+            invoiceDocumentNumber: invoiceLocked.documentNumber,
+            amount: allocAmount,
+            date: today,
+            divisionId: invoiceLocked.divisionId,
+            postedBy: session.user.id,
+            tx,
+          });
+          if (glRes.error) {
+            throw new Error(glRes.error);
+          }
+        }
       }
 
       // 5. Recalculate invoice status using combined allocation totals
@@ -468,6 +502,7 @@ export async function applyCreditToInvoice(
     revalidatePath('/billing/payments');
     revalidatePath('/billing/credits');
     revalidatePath('/dashboard');
+    revalidateAccountingPaths();
 
     return { success: true, applied: actualApplied };
   } catch (err) {
@@ -605,12 +640,31 @@ export async function applyCreditToInvoices(
             })
             .where(eq(creditNotes.id, note.id));
 
-          await tx.insert(creditApplications).values({
-            creditNoteId: note.id,
-            invoiceId: alloc.invoiceId,
-            amount: String(allocAmount.toFixed(2)),
-            appliedBy: session.user.id,
-          });
+          const [insertedApp] = await tx
+            .insert(creditApplications)
+            .values({
+              creditNoteId: note.id,
+              invoiceId: alloc.invoiceId,
+              amount: String(allocAmount.toFixed(2)),
+              appliedBy: session.user.id,
+            })
+            .returning({ id: creditApplications.id });
+
+          if (insertedApp) {
+            const glRes = await postCreditApplicationJournalEntry({
+              creditApplicationId: insertedApp.id,
+              creditNoteDocumentNumber: note.documentNumber,
+              invoiceDocumentNumber: invoice.documentNumber,
+              amount: allocAmount,
+              date: today,
+              divisionId: invoice.divisionId,
+              postedBy: session.user.id,
+              tx,
+            });
+            if (glRes.error) {
+              throw new Error(glRes.error);
+            }
+          }
 
           appliedThisInvoice += allocAmount;
         }
@@ -708,6 +762,7 @@ export async function applyCreditToInvoices(
     revalidatePath('/billing/payments');
     revalidatePath('/billing/credits');
     revalidatePath('/dashboard');
+    revalidateAccountingPaths();
 
     return { success: true, totalApplied };
   } catch (err) {
@@ -738,7 +793,8 @@ export async function createCreditNote(data: {
       return { error: 'Credit amount must be greater than zero.' };
     }
 
-    if (await isPeriodClosed(getSASTToday())) {
+    const today = getSASTToday();
+    if (await isPeriodClosed(today)) {
       const minDate = await getMinAllowedDate();
       return { error: getMinDateErrorMessage(minDate) };
     }
@@ -771,30 +827,57 @@ export async function createCreditNote(data: {
 
     const documentNumber = generateCreditNoteNumber(divisionName, year, nextSeq);
 
-    const [inserted] = await db
-      .insert(creditNotes)
-      .values({
-        clientId: data.clientId,
-        divisionId: data.divisionId,
+    const insertAndPost = async (tx: any) => {
+      const [inserted] = await tx
+        .insert(creditNotes)
+        .values({
+          clientId: data.clientId,
+          divisionId: data.divisionId,
+          documentNumber,
+          type: data.type,
+          reason: data.reason,
+          originalInvoiceId: data.originalInvoiceId ?? null,
+          originalPaymentId: data.originalPaymentId ?? null,
+          amount: String(data.amount.toFixed(2)),
+          amountRemaining: String(data.amount.toFixed(2)),
+          expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+          createdBy: session.user.id,
+        })
+        .returning({ id: creditNotes.id });
+
+      if (!inserted) {
+        throw new Error('Failed to create credit note.');
+      }
+
+      const glRes = await postCreditNoteIssueJournalEntry({
+        creditNoteId: inserted.id,
         documentNumber,
         type: data.type,
+        amount: data.amount,
+        date: today,
+        divisionId: data.divisionId,
         reason: data.reason,
-        originalInvoiceId: data.originalInvoiceId ?? null,
-        originalPaymentId: data.originalPaymentId ?? null,
-        amount: String(data.amount.toFixed(2)),
-        amountRemaining: String(data.amount.toFixed(2)),
-        expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
-        createdBy: session.user.id,
-      })
-      .returning({ id: creditNotes.id });
+        postedBy: session.user.id,
+        tx,
+      });
 
-    if (!inserted) return { error: 'Failed to create credit note.' };
+      if (glRes.error) {
+        throw new Error(glRes.error);
+      }
+
+      return inserted.id as string;
+    };
+
+    const creditNoteId = data.tx
+      ? await insertAndPost(data.tx)
+      : await db.transaction(insertAndPost);
 
     revalidatePath('/billing/credits');
     revalidatePath('/billing/payments');
     revalidatePath('/dashboard');
+    revalidateAccountingPaths();
 
-    return { creditNoteId: inserted.id };
+    return { creditNoteId };
   } catch (err) {
     console.error('Failed to create credit note:', err);
     return { error: 'Failed to create credit note. Please try again.' };
@@ -816,7 +899,7 @@ export async function createCreditNote(data: {
 // income via that fallback will not restore that income as available credit.
 export async function reverseCreditApplication(invoiceId: string): Promise<{ error?: string }> {
   try {
-    await getSessionOrRedirect();
+    const session = await getSessionOrRedirect();
     const db = getDb();
 
     await db.transaction(async (tx) => {
@@ -825,6 +908,18 @@ export async function reverseCreditApplication(invoiceId: string): Promise<{ err
         .select()
         .from(creditApplications)
         .where(eq(creditApplications.invoiceId, invoiceId));
+
+      // Void linked General Ledger entries for these credit applications
+      if (apps.length > 0) {
+        const voidRes = await voidCreditApplicationJournalEntries(
+          apps.map((a) => a.id),
+          session.user.id,
+          tx,
+        );
+        if (voidRes.error) {
+          throw new Error(voidRes.error);
+        }
+      }
 
       // Also fetch and delete any income records created for credit applications
       // (historical rows only — see the KNOWN LIMITATION note above the function).
@@ -883,6 +978,7 @@ export async function reverseCreditApplication(invoiceId: string): Promise<{ err
     revalidatePath('/billing/invoices');
     revalidatePath('/billing/payments');
     revalidatePath('/dashboard');
+    revalidateAccountingPaths();
 
     return {};
   } catch (err) {
@@ -957,19 +1053,27 @@ export async function voidCreditNote(creditNoteId: string): Promise<{ error?: st
       };
     }
 
-    await db
-      .update(creditNotes)
-      .set({
-        status: 'void',
-        voidedAt: new Date(),
-        voidedBy: session.user.id,
-        updatedAt: new Date(),
-      })
-      .where(eq(creditNotes.id, creditNoteId));
+    await db.transaction(async (tx) => {
+      const voidRes = await voidCreditNoteJournalEntries(creditNoteId, session.user.id, tx);
+      if (voidRes.error) {
+        throw new Error(voidRes.error);
+      }
+
+      await tx
+        .update(creditNotes)
+        .set({
+          status: 'void',
+          voidedAt: new Date(),
+          voidedBy: session.user.id,
+          updatedAt: new Date(),
+        })
+        .where(eq(creditNotes.id, creditNoteId));
+    });
 
     revalidatePath('/billing/credits');
     revalidatePath('/dashboard');
     revalidatePath(`/billing/credits/${creditNoteId}`);
+    revalidateAccountingPaths();
 
     return {};
   } catch (err) {
@@ -1056,12 +1160,30 @@ export async function refundCredit(data: {
           updatedAt: new Date(),
         })
         .where(eq(creditNotes.id, data.creditNoteId));
+
+      // 3. Post General Ledger entry: Dr 2140 Client Credits / Cr 1010 Bank
+      if (insertedRefund) {
+        const glRes = await postCreditRefundJournalEntry({
+          creditRefundId: insertedRefund.id,
+          creditNoteDocumentNumber: note.documentNumber,
+          amount: data.amount,
+          date: data.refundDate,
+          divisionId: note.divisionId,
+          reference: data.reference ?? null,
+          postedBy: session.user.id,
+          tx,
+        });
+        if (glRes.error) {
+          throw new Error(glRes.error);
+        }
+      }
     });
 
     // Revalidate paths
     revalidatePath('/billing/credits');
     revalidatePath('/billing/payments');
     revalidatePath('/dashboard');
+    revalidateAccountingPaths();
 
     return { refundId };
   } catch (err) {

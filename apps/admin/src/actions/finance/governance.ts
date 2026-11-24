@@ -2,13 +2,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import {
-  db,
-  dividendPayouts,
-  getTrialBalance,
-  upsertDividendPolicy,
-  type BankAccountCode,
-} from '@pmg/db';
+import { getTrialBalance, upsertDividendPolicy, type BankAccountCode } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import {
   postMonthlyTaxProvisionEntry,
@@ -116,27 +110,14 @@ export async function recordQuarterlyDistribution(
       netCashPaid,
       description: d.notes?.trim() || undefined,
       createdBy: session.user.id,
+      payoutRecord: {
+        fiscalYear: d.fiscalYear,
+        solvencySignedBy: session.user.email || session.user.id,
+        notes: d.notes?.trim() || null,
+      },
     });
 
     if (glRes.error) return { error: glRes.error };
-
-    const now = new Date();
-    await db.insert(dividendPayouts).values({
-      fiscalYear: d.fiscalYear,
-      quarter: d.quarter,
-      payoutDate: d.payoutDate,
-      payoutType: d.payoutType,
-      grossAmount: d.grossAmount.toFixed(2),
-      dwtWithheld: dwtWithheld.toFixed(2),
-      loanOffsetAmount: loanOffset.toFixed(2),
-      netCashPaid: netCashPaid.toFixed(2),
-      solvencySignedOff: true,
-      solvencySignedBy: session.user.email || session.user.id,
-      solvencySignedAt: now,
-      journalEntryId: glRes.entryId ?? null,
-      notes: d.notes?.trim() || null,
-      updatedAt: now,
-    });
 
     revalidateGovernancePaths();
     return { entryId: glRes.entryId };
