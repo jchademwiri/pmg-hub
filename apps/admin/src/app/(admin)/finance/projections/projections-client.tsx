@@ -365,7 +365,7 @@ export function ProjectionsClient({
             >
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Tax Reserve Target
+                  Tax Reserve (Actual vs Plan)
                 </p>
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-lg ${
@@ -390,10 +390,11 @@ export function ProjectionsClient({
                     : 'text-amber-600 dark:text-amber-400'
                 }`}
               >
-                {formatZAR(totals.taxReserveTarget)}
+                {formatZAR(governance.tax.alreadyProvisionedTax)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Annual ring-fenced SARS &amp; IRP6 reserve
+                Est. tax: {formatZAR(governance.tax.activeEstimatedTax)} · Planned target:{' '}
+                {formatZAR(totals.taxReserveTarget)}
               </p>
             </div>
           </div>

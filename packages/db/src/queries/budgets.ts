@@ -120,11 +120,16 @@ export async function getBudgetVsActualsForFiscalYear(
       .catch(() => []);
     if (
       existingPlan.length === 0 ||
+      (fiscalYear === 2027 &&
+        existingPlan[0]?.notes ===
+          'Seeded FY2026/27 seasonalized R100k plan (Dec R10k, Jan R4k)') ||
       (fiscalYear === 2028 &&
         (existingPlan[0]?.notes ===
           'Seeded FY2027/28 seasonalized R240k plan from Excel Financial Plan' ||
           existingPlan[0]?.notes ===
-            'Seeded FY2027/28 seasonalized R186k organic growth plan (+24.8% YoY)'))
+            'Seeded FY2027/28 seasonalized R186k organic growth plan (+24.8% YoY)' ||
+          existingPlan[0]?.notes ===
+            'Seeded FY2027/28 seasonalized R186k plan (OpEx R21.6k, +24.8% YoY)'))
     ) {
       await seedSeasonalizedBudgetPlan(fiscalYear).catch(() => {});
     }
@@ -451,18 +456,18 @@ const FY2027_MONTHLY_TARGETS: Array<{
   salary: number;
   taxReserve: number;
 }> = [
-  { tes: 5500, aws: 500, pmg: 300, opex: 1600, salary: 0, taxReserve: 500 }, // Mar 2026 (R6,300)
-  { tes: 6500, aws: 550, pmg: 350, opex: 1600, salary: 0, taxReserve: 500 }, // Apr 2026 (R7,400)
-  { tes: 7000, aws: 600, pmg: 400, opex: 1600, salary: 0, taxReserve: 500 }, // May 2026 (R8,000)
-  { tes: 7400, aws: 650, pmg: 450, opex: 1600, salary: 0, taxReserve: 500 }, // Jun 2026 (R8,500)
-  { tes: 7800, aws: 700, pmg: 500, opex: 1600, salary: 0, taxReserve: 500 }, // Jul 2026 (R9,000)
-  { tes: 8300, aws: 700, pmg: 500, opex: 1600, salary: 0, taxReserve: 500 }, // Aug 2026 (R9,500)
-  { tes: 8300, aws: 700, pmg: 500, opex: 1600, salary: 0, taxReserve: 500 }, // Sep 2026 (R9,500)
-  { tes: 8550, aws: 750, pmg: 500, opex: 1600, salary: 0, taxReserve: 500 }, // Oct 2026 (R9,800)
-  { tes: 7000, aws: 600, pmg: 400, opex: 1600, salary: 0, taxReserve: 500 }, // Nov 2026 (R8,000)
-  { tes: 8750, aws: 750, pmg: 500, opex: 1600, salary: 0, taxReserve: 500 }, // Dec 2026 (R10,000 — agreed R8k–R10k before 18 Dec holiday close)
-  { tes: 3500, aws: 300, pmg: 200, opex: 1600, salary: 0, taxReserve: 500 }, // Jan 2027 (R4,000 — agreed slow Jan month)
-  { tes: 8900, aws: 700, pmg: 400, opex: 1600, salary: 0, taxReserve: 500 }, // Feb 2027 (R10,000 — year-end recovery; FY total = R100,000)
+  { tes: 5500, aws: 500, pmg: 300, opex: 1600, salary: 0, taxReserve: 0 }, // Mar 2026 (R6,300)
+  { tes: 6500, aws: 550, pmg: 350, opex: 1600, salary: 0, taxReserve: 0 }, // Apr 2026 (R7,400)
+  { tes: 7000, aws: 600, pmg: 400, opex: 1600, salary: 0, taxReserve: 0 }, // May 2026 (R8,000)
+  { tes: 7400, aws: 650, pmg: 450, opex: 1600, salary: 0, taxReserve: 0 }, // Jun 2026 (R8,500)
+  { tes: 7800, aws: 700, pmg: 500, opex: 1600, salary: 0, taxReserve: 0 }, // Jul 2026 (R9,000)
+  { tes: 8300, aws: 700, pmg: 500, opex: 1600, salary: 0, taxReserve: 0 }, // Aug 2026 (R9,500)
+  { tes: 8300, aws: 700, pmg: 500, opex: 1600, salary: 0, taxReserve: 0 }, // Sep 2026 (R9,500)
+  { tes: 8550, aws: 750, pmg: 500, opex: 1600, salary: 0, taxReserve: 0 }, // Oct 2026 (R9,800)
+  { tes: 7000, aws: 600, pmg: 400, opex: 1600, salary: 0, taxReserve: 0 }, // Nov 2026 (R8,000)
+  { tes: 8750, aws: 750, pmg: 500, opex: 1600, salary: 0, taxReserve: 0 }, // Dec 2026 (R10,000 — agreed R8k–R10k before 18 Dec holiday close)
+  { tes: 3500, aws: 300, pmg: 200, opex: 1600, salary: 0, taxReserve: 0 }, // Jan 2027 (R4,000 — agreed slow Jan month)
+  { tes: 8900, aws: 700, pmg: 400, opex: 1600, salary: 0, taxReserve: 0 }, // Feb 2027 (R10,000 — year-end recovery; FY total = R100,000; 0% SBC tax bracket)
 ];
 
 const FY2028_MONTHLY_TARGETS: Array<{
@@ -473,18 +478,18 @@ const FY2028_MONTHLY_TARGETS: Array<{
   salary: number;
   taxReserve: number;
 }> = [
-  { tes: 14450, aws: 1250, pmg: 800, opex: 1900, salary: 5000, taxReserve: 960 }, // Mar 2027 (R16,500)
-  { tes: 9200, aws: 800, pmg: 500, opex: 1300, salary: 5000, taxReserve: 420 }, // Apr 2027 (R10,500 — Easter dip)
-  { tes: 10500, aws: 900, pmg: 600, opex: 1500, salary: 5000, taxReserve: 550 }, // May 2027 (R12,000)
-  { tes: 12250, aws: 1050, pmg: 700, opex: 1700, salary: 5000, taxReserve: 730 }, // Jun 2027 (R14,000)
-  { tes: 15750, aws: 1350, pmg: 900, opex: 2100, salary: 5000, taxReserve: 1090 }, // Jul 2027 (R18,000)
-  { tes: 21850, aws: 1900, pmg: 1250, opex: 2600, salary: 5000, taxReserve: 1740 }, // Aug 2027 (R25,000 — Peak)
-  { tes: 21000, aws: 1800, pmg: 1200, opex: 2500, salary: 5000, taxReserve: 1650 }, // Sep 2027 (R24,000 — Peak)
-  { tes: 14000, aws: 1200, pmg: 800, opex: 1900, salary: 5000, taxReserve: 910 }, // Oct 2027 (R16,000)
-  { tes: 14850, aws: 1300, pmg: 850, opex: 2000, salary: 5000, taxReserve: 1000 }, // Nov 2027 (R17,000)
-  { tes: 9650, aws: 800, pmg: 550, opex: 1300, salary: 5000, taxReserve: 470 }, // Dec 2027 (R11,000 — Early close)
-  { tes: 5700, aws: 500, pmg: 300, opex: 1000, salary: 5000, taxReserve: 50 }, // Jan 2028 (R6,500 — Holiday dip)
-  { tes: 13550, aws: 1150, pmg: 800, opex: 1800, salary: 5000, taxReserve: 870 }, // Feb 2028 (R15,500 — Recovery; FY Total = R186,000, OpEx = R21,600)
+  { tes: 14450, aws: 1250, pmg: 800, opex: 1900, salary: 5000, taxReserve: 0 }, // Mar 2027 (R16,500)
+  { tes: 9200, aws: 800, pmg: 500, opex: 1300, salary: 5000, taxReserve: 0 }, // Apr 2027 (R10,500 — Easter dip)
+  { tes: 10500, aws: 900, pmg: 600, opex: 1500, salary: 5000, taxReserve: 0 }, // May 2027 (R12,000)
+  { tes: 12250, aws: 1050, pmg: 700, opex: 1700, salary: 5000, taxReserve: 0 }, // Jun 2027 (R14,000)
+  { tes: 15750, aws: 1350, pmg: 900, opex: 2100, salary: 5000, taxReserve: 0 }, // Jul 2027 (R18,000)
+  { tes: 21850, aws: 1900, pmg: 1250, opex: 2600, salary: 5000, taxReserve: 0 }, // Aug 2027 (R25,000 — Peak)
+  { tes: 21000, aws: 1800, pmg: 1200, opex: 2500, salary: 5000, taxReserve: 0 }, // Sep 2027 (R24,000 — Peak)
+  { tes: 14000, aws: 1200, pmg: 800, opex: 1900, salary: 5000, taxReserve: 0 }, // Oct 2027 (R16,000)
+  { tes: 14850, aws: 1300, pmg: 850, opex: 2000, salary: 5000, taxReserve: 0 }, // Nov 2027 (R17,000)
+  { tes: 9650, aws: 800, pmg: 550, opex: 1300, salary: 5000, taxReserve: 200 }, // Dec 2027 (R11,000 — Early close)
+  { tes: 5700, aws: 500, pmg: 300, opex: 1000, salary: 5000, taxReserve: 100 }, // Jan 2028 (R6,500 — Holiday dip)
+  { tes: 13550, aws: 1150, pmg: 800, opex: 1800, salary: 5000, taxReserve: 490 }, // Feb 2028 (R15,500 — Recovery; FY Total = R186,000, OpEx = R21,600, SBC/DWT Tax = R790)
 ];
 
 /**
@@ -503,8 +508,8 @@ export async function seedSeasonalizedBudgetPlan(fiscalYear: number) {
   const isFy2027 = fiscalYear === 2027;
   const schedule = isFy2027 ? FY2027_MONTHLY_TARGETS : FY2028_MONTHLY_TARGETS;
   const PLAN_NOTE = isFy2027
-    ? 'Seeded FY2026/27 seasonalized R100k plan (Dec R10k, Jan R4k)'
-    : 'Seeded FY2027/28 seasonalized R186k plan (OpEx R21.6k, +24.8% YoY)';
+    ? 'Seeded FY2026/27 seasonalized R100k plan (0% SBC tax bracket)'
+    : 'Seeded FY2027/28 seasonalized R186k plan (OpEx R21.6k, SBC calibrated)';
 
   for (let i = 0; i < periods.length; i++) {
     const period = periods[i]!;
