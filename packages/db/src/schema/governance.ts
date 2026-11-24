@@ -35,7 +35,7 @@ export const dividendPolicies = pgTable(
     /** Gate 2 minimum True Spendable Cash floor kept in bank before payout */
     minCashReserve: numeric('min_cash_reserve', { precision: 14, scale: 2 })
       .notNull()
-      .default('15000.00'),
+      .default('25000.00'),
     /** Max % of net surplus eligible for quarterly distribution */
     payoutRatioPercent: numeric('payout_ratio_percent', { precision: 5, scale: 2 })
       .notNull()

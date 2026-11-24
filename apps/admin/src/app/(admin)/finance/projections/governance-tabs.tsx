@@ -335,13 +335,13 @@ export function DividendsTab({
             {formatZAR(gates.ytdNetProfit)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            {gates.profitGatePassed ? 'Passed — positive YTD profit' : 'Blocked — YTD profit ≤ R0'}
+            {gates.profitGatePassed ? 'Passed — positive YTD profit' : 'Warning — YTD profit ≤ R0'}
           </p>
         </div>
 
         <div
           className={`rounded-xl border p-5 ${
-            gates.trueSpendableCash < 0
+            gates.trueSpendableCash < 10000
               ? 'border-red-500/35 bg-red-500/5'
               : gates.cashGatePassed
                 ? 'border-emerald-500/30 bg-emerald-500/5'
@@ -355,16 +355,16 @@ export function DividendsTab({
             {gates.cashGatePassed ? (
               <CheckCircle2 className="size-4 text-emerald-600" />
             ) : (
-              <XCircle
+              <AlertTriangle
                 className={`size-4 ${
-                  gates.trueSpendableCash < 0 ? 'text-red-600' : 'text-amber-600'
+                  gates.trueSpendableCash < 10000 ? 'text-red-600' : 'text-amber-600'
                 }`}
               />
             )}
           </div>
           <p
             className={`text-2xl font-bold mt-2 tabular-nums ${
-              gates.trueSpendableCash < 0
+              gates.trueSpendableCash < 10000
                 ? 'text-red-600 dark:text-red-400'
                 : gates.cashGatePassed
                   ? 'text-emerald-600 dark:text-emerald-400'
@@ -375,15 +375,21 @@ export function DividendsTab({
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Floor: {formatZAR(policy.minCashReserve)} ·{' '}
-            {gates.cashGatePassed ? 'Above floor' : 'Below reserve floor'}
+            {gates.trueSpendableCash < 10000
+              ? 'Danger — below R10,000 critical floor'
+              : gates.cashGatePassed
+                ? 'All good — above reserve floor'
+                : 'Warning — below reserve floor'}
           </p>
         </div>
 
         <div
           className={`rounded-xl border p-5 ${
-            bothGatesPassed && gates.maxSafeDistribution > 0
-              ? 'border-emerald-500/30 bg-emerald-500/5'
-              : 'border-amber-500/35 bg-amber-500/5'
+            gates.trueSpendableCash < 10000
+              ? 'border-red-500/35 bg-red-500/5'
+              : bothGatesPassed && gates.maxSafeDistribution > 0
+                ? 'border-emerald-500/30 bg-emerald-500/5'
+                : 'border-amber-500/35 bg-amber-500/5'
           }`}
         >
           <div className="flex items-center justify-between">
@@ -393,22 +399,28 @@ export function DividendsTab({
             {bothGatesPassed && gates.maxSafeDistribution > 0 ? (
               <Wallet className="size-4 text-emerald-600" />
             ) : (
-              <AlertTriangle className="size-4 text-amber-600" />
+              <AlertTriangle
+                className={`size-4 ${
+                  gates.trueSpendableCash < 10000 ? 'text-red-600' : 'text-amber-600'
+                }`}
+              />
             )}
           </div>
           <p
             className={`text-2xl font-bold mt-2 tabular-nums ${
-              bothGatesPassed && gates.maxSafeDistribution > 0
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-amber-600 dark:text-amber-400'
+              gates.trueSpendableCash < 10000
+                ? 'text-red-600 dark:text-red-400'
+                : bothGatesPassed && gates.maxSafeDistribution > 0
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-amber-600 dark:text-amber-400'
             }`}
           >
             {formatZAR(gates.maxSafeDistribution)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             {bothGatesPassed && gates.maxSafeDistribution > 0
-              ? `Capped at ${policy.payoutRatioPercent}% profit & cash floor`
-              : 'Blocked — requires both gates passed'}
+              ? `At most ${policy.payoutRatioPercent}% of excess above ${formatZAR(policy.minCashReserve)}`
+              : `Warning — cash below ${formatZAR(policy.minCashReserve)} reserve floor`}
           </p>
         </div>
 
@@ -945,24 +957,56 @@ export function TaxProvisionTab({
 
       {/* 4 Tax KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-xl border bg-card p-5">
+        <div
+          className={`rounded-xl border p-5 ${
+            tax.ytdProfitBeforeTax < 0
+              ? 'border-red-500/35 bg-red-500/5'
+              : tax.ytdProfitBeforeTax === 0
+                ? 'border-amber-500/35 bg-amber-500/5'
+                : 'border-emerald-500/30 bg-emerald-500/5'
+          }`}
+        >
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             YTD Profit Before Tax
           </p>
-          <p className="text-2xl font-bold mt-2 tabular-nums">
+          <p
+            className={`text-2xl font-bold mt-2 tabular-nums ${
+              tax.ytdProfitBeforeTax < 0
+                ? 'text-red-600 dark:text-red-400'
+                : tax.ytdProfitBeforeTax === 0
+                  ? 'text-amber-600 dark:text-amber-400'
+                  : 'text-emerald-600 dark:text-emerald-400'
+            }`}
+          >
             {formatZAR(tax.ytdProfitBeforeTax)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Taxable base ({label})</p>
         </div>
 
-        <div className="rounded-xl border border-indigo-500/25 bg-indigo-500/5 p-5">
+        <div
+          className={`rounded-xl border p-5 ${
+            tax.activeEstimatedTax === 0
+              ? 'border-emerald-500/30 bg-emerald-500/5'
+              : 'border-amber-500/35 bg-amber-500/5'
+          }`}
+        >
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               {policy.isSbcQualified ? 'SBC Tax Estimate' : 'Standard 27% CIT'}
             </p>
-            <Landmark className="size-4 text-indigo-600" />
+            <Landmark
+              className={`size-4 ${
+                tax.activeEstimatedTax === 0 ? 'text-emerald-600' : 'text-amber-600'
+              }`}
+            />
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums text-indigo-600 dark:text-indigo-400">
+          <p
+            className={`text-2xl font-bold mt-2 tabular-nums ${
+              tax.activeEstimatedTax === 0
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-amber-600 dark:text-amber-400'
+            }`}
+          >
             {formatZAR(tax.activeEstimatedTax)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
@@ -972,29 +1016,82 @@ export function TaxProvisionTab({
           </p>
         </div>
 
-        <div className="rounded-xl border bg-card p-5">
+        <div
+          className={`rounded-xl border p-5 ${
+            tax.remainingProvisionNeeded === 0
+              ? 'border-emerald-500/30 bg-emerald-500/5'
+              : 'border-amber-500/35 bg-amber-500/5'
+          }`}
+        >
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Provisioned (5160)
             </p>
-            <Receipt className="size-4 text-emerald-600" />
+            {tax.remainingProvisionNeeded === 0 ? (
+              <Receipt className="size-4 text-emerald-600" />
+            ) : (
+              <AlertTriangle className="size-4 text-amber-600" />
+            )}
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums text-emerald-600">
+          <p
+            className={`text-2xl font-bold mt-2 tabular-nums ${
+              tax.remainingProvisionNeeded === 0
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-amber-600 dark:text-amber-400'
+            }`}
+          >
             {formatZAR(tax.alreadyProvisionedTax)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Remaining to accrue: {formatZAR(tax.remainingProvisionNeeded)}
+            {tax.remainingProvisionNeeded === 0
+              ? 'All good — 100% of estimated tax provisioned'
+              : `Warning — ${formatZAR(tax.remainingProvisionNeeded)} remaining to accrue`}
           </p>
         </div>
 
-        <div className="rounded-xl border bg-card p-5">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            2160 · SARS Payable
-          </p>
-          <p className="text-2xl font-bold mt-2 tabular-nums text-amber-600">
+        <div
+          className={`rounded-xl border p-5 ${
+            tax.sarsPayableBalance <= 0
+              ? 'border-emerald-500/30 bg-emerald-500/5'
+              : tax.sarsPayableBalance > governance.gates.taxReserveBalance
+                ? 'border-red-500/35 bg-red-500/5'
+                : 'border-amber-500/35 bg-amber-500/5'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              2160 · SARS Payable
+            </p>
+            {tax.sarsPayableBalance <= 0 ? (
+              <ShieldCheck className="size-4 text-emerald-600" />
+            ) : (
+              <AlertTriangle
+                className={`size-4 ${
+                  tax.sarsPayableBalance > governance.gates.taxReserveBalance
+                    ? 'text-red-600'
+                    : 'text-amber-600'
+                }`}
+              />
+            )}
+          </div>
+          <p
+            className={`text-2xl font-bold mt-2 tabular-nums ${
+              tax.sarsPayableBalance <= 0
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : tax.sarsPayableBalance > governance.gates.taxReserveBalance
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-amber-600 dark:text-amber-400'
+            }`}
+          >
             {formatZAR(tax.sarsPayableBalance)}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">Total CIT + DWT owed to SARS</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {tax.sarsPayableBalance <= 0
+              ? 'All good — R0 owed to SARS'
+              : tax.sarsPayableBalance > governance.gates.taxReserveBalance
+                ? 'Danger — exceeds 1030 Tax Reserve cash'
+                : 'Warning — covered by 1030 Tax Reserve'}
+          </p>
         </div>
       </div>
 

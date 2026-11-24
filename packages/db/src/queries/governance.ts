@@ -138,7 +138,7 @@ export async function getGovernanceOverview(fiscalYear: number): Promise<Governa
   const rawPolicy = policyRows[0];
   const policy: GovernancePolicyView = {
     fiscalYear,
-    minCashReserve: Number(rawPolicy?.minCashReserve ?? 15000),
+    minCashReserve: Number(rawPolicy?.minCashReserve ?? 25000),
     payoutRatioPercent: Number(rawPolicy?.payoutRatioPercent ?? 50),
     payeTaxFreeThreshold: Number(rawPolicy?.payeTaxFreeThreshold ?? 95750),
     dwtRatePercent: Number(rawPolicy?.dwtRatePercent ?? 20),
@@ -176,8 +176,12 @@ export async function getGovernanceOverview(fiscalYear: number): Promise<Governa
 
   const profitGatePassed = pnl.netProfit > 0;
   const cashGatePassed = banking.trueSpendableCash > policy.minCashReserve;
-  const maxByProfit = Math.max(0, pnl.netProfit * (policy.payoutRatioPercent / 100));
-  const maxByCash = Math.max(0, banking.trueSpendableCash - policy.minCashReserve);
+  const payoutFraction = policy.payoutRatioPercent / 100;
+  const maxByProfit = Math.max(0, pnl.netProfit * payoutFraction);
+  const maxByCash = Math.max(
+    0,
+    (banking.trueSpendableCash - policy.minCashReserve) * payoutFraction,
+  );
   const maxSafeDistribution =
     profitGatePassed && cashGatePassed ? Number(Math.min(maxByProfit, maxByCash).toFixed(2)) : 0;
 
