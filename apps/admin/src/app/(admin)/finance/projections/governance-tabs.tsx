@@ -164,7 +164,16 @@ export function DividendsTab({
       : '0',
   );
   const [solvencySignedOff, setSolvencySignedOff] = React.useState(false);
+  const [repeatConfirmed, setRepeatConfirmed] = React.useState(false);
   const [notes, setNotes] = React.useState('');
+
+  const quarterPayouts = payouts.filter((p) => p.quarter === quarter);
+  const alreadyDeclaredInQuarter = quarterPayouts.reduce((s, p) => s + p.grossAmount, 0);
+  const monthPayouts = payouts.filter((p) => p.payoutDate.slice(0, 7) === payoutDate.slice(0, 7));
+  const alreadyDeclaredInMonth = monthPayouts.reduce((s, p) => s + p.grossAmount, 0);
+  const hasRepeatInQuarterOrMonth = alreadyDeclaredInQuarter > 0 || alreadyDeclaredInMonth > 0;
+  const payoutTotalByQuarter = (qKey: 'Q1' | 'Q2' | 'Q3' | 'Q4') =>
+    payouts.filter((p) => p.quarter === qKey).reduce((s, p) => s + p.grossAmount, 0);
 
   function openDeclarePayoutModal() {
     const recAcct = gates.recommendedAccountCode;
@@ -202,15 +211,25 @@ export function DividendsTab({
               ).toFixed(2),
             ),
           );
-    setQuarter(getFiscalQuarterFromDate(today));
+    const activeQuarter = getFiscalQuarterFromDate(today);
+    const activeQuarterTaken = payouts
+      .filter((p) => p.quarter === activeQuarter)
+      .reduce((s, p) => s + p.grossAmount, 0);
+    const activeMonthTaken = payouts
+      .filter((p) => p.payoutDate.slice(0, 7) === today.slice(0, 7))
+      .reduce((s, p) => s + p.grossAmount, 0);
+    const finalPrefill = activeQuarterTaken > 0 || activeMonthTaken > 0 ? 0 : recPrefill;
+
+    setQuarter(activeQuarter);
     setAccountCode(recAcct);
     setPayoutType(recType);
-    setGrossAmount(String(recPrefill));
+    setGrossAmount(finalPrefill > 0 ? String(finalPrefill) : '');
     setLoanOffset(
       gates.directorsLoanBalance > 0
-        ? String(Math.min(gates.directorsLoanBalance, recPrefill))
+        ? String(Math.min(gates.directorsLoanBalance, finalPrefill))
         : '0',
     );
+    setRepeatConfirmed(false);
     setSolvencySignedOff(false);
     setPayoutOpen(true);
   }
@@ -264,6 +283,10 @@ export function DividendsTab({
     }
     if (!solvencySignedOff) {
       toast.error('Companies Act s46 Solvency & Liquidity sign-off is required.');
+      return;
+    }
+    if (hasRepeatInQuarterOrMonth && !repeatConfirmed) {
+      toast.error(`Please confirm that you want to take an additional distribution in ${quarter}.`);
       return;
     }
 
@@ -1176,10 +1199,30 @@ export function DividendsTab({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Q1">Q1 (Mar–May)</SelectItem>
-                      <SelectItem value="Q2">Q2 (Jun–Aug)</SelectItem>
-                      <SelectItem value="Q3">Q3 (Sep–Nov)</SelectItem>
-                      <SelectItem value="Q4">Q4 (Dec–Feb)</SelectItem>
+                      <SelectItem value="Q1">
+                        Q1 (Mar–May)
+                        {payoutTotalByQuarter('Q1') > 0
+                          ? ` · ${formatZAR(payoutTotalByQuarter('Q1'))} taken`
+                          : ''}
+                      </SelectItem>
+                      <SelectItem value="Q2">
+                        Q2 (Jun–Aug)
+                        {payoutTotalByQuarter('Q2') > 0
+                          ? ` · ${formatZAR(payoutTotalByQuarter('Q2'))} taken`
+                          : ''}
+                      </SelectItem>
+                      <SelectItem value="Q3">
+                        Q3 (Sep–Nov)
+                        {payoutTotalByQuarter('Q3') > 0
+                          ? ` · ${formatZAR(payoutTotalByQuarter('Q3'))} taken`
+                          : ''}
+                      </SelectItem>
+                      <SelectItem value="Q4">
+                        Q4 (Dec–Feb)
+                        {payoutTotalByQuarter('Q4') > 0
+                          ? ` · ${formatZAR(payoutTotalByQuarter('Q4'))} taken`
+                          : ''}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>
@@ -1307,6 +1350,46 @@ export function DividendsTab({
                 </Field>
               </div>
 
+              {hasRepeatInQuarterOrMonth && (
+                <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-200 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="size-4 shrink-0 mt-0.5 text-amber-600" />
+                    <span>
+                      <strong>
+                        Already withdrawn in {quarter} (
+                        {formatZAR(
+                          alreadyDeclaredInQuarter > 0
+                            ? alreadyDeclaredInQuarter
+                            : alreadyDeclaredInMonth,
+                        )}
+                        ):
+                      </strong>{' '}
+                      You have already declared{' '}
+                      {quarterPayouts.length > 0
+                        ? `${quarterPayouts.length} distribution${quarterPayouts.length === 1 ? '' : 's'} totaling ${formatZAR(alreadyDeclaredInQuarter)} in ${quarter}`
+                        : `${monthPayouts.length} distribution${monthPayouts.length === 1 ? '' : 's'} totaling ${formatZAR(alreadyDeclaredInMonth)} this month`}
+                      {quarterPayouts.length > 0 && alreadyDeclaredInMonth > 0
+                        ? ` (${formatZAR(alreadyDeclaredInMonth)} this month)`
+                        : ''}
+                      . Taking another payout in the same quarter will draw down the 50% company
+                      reserve you already retained.
+                    </span>
+                  </div>
+                  <label className="flex items-center gap-2 pl-6 cursor-pointer font-medium">
+                    <input
+                      type="checkbox"
+                      checked={repeatConfirmed}
+                      onChange={(e) => setRepeatConfirmed(e.target.checked)}
+                      className="size-3.5 rounded border-input accent-amber-600 shrink-0"
+                    />
+                    <span>
+                      I confirm I want to exceed my {quarter} allocation and take an additional
+                      distribution.
+                    </span>
+                  </label>
+                </div>
+              )}
+
               {/* Warnings when exceeding Account Balance, 2-Gate Safe Cap, or 0% PAYE Headroom */}
               {exceedsSelectedAccount && (
                 <div className="flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 p-2.5 text-xs text-red-600 dark:text-red-400">
@@ -1401,7 +1484,12 @@ export function DividendsTab({
               </Button>
               <Button
                 type="submit"
-                disabled={isPending || !solvencySignedOff || exceedsSelectedAccount}
+                disabled={
+                  isPending ||
+                  !solvencySignedOff ||
+                  exceedsSelectedAccount ||
+                  (hasRepeatInQuarterOrMonth && !repeatConfirmed)
+                }
               >
                 {isPending ? 'Posting…' : 'Sign Off & Post Distribution'}
               </Button>
