@@ -51,16 +51,18 @@ import {
   saveDividendPolicy,
 } from '@/actions/finance/governance';
 import { formatZAR, fmtDate } from '@/lib/format';
-import type { GovernanceOverviewResult } from '@pmg/db';
+import type { FiscalYearBudgetOverview, GovernanceOverviewResult } from '@pmg/db';
 
 const VAT_LIMIT = 1_000_000;
 
 export function DividendsTab({
   governance,
+  overview,
   label,
   today,
 }: {
   governance: GovernanceOverviewResult;
+  overview: FiscalYearBudgetOverview;
   label: string;
   today: string;
 }) {
@@ -335,13 +337,13 @@ export function DividendsTab({
             {formatZAR(gates.ytdNetProfit)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            {gates.profitGatePassed ? 'Passed — positive YTD profit' : 'Blocked — YTD profit ≤ R0'}
+            {gates.profitGatePassed ? 'Passed — positive YTD profit' : 'Warning — YTD profit ≤ R0'}
           </p>
         </div>
 
         <div
           className={`rounded-xl border p-5 ${
-            gates.trueSpendableCash < 0
+            gates.trueSpendableCash < 10000
               ? 'border-red-500/35 bg-red-500/5'
               : gates.cashGatePassed
                 ? 'border-emerald-500/30 bg-emerald-500/5'
@@ -355,16 +357,16 @@ export function DividendsTab({
             {gates.cashGatePassed ? (
               <CheckCircle2 className="size-4 text-emerald-600" />
             ) : (
-              <XCircle
+              <AlertTriangle
                 className={`size-4 ${
-                  gates.trueSpendableCash < 0 ? 'text-red-600' : 'text-amber-600'
+                  gates.trueSpendableCash < 10000 ? 'text-red-600' : 'text-amber-600'
                 }`}
               />
             )}
           </div>
           <p
             className={`text-2xl font-bold mt-2 tabular-nums ${
-              gates.trueSpendableCash < 0
+              gates.trueSpendableCash < 10000
                 ? 'text-red-600 dark:text-red-400'
                 : gates.cashGatePassed
                   ? 'text-emerald-600 dark:text-emerald-400'
@@ -375,15 +377,21 @@ export function DividendsTab({
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Floor: {formatZAR(policy.minCashReserve)} ·{' '}
-            {gates.cashGatePassed ? 'Above floor' : 'Below reserve floor'}
+            {gates.trueSpendableCash < 10000
+              ? 'Danger — below R10,000 critical floor'
+              : gates.cashGatePassed
+                ? 'All good — above reserve floor'
+                : 'Warning — below reserve floor'}
           </p>
         </div>
 
         <div
           className={`rounded-xl border p-5 ${
-            bothGatesPassed && gates.maxSafeDistribution > 0
-              ? 'border-emerald-500/30 bg-emerald-500/5'
-              : 'border-amber-500/35 bg-amber-500/5'
+            gates.trueSpendableCash < 10000
+              ? 'border-red-500/35 bg-red-500/5'
+              : bothGatesPassed && gates.maxSafeDistribution > 0
+                ? 'border-emerald-500/30 bg-emerald-500/5'
+                : 'border-amber-500/35 bg-amber-500/5'
           }`}
         >
           <div className="flex items-center justify-between">
@@ -393,22 +401,28 @@ export function DividendsTab({
             {bothGatesPassed && gates.maxSafeDistribution > 0 ? (
               <Wallet className="size-4 text-emerald-600" />
             ) : (
-              <AlertTriangle className="size-4 text-amber-600" />
+              <AlertTriangle
+                className={`size-4 ${
+                  gates.trueSpendableCash < 10000 ? 'text-red-600' : 'text-amber-600'
+                }`}
+              />
             )}
           </div>
           <p
             className={`text-2xl font-bold mt-2 tabular-nums ${
-              bothGatesPassed && gates.maxSafeDistribution > 0
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-amber-600 dark:text-amber-400'
+              gates.trueSpendableCash < 10000
+                ? 'text-red-600 dark:text-red-400'
+                : bothGatesPassed && gates.maxSafeDistribution > 0
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-amber-600 dark:text-amber-400'
             }`}
           >
             {formatZAR(gates.maxSafeDistribution)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             {bothGatesPassed && gates.maxSafeDistribution > 0
-              ? `Capped at ${policy.payoutRatioPercent}% profit & cash floor`
-              : 'Blocked — requires both gates passed'}
+              ? `At most ${policy.payoutRatioPercent}% of excess above ${formatZAR(policy.minCashReserve)}`
+              : `Warning — cash below ${formatZAR(policy.minCashReserve)} reserve floor`}
           </p>
         </div>
 
@@ -444,6 +458,363 @@ export function DividendsTab({
           </p>
         </div>
       </div>
+
+      {/* Quarterly Reserve & Bonus Schedule Table (Actuals from DB for elapsed months, Planned for upcoming months) */}
+      {(() => {
+        const currentPeriod = today.slice(0, 7);
+        const quarterDefs = [
+          { key: 'Q1', label: 'Q1 (Mar–May)', slice: overview.months.slice(0, 3) },
+          { key: 'Q2', label: 'Q2 (Jun–Aug)', slice: overview.months.slice(3, 6) },
+          { key: 'Q3', label: 'Q3 (Sep–Nov)', slice: overview.months.slice(6, 9) },
+          { key: 'Q4', label: 'Q4 (Dec–Feb)', slice: overview.months.slice(9, 12) },
+        ] as const;
+
+        const baseFloor = policy.minCashReserve;
+        const payoutFraction = policy.payoutRatioPercent / 100;
+        let runningPlannedReserve = 0;
+        let runningActualReserve = 0;
+
+        const quarterRows = quarterDefs.map((q) => {
+          const hasElapsedMonth = q.slice.some((m) => m.isClosed || m.period <= currentPeriod);
+          const allClosed = q.slice.every((m) => m.isClosed);
+          const status: 'closed' | 'active' | 'upcoming' = allClosed
+            ? 'closed'
+            : hasElapsedMonth
+              ? 'active'
+              : 'upcoming';
+
+          const plannedSales = q.slice.reduce((s, m) => s + m.revenueTarget, 0);
+          const plannedOpex = q.slice.reduce((s, m) => s + m.expenseBudget, 0);
+          const plannedSalary = q.slice.reduce((s, m) => s + m.directorSalaryBudget, 0);
+          const plannedNetProfit = plannedSales - plannedOpex - plannedSalary;
+
+          // Actual figures come strictly from DB for closed or current/elapsed months (0 for future months)
+          const actualSales = q.slice.reduce(
+            (s, m) => s + (m.isClosed || m.period <= currentPeriod ? m.actualRevenue : 0),
+            0,
+          );
+          const actualExpenses = q.slice.reduce(
+            (s, m) => s + (m.isClosed || m.period <= currentPeriod ? m.actualExpenses : 0),
+            0,
+          );
+          const actualNetProfit = actualSales - actualExpenses;
+
+          // Planned reserve progression
+          const plannedReserveBefore = runningPlannedReserve + plannedNetProfit;
+          const plannedNeededForBase = Math.max(
+            0,
+            Math.min(plannedNetProfit, baseFloor - runningPlannedReserve),
+          );
+          const plannedNewExcess = Math.max(0, plannedNetProfit - plannedNeededForBase);
+          const plannedBonus =
+            plannedReserveBefore > baseFloor
+              ? Number((plannedNewExcess * payoutFraction).toFixed(2))
+              : 0;
+          const plannedReserveAfter = Number((plannedReserveBefore - plannedBonus).toFixed(2));
+          runningPlannedReserve = plannedReserveAfter;
+
+          // Actual DB reserve progression (only for elapsed/current months)
+          const actualPaidInQuarter = payouts
+            .filter((p) => p.quarter === q.key)
+            .reduce((s, p) => s + p.grossAmount, 0);
+          const actualReserveBefore = runningActualReserve + actualNetProfit;
+          const actualNeededForBase = Math.max(
+            0,
+            Math.min(Math.max(0, actualNetProfit), Math.max(0, baseFloor - runningActualReserve)),
+          );
+          const actualNewExcess =
+            actualReserveBefore > baseFloor
+              ? Math.max(0, actualNetProfit - actualNeededForBase)
+              : 0;
+          const actualSafeBonus =
+            hasElapsedMonth && actualReserveBefore > baseFloor
+              ? Number((actualNewExcess * payoutFraction).toFixed(2))
+              : 0;
+          const actualBonusTakenOrSafe =
+            actualPaidInQuarter > 0 ? actualPaidInQuarter : actualSafeBonus;
+          const actualReserveAfter = hasElapsedMonth
+            ? Number((actualReserveBefore - actualBonusTakenOrSafe).toFixed(2))
+            : runningActualReserve;
+          if (hasElapsedMonth) {
+            runningActualReserve = actualReserveAfter;
+          }
+
+          return {
+            key: q.key,
+            label: q.label,
+            status,
+            hasElapsedMonth,
+            plannedSales,
+            plannedOpex,
+            plannedSalary,
+            plannedNetProfit,
+            plannedReserveBefore,
+            plannedNewExcess,
+            plannedBonus,
+            plannedReserveAfter,
+            actualSales,
+            actualExpenses,
+            actualNetProfit,
+            actualReserveBefore,
+            actualNewExcess,
+            actualSafeBonus,
+            actualPaidInQuarter,
+            actualReserveAfter,
+          };
+        });
+
+        const totalPlannedSales = quarterRows.reduce((s, r) => s + r.plannedSales, 0);
+        const totalActualSales = quarterRows.reduce((s, r) => s + r.actualSales, 0);
+        const totalPlannedExpenses = quarterRows.reduce(
+          (s, r) => s + r.plannedOpex + r.plannedSalary,
+          0,
+        );
+        const totalActualExpenses = quarterRows.reduce((s, r) => s + r.actualExpenses, 0);
+        const totalPlannedNetProfit = quarterRows.reduce((s, r) => s + r.plannedNetProfit, 0);
+        const totalActualNetProfit = quarterRows.reduce((s, r) => s + r.actualNetProfit, 0);
+        const totalPlannedBonus = quarterRows.reduce((s, r) => s + r.plannedBonus, 0);
+        const totalActualBonus = quarterRows.reduce(
+          (s, r) => s + (r.actualPaidInQuarter > 0 ? r.actualPaidInQuarter : r.actualSafeBonus),
+          0,
+        );
+
+        return (
+          <div className="rounded-xl border bg-card overflow-hidden">
+            <div className="px-5 py-3.5 border-b bg-muted/30 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-semibold">
+                  Quarterly Reserve &amp; {policy.payoutRatioPercent}% Excess Bonus Schedule (
+                  {label})
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Actual figures come strictly from real DB records up to today ({today}); future
+                  quarters show planned targets. Fills the {formatZAR(baseFloor)} Base Reserve
+                  first, then {policy.payoutRatioPercent}% of excess above {formatZAR(baseFloor)}.
+                </p>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                YTD Actual Bonus: {formatZAR(totalActualBonus)} · Planned Avg:{' '}
+                {formatZAR(totalPlannedBonus / 4)}/qtr
+              </Badge>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Quarter</TableHead>
+                    <TableHead className="text-right">Sales (Actual / Target)</TableHead>
+                    <TableHead className="text-right">Expenses (Actual / Budget)</TableHead>
+                    <TableHead className="text-right">Net Profit (Actual / Plan)</TableHead>
+                    <TableHead className="text-right">Reserve Before Bonus</TableHead>
+                    <TableHead className="text-right">
+                      Excess Above {formatZAR(baseFloor)}
+                    </TableHead>
+                    <TableHead className="text-right">
+                      Your Bonus ({policy.payoutRatioPercent}%)
+                    </TableHead>
+                    <TableHead className="text-right">Company Reserve Balance</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {quarterRows.map((q) => {
+                    const isUpcoming = q.status === 'upcoming';
+                    const reserveBefore = isUpcoming
+                      ? q.plannedReserveBefore
+                      : q.actualReserveBefore;
+                    const belowBase = reserveBefore <= baseFloor;
+                    const excessVal = isUpcoming ? q.plannedNewExcess : q.actualNewExcess;
+                    const bonusVal = isUpcoming
+                      ? q.plannedBonus
+                      : q.actualPaidInQuarter > 0
+                        ? q.actualPaidInQuarter
+                        : q.actualSafeBonus;
+                    const reserveAfter = isUpcoming ? q.plannedReserveAfter : q.actualReserveAfter;
+
+                    return (
+                      <TableRow key={q.key} className={isUpcoming ? 'opacity-75' : undefined}>
+                        <TableCell className="font-semibold whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <span>{q.label}</span>
+                            {q.status === 'closed' ? (
+                              <Badge variant="secondary" className="text-[10px] py-0">
+                                Closed
+                              </Badge>
+                            ) : isUpcoming ? (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] py-0 text-muted-foreground border-dashed"
+                              >
+                                Upcoming
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] py-0 border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
+                              >
+                                Live
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {isUpcoming ? (
+                            <span className="text-muted-foreground">
+                              — <span className="text-xs">/ {formatZAR(q.plannedSales)}</span>
+                            </span>
+                          ) : (
+                            <>
+                              <span className="font-medium">{formatZAR(q.actualSales)}</span>{' '}
+                              <span className="text-xs text-muted-foreground">
+                                / {formatZAR(q.plannedSales)}
+                              </span>
+                            </>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {isUpcoming ? (
+                            <span className="text-muted-foreground">
+                              —{' '}
+                              <span className="text-xs">
+                                / {formatZAR(q.plannedOpex + q.plannedSalary)}
+                              </span>
+                            </span>
+                          ) : (
+                            <>
+                              <span className="font-medium">{formatZAR(q.actualExpenses)}</span>{' '}
+                              <span className="text-xs text-muted-foreground">
+                                / {formatZAR(q.plannedOpex + q.plannedSalary)}
+                              </span>
+                            </>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {isUpcoming ? (
+                            <span className="text-xs text-muted-foreground">
+                              Est. +{formatZAR(q.plannedNetProfit)}
+                            </span>
+                          ) : (
+                            <span
+                              className={`font-medium ${
+                                q.actualNetProfit >= 0 ? 'text-emerald-600' : 'text-red-600'
+                              }`}
+                            >
+                              {q.actualNetProfit >= 0 ? '+' : '−'}
+                              {formatZAR(Math.abs(q.actualNetProfit))}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell
+                          className={`text-right tabular-nums font-medium ${
+                            isUpcoming
+                              ? 'text-muted-foreground text-xs font-normal'
+                              : reserveBefore < 10000
+                                ? 'text-red-600'
+                                : belowBase
+                                  ? 'text-amber-600'
+                                  : 'text-emerald-600'
+                          }`}
+                        >
+                          {isUpcoming
+                            ? `Est. ${formatZAR(q.plannedReserveBefore)}`
+                            : formatZAR(q.actualReserveBefore)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {belowBase ? (
+                            <span className="text-xs text-amber-600">
+                              {formatZAR(0)} (filling {formatZAR(baseFloor)} base)
+                            </span>
+                          ) : isUpcoming ? (
+                            <span className="text-xs text-muted-foreground">
+                              Est. {formatZAR(excessVal)}
+                            </span>
+                          ) : (
+                            formatZAR(excessVal)
+                          )}
+                        </TableCell>
+                        <TableCell
+                          className={`text-right tabular-nums font-semibold ${
+                            isUpcoming
+                              ? 'text-muted-foreground text-xs font-normal'
+                              : bonusVal > 0
+                                ? 'text-emerald-600'
+                                : 'text-amber-600'
+                          }`}
+                        >
+                          {isUpcoming ? `Est. ${formatZAR(q.plannedBonus)}` : formatZAR(bonusVal)}
+                        </TableCell>
+                        <TableCell
+                          className={`text-right tabular-nums font-semibold ${
+                            isUpcoming
+                              ? 'text-muted-foreground text-xs font-normal'
+                              : reserveAfter < 10000
+                                ? 'text-red-600'
+                                : reserveAfter < baseFloor
+                                  ? 'text-amber-600'
+                                  : 'text-emerald-600'
+                          }`}
+                        >
+                          {isUpcoming
+                            ? `Est. ${formatZAR(q.plannedReserveAfter)}`
+                            : formatZAR(q.actualReserveAfter)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+
+                  <TableRow className="bg-muted/40 font-semibold">
+                    <TableCell>{label} Total (YTD Actual / Plan)</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatZAR(totalActualSales)}{' '}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        / {formatZAR(totalPlannedSales)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatZAR(totalActualExpenses)}{' '}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        / {formatZAR(totalPlannedExpenses)}
+                      </span>
+                    </TableCell>
+                    <TableCell
+                      className={`text-right tabular-nums ${
+                        totalActualNetProfit > 0
+                          ? 'text-emerald-600'
+                          : totalActualNetProfit < 0
+                            ? 'text-red-600'
+                            : 'text-muted-foreground'
+                      }`}
+                    >
+                      {formatZAR(totalActualNetProfit)}{' '}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        / {formatZAR(totalPlannedNetProfit)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      —
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      —
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-emerald-600">
+                      {formatZAR(totalActualBonus)}{' '}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        / {formatZAR(totalPlannedBonus)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-emerald-600">
+                      {formatZAR(runningActualReserve)}{' '}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        / {formatZAR(runningPlannedReserve)}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Payout History Table */}
       <div className="rounded-xl border bg-card overflow-hidden">
@@ -945,24 +1316,56 @@ export function TaxProvisionTab({
 
       {/* 4 Tax KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-xl border bg-card p-5">
+        <div
+          className={`rounded-xl border p-5 ${
+            tax.ytdProfitBeforeTax < 0
+              ? 'border-red-500/35 bg-red-500/5'
+              : tax.ytdProfitBeforeTax === 0
+                ? 'border-amber-500/35 bg-amber-500/5'
+                : 'border-emerald-500/30 bg-emerald-500/5'
+          }`}
+        >
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             YTD Profit Before Tax
           </p>
-          <p className="text-2xl font-bold mt-2 tabular-nums">
+          <p
+            className={`text-2xl font-bold mt-2 tabular-nums ${
+              tax.ytdProfitBeforeTax < 0
+                ? 'text-red-600 dark:text-red-400'
+                : tax.ytdProfitBeforeTax === 0
+                  ? 'text-amber-600 dark:text-amber-400'
+                  : 'text-emerald-600 dark:text-emerald-400'
+            }`}
+          >
             {formatZAR(tax.ytdProfitBeforeTax)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Taxable base ({label})</p>
         </div>
 
-        <div className="rounded-xl border border-indigo-500/25 bg-indigo-500/5 p-5">
+        <div
+          className={`rounded-xl border p-5 ${
+            tax.activeEstimatedTax === 0
+              ? 'border-emerald-500/30 bg-emerald-500/5'
+              : 'border-amber-500/35 bg-amber-500/5'
+          }`}
+        >
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               {policy.isSbcQualified ? 'SBC Tax Estimate' : 'Standard 27% CIT'}
             </p>
-            <Landmark className="size-4 text-indigo-600" />
+            <Landmark
+              className={`size-4 ${
+                tax.activeEstimatedTax === 0 ? 'text-emerald-600' : 'text-amber-600'
+              }`}
+            />
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums text-indigo-600 dark:text-indigo-400">
+          <p
+            className={`text-2xl font-bold mt-2 tabular-nums ${
+              tax.activeEstimatedTax === 0
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-amber-600 dark:text-amber-400'
+            }`}
+          >
             {formatZAR(tax.activeEstimatedTax)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
@@ -972,29 +1375,82 @@ export function TaxProvisionTab({
           </p>
         </div>
 
-        <div className="rounded-xl border bg-card p-5">
+        <div
+          className={`rounded-xl border p-5 ${
+            tax.remainingProvisionNeeded === 0
+              ? 'border-emerald-500/30 bg-emerald-500/5'
+              : 'border-amber-500/35 bg-amber-500/5'
+          }`}
+        >
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Provisioned (5160)
             </p>
-            <Receipt className="size-4 text-emerald-600" />
+            {tax.remainingProvisionNeeded === 0 ? (
+              <Receipt className="size-4 text-emerald-600" />
+            ) : (
+              <AlertTriangle className="size-4 text-amber-600" />
+            )}
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums text-emerald-600">
+          <p
+            className={`text-2xl font-bold mt-2 tabular-nums ${
+              tax.remainingProvisionNeeded === 0
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-amber-600 dark:text-amber-400'
+            }`}
+          >
             {formatZAR(tax.alreadyProvisionedTax)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Remaining to accrue: {formatZAR(tax.remainingProvisionNeeded)}
+            {tax.remainingProvisionNeeded === 0
+              ? 'All good — 100% of estimated tax provisioned'
+              : `Warning — ${formatZAR(tax.remainingProvisionNeeded)} remaining to accrue`}
           </p>
         </div>
 
-        <div className="rounded-xl border bg-card p-5">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            2160 · SARS Payable
-          </p>
-          <p className="text-2xl font-bold mt-2 tabular-nums text-amber-600">
+        <div
+          className={`rounded-xl border p-5 ${
+            tax.sarsPayableBalance <= 0
+              ? 'border-emerald-500/30 bg-emerald-500/5'
+              : tax.sarsPayableBalance > governance.gates.taxReserveBalance
+                ? 'border-red-500/35 bg-red-500/5'
+                : 'border-amber-500/35 bg-amber-500/5'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              2160 · SARS Payable
+            </p>
+            {tax.sarsPayableBalance <= 0 ? (
+              <ShieldCheck className="size-4 text-emerald-600" />
+            ) : (
+              <AlertTriangle
+                className={`size-4 ${
+                  tax.sarsPayableBalance > governance.gates.taxReserveBalance
+                    ? 'text-red-600'
+                    : 'text-amber-600'
+                }`}
+              />
+            )}
+          </div>
+          <p
+            className={`text-2xl font-bold mt-2 tabular-nums ${
+              tax.sarsPayableBalance <= 0
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : tax.sarsPayableBalance > governance.gates.taxReserveBalance
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-amber-600 dark:text-amber-400'
+            }`}
+          >
             {formatZAR(tax.sarsPayableBalance)}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">Total CIT + DWT owed to SARS</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {tax.sarsPayableBalance <= 0
+              ? 'All good — R0 owed to SARS'
+              : tax.sarsPayableBalance > governance.gates.taxReserveBalance
+                ? 'Danger — exceeds 1030 Tax Reserve cash'
+                : 'Warning — covered by 1030 Tax Reserve'}
+          </p>
         </div>
       </div>
 

@@ -7662,7 +7662,7 @@
           "type": "numeric(14, 2)",
           "primaryKey": false,
           "notNull": true,
-          "default": "'15000.00'"
+          "default": "'25000.00'"
         },
         "payout_ratio_percent": {
           "name": "payout_ratio_percent",

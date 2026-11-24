@@ -21,7 +21,7 @@ CREATE TABLE "dividend_payouts" (
 CREATE TABLE "dividend_policies" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"fiscal_year" integer NOT NULL,
-	"min_cash_reserve" numeric(14, 2) DEFAULT '15000.00' NOT NULL,
+	"min_cash_reserve" numeric(14, 2) DEFAULT '25000.00' NOT NULL,
 	"payout_ratio_percent" numeric(5, 2) DEFAULT '50.00' NOT NULL,
 	"paye_tax_free_threshold" numeric(14, 2) DEFAULT '95750.00' NOT NULL,
 	"dwt_rate_percent" numeric(5, 2) DEFAULT '20.00' NOT NULL,

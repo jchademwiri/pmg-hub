@@ -26,8 +26,8 @@ export default async function ProjectionsPage({ searchParams }: ProjectionsPageP
   const activeTab = tab === 'dividends' || tab === 'tax' ? tab : 'budgets';
 
   const [overview, governance] = await Promise.all([
-    getBudgetVsActualsForFiscalYear(fiscalYear),
-    getGovernanceOverview(fiscalYear),
+    getBudgetVsActualsForFiscalYear(fiscalYear, today),
+    getGovernanceOverview(fiscalYear, today),
   ]);
 
   return (
@@ -49,7 +49,7 @@ export default async function ProjectionsPage({ searchParams }: ProjectionsPageP
         overview={overview}
         governance={governance}
         activeTab={activeTab}
-        today={getSASTToday()}
+        today={today}
       />
     </div>
   );

@@ -192,16 +192,48 @@ export function AccountingOverviewClient({
       {/* Core Accounting KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Assets */}
-        <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
+        <div
+          className={`rounded-xl border p-5 hover:shadow-md transition-all duration-200 ${
+            balanceSheet.totalAssets >= 25000
+              ? 'border-emerald-500/30 bg-emerald-500/5'
+              : balanceSheet.totalAssets >= 10000
+                ? 'border-amber-500/35 bg-amber-500/5'
+                : 'border-red-500/35 bg-red-500/5'
+          }`}
+        >
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Total Assets
             </p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
-              <Landmark className="h-4 w-4 text-blue-600" />
+            <div
+              className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                balanceSheet.totalAssets >= 25000
+                  ? 'bg-emerald-500/10'
+                  : balanceSheet.totalAssets >= 10000
+                    ? 'bg-amber-500/10'
+                    : 'bg-red-500/10'
+              }`}
+            >
+              <Landmark
+                className={`h-4 w-4 ${
+                  balanceSheet.totalAssets >= 25000
+                    ? 'text-emerald-600'
+                    : balanceSheet.totalAssets >= 10000
+                      ? 'text-amber-600'
+                      : 'text-red-600'
+                }`}
+              />
             </div>
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums text-foreground">
+          <p
+            className={`text-2xl font-bold mt-2 tabular-nums ${
+              balanceSheet.totalAssets >= 25000
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : balanceSheet.totalAssets >= 10000
+                  ? 'text-amber-600 dark:text-amber-400'
+                  : 'text-red-600 dark:text-red-400'
+            }`}
+          >
             {formatZAR(balanceSheet.totalAssets)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
@@ -211,7 +243,13 @@ export function AccountingOverviewClient({
         </div>
 
         {/* Net Profit (GL) */}
-        <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
+        <div
+          className={`rounded-xl border p-5 hover:shadow-md transition-all duration-200 ${
+            isProfitable
+              ? 'border-emerald-500/30 bg-emerald-500/5'
+              : 'border-red-500/35 bg-red-500/5'
+          }`}
+        >
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               {isProfitable ? 'Net Profit (GL)' : 'Net Loss (GL)'}
@@ -242,16 +280,36 @@ export function AccountingOverviewClient({
         </div>
 
         {/* Journal Entries */}
-        <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
+        <div
+          className={`rounded-xl border p-5 hover:shadow-md transition-all duration-200 ${
+            overview.totalDraftEntries === 0
+              ? 'border-emerald-500/30 bg-emerald-500/5'
+              : 'border-amber-500/35 bg-amber-500/5'
+          }`}
+        >
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Journal Entries
             </p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10">
-              <Receipt className="h-4 w-4 text-violet-600" />
+            <div
+              className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                overview.totalDraftEntries === 0 ? 'bg-emerald-500/10' : 'bg-amber-500/10'
+              }`}
+            >
+              <Receipt
+                className={`h-4 w-4 ${
+                  overview.totalDraftEntries === 0 ? 'text-emerald-600' : 'text-amber-600'
+                }`}
+              />
             </div>
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums text-foreground">
+          <p
+            className={`text-2xl font-bold mt-2 tabular-nums ${
+              overview.totalDraftEntries === 0
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-amber-600 dark:text-amber-400'
+            }`}
+          >
             {overview.totalPostedEntries.toLocaleString()}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
@@ -260,7 +318,13 @@ export function AccountingOverviewClient({
         </div>
 
         {/* Reconciliation Integrity */}
-        <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
+        <div
+          className={`rounded-xl border p-5 hover:shadow-md transition-all duration-200 ${
+            isReconciled
+              ? 'border-emerald-500/30 bg-emerald-500/5'
+              : 'border-amber-500/35 bg-amber-500/5'
+          }`}
+        >
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Sub-Ledger Sync

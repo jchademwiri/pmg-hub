@@ -170,29 +170,85 @@ export function FinanceOverviewClient({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="rounded-lg border bg-card p-3.5">
+          <div
+            className={`rounded-lg border p-3.5 ${
+              liquidBalances.cheque < 0
+                ? 'border-red-500/40 bg-red-500/5'
+                : liquidBalances.cheque < 5000
+                  ? 'border-amber-500/35 bg-amber-500/5'
+                  : 'border-emerald-500/30 bg-emerald-500/5'
+            }`}
+          >
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>1010 · Cheque Account</span>
-              <Building2 className="h-3.5 w-3.5 text-blue-500" />
+              <Building2
+                className={`h-3.5 w-3.5 ${
+                  liquidBalances.cheque < 0
+                    ? 'text-red-600'
+                    : liquidBalances.cheque < 5000
+                      ? 'text-amber-600'
+                      : 'text-emerald-600'
+                }`}
+              />
             </div>
-            <p className="text-xl font-bold mt-1.5 tabular-nums text-foreground">
+            <p
+              className={`text-xl font-bold mt-1.5 tabular-nums ${
+                liquidBalances.cheque < 0
+                  ? 'text-red-600 dark:text-red-400'
+                  : liquidBalances.cheque < 5000
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : 'text-emerald-600 dark:text-emerald-400'
+              }`}
+            >
               {formatZAR(liquidBalances.cheque)}
             </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Operational liquidity in bank
+              {liquidBalances.cheque < 0
+                ? 'Danger (Overdrawn) · Operational liquidity'
+                : liquidBalances.cheque < 5000
+                  ? 'Warning (< R5,000) · Operational liquidity'
+                  : 'All good · Operational liquidity in bank'}
             </p>
           </div>
 
-          <div className="rounded-lg border bg-card p-3.5">
+          <div
+            className={`rounded-lg border p-3.5 ${
+              liquidBalances.savings < 10000
+                ? 'border-red-500/40 bg-red-500/5'
+                : liquidBalances.savings < 25000
+                  ? 'border-amber-500/35 bg-amber-500/5'
+                  : 'border-emerald-500/30 bg-emerald-500/5'
+            }`}
+          >
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>1020 · Savings Account</span>
-              <PiggyBank className="h-3.5 w-3.5 text-emerald-500" />
+              <PiggyBank
+                className={`h-3.5 w-3.5 ${
+                  liquidBalances.savings < 10000
+                    ? 'text-red-600'
+                    : liquidBalances.savings < 25000
+                      ? 'text-amber-600'
+                      : 'text-emerald-500'
+                }`}
+              />
             </div>
-            <p className="text-xl font-bold mt-1.5 tabular-nums text-emerald-600 dark:text-emerald-400">
+            <p
+              className={`text-xl font-bold mt-1.5 tabular-nums ${
+                liquidBalances.savings < 10000
+                  ? 'text-red-600 dark:text-red-400'
+                  : liquidBalances.savings < 25000
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : 'text-emerald-600 dark:text-emerald-400'
+              }`}
+            >
               {formatZAR(liquidBalances.savings)}
             </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Physical cash in savings
+              {liquidBalances.savings < 10000
+                ? 'Danger (< R10,000) · Physical cash in savings'
+                : liquidBalances.savings < 25000
+                  ? 'Warning (< R25,000 floor) · Physical cash in savings'
+                  : 'All good (≥ R25,000 floor) · Physical cash in savings'}
               {pendingTransfer > 0 && (
                 <span className="block text-[10px] text-amber-500 font-medium mt-0.5">
                   ({formatZAR(pendingTransfer)} pending transfer from Cheque)
@@ -201,15 +257,45 @@ export function FinanceOverviewClient({
             </p>
           </div>
 
-          <div className="rounded-lg border bg-card p-3.5 bg-primary/5">
+          <div
+            className={`rounded-lg border p-3.5 ${
+              totalLiquidCash < 10000
+                ? 'border-red-500/40 bg-red-500/5'
+                : totalLiquidCash < 25000
+                  ? 'border-amber-500/35 bg-amber-500/5'
+                  : 'border-emerald-500/30 bg-emerald-500/5'
+            }`}
+          >
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Total Liquid Cash</span>
-              <DollarSign className="h-3.5 w-3.5 text-primary" />
+              <DollarSign
+                className={`h-3.5 w-3.5 ${
+                  totalLiquidCash < 10000
+                    ? 'text-red-600'
+                    : totalLiquidCash < 25000
+                      ? 'text-amber-600'
+                      : 'text-emerald-600'
+                }`}
+              />
             </div>
-            <p className="text-xl font-bold mt-1.5 tabular-nums text-primary">
+            <p
+              className={`text-xl font-bold mt-1.5 tabular-nums ${
+                totalLiquidCash < 10000
+                  ? 'text-red-600 dark:text-red-400'
+                  : totalLiquidCash < 25000
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : 'text-emerald-600 dark:text-emerald-400'
+              }`}
+            >
               {formatZAR(totalLiquidCash)}
             </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Combined physical bank cash</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {totalLiquidCash < 10000
+                ? 'Danger (< R10,000) · Combined physical bank cash'
+                : totalLiquidCash < 25000
+                  ? 'Warning (< R25,000 floor) · Combined physical bank cash'
+                  : 'All good (≥ R25,000 floor) · Combined physical bank cash'}
+            </p>
           </div>
         </div>
       </div>
@@ -217,7 +303,13 @@ export function FinanceOverviewClient({
       {/* Core Financial KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Net Profit / Loss */}
-        <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
+        <div
+          className={`rounded-xl border p-5 hover:shadow-md transition-all duration-200 ${
+            isProfitable
+              ? 'border-emerald-500/30 bg-emerald-500/5'
+              : 'border-red-500/35 bg-red-500/5'
+          }`}
+        >
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               {isProfitable ? 'Net Profit' : 'Net Loss'}
@@ -245,7 +337,7 @@ export function FinanceOverviewClient({
         </div>
 
         {/* Total Revenue */}
-        <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-5 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Revenue
@@ -261,48 +353,68 @@ export function FinanceOverviewClient({
         </div>
 
         {/* Total Expenses */}
-        <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Expenses
             </p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10">
-              <Receipt className="h-4 w-4 text-red-600" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
+              <Receipt className="h-4 w-4 text-amber-600" />
             </div>
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums text-red-600">
+          <p className="text-2xl font-bold mt-2 tabular-nums text-amber-600 dark:text-amber-400">
             {formatZAR(selectedPeriod ? profitAndLoss.totalExpenses : summary.expenses)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Total operating costs</p>
         </div>
 
         {/* Accounts Receivable */}
-        <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
+        <div
+          className={`rounded-xl border p-5 hover:shadow-md transition-all duration-200 ${
+            accountsReceivableBalance > 10000
+              ? 'border-amber-500/35 bg-amber-500/5'
+              : 'border-emerald-500/30 bg-emerald-500/5'
+          }`}
+        >
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Accounts Receivable
             </p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
-              <FileText className="h-4 w-4 text-blue-600" />
+            <div
+              className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                accountsReceivableBalance > 10000 ? 'bg-amber-500/10' : 'bg-emerald-500/10'
+              }`}
+            >
+              <FileText
+                className={`h-4 w-4 ${
+                  accountsReceivableBalance > 10000 ? 'text-amber-600' : 'text-emerald-600'
+                }`}
+              />
             </div>
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums text-blue-600">
+          <p
+            className={`text-2xl font-bold mt-2 tabular-nums ${
+              accountsReceivableBalance > 10000
+                ? 'text-amber-600 dark:text-amber-400'
+                : 'text-emerald-600 dark:text-emerald-400'
+            }`}
+          >
             {formatZAR(Math.abs(accountsReceivableBalance))}
           </p>
           <p className="text-xs text-muted-foreground mt-1">1100 · {accountsReceivableLabel}</p>
         </div>
 
         {/* PMG Share */}
-        <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-5 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               PMG Share (25%)
             </p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10">
-              <PieChart className="h-4 w-4 text-purple-600" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
+              <PieChart className="h-4 w-4 text-emerald-600" />
             </div>
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums text-purple-600">
+          <p className="text-2xl font-bold mt-2 tabular-nums text-emerald-600 dark:text-emerald-400">
             {formatZAR(summary.pmgShare)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">25% profit allocation</p>

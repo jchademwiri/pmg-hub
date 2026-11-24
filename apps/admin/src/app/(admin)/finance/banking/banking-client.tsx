@@ -502,7 +502,7 @@ export function BankingClient({
         {/* True Spendable Cash (Hero Card) */}
         <div
           className={`rounded-xl border p-5 shadow-sm ${
-            overview.trueSpendableCash < 0
+            overview.trueSpendableCash < 10000
               ? 'border-red-500/40 bg-red-500/5'
               : overview.trueSpendableCash < policy.minCashReserve
                 ? 'border-amber-500/35 bg-amber-500/5'
@@ -512,7 +512,7 @@ export function BankingClient({
           <div className="flex items-center justify-between">
             <p
               className={`text-xs font-semibold uppercase tracking-wider ${
-                overview.trueSpendableCash < 0
+                overview.trueSpendableCash < 10000
                   ? 'text-red-600 dark:text-red-400'
                   : overview.trueSpendableCash < policy.minCashReserve
                     ? 'text-amber-600 dark:text-amber-400'
@@ -523,7 +523,7 @@ export function BankingClient({
             </p>
             <div
               className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                overview.trueSpendableCash < 0
+                overview.trueSpendableCash < 10000
                   ? 'bg-red-500/10'
                   : overview.trueSpendableCash < policy.minCashReserve
                     ? 'bg-amber-500/10'
@@ -532,7 +532,7 @@ export function BankingClient({
             >
               <Wallet
                 className={`h-4 w-4 ${
-                  overview.trueSpendableCash < 0
+                  overview.trueSpendableCash < 10000
                     ? 'text-red-600'
                     : overview.trueSpendableCash < policy.minCashReserve
                       ? 'text-amber-600'
@@ -543,7 +543,7 @@ export function BankingClient({
           </div>
           <p
             className={`text-2xl font-bold mt-2 tabular-nums ${
-              overview.trueSpendableCash < 0
+              overview.trueSpendableCash < 10000
                 ? 'text-red-600 dark:text-red-400'
                 : overview.trueSpendableCash < policy.minCashReserve
                   ? 'text-amber-600 dark:text-amber-400'
@@ -553,9 +553,11 @@ export function BankingClient({
             {formatZAR(overview.trueSpendableCash)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            {overview.trueSpendableCash < policy.minCashReserve
-              ? `Below ${formatZAR(policy.minCashReserve)} reserve floor · Bank (${formatZAR(overview.totalBankCash)}) − SARS (${formatZAR(Math.max(0, overview.sarsPayableBalance))})`
-              : `Healthy (≥ ${formatZAR(policy.minCashReserve)} floor) · Bank (${formatZAR(overview.totalBankCash)}) − SARS (${formatZAR(Math.max(0, overview.sarsPayableBalance))})`}
+            {overview.trueSpendableCash < 10000
+              ? `Danger (< R10,000) · Bank (${formatZAR(overview.totalBankCash)}) − SARS (${formatZAR(Math.max(0, overview.sarsPayableBalance))})`
+              : overview.trueSpendableCash < policy.minCashReserve
+                ? `Warning (< ${formatZAR(policy.minCashReserve)} floor) · Bank (${formatZAR(overview.totalBankCash)}) − SARS (${formatZAR(Math.max(0, overview.sarsPayableBalance))})`
+                : `All good (≥ ${formatZAR(policy.minCashReserve)} floor) · Bank (${formatZAR(overview.totalBankCash)}) − SARS (${formatZAR(Math.max(0, overview.sarsPayableBalance))})`}
           </p>
         </div>
 
@@ -608,9 +610,9 @@ export function BankingClient({
         {/* 1020 Savings Account */}
         <div
           className={`rounded-xl border p-5 ${
-            overview.savingsBalance < 0
+            overview.savingsBalance < 10000
               ? 'border-red-500/40 bg-red-500/5'
-              : overview.savingsBalance < 10000
+              : overview.savingsBalance < policy.minCashReserve
                 ? 'border-amber-500/35 bg-amber-500/5'
                 : 'border-emerald-500/30 bg-emerald-500/5'
           }`}
@@ -619,9 +621,9 @@ export function BankingClient({
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               1020 · Savings Account
             </p>
-            {overview.savingsBalance < 0 ? (
+            {overview.savingsBalance < 10000 ? (
               <AlertTriangle className="h-4 w-4 text-red-600" />
-            ) : overview.savingsBalance < 10000 ? (
+            ) : overview.savingsBalance < policy.minCashReserve ? (
               <AlertTriangle className="h-4 w-4 text-amber-600" />
             ) : (
               <PiggyBank className="h-4 w-4 text-emerald-500" />
@@ -629,16 +631,22 @@ export function BankingClient({
           </div>
           <p
             className={`text-2xl font-bold mt-2 tabular-nums ${
-              overview.savingsBalance < 0
+              overview.savingsBalance < 10000
                 ? 'text-red-600 dark:text-red-400'
-                : overview.savingsBalance < 10000
+                : overview.savingsBalance < policy.minCashReserve
                   ? 'text-amber-600 dark:text-amber-400'
                   : 'text-emerald-600 dark:text-emerald-400'
             }`}
           >
             {formatZAR(overview.savingsBalance)}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">Emergency &amp; capital reserves</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {overview.savingsBalance < 10000
+              ? 'Danger (< R10,000) · Emergency & capital reserves'
+              : overview.savingsBalance < policy.minCashReserve
+                ? `Warning (< ${formatZAR(policy.minCashReserve)} floor) · Emergency & capital reserves`
+                : `All good (≥ ${formatZAR(policy.minCashReserve)} floor) · Emergency & capital reserves`}
+          </p>
         </div>
 
         {/* 1030 Tax Reserve */}

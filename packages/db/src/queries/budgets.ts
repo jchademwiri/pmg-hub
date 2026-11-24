@@ -107,18 +107,35 @@ export type FiscalYearBudgetOverview = {
  */
 export async function getBudgetVsActualsForFiscalYear(
   fiscalYear: number,
+  todayStr?: string,
 ): Promise<FiscalYearBudgetOverview> {
   const periods = getFiscalYearPeriods(fiscalYear);
+  const currentPeriod = (todayStr ?? new Date().toISOString().slice(0, 10)).slice(0, 7);
+  const elapsedOrCurrentPeriods = periods.filter((p) => p <= currentPeriod);
+  const periodsForLiveGl =
+    elapsedOrCurrentPeriods.length > 0 ? elapsedOrCurrentPeriods : ['__none__'];
 
-  // Auto-seed the planned FY2026/27 (2027 = R100k) or FY2027/28 (2028 = R240k) seasonalized budget once if not yet present
+  // Auto-seed the planned FY2026/27 (2027 = R100k) or FY2027/28 (2028 = R186k, OpEx = R21.6k) seasonalized budget once if not yet present
   if (fiscalYear === 2027 || fiscalYear === 2028) {
     const existingPlan = await db
-      .select({ id: budgetMonthlyPlan.id })
+      .select({ id: budgetMonthlyPlan.id, notes: budgetMonthlyPlan.notes })
       .from(budgetMonthlyPlan)
       .where(eq(budgetMonthlyPlan.fiscalYear, fiscalYear))
       .limit(1)
       .catch(() => []);
-    if (existingPlan.length === 0) {
+    if (
+      existingPlan.length === 0 ||
+      (fiscalYear === 2027 &&
+        existingPlan[0]?.notes ===
+          'Seeded FY2026/27 seasonalized R100k plan (Dec R10k, Jan R4k)') ||
+      (fiscalYear === 2028 &&
+        (existingPlan[0]?.notes ===
+          'Seeded FY2027/28 seasonalized R240k plan from Excel Financial Plan' ||
+          existingPlan[0]?.notes ===
+            'Seeded FY2027/28 seasonalized R186k organic growth plan (+24.8% YoY)' ||
+          existingPlan[0]?.notes ===
+            'Seeded FY2027/28 seasonalized R186k plan (OpEx R21.6k, +24.8% YoY)'))
+    ) {
       await seedSeasonalizedBudgetPlan(fiscalYear).catch(() => {});
     }
   }
@@ -175,7 +192,7 @@ export async function getBudgetVsActualsForFiscalYear(
       .where(
         and(
           eq(journalEntries.status, 'posted'),
-          inArray(journalEntries.period, periods),
+          inArray(journalEntries.period, periodsForLiveGl),
           inArray(chartAccounts.type, ['revenue', 'expense']),
         ),
       )
@@ -193,7 +210,7 @@ export async function getBudgetVsActualsForFiscalYear(
       .where(
         and(
           eq(journalEntries.status, 'posted'),
-          inArray(journalEntries.period, periods),
+          inArray(journalEntries.period, periodsForLiveGl),
           eq(chartAccounts.type, 'revenue'),
         ),
       )
@@ -259,13 +276,22 @@ export async function getBudgetVsActualsForFiscalYear(
     const totalExpenseBudget = expenseBudget + directorSalaryBudget;
     const taxReserveTarget = Number(plan?.taxReserveTarget ?? 0);
 
-    const actualRevenue = isClosed ? Number(snap!.revenue ?? 0) : (glRevByPeriod.get(period) ?? 0);
+    const isFutureUnclosed = !isClosed && period > currentPeriod;
+    const actualRevenue = isClosed
+      ? Number(snap!.revenue ?? 0)
+      : isFutureUnclosed
+        ? 0
+        : (glRevByPeriod.get(period) ?? 0);
     const actualExpenses = isClosed
       ? Number(snap!.expenses ?? 0)
-      : (glExpByPeriod.get(period) ?? 0);
+      : isFutureUnclosed
+        ? 0
+        : (glExpByPeriod.get(period) ?? 0);
 
     const budgetedProfit = revenueTarget - totalExpenseBudget;
     const actualProfit = actualRevenue - actualExpenses;
+    const revenueVariance = isFutureUnclosed ? 0 : actualRevenue - revenueTarget;
+    const expenseVariance = isFutureUnclosed ? 0 : totalExpenseBudget - actualExpenses;
 
     const pDivMap = targetsByPeriod.get(period);
     const divisionTargets = allDivisions.map((d) => ({
@@ -279,12 +305,12 @@ export async function getBudgetVsActualsForFiscalYear(
       isClosed,
       revenueTarget,
       actualRevenue,
-      revenueVariance: actualRevenue - revenueTarget,
+      revenueVariance,
       expenseBudget,
       directorSalaryBudget,
       totalExpenseBudget,
       actualExpenses,
-      expenseVariance: totalExpenseBudget - actualExpenses, // positive = under budget (good)
+      expenseVariance,
       taxReserveTarget,
       budgetedProfit,
       actualProfit,
@@ -444,18 +470,18 @@ const FY2027_MONTHLY_TARGETS: Array<{
   salary: number;
   taxReserve: number;
 }> = [
-  { tes: 5500, aws: 500, pmg: 300, opex: 1600, salary: 0, taxReserve: 500 }, // Mar 2026 (R6,300)
-  { tes: 6500, aws: 550, pmg: 350, opex: 1600, salary: 0, taxReserve: 500 }, // Apr 2026 (R7,400)
-  { tes: 7000, aws: 600, pmg: 400, opex: 1600, salary: 0, taxReserve: 500 }, // May 2026 (R8,000)
-  { tes: 7400, aws: 650, pmg: 450, opex: 1600, salary: 0, taxReserve: 500 }, // Jun 2026 (R8,500)
-  { tes: 7800, aws: 700, pmg: 500, opex: 1600, salary: 0, taxReserve: 500 }, // Jul 2026 (R9,000)
-  { tes: 8300, aws: 700, pmg: 500, opex: 1600, salary: 0, taxReserve: 500 }, // Aug 2026 (R9,500)
-  { tes: 8300, aws: 700, pmg: 500, opex: 1600, salary: 0, taxReserve: 500 }, // Sep 2026 (R9,500)
-  { tes: 8550, aws: 750, pmg: 500, opex: 1600, salary: 0, taxReserve: 500 }, // Oct 2026 (R9,800)
-  { tes: 7000, aws: 600, pmg: 400, opex: 1600, salary: 0, taxReserve: 500 }, // Nov 2026 (R8,000)
-  { tes: 8750, aws: 750, pmg: 500, opex: 1600, salary: 0, taxReserve: 500 }, // Dec 2026 (R10,000 — agreed R8k–R10k before 18 Dec holiday close)
-  { tes: 3500, aws: 300, pmg: 200, opex: 1600, salary: 0, taxReserve: 500 }, // Jan 2027 (R4,000 — agreed slow Jan month)
-  { tes: 8900, aws: 700, pmg: 400, opex: 1600, salary: 0, taxReserve: 500 }, // Feb 2027 (R10,000 — year-end recovery; FY total = R100,000)
+  { tes: 5500, aws: 500, pmg: 300, opex: 1600, salary: 0, taxReserve: 0 }, // Mar 2026 (R6,300)
+  { tes: 6500, aws: 550, pmg: 350, opex: 1600, salary: 0, taxReserve: 0 }, // Apr 2026 (R7,400)
+  { tes: 7000, aws: 600, pmg: 400, opex: 1600, salary: 0, taxReserve: 0 }, // May 2026 (R8,000)
+  { tes: 7400, aws: 650, pmg: 450, opex: 1600, salary: 0, taxReserve: 0 }, // Jun 2026 (R8,500)
+  { tes: 7800, aws: 700, pmg: 500, opex: 1600, salary: 0, taxReserve: 0 }, // Jul 2026 (R9,000)
+  { tes: 8300, aws: 700, pmg: 500, opex: 1600, salary: 0, taxReserve: 0 }, // Aug 2026 (R9,500)
+  { tes: 8300, aws: 700, pmg: 500, opex: 1600, salary: 0, taxReserve: 0 }, // Sep 2026 (R9,500)
+  { tes: 8550, aws: 750, pmg: 500, opex: 1600, salary: 0, taxReserve: 0 }, // Oct 2026 (R9,800)
+  { tes: 7000, aws: 600, pmg: 400, opex: 1600, salary: 0, taxReserve: 0 }, // Nov 2026 (R8,000)
+  { tes: 8750, aws: 750, pmg: 500, opex: 1600, salary: 0, taxReserve: 0 }, // Dec 2026 (R10,000 — agreed R8k–R10k before 18 Dec holiday close)
+  { tes: 3500, aws: 300, pmg: 200, opex: 1600, salary: 0, taxReserve: 0 }, // Jan 2027 (R4,000 — agreed slow Jan month)
+  { tes: 8900, aws: 700, pmg: 400, opex: 1600, salary: 0, taxReserve: 0 }, // Feb 2027 (R10,000 — year-end recovery; FY total = R100,000; 0% SBC tax bracket)
 ];
 
 const FY2028_MONTHLY_TARGETS: Array<{
@@ -466,24 +492,24 @@ const FY2028_MONTHLY_TARGETS: Array<{
   salary: number;
   taxReserve: number;
 }> = [
-  { tes: 18500, aws: 1500, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1220 }, // Mar 2027 (R21,000)
-  { tes: 17000, aws: 1500, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1070 }, // Apr 2027 (R19,500)
-  { tes: 18250, aws: 1500, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1195 }, // May 2027 (R20,750)
-  { tes: 18750, aws: 1500, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1245 }, // Jun 2027 (R21,250)
-  { tes: 19500, aws: 1500, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1320 }, // Jul 2027 (R22,000)
-  { tes: 21000, aws: 1500, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1470 }, // Aug 2027 (R23,500)
-  { tes: 20500, aws: 1500, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1420 }, // Sep 2027 (R23,000)
-  { tes: 22000, aws: 1750, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1595 }, // Oct 2027 (R24,750)
-  { tes: 20500, aws: 1750, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1445 }, // Nov 2027 (R23,250)
-  { tes: 10750, aws: 1250, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 420 }, // Dec 2027 (R13,000)
-  { tes: 5250, aws: 1250, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 0 }, // Jan 2028 (R7,500)
-  { tes: 18000, aws: 1500, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1170 }, // Feb 2028 (R20,500)
+  { tes: 14450, aws: 1250, pmg: 800, opex: 1900, salary: 5000, taxReserve: 0 }, // Mar 2027 (R16,500)
+  { tes: 9200, aws: 800, pmg: 500, opex: 1300, salary: 5000, taxReserve: 0 }, // Apr 2027 (R10,500 — Easter dip)
+  { tes: 10500, aws: 900, pmg: 600, opex: 1500, salary: 5000, taxReserve: 0 }, // May 2027 (R12,000)
+  { tes: 12250, aws: 1050, pmg: 700, opex: 1700, salary: 5000, taxReserve: 0 }, // Jun 2027 (R14,000)
+  { tes: 15750, aws: 1350, pmg: 900, opex: 2100, salary: 5000, taxReserve: 0 }, // Jul 2027 (R18,000)
+  { tes: 21850, aws: 1900, pmg: 1250, opex: 2600, salary: 5000, taxReserve: 0 }, // Aug 2027 (R25,000 — Peak)
+  { tes: 21000, aws: 1800, pmg: 1200, opex: 2500, salary: 5000, taxReserve: 0 }, // Sep 2027 (R24,000 — Peak)
+  { tes: 14000, aws: 1200, pmg: 800, opex: 1900, salary: 5000, taxReserve: 0 }, // Oct 2027 (R16,000)
+  { tes: 14850, aws: 1300, pmg: 850, opex: 2000, salary: 5000, taxReserve: 0 }, // Nov 2027 (R17,000)
+  { tes: 9650, aws: 800, pmg: 550, opex: 1300, salary: 5000, taxReserve: 200 }, // Dec 2027 (R11,000 — Early close)
+  { tes: 5700, aws: 500, pmg: 300, opex: 1000, salary: 5000, taxReserve: 100 }, // Jan 2028 (R6,500 — Holiday dip)
+  { tes: 13550, aws: 1150, pmg: 800, opex: 1800, salary: 5000, taxReserve: 490 }, // Feb 2028 (R15,500 — Recovery; FY Total = R186,000, OpEx = R21,600, SBC/DWT Tax = R790)
 ];
 
 /**
- * Seeds the seasonalized annual budget plan from PMG_FY2027_28_Financial_Plan.xlsx:
+ * Seeds the seasonalized annual budget plan:
  * - FY2026/27 (2027): R100,000 (TES R87,500 | AWS R7,500 | PMG R5,000), Dec R10,000, Jan R4,000, Feb R10,000
- * - FY2027/28 (2028): R240,000 (TES R210,000 | AWS R18,000 | PMG R12,000) matching Sheet 2 of the Excel Financial Plan
+ * - FY2027/28 (2028): R186,000 Option 2 Organic Growth Plan (TES R162,750 | AWS R14,000 | PMG R9,250)
  */
 export async function seedSeasonalizedBudgetPlan(fiscalYear: number) {
   const periods = getFiscalYearPeriods(fiscalYear);
@@ -496,8 +522,8 @@ export async function seedSeasonalizedBudgetPlan(fiscalYear: number) {
   const isFy2027 = fiscalYear === 2027;
   const schedule = isFy2027 ? FY2027_MONTHLY_TARGETS : FY2028_MONTHLY_TARGETS;
   const PLAN_NOTE = isFy2027
-    ? 'Seeded FY2026/27 seasonalized R100k plan (Dec R10k, Jan R4k)'
-    : 'Seeded FY2027/28 seasonalized R240k plan from Excel Financial Plan';
+    ? 'Seeded FY2026/27 seasonalized R100k plan (0% SBC tax bracket)'
+    : 'Seeded FY2027/28 seasonalized R186k plan (OpEx R21.6k, SBC calibrated)';
 
   for (let i = 0; i < periods.length; i++) {
     const period = periods[i]!;

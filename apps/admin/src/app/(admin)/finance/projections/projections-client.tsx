@@ -182,30 +182,73 @@ export function ProjectionsClient({
       </div>
 
       {activeTab === 'dividends' ? (
-        <DividendsTab governance={governance} label={overview.label} today={today} />
+        <DividendsTab
+          governance={governance}
+          overview={overview}
+          label={overview.label}
+          today={today}
+        />
       ) : activeTab === 'tax' ? (
         <TaxProvisionTab governance={governance} label={overview.label} today={today} />
       ) : (
         <>
           {/* 4 Executive KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="rounded-xl border bg-card p-5 shadow-sm">
+            <div
+              className={`rounded-xl border p-5 shadow-sm ${
+                totals.revenueAttainmentPercent >= 80
+                  ? 'border-emerald-500/30 bg-emerald-500/5'
+                  : totals.revenueAttainmentPercent >= 40 || totals.actualRevenue === 0
+                    ? 'border-amber-500/35 bg-amber-500/5'
+                    : 'border-red-500/35 bg-red-500/5'
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Revenue Attainment
                 </p>
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
-                  <Target className="h-4 w-4 text-emerald-600" />
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                    totals.revenueAttainmentPercent >= 80
+                      ? 'bg-emerald-500/10'
+                      : totals.revenueAttainmentPercent >= 40 || totals.actualRevenue === 0
+                        ? 'bg-amber-500/10'
+                        : 'bg-red-500/10'
+                  }`}
+                >
+                  <Target
+                    className={`h-4 w-4 ${
+                      totals.revenueAttainmentPercent >= 80
+                        ? 'text-emerald-600'
+                        : totals.revenueAttainmentPercent >= 40 || totals.actualRevenue === 0
+                          ? 'text-amber-600'
+                          : 'text-red-600'
+                    }`}
+                  />
                 </div>
               </div>
-              <p className="text-2xl font-bold mt-2 tabular-nums text-emerald-600">
+              <p
+                className={`text-2xl font-bold mt-2 tabular-nums ${
+                  totals.revenueAttainmentPercent >= 80
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : totals.revenueAttainmentPercent >= 40 || totals.actualRevenue === 0
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : 'text-red-600 dark:text-red-400'
+                }`}
+              >
                 {formatZAR(totals.actualRevenue)}
               </p>
               <div className="mt-2 space-y-1">
                 <Progress
                   value={Math.min(100, totals.revenueAttainmentPercent)}
                   className="h-1.5"
-                  indicatorClassName="bg-emerald-500"
+                  indicatorClassName={
+                    totals.revenueAttainmentPercent >= 80
+                      ? 'bg-emerald-500'
+                      : totals.revenueAttainmentPercent >= 40 || totals.actualRevenue === 0
+                        ? 'bg-amber-500'
+                        : 'bg-red-500'
+                  }
                 />
                 <p className="text-xs text-muted-foreground">
                   {totals.revenueAttainmentPercent.toFixed(1)}% of {formatZAR(totals.revenueTarget)}{' '}
@@ -214,16 +257,48 @@ export function ProjectionsClient({
               </div>
             </div>
 
-            <div className="rounded-xl border bg-card p-5 shadow-sm">
+            <div
+              className={`rounded-xl border p-5 shadow-sm ${
+                totals.actualExpenses <= totals.totalExpenseBudget
+                  ? 'border-emerald-500/30 bg-emerald-500/5'
+                  : totals.actualExpenses <= totals.totalExpenseBudget * 1.15
+                    ? 'border-amber-500/35 bg-amber-500/5'
+                    : 'border-red-500/35 bg-red-500/5'
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Spend vs Budget
                 </p>
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10">
-                  <Receipt className="h-4 w-4 text-red-600" />
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                    totals.actualExpenses <= totals.totalExpenseBudget
+                      ? 'bg-emerald-500/10'
+                      : totals.actualExpenses <= totals.totalExpenseBudget * 1.15
+                        ? 'bg-amber-500/10'
+                        : 'bg-red-500/10'
+                  }`}
+                >
+                  <Receipt
+                    className={`h-4 w-4 ${
+                      totals.actualExpenses <= totals.totalExpenseBudget
+                        ? 'text-emerald-600'
+                        : totals.actualExpenses <= totals.totalExpenseBudget * 1.15
+                          ? 'text-amber-600'
+                          : 'text-red-600'
+                    }`}
+                  />
                 </div>
               </div>
-              <p className="text-2xl font-bold mt-2 tabular-nums text-foreground">
+              <p
+                className={`text-2xl font-bold mt-2 tabular-nums ${
+                  totals.actualExpenses <= totals.totalExpenseBudget
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : totals.actualExpenses <= totals.totalExpenseBudget * 1.15
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : 'text-red-600 dark:text-red-400'
+                }`}
+              >
                 {formatZAR(totals.actualExpenses)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
@@ -232,18 +307,34 @@ export function ProjectionsClient({
               </p>
             </div>
 
-            <div className="rounded-xl border bg-card p-5 shadow-sm">
+            <div
+              className={`rounded-xl border p-5 shadow-sm ${
+                totals.actualProfit < 0
+                  ? 'border-red-500/35 bg-red-500/5'
+                  : totals.actualProfit === 0
+                    ? 'border-amber-500/35 bg-amber-500/5'
+                    : 'border-emerald-500/30 bg-emerald-500/5'
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Net Profit (Actual vs Plan)
                 </p>
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                    isProfitable ? 'bg-emerald-500/10' : 'bg-red-500/10'
+                    totals.actualProfit < 0
+                      ? 'bg-red-500/10'
+                      : totals.actualProfit === 0
+                        ? 'bg-amber-500/10'
+                        : 'bg-emerald-500/10'
                   }`}
                 >
-                  {isProfitable ? (
-                    <TrendingUp className="h-4 w-4 text-emerald-600" />
+                  {totals.actualProfit >= 0 ? (
+                    <TrendingUp
+                      className={`h-4 w-4 ${
+                        totals.actualProfit === 0 ? 'text-amber-600' : 'text-emerald-600'
+                      }`}
+                    />
                   ) : (
                     <TrendingDown className="h-4 w-4 text-red-600" />
                   )}
@@ -251,7 +342,11 @@ export function ProjectionsClient({
               </div>
               <p
                 className={`text-2xl font-bold mt-2 tabular-nums ${
-                  isProfitable ? 'text-emerald-600' : 'text-red-600'
+                  totals.actualProfit < 0
+                    ? 'text-red-600 dark:text-red-400'
+                    : totals.actualProfit === 0
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : 'text-emerald-600 dark:text-emerald-400'
                 }`}
               >
                 {formatZAR(totals.actualProfit)}
@@ -261,20 +356,45 @@ export function ProjectionsClient({
               </p>
             </div>
 
-            <div className="rounded-xl border bg-card p-5 shadow-sm">
+            <div
+              className={`rounded-xl border p-5 shadow-sm ${
+                governance.tax.remainingProvisionNeeded === 0
+                  ? 'border-emerald-500/30 bg-emerald-500/5'
+                  : 'border-amber-500/35 bg-amber-500/5'
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Tax Reserve Target
+                  Tax Reserve (Actual vs Plan)
                 </p>
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10">
-                  <Landmark className="h-4 w-4 text-indigo-600" />
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                    governance.tax.remainingProvisionNeeded === 0
+                      ? 'bg-emerald-500/10'
+                      : 'bg-amber-500/10'
+                  }`}
+                >
+                  <Landmark
+                    className={`h-4 w-4 ${
+                      governance.tax.remainingProvisionNeeded === 0
+                        ? 'text-emerald-600'
+                        : 'text-amber-600'
+                    }`}
+                  />
                 </div>
               </div>
-              <p className="text-2xl font-bold mt-2 tabular-nums text-indigo-600 dark:text-indigo-400">
-                {formatZAR(totals.taxReserveTarget)}
+              <p
+                className={`text-2xl font-bold mt-2 tabular-nums ${
+                  governance.tax.remainingProvisionNeeded === 0
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-amber-600 dark:text-amber-400'
+                }`}
+              >
+                {formatZAR(governance.tax.alreadyProvisionedTax)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Annual ring-fenced SARS &amp; IRP6 reserve
+                Est. tax: {formatZAR(governance.tax.activeEstimatedTax)} · Planned target:{' '}
+                {formatZAR(totals.taxReserveTarget)}
               </p>
             </div>
           </div>
@@ -340,10 +460,10 @@ export function ProjectionsClient({
                     <TableHead>Month</TableHead>
                     <TableHead className="text-right">Rev Target</TableHead>
                     <TableHead className="text-right">Rev Actual</TableHead>
-                    <TableHead className="text-right">Rev Variance</TableHead>
-                    <TableHead className="text-right">Exp Budget</TableHead>
+                    <TableHead className="text-right">OpEx Budget</TableHead>
+                    <TableHead className="text-right">Base Salary</TableHead>
                     <TableHead className="text-right">Exp Actual</TableHead>
-                    <TableHead className="text-right">Net Profit</TableHead>
+                    <TableHead className="text-right">Net Profit Added</TableHead>
                     <TableHead className="w-16 text-right">Edit</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -392,26 +512,11 @@ export function ProjectionsClient({
                             formatZAR(m.actualRevenue)
                           )}
                         </TableCell>
-                        <TableCell
-                          className={`text-right tabular-nums text-xs font-medium ${
-                            isUpcoming
-                              ? 'text-muted-foreground'
-                              : m.revenueVariance >= 0
-                                ? 'text-emerald-600'
-                                : 'text-amber-600'
-                          }`}
-                        >
-                          {isUpcoming ? (
-                            '—'
-                          ) : (
-                            <>
-                              {m.revenueVariance >= 0 ? '+' : '−'}
-                              {formatZAR(Math.abs(m.revenueVariance))}
-                            </>
-                          )}
+                        <TableCell className="text-right tabular-nums text-muted-foreground">
+                          {formatZAR(m.expenseBudget)}
                         </TableCell>
                         <TableCell className="text-right tabular-nums text-muted-foreground">
-                          {formatZAR(m.totalExpenseBudget)}
+                          {formatZAR(m.directorSalaryBudget)}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
                           {isUpcoming ? (
@@ -450,32 +555,29 @@ export function ProjectionsClient({
 
                   {/* Totals Row */}
                   <TableRow className="bg-muted/40 font-semibold">
-                    <TableCell>{overview.label} Total</TableCell>
+                    <TableCell>{overview.label} Total (YTD Actual vs Plan)</TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatZAR(totals.revenueTarget)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatZAR(totals.actualRevenue)}
                     </TableCell>
-                    <TableCell
-                      className={`text-right tabular-nums ${
-                        totals.actualRevenue - totals.revenueTarget >= 0
-                          ? 'text-emerald-600'
-                          : 'text-amber-600'
-                      }`}
-                    >
-                      {totals.actualRevenue - totals.revenueTarget >= 0 ? '+' : '−'}
-                      {formatZAR(Math.abs(totals.actualRevenue - totals.revenueTarget))}
+                    <TableCell className="text-right tabular-nums">
+                      {formatZAR(totals.expenseBudget)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatZAR(totals.totalExpenseBudget)}
+                      {formatZAR(totals.directorSalaryBudget)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatZAR(totals.actualExpenses)}
                     </TableCell>
                     <TableCell
                       className={`text-right tabular-nums ${
-                        totals.actualProfit >= 0 ? 'text-emerald-600' : 'text-red-600'
+                        totals.actualProfit > 0
+                          ? 'text-emerald-600'
+                          : totals.actualProfit < 0
+                            ? 'text-red-600'
+                            : 'text-muted-foreground'
                       }`}
                     >
                       {formatZAR(totals.actualProfit)}
