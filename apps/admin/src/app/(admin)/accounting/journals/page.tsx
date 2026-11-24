@@ -32,9 +32,11 @@ export default async function JournalsPage({
   const { currentMonths, previousYearGroup } = generateFinancialYearGroups();
   const [currentYear, currentMonth] = currentMonthStr.split('-').map(Number);
 
-  const [currentMonthResult] = await Promise.all([
+  const [currentMonthResult, allPeriods] = await Promise.all([
     getJournalEntries({ period: currentMonthStr, status: params.status, page: 1, pageSize: 5000 }),
+    getAllAccountingPeriods(),
   ]);
+  const closedPeriods = allPeriods.filter((p) => p.status !== 'open').map((p) => p.period);
 
   const fyStartYear = currentMonth <= 2 ? currentYear - 1 : currentYear;
 
@@ -151,6 +153,7 @@ export default async function JournalsPage({
           <AccordionContent className="pt-2 pb-6">
             <JournalsTable
               entries={currentMonthResult.data}
+              closedPeriods={closedPeriods}
               postAction={postJournalEntry}
               voidAction={voidJournalEntry}
             />
@@ -195,6 +198,7 @@ export default async function JournalsPage({
                   year={m.year}
                   month={m.month}
                   status={params.status}
+                  closedPeriods={closedPeriods}
                   postAction={postJournalEntry}
                   voidAction={voidJournalEntry}
                 />
@@ -216,6 +220,7 @@ export default async function JournalsPage({
               <LazyJournalsTable
                 year={previousYearGroup.year}
                 status={params.status}
+                closedPeriods={closedPeriods}
                 postAction={postJournalEntry}
                 voidAction={voidJournalEntry}
               />

@@ -10,11 +10,19 @@ interface Props {
   year: number;
   month?: number;
   status?: string;
+  closedPeriods?: string[];
   postAction: (id: string) => Promise<{ error?: string }>;
   voidAction: (id: string, reason: string) => Promise<{ error?: string }>;
 }
 
-export function LazyJournalsTable({ year, month, status, postAction, voidAction }: Props) {
+export function LazyJournalsTable({
+  year,
+  month,
+  status,
+  closedPeriods = [],
+  postAction,
+  voidAction,
+}: Props) {
   const [data, setData] = useState<any[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshCounter, setRefreshCounter] = useState(0);
@@ -71,6 +79,11 @@ export function LazyJournalsTable({ year, month, status, postAction, voidAction 
   };
 
   return (
-    <JournalsTable entries={data} postAction={wrappedPostAction} voidAction={wrappedVoidAction} />
+    <JournalsTable
+      entries={data}
+      closedPeriods={closedPeriods}
+      postAction={wrappedPostAction}
+      voidAction={wrappedVoidAction}
+    />
   );
 }

@@ -943,16 +943,27 @@ export function DividendsTab({
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        disabled={isPending}
-                        onClick={() => setVoidTarget(p)}
-                        className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-500/10"
-                      >
-                        <Trash2 className="size-3.5 mr-1" /> Void
-                      </Button>
+                      {overview.months.some(
+                        (m) => m.period === p.payoutDate.slice(0, 7) && m.isClosed,
+                      ) ? (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
+                          title={`Period ${p.payoutDate.slice(0, 7)} is closed — payout cannot be voided`}
+                        >
+                          Closed
+                        </span>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={isPending}
+                          onClick={() => setVoidTarget(p)}
+                          className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-500/10"
+                        >
+                          <Trash2 className="size-3.5 mr-1" /> Void
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
