@@ -17,6 +17,8 @@ export type PeriodSummary = {
   expenses: number;
   pmgShare: number;
   profitPool: number;
+  /** Posted 5120 Director Remuneration for the period (from GL, separate from OpEx) */
+  directorRemuneration?: number;
 };
 
 export async function getTotalRevenue(): Promise<number> {
@@ -29,7 +31,8 @@ export async function getTotalRevenue(): Promise<number> {
 export async function getTotalExpenses(): Promise<number> {
   const result = await db
     .select({ total: sql<string>`COALESCE(SUM(${expenses.amount}), '0')` })
-    .from(expenses);
+    .from(expenses)
+    .where(sql`LOWER(COALESCE(${expenses.category}, '')) <> 'director salary'`);
   return Number(result[0]!.total);
 }
 
@@ -64,6 +67,7 @@ export async function getExpensesByDivision(): Promise<
     })
     .from(expenses)
     .innerJoin(divisions, eq(expenses.divisionId, divisions.id))
+    .where(sql`LOWER(COALESCE(${expenses.category}, '')) <> 'director salary'`)
     .groupBy(divisions.id, divisions.name)
     .orderBy(desc(sql`SUM(${expenses.amount})`));
   return result.map((row) => ({
@@ -107,7 +111,9 @@ export async function getMonthlyFinancials(): Promise<
     ),
     exp AS (
       SELECT TO_CHAR(date::date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS expenses
-      FROM expenses WHERE EXTRACT(YEAR FROM (date::date - INTERVAL '2 months'))::int = EXTRACT(YEAR FROM (timezone('Africa/Johannesburg', now()) - INTERVAL '2 months'))::int
+      FROM expenses
+      WHERE EXTRACT(YEAR FROM (date::date - INTERVAL '2 months'))::int = EXTRACT(YEAR FROM (timezone('Africa/Johannesburg', now()) - INTERVAL '2 months'))::int
+        AND LOWER(COALESCE(category, '')) <> 'director salary'
       GROUP BY TO_CHAR(date::date, 'YYYY-MM')
     )
     SELECT COALESCE(rev.month, exp.month) AS month,
@@ -157,6 +163,7 @@ export async function getMoMSnapshot(): Promise<{
                          AND date <  DATE_TRUNC('month', timezone('Africa/Johannesburg', now()))
                          THEN amount END), 0) AS previous_expenses
     FROM expenses
+    WHERE LOWER(COALESCE(category, '')) <> 'director salary'
   `);
   const inc = result.rows[0] as { current_revenue: string; previous_revenue: string };
   const exp = expResult.rows[0] as { current_expenses: string; previous_expenses: string };
@@ -184,9 +191,27 @@ export async function getFinancialSummaryForPeriod(
     SELECT COALESCE(SUM(amount), 0) AS total
     FROM expenses
     WHERE date >= ${sql.raw(startExpr)} AND date < ${sql.raw(endExpr)}
+      AND LOWER(COALESCE(category, '')) <> 'director salary'
   `);
+  const dirRemResult = await db
+    .execute(
+      sql`
+      SELECT COALESCE(SUM(COALESCE(jl.debit::numeric, 0) - COALESCE(jl.credit::numeric, 0)), 0) AS total
+      FROM journal_lines jl
+      INNER JOIN journal_entries je ON je.id = jl.journal_entry_id
+      INNER JOIN chart_accounts ca ON ca.id = jl.account_id
+      WHERE je.status = 'posted'
+        AND ca.code = '5120'
+        AND je.entry_date::date >= (${sql.raw(startExpr)})::date
+        AND je.entry_date::date < (${sql.raw(endExpr)})::date
+    `,
+    )
+    .catch(() => ({ rows: [{ total: '0' }] }));
   const revenue = Number((revResult.rows[0] as { total: string }).total);
   const expTotal = Number((expResult.rows[0] as { total: string }).total);
+  const directorRemuneration = Number(
+    (dirRemResult.rows[0] as { total?: string } | undefined)?.total ?? '0',
+  );
   const actualProfit = revenue - expTotal;
   const pmgShare = Math.max(0, actualProfit) * effectiveRates.pmg_share;
   const profitPool = actualProfit;
@@ -195,6 +220,7 @@ export async function getFinancialSummaryForPeriod(
     expenses: expTotal,
     pmgShare,
     profitPool,
+    directorRemuneration,
   };
 }
 
@@ -288,6 +314,7 @@ export async function getMonthlyFinancialsForYear(
       SELECT TO_CHAR(date::date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS expenses
       FROM expenses
       WHERE EXTRACT(YEAR FROM (date::date - INTERVAL '2 months'))::int = ${Number(year)}
+        AND LOWER(COALESCE(category, '')) <> 'director salary'
       GROUP BY TO_CHAR(date::date, 'YYYY-MM')
     )
     SELECT COALESCE(rev.month, exp.month) AS month,

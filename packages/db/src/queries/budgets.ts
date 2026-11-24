@@ -54,7 +54,12 @@ export type BudgetMonthRow = {
   expenseBudget: number;
   directorSalaryBudget: number;
   totalExpenseBudget: number;
+  /** Total GL expenses (OpEx + Director Remuneration + Tax) */
   actualExpenses: number;
+  /** Operating expenses only — excludes 5120 Director Remuneration and 5160 Income Tax */
+  actualOpex: number;
+  /** 5120 Staff Costs & Director Remuneration posted in this period */
+  actualDirectorRemuneration: number;
   expenseVariance: number;
   taxReserveTarget: number;
   budgetedProfit: number;
@@ -94,6 +99,8 @@ export type FiscalYearBudgetOverview = {
     directorSalaryBudget: number;
     totalExpenseBudget: number;
     actualExpenses: number;
+    actualOpex: number;
+    actualDirectorRemuneration: number;
     taxReserveTarget: number;
     budgetedProfit: number;
     actualProfit: number;
@@ -183,6 +190,7 @@ export async function getBudgetVsActualsForFiscalYear(
       .select({
         period: journalEntries.period,
         accountType: chartAccounts.type,
+        accountCode: chartAccounts.code,
         totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`,
         totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
       })
@@ -196,7 +204,7 @@ export async function getBudgetVsActualsForFiscalYear(
           inArray(chartAccounts.type, ['revenue', 'expense']),
         ),
       )
-      .groupBy(journalEntries.period, chartAccounts.type)
+      .groupBy(journalEntries.period, chartAccounts.type, chartAccounts.code)
       .catch(() => []),
     db
       .select({
@@ -235,16 +243,24 @@ export async function getBudgetVsActualsForFiscalYear(
   const snapByPeriod = new Map(snapshotRows.map((s) => [s.period, s]));
   const divNameMap = new Map(allDivisions.map((d) => [d.id, d.name]));
 
-  // Live GL actuals per period
+  // Live GL actuals per period (split into OpEx vs 5120 Director Remuneration vs Total)
   const glRevByPeriod = new Map<string, number>();
   const glExpByPeriod = new Map<string, number>();
+  const glOpexByPeriod = new Map<string, number>();
+  const glDirectorRemByPeriod = new Map<string, number>();
   for (const r of glMonthlyRows) {
     const debits = Number(r.totalDebits || 0);
     const credits = Number(r.totalCredits || 0);
     if (r.accountType === 'revenue') {
       glRevByPeriod.set(r.period, (glRevByPeriod.get(r.period) ?? 0) + (credits - debits));
     } else if (r.accountType === 'expense') {
-      glExpByPeriod.set(r.period, (glExpByPeriod.get(r.period) ?? 0) + (debits - credits));
+      const amt = debits - credits;
+      glExpByPeriod.set(r.period, (glExpByPeriod.get(r.period) ?? 0) + amt);
+      if (r.accountCode === '5120') {
+        glDirectorRemByPeriod.set(r.period, (glDirectorRemByPeriod.get(r.period) ?? 0) + amt);
+      } else if (r.accountCode !== '5160') {
+        glOpexByPeriod.set(r.period, (glOpexByPeriod.get(r.period) ?? 0) + amt);
+      }
     }
   }
 
@@ -282,11 +298,19 @@ export async function getBudgetVsActualsForFiscalYear(
       : isFutureUnclosed
         ? 0
         : (glRevByPeriod.get(period) ?? 0);
+    const actualDirectorRemuneration = isFutureUnclosed
+      ? 0
+      : (glDirectorRemByPeriod.get(period) ?? 0);
     const actualExpenses = isClosed
       ? Number(snap!.expenses ?? 0)
       : isFutureUnclosed
         ? 0
         : (glExpByPeriod.get(period) ?? 0);
+    const actualOpex = isClosed
+      ? Math.max(0, Number(snap!.expenses ?? 0) - actualDirectorRemuneration)
+      : isFutureUnclosed
+        ? 0
+        : (glOpexByPeriod.get(period) ?? 0);
 
     const budgetedProfit = revenueTarget - totalExpenseBudget;
     const actualProfit = actualRevenue - actualExpenses;
@@ -310,6 +334,8 @@ export async function getBudgetVsActualsForFiscalYear(
       directorSalaryBudget,
       totalExpenseBudget,
       actualExpenses,
+      actualOpex,
+      actualDirectorRemuneration,
       expenseVariance,
       taxReserveTarget,
       budgetedProfit,
@@ -327,6 +353,8 @@ export async function getBudgetVsActualsForFiscalYear(
       directorSalaryBudget: acc.directorSalaryBudget + m.directorSalaryBudget,
       totalExpenseBudget: acc.totalExpenseBudget + m.totalExpenseBudget,
       actualExpenses: acc.actualExpenses + m.actualExpenses,
+      actualOpex: acc.actualOpex + m.actualOpex,
+      actualDirectorRemuneration: acc.actualDirectorRemuneration + m.actualDirectorRemuneration,
       taxReserveTarget: acc.taxReserveTarget + m.taxReserveTarget,
       budgetedProfit: acc.budgetedProfit + m.budgetedProfit,
       actualProfit: acc.actualProfit + m.actualProfit,
@@ -338,6 +366,8 @@ export async function getBudgetVsActualsForFiscalYear(
       directorSalaryBudget: 0,
       totalExpenseBudget: 0,
       actualExpenses: 0,
+      actualOpex: 0,
+      actualDirectorRemuneration: 0,
       taxReserveTarget: 0,
       budgetedProfit: 0,
       actualProfit: 0,

@@ -110,6 +110,7 @@ function Sparkline({
 type KpiCardProps = {
   label: string;
   value: number;
+  subtitle?: string;
   delta?: Delta;
   invertDelta?: boolean;
   highlight?: 'danger' | 'success';
@@ -122,6 +123,7 @@ type KpiCardProps = {
 function KpiCard({
   label,
   value,
+  subtitle,
   delta,
   invertDelta,
   highlight,
@@ -170,6 +172,11 @@ function KpiCard({
               invertDelta={invertDelta}
               label={deltaLabel}
             />
+          )}
+          {subtitle && (
+            <span className="text-[11px] text-muted-foreground tabular-nums truncate">
+              {subtitle}
+            </span>
           )}
         </div>
         {sparklineData && sparklineData.length > 0 && (
@@ -231,8 +238,13 @@ export function KpiGrid({
           textColorClass="text-emerald-600"
         />
         <KpiCard
-          label="Total Profit"
+          label="Operating Profit"
           value={summary.profitPool}
+          subtitle={
+            (summary.directorRemuneration ?? 0) > 0
+              ? `After Director Pay: ${formatZAR(summary.profitPool - (summary.directorRemuneration ?? 0))}`
+              : undefined
+          }
           delta={deltas?.profit ?? undefined}
           highlight={summary.profitPool < 0 ? 'danger' : 'success'}
           deltaLabel={deltaLabel}
@@ -242,8 +254,13 @@ export function KpiGrid({
         />
         <div className={`col-span-1 ${showAll ? 'block' : 'hidden lg:block'}`}>
           <KpiCard
-            label="Total Expenses"
+            label="Operating Expenses"
             value={summary.expenses}
+            subtitle={
+              (summary.directorRemuneration ?? 0) > 0
+                ? `Excl. ${formatZAR(summary.directorRemuneration ?? 0)} Director Pay`
+                : undefined
+            }
             delta={deltas?.expenses ?? undefined}
             invertDelta
             deltaLabel={deltaLabel}

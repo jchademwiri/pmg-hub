@@ -1011,6 +1011,17 @@ export type ProfitAndLossResult = {
   totalRevenue: number;
   expenses: ProfitAndLossRow[];
   totalExpenses: number;
+  /** Operating expenses excluding 5120 Director Remuneration and 5160 Income Tax */
+  operatingExpenses: ProfitAndLossRow[];
+  totalOperatingExpenses: number;
+  /** Operating Profit (EBIT / Before Director Pay & Tax) = totalRevenue - totalOperatingExpenses */
+  operatingProfit: number;
+  /** 5120 Staff Costs & Director Remuneration */
+  directorRemuneration: number;
+  /** Net Profit Before Tax = operatingProfit - directorRemuneration */
+  netProfitBeforeTax: number;
+  /** 5160 Income Tax Expense */
+  incomeTaxExpense: number;
   netProfit: number;
 };
 
@@ -1169,13 +1180,28 @@ export async function getProfitAndLoss(
 
   const totalRevenue = revenue.reduce((s, r) => s + r.amount, 0);
   const totalExpenses = expenses.reduce((s, r) => s + r.amount, 0);
+  const operatingExpenses = expenses.filter(
+    (e) => e.accountCode !== '5120' && e.accountCode !== '5160',
+  );
+  const totalOperatingExpenses = operatingExpenses.reduce((s, r) => s + r.amount, 0);
+  const directorRemuneration = expenses.find((e) => e.accountCode === '5120')?.amount ?? 0;
+  const incomeTaxExpense = expenses.find((e) => e.accountCode === '5160')?.amount ?? 0;
+  const operatingProfit = totalRevenue - totalOperatingExpenses;
+  const netProfitBeforeTax = operatingProfit - directorRemuneration;
+  const netProfit = totalRevenue - totalExpenses;
 
   return {
     revenue,
     totalRevenue,
     expenses,
     totalExpenses,
-    netProfit: totalRevenue - totalExpenses,
+    operatingExpenses,
+    totalOperatingExpenses,
+    operatingProfit,
+    directorRemuneration,
+    netProfitBeforeTax,
+    incomeTaxExpense,
+    netProfit,
   };
 }
 

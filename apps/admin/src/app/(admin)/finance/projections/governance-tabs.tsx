@@ -13,6 +13,7 @@ import {
   Receipt,
   Settings2,
   ShieldCheck,
+  Trash2,
   Wallet,
   XCircle,
 } from 'lucide-react';
@@ -49,11 +50,21 @@ import {
   postTaxProvision,
   recordQuarterlyDistribution,
   saveDividendPolicy,
+  voidQuarterlyDistribution,
 } from '@/actions/finance/governance';
 import { formatZAR, fmtDate } from '@/lib/format';
 import type { FiscalYearBudgetOverview, GovernanceOverviewResult } from '@pmg/db';
 
 const VAT_LIMIT = 1_000_000;
+
+/** Maps an ISO date (YYYY-MM-DD) to its South African fiscal quarter (Mar–Feb). */
+export function getFiscalQuarterFromDate(isoDate: string): 'Q1' | 'Q2' | 'Q3' | 'Q4' {
+  const month = parseInt(isoDate.slice(5, 7), 10);
+  if (month >= 3 && month <= 5) return 'Q1';
+  if (month >= 6 && month <= 8) return 'Q2';
+  if (month >= 9 && month <= 11) return 'Q3';
+  return 'Q4';
+}
 
 export function DividendsTab({
   governance,
@@ -70,6 +81,9 @@ export function DividendsTab({
   const [isPending, startTransition] = React.useTransition();
   const [policyOpen, setPolicyOpen] = React.useState(false);
   const [payoutOpen, setPayoutOpen] = React.useState(false);
+  const [voidTarget, setVoidTarget] = React.useState<
+    GovernanceOverviewResult['payouts'][number] | null
+  >(null);
 
   const { policy, gates, payouts } = governance;
 
@@ -80,8 +94,10 @@ export function DividendsTab({
   const [dwtRate, setDwtRate] = React.useState(String(policy.dwtRatePercent));
   const [isSbc, setIsSbc] = React.useState(policy.isSbcQualified);
 
-  // Payout form
-  const [quarter, setQuarter] = React.useState<'Q1' | 'Q2' | 'Q3' | 'Q4'>('Q1');
+  // Payout form (defaults to the active SA fiscal quarter based on today)
+  const [quarter, setQuarter] = React.useState<'Q1' | 'Q2' | 'Q3' | 'Q4'>(() =>
+    getFiscalQuarterFromDate(today),
+  );
   const [payoutDate, setPayoutDate] = React.useState(today);
   const [payoutType, setPayoutType] = React.useState<'director_bonus' | 'dividend'>(
     gates.recommendedPayoutType,
@@ -186,6 +202,7 @@ export function DividendsTab({
               ).toFixed(2),
             ),
           );
+    setQuarter(getFiscalQuarterFromDate(today));
     setAccountCode(recAcct);
     setPayoutType(recType);
     setGrossAmount(String(recPrefill));
@@ -275,6 +292,23 @@ export function DividendsTab({
       setPayoutOpen(false);
       setSolvencySignedOff(false);
       setNotes('');
+      router.refresh();
+    });
+  }
+
+  function handleConfirmVoidPayout() {
+    if (!voidTarget) return;
+    startTransition(async () => {
+      const res = await voidQuarterlyDistribution({
+        payoutId: voidTarget.id,
+        reason: `Voided ${voidTarget.quarter} ${voidTarget.payoutType === 'director_bonus' ? '0% PAYE Bonus' : 'Dividend'} from Governance Audit Log`,
+      });
+      if (res.error) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success('Distribution voided and reversed in the General Ledger.');
+      setVoidTarget(null);
       router.refresh();
     });
   }
@@ -488,13 +522,15 @@ export function DividendsTab({
           const plannedSalary = q.slice.reduce((s, m) => s + m.directorSalaryBudget, 0);
           const plannedNetProfit = plannedSales - plannedOpex - plannedSalary;
 
-          // Actual figures come strictly from DB for closed or current/elapsed months (0 for future months)
+          // Actual figures come strictly from DB for closed or current/elapsed months (0 for future months).
+          // Uses `actualOpex` (Operating Expenses excluding 5120 Director Remuneration) so that
+          // 0% PAYE Director Bonuses are NOT double-counted in both Expenses and Bonus (50%).
           const actualSales = q.slice.reduce(
             (s, m) => s + (m.isClosed || m.period <= currentPeriod ? m.actualRevenue : 0),
             0,
           );
           const actualExpenses = q.slice.reduce(
-            (s, m) => s + (m.isClosed || m.period <= currentPeriod ? m.actualExpenses : 0),
+            (s, m) => s + (m.isClosed || m.period <= currentPeriod ? m.actualOpex : 0),
             0,
           );
           const actualNetProfit = actualSales - actualExpenses;
@@ -604,8 +640,8 @@ export function DividendsTab({
                   <TableRow>
                     <TableHead className="px-3">Quarter</TableHead>
                     <TableHead className="px-3 text-right">Sales</TableHead>
-                    <TableHead className="px-3 text-right">Expenses</TableHead>
-                    <TableHead className="px-3 text-right">Net Profit</TableHead>
+                    <TableHead className="px-3 text-right">OpEx</TableHead>
+                    <TableHead className="px-3 text-right">Operating Profit</TableHead>
                     <TableHead className="px-3 text-right">Pre-Bonus</TableHead>
                     <TableHead className="px-3 text-right">Excess &gt; Floor</TableHead>
                     <TableHead className="px-3 text-right">
@@ -811,7 +847,15 @@ export function DividendsTab({
                         / {formatZAR(totalPlannedBonus)}
                       </span>
                     </TableCell>
-                    <TableCell className="px-3 text-right tabular-nums text-emerald-600">
+                    <TableCell
+                      className={`px-3 text-right tabular-nums ${
+                        runningActualReserve < 10000
+                          ? 'text-red-600'
+                          : runningActualReserve < baseFloor
+                            ? 'text-amber-600'
+                            : 'text-emerald-600'
+                      }`}
+                    >
                       <span>{formatZAR(runningActualReserve)}</span>
                       <span className="block text-[11px] font-normal text-muted-foreground">
                         / {formatZAR(runningPlannedReserve)}
@@ -854,6 +898,7 @@ export function DividendsTab({
                   <TableHead className="text-right">Loan Offset</TableHead>
                   <TableHead className="text-right">Net Cash</TableHead>
                   <TableHead className="text-right">s46 Sign-Off</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -887,6 +932,18 @@ export function DividendsTab({
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={isPending}
+                        onClick={() => setVoidTarget(p)}
+                        className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-500/10"
+                      >
+                        <Trash2 className="size-3.5 mr-1" /> Void
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -894,6 +951,61 @@ export function DividendsTab({
           </div>
         )}
       </div>
+
+      {/* Void Distribution Confirmation Dialog */}
+      <Dialog open={Boolean(voidTarget)} onOpenChange={(open) => !open && setVoidTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Void Distribution Payout?</DialogTitle>
+            <DialogDescription>
+              This will atomically void the General Ledger journal entry, remove any legacy mirrored
+              expense row, and restore your bank &amp; Director&apos;s Loan balances.
+            </DialogDescription>
+          </DialogHeader>
+          {voidTarget && (
+            <div className="rounded-lg border bg-muted/40 p-3 text-xs space-y-1">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Quarter &amp; Date</span>
+                <span className="font-medium">
+                  {voidTarget.quarter} · {fmtDate(voidTarget.payoutDate)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Type</span>
+                <span className="font-medium">
+                  {voidTarget.payoutType === 'director_bonus'
+                    ? '0% PAYE Director Bonus (5120)'
+                    : '20% DWT Dividend (3040)'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Gross Amount</span>
+                <span className="font-semibold tabular-nums">
+                  {formatZAR(voidTarget.grossAmount)}
+                </span>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setVoidTarget(null)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleConfirmVoidPayout}
+              disabled={isPending}
+            >
+              {isPending ? 'Voiding...' : 'Void & Reverse'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Policy Settings Dialog */}
       <Dialog open={policyOpen} onOpenChange={setPolicyOpen}>

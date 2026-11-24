@@ -13,9 +13,12 @@ import { getSessionOrRedirect } from '@/lib/auth';
 import {
   postMonthlyTaxProvisionEntry,
   postQuarterlyDistributionEntry,
+  voidQuarterlyDistributionEntry,
 } from '@/lib/accounting/posting';
 
 function revalidateGovernancePaths() {
+  revalidatePath('/dashboard');
+  revalidatePath('/finance/expenses');
   revalidatePath('/finance/projections');
   revalidatePath('/finance/banking');
   revalidatePath('/finance');
@@ -171,5 +174,35 @@ export async function postTaxProvision(
     return { entryId: res.entryId };
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Failed to post tax provision.' };
+  }
+}
+
+const VoidDistributionSchema = z.object({
+  payoutId: z.string().uuid('Invalid payout ID'),
+  reason: z.string().max(300).optional(),
+});
+
+export async function voidQuarterlyDistribution(
+  input: z.input<typeof VoidDistributionSchema>,
+): Promise<{ error?: string }> {
+  try {
+    const session = await getSessionOrRedirect();
+    const parsed = VoidDistributionSchema.safeParse(input);
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message ?? 'Invalid payout ID.' };
+    }
+
+    const res = await voidQuarterlyDistributionEntry({
+      payoutId: parsed.data.payoutId,
+      voidedBy: session.user.id,
+      reason: parsed.data.reason,
+    });
+
+    if (res.error) return { error: res.error };
+
+    revalidateGovernancePaths();
+    return {};
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Failed to void distribution.' };
   }
 }
