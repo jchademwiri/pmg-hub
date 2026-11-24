@@ -2,8 +2,14 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { getTrialBalance, upsertDividendPolicy, type BankAccountCode } from '@pmg/db';
+import {
+  getClosedFiscalQuarters,
+  getTrialBalance,
+  upsertDividendPolicy,
+  type BankAccountCode,
+} from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
+import { getSASTToday } from '@/lib/format';
 import {
   postMonthlyTaxProvisionEntry,
   postQuarterlyDistributionEntry,
@@ -78,6 +84,13 @@ export async function recordQuarterlyDistribution(
       return {
         error:
           'Companies Act s46 Solvency & Liquidity sign-off is mandatory before declaring a payout.',
+      };
+    }
+
+    const closedQuarters = getClosedFiscalQuarters(d.fiscalYear, getSASTToday());
+    if (!closedQuarters.includes(d.quarter)) {
+      return {
+        error: `${d.quarter} (FY${d.fiscalYear - 1}/${String(d.fiscalYear).slice(2)}) is not closed yet. Distributions can only be declared from completed previous quarters${closedQuarters.length > 0 ? ` (${closedQuarters.join(', ')})` : ''}.`,
       };
     }
 

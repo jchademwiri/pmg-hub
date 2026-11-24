@@ -117,18 +117,11 @@ export function BankingClient({
   const [quickEntryMode, setQuickEntryMode] = React.useState<'bank_fee' | 'interest' | null>(null);
   const [transferOpen, setTransferOpen] = React.useState(false);
 
-  // Quarterly Distribution / Bonus form (defaults to the active SA fiscal quarter)
+  // Quarterly Distribution / Bonus form (defaults to the most recent CLOSED SA fiscal quarter)
   const { policy, gates, payouts } = governance;
-  const getFiscalQuarter = (dateStr: string): 'Q1' | 'Q2' | 'Q3' | 'Q4' => {
-    const m = parseInt(dateStr.slice(5, 7), 10);
-    if (m >= 3 && m <= 5) return 'Q1';
-    if (m >= 6 && m <= 8) return 'Q2';
-    if (m >= 9 && m <= 11) return 'Q3';
-    return 'Q4';
-  };
-  const [quarter, setQuarter] = React.useState<'Q1' | 'Q2' | 'Q3' | 'Q4'>(() =>
-    getFiscalQuarter(today),
-  );
+  const closedQuarters = gates.closedQuarters;
+  const defaultClosedQuarter: 'Q1' | 'Q2' | 'Q3' | 'Q4' = gates.latestClosedQuarter ?? 'Q1';
+  const [quarter, setQuarter] = React.useState<'Q1' | 'Q2' | 'Q3' | 'Q4'>(defaultClosedQuarter);
   const [payoutDate, setPayoutDate] = React.useState(today);
   const [payoutType, setPayoutType] = React.useState<'director_bonus' | 'dividend'>(
     gates.recommendedPayoutType,
@@ -136,15 +129,22 @@ export function BankingClient({
   const [payoutAccount, setPayoutAccount] = React.useState<'1010' | '1020' | '1030'>(
     gates.recommendedAccountCode,
   );
-  const [repeatConfirmed, setRepeatConfirmed] = React.useState(false);
+  const [poolOverrideConfirmed, setPoolOverrideConfirmed] = React.useState(false);
 
-  const quarterPayouts = payouts.filter((p) => p.quarter === quarter);
-  const alreadyDeclaredInQuarter = quarterPayouts.reduce((s, p) => s + p.grossAmount, 0);
-  const monthPayouts = payouts.filter((p) => p.payoutDate.slice(0, 7) === payoutDate.slice(0, 7));
-  const alreadyDeclaredInMonth = monthPayouts.reduce((s, p) => s + p.grossAmount, 0);
-  const hasRepeatInQuarterOrMonth = alreadyDeclaredInQuarter > 0 || alreadyDeclaredInMonth > 0;
+  const isSelectedQuarterClosed = closedQuarters.includes(quarter);
   const payoutTotalByQuarter = (qKey: 'Q1' | 'Q2' | 'Q3' | 'Q4') =>
     payouts.filter((p) => p.quarter === qKey).reduce((s, p) => s + p.grossAmount, 0);
+  const getQuarterOptionSuffix = (qKey: 'Q1' | 'Q2' | 'Q3' | 'Q4') => {
+    if (!closedQuarters.includes(qKey)) {
+      const qIdx = ['Q1', 'Q2', 'Q3', 'Q4'].indexOf(qKey);
+      const lastClosedIdx = gates.latestClosedQuarter
+        ? ['Q1', 'Q2', 'Q3', 'Q4'].indexOf(gates.latestClosedQuarter)
+        : -1;
+      return qIdx === lastClosedIdx + 1 ? ' · In progress (unclosed)' : ' · Upcoming';
+    }
+    const taken = payoutTotalByQuarter(qKey);
+    return taken > 0 ? ` · ${formatZAR(taken)} taken` : ' · Closed';
+  };
   const payoutSelectedBal =
     payoutAccount === '1010'
       ? overview.chequeBalance
@@ -226,30 +226,9 @@ export function BankingClient({
         ).toFixed(2),
       ),
     );
-    const recPrefill =
-      recSafe > 0
-        ? recSafe
-        : Math.max(
-            0,
-            Number(
-              Math.min(
-                maxFromAcct,
-                recType === 'director_bonus' && gates.payeBonusHeadroom > 0
-                  ? gates.payeBonusHeadroom
-                  : Infinity,
-              ).toFixed(2),
-            ),
-          );
-    const activeQuarter = getFiscalQuarter(today);
-    const activeQuarterTaken = payouts
-      .filter((p) => p.quarter === activeQuarter)
-      .reduce((s, p) => s + p.grossAmount, 0);
-    const activeMonthTaken = payouts
-      .filter((p) => p.payoutDate.slice(0, 7) === today.slice(0, 7))
-      .reduce((s, p) => s + p.grossAmount, 0);
-    const finalPrefill = activeQuarterTaken > 0 || activeMonthTaken > 0 ? 0 : recPrefill;
+    const finalPrefill = recSafe > 0 ? recSafe : 0;
 
-    setQuarter(activeQuarter);
+    setQuarter(defaultClosedQuarter);
     setPayoutAccount(recAcct);
     setPayoutType(recType);
     setGrossAmount(finalPrefill > 0 ? String(finalPrefill) : '');
@@ -258,13 +237,19 @@ export function BankingClient({
         ? String(Math.min(gates.directorsLoanBalance, finalPrefill))
         : '0',
     );
-    setRepeatConfirmed(false);
+    setPoolOverrideConfirmed(false);
     setSolvencySignedOff(false);
     setPayoutOpen(true);
   }
 
   function handleRecordPayout(e: React.FormEvent) {
     e.preventDefault();
+    if (!isSelectedQuarterClosed) {
+      toast.error(
+        `${quarter} is not closed yet. Select a completed previous quarter (${closedQuarters.join(', ') || 'none closed yet'}).`,
+      );
+      return;
+    }
     if (parsedGross <= 0) {
       toast.error('Gross amount must be greater than zero.');
       return;
@@ -275,8 +260,10 @@ export function BankingClient({
       );
       return;
     }
-    if (hasRepeatInQuarterOrMonth && !repeatConfirmed) {
-      toast.error(`Please confirm that you want to take an additional distribution in ${quarter}.`);
+    if (exceedsSafeGateCap && !poolOverrideConfirmed) {
+      toast.error(
+        `Please confirm that you want to exceed your Remaining Safe Pool (${formatZAR(gates.maxSafeDistribution)}).`,
+      );
       return;
     }
     if (!solvencySignedOff) {
@@ -1344,14 +1331,16 @@ export function BankingClient({
               <div className="grid grid-cols-3 divide-x rounded-lg border bg-muted/30 text-xs">
                 <div className="p-3">
                   <div className="flex items-center justify-between gap-1">
-                    <span className="text-muted-foreground">Safe Max Payout</span>
-                    <button
-                      type="button"
-                      onClick={() => setGrossAmount(String(suggestedPrefillAmount))}
-                      className="text-[11px] font-medium text-primary hover:underline cursor-pointer"
-                    >
-                      Apply
-                    </button>
+                    <span className="text-muted-foreground">Remaining Safe Pool</span>
+                    {recommendedSafeAmount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setGrossAmount(String(recommendedSafeAmount))}
+                        className="text-[11px] font-medium text-primary hover:underline cursor-pointer"
+                      >
+                        Apply
+                      </button>
+                    )}
                   </div>
                   <span
                     className={`font-bold text-sm tabular-nums block mt-1 ${
@@ -1359,6 +1348,10 @@ export function BankingClient({
                     }`}
                   >
                     {formatZAR(recommendedSafeAmount)}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground block mt-0.5 truncate">
+                    Earned {formatZAR(gates.cumulativeEarnedPool)} − Taken{' '}
+                    {formatZAR(gates.totalDeclaredYtd)}
                   </span>
                 </div>
                 <div className="p-3">
@@ -1397,29 +1390,17 @@ export function BankingClient({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Q1">
-                        Q1 (Mar–May)
-                        {payoutTotalByQuarter('Q1') > 0
-                          ? ` · ${formatZAR(payoutTotalByQuarter('Q1'))} taken`
-                          : ''}
+                      <SelectItem value="Q1" disabled={!closedQuarters.includes('Q1')}>
+                        Q1 (Mar–May){getQuarterOptionSuffix('Q1')}
                       </SelectItem>
-                      <SelectItem value="Q2">
-                        Q2 (Jun–Aug)
-                        {payoutTotalByQuarter('Q2') > 0
-                          ? ` · ${formatZAR(payoutTotalByQuarter('Q2'))} taken`
-                          : ''}
+                      <SelectItem value="Q2" disabled={!closedQuarters.includes('Q2')}>
+                        Q2 (Jun–Aug){getQuarterOptionSuffix('Q2')}
                       </SelectItem>
-                      <SelectItem value="Q3">
-                        Q3 (Sep–Nov)
-                        {payoutTotalByQuarter('Q3') > 0
-                          ? ` · ${formatZAR(payoutTotalByQuarter('Q3'))} taken`
-                          : ''}
+                      <SelectItem value="Q3" disabled={!closedQuarters.includes('Q3')}>
+                        Q3 (Sep–Nov){getQuarterOptionSuffix('Q3')}
                       </SelectItem>
-                      <SelectItem value="Q4">
-                        Q4 (Dec–Feb)
-                        {payoutTotalByQuarter('Q4') > 0
-                          ? ` · ${formatZAR(payoutTotalByQuarter('Q4'))} taken`
-                          : ''}
+                      <SelectItem value="Q4" disabled={!closedQuarters.includes('Q4')}>
+                        Q4 (Dec–Feb){getQuarterOptionSuffix('Q4')}
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -1548,43 +1529,13 @@ export function BankingClient({
                 </Field>
               </div>
 
-              {hasRepeatInQuarterOrMonth && (
-                <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-200 space-y-2">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="size-4 shrink-0 mt-0.5 text-amber-600" />
-                    <span>
-                      <strong>
-                        Already withdrawn in {quarter} (
-                        {formatZAR(
-                          alreadyDeclaredInQuarter > 0
-                            ? alreadyDeclaredInQuarter
-                            : alreadyDeclaredInMonth,
-                        )}
-                        ):
-                      </strong>{' '}
-                      You have already declared{' '}
-                      {quarterPayouts.length > 0
-                        ? `${quarterPayouts.length} distribution${quarterPayouts.length === 1 ? '' : 's'} totaling ${formatZAR(alreadyDeclaredInQuarter)} in ${quarter}`
-                        : `${monthPayouts.length} distribution${monthPayouts.length === 1 ? '' : 's'} totaling ${formatZAR(alreadyDeclaredInMonth)} this month`}
-                      {quarterPayouts.length > 0 && alreadyDeclaredInMonth > 0
-                        ? ` (${formatZAR(alreadyDeclaredInMonth)} this month)`
-                        : ''}
-                      . Taking another payout in the same quarter will draw down the 50% company
-                      reserve you already retained.
-                    </span>
-                  </div>
-                  <label className="flex items-center gap-2 pl-6 cursor-pointer font-medium">
-                    <input
-                      type="checkbox"
-                      checked={repeatConfirmed}
-                      onChange={(e) => setRepeatConfirmed(e.target.checked)}
-                      className="size-3.5 rounded border-input accent-amber-600 shrink-0"
-                    />
-                    <span>
-                      I confirm I want to exceed my {quarter} allocation and take an additional
-                      distribution.
-                    </span>
-                  </label>
+              {closedQuarters.length === 0 && (
+                <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-2.5 text-xs text-amber-800 dark:text-amber-200">
+                  <AlertTriangle className="size-4 shrink-0 mt-0.5 text-amber-600" />
+                  <span>
+                    <strong>No closed quarters yet in {fyLabel}:</strong> Distributions can only be
+                    declared once a fiscal quarter has completed.
+                  </span>
                 </div>
               )}
 
@@ -1601,16 +1552,36 @@ export function BankingClient({
                 </div>
               )}
 
-              {!exceedsPayoutAccount && exceedsSafeGateCap && (
-                <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-2.5 text-xs text-amber-700 dark:text-amber-300">
-                  <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-                  <span>
-                    <strong>
-                      Exceeds 2-Gate Max Safe Payout ({formatZAR(gates.maxSafeDistribution)}):
-                    </strong>{' '}
-                    Breaches your {policy.payoutRatioPercent}% profit retention cap or drops True
-                    Spendable Cash below your {formatZAR(policy.minCashReserve)} reserve floor.
-                  </span>
+              {!exceedsPayoutAccount && exceedsSafeGateCap && closedQuarters.length > 0 && (
+                <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-200 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="size-4 shrink-0 mt-0.5 text-amber-600" />
+                    <span>
+                      <strong>
+                        Exceeds Remaining Safe Pool ({formatZAR(gates.maxSafeDistribution)}):
+                      </strong>{' '}
+                      Your cumulative {policy.payoutRatioPercent}% earned pool across closed
+                      quarters ({closedQuarters.join(', ')}) is{' '}
+                      <strong>{formatZAR(gates.cumulativeEarnedPool)}</strong>, with{' '}
+                      <strong>{formatZAR(gates.totalDeclaredYtd)}</strong> already taken YTD
+                      (Remaining: <strong>{formatZAR(gates.remainingUnclaimedPool)}</strong>).
+                      Taking <strong>{formatZAR(parsedGross)}</strong> draws down your retained
+                      company reserves or drops True Spendable Cash below the{' '}
+                      {formatZAR(policy.minCashReserve)} floor.
+                    </span>
+                  </div>
+                  <label className="flex items-center gap-2 pl-6 cursor-pointer font-medium">
+                    <input
+                      type="checkbox"
+                      checked={poolOverrideConfirmed}
+                      onChange={(e) => setPoolOverrideConfirmed(e.target.checked)}
+                      className="size-3.5 rounded border-input accent-amber-600 shrink-0"
+                    />
+                    <span>
+                      I confirm I want to exceed my Remaining Safe Pool and draw down retained
+                      company reserves.
+                    </span>
+                  </label>
                 </div>
               )}
 
@@ -1685,7 +1656,8 @@ export function BankingClient({
                   isPending ||
                   !solvencySignedOff ||
                   exceedsPayoutAccount ||
-                  (hasRepeatInQuarterOrMonth && !repeatConfirmed)
+                  !isSelectedQuarterClosed ||
+                  (exceedsSafeGateCap && !poolOverrideConfirmed)
                 }
               >
                 {isPending ? 'Posting…' : 'Sign Off & Post Distribution'}

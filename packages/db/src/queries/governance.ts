@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '../client';
 import {
   chartAccounts,
@@ -13,6 +13,77 @@ import { getBankingOverview } from './banking';
 import { getCurrentFiscalYear } from './budgets';
 
 export const VAT_COMPULSORY_THRESHOLD = 1_000_000;
+
+export type FiscalQuarter = 'Q1' | 'Q2' | 'Q3' | 'Q4';
+
+/**
+ * Returns the 3 YYYY-MM periods for each South African fiscal quarter (Mar–Feb).
+ */
+export function getFiscalQuarterMonths(
+  fiscalYear: number,
+): Record<FiscalQuarter, [string, string, string]> {
+  const startYear = fiscalYear - 1;
+  return {
+    Q1: [`${startYear}-03`, `${startYear}-04`, `${startYear}-05`],
+    Q2: [`${startYear}-06`, `${startYear}-07`, `${startYear}-08`],
+    Q3: [`${startYear}-09`, `${startYear}-10`, `${startYear}-11`],
+    Q4: [`${startYear}-12`, `${fiscalYear}-01`, `${fiscalYear}-02`],
+  };
+}
+
+/**
+ * Returns all completed (closed) quarters for a fiscal year as of `todayIso`.
+ * A quarter is closed once its final month is strictly before the current calendar month.
+ */
+export function getClosedFiscalQuarters(fiscalYear: number, todayIso: string): FiscalQuarter[] {
+  const currentPeriod = todayIso.slice(0, 7);
+  const quarterMonths = getFiscalQuarterMonths(fiscalYear);
+  const ordered: FiscalQuarter[] = ['Q1', 'Q2', 'Q3', 'Q4'];
+  return ordered.filter((q) => quarterMonths[q][2] < currentPeriod);
+}
+
+/**
+ * Pure calculation for the Cumulative Carry-Forward Bonus Pool.
+ *
+ * - Earned Pool = payoutRatio% of closed-quarter net profit above the Base Reserve Floor.
+ * - Remaining Unclaimed Pool = max(0, Earned Pool - Already Taken YTD).
+ *   Unclaimed shares from earlier closed quarters automatically carry forward.
+ * - Max Safe Distribution Today = min(Remaining Unclaimed Pool, True Spendable Cash above Floor).
+ *   Once the pool is fully claimed, Max Safe Distribution drops to R0.00 (no halving loop).
+ */
+export function calculateCarryForwardBonusPool(input: {
+  closedQuartersNetProfit: number;
+  minCashReserve: number;
+  payoutRatioPercent: number;
+  totalDeclaredYtd: number;
+  trueSpendableCash: number;
+  closedQuartersCount: number;
+}) {
+  const payoutFraction = input.payoutRatioPercent / 100;
+  const profitExcessAboveFloor = Math.max(0, input.closedQuartersNetProfit - input.minCashReserve);
+  const cumulativeEarnedPool = Number((profitExcessAboveFloor * payoutFraction).toFixed(2));
+  const remainingUnclaimedPool = Math.max(
+    0,
+    Number((cumulativeEarnedPool - input.totalDeclaredYtd).toFixed(2)),
+  );
+  const cashExcessAboveFloor = Math.max(
+    0,
+    Number((input.trueSpendableCash - input.minCashReserve).toFixed(2)),
+  );
+  const maxSafeDistribution =
+    input.closedQuartersCount > 0 &&
+    input.trueSpendableCash > input.minCashReserve &&
+    remainingUnclaimedPool > 0
+      ? Number(Math.min(remainingUnclaimedPool, cashExcessAboveFloor).toFixed(2))
+      : 0;
+
+  return {
+    cumulativeEarnedPool,
+    remainingUnclaimedPool,
+    cashExcessAboveFloor,
+    maxSafeDistribution,
+  };
+}
 
 /**
  * South African Small Business Corporation (SBC — s12E) progressive tax tables.
@@ -62,6 +133,12 @@ export type GovernanceOverviewResult = {
   }>;
   gates: {
     ytdNetProfit: number;
+    closedQuarters: FiscalQuarter[];
+    latestClosedQuarter: FiscalQuarter | null;
+    closedQuartersNetProfit: number;
+    cumulativeEarnedPool: number;
+    totalDeclaredYtd: number;
+    remainingUnclaimedPool: number;
     trueSpendableCash: number;
     chequeBalance: number;
     savingsBalance: number;
@@ -109,39 +186,67 @@ export async function getGovernanceOverview(
   twelveMonthsAgo.setUTCMonth(twelveMonthsAgo.getUTCMonth() - 12);
   const rollingStartDate = twelveMonthsAgo.toISOString().slice(0, 10);
 
-  const [policyRows, payoutRows, rawPnl, banking, rollingRevRows] = await Promise.all([
-    db
-      .select()
-      .from(dividendPolicies)
-      .where(eq(dividendPolicies.fiscalYear, fiscalYear))
-      .limit(1)
-      .catch(() => []),
-    db
-      .select()
-      .from(dividendPayouts)
-      .where(eq(dividendPayouts.fiscalYear, fiscalYear))
-      .orderBy(desc(dividendPayouts.payoutDate))
-      .catch(() => [] as DividendPayout[]),
-    getProfitAndLoss(fyPeriodKey),
-    getBankingOverview(),
-    db
-      .select({
-        totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`,
-        totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
-      })
-      .from(journalLines)
-      .innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
-      .innerJoin(chartAccounts, eq(journalLines.accountId, chartAccounts.id))
-      .where(
-        and(
-          eq(journalEntries.status, 'posted'),
-          eq(chartAccounts.type, 'revenue'),
-          sql`${journalEntries.entryDate} >= ${rollingStartDate}`,
-          sql`${journalEntries.entryDate} <= ${todayIso}`,
-        ),
-      )
-      .catch(() => []),
-  ]);
+  const closedQuarters = getClosedFiscalQuarters(fiscalYear, todayIso);
+  const latestClosedQuarter =
+    closedQuarters.length > 0 ? closedQuarters[closedQuarters.length - 1]! : null;
+  const quarterMonthsMap = getFiscalQuarterMonths(fiscalYear);
+  const closedQuarterPeriods = closedQuarters.flatMap((q) => quarterMonthsMap[q]);
+
+  const [policyRows, payoutRows, rawPnl, banking, rollingRevRows, closedQtrGlRows] =
+    await Promise.all([
+      db
+        .select()
+        .from(dividendPolicies)
+        .where(eq(dividendPolicies.fiscalYear, fiscalYear))
+        .limit(1)
+        .catch(() => []),
+      db
+        .select()
+        .from(dividendPayouts)
+        .where(eq(dividendPayouts.fiscalYear, fiscalYear))
+        .orderBy(desc(dividendPayouts.payoutDate))
+        .catch(() => [] as DividendPayout[]),
+      getProfitAndLoss(fyPeriodKey),
+      getBankingOverview(),
+      db
+        .select({
+          totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`,
+          totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
+        })
+        .from(journalLines)
+        .innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
+        .innerJoin(chartAccounts, eq(journalLines.accountId, chartAccounts.id))
+        .where(
+          and(
+            eq(journalEntries.status, 'posted'),
+            eq(chartAccounts.type, 'revenue'),
+            sql`${journalEntries.entryDate} >= ${rollingStartDate}`,
+            sql`${journalEntries.entryDate} <= ${todayIso}`,
+          ),
+        )
+        .catch(() => []),
+      closedQuarterPeriods.length > 0 && !isFutureFy
+        ? db
+            .select({
+              accountType: chartAccounts.type,
+              totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`,
+              totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
+            })
+            .from(journalLines)
+            .innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
+            .innerJoin(chartAccounts, eq(journalLines.accountId, chartAccounts.id))
+            .where(
+              and(
+                eq(journalEntries.status, 'posted'),
+                inArray(journalEntries.period, closedQuarterPeriods),
+                inArray(chartAccounts.type, ['revenue', 'expense']),
+                sql`COALESCE(${journalEntries.sourceModule}, '') != 'governance'`,
+              ),
+            )
+            .groupBy(chartAccounts.type)
+            .catch(() => [])
+        : Promise.resolve([]),
+    ]);
 
   const pnl = isFutureFy
     ? {
@@ -190,25 +295,40 @@ export async function getGovernanceOverview(
   const vatStatus: 'safe' | 'approaching' | 'required' =
     vatThresholdPercent >= 100 ? 'required' : vatThresholdPercent >= 75 ? 'approaching' : 'safe';
 
-  // 2-Gate Dividend Evaluator
+  // 2-Gate Dividend Evaluator (Closed-Quarter Cumulative Carry-Forward Pool)
   const ytdDirectorRemuneration = pnl.expenses.find((e) => e.accountCode === '5120')?.amount ?? 0;
   const payeBonusHeadroom = Math.max(
     0,
     Number((policy.payeTaxFreeThreshold - ytdDirectorRemuneration).toFixed(2)),
   );
 
-  const profitGatePassed = pnl.netProfit > 0;
-  const cashGatePassed = banking.trueSpendableCash > policy.minCashReserve;
-  const payoutFraction = policy.payoutRatioPercent / 100;
-  // Both Gate 1 (Net Profit) and Gate 2 (True Spendable Cash) require filling the R25,000
-  // Base Reserve Floor first; at most 50% (payoutRatioPercent) of the excess above R25,000 is distributable.
-  const maxByProfit = Math.max(0, (pnl.netProfit - policy.minCashReserve) * payoutFraction);
-  const maxByCash = Math.max(
-    0,
-    (banking.trueSpendableCash - policy.minCashReserve) * payoutFraction,
+  const closedQtrRevenue = closedQtrGlRows
+    .filter((r) => r.accountType === 'revenue')
+    .reduce((sum, r) => sum + (Number(r.totalCredits || 0) - Number(r.totalDebits || 0)), 0);
+  const closedQtrExpenses = closedQtrGlRows
+    .filter((r) => r.accountType === 'expense')
+    .reduce((sum, r) => sum + (Number(r.totalDebits || 0) - Number(r.totalCredits || 0)), 0);
+  const closedQuartersNetProfit = Number((closedQtrRevenue - closedQtrExpenses).toFixed(2));
+
+  const totalDeclaredYtd = Number(
+    payoutRows
+      .filter((p) => p.payoutDate <= todayIso)
+      .reduce((sum, p) => sum + Number(p.grossAmount || 0), 0)
+      .toFixed(2),
   );
-  const maxSafeDistribution =
-    profitGatePassed && cashGatePassed ? Number(Math.min(maxByProfit, maxByCash).toFixed(2)) : 0;
+
+  const profitGatePassed = closedQuarters.length > 0 && closedQuartersNetProfit > 0;
+  const cashGatePassed = banking.trueSpendableCash > policy.minCashReserve;
+
+  const { cumulativeEarnedPool, remainingUnclaimedPool, maxSafeDistribution } =
+    calculateCarryForwardBonusPool({
+      closedQuartersNetProfit,
+      minCashReserve: policy.minCashReserve,
+      payoutRatioPercent: policy.payoutRatioPercent,
+      totalDeclaredYtd,
+      trueSpendableCash: banking.trueSpendableCash,
+      closedQuartersCount: closedQuarters.length,
+    });
 
   const startYear = fiscalYear - 1;
   const irp6FirstDueDate = `${startYear}-08-31`;
@@ -231,6 +351,12 @@ export async function getGovernanceOverview(
     })),
     gates: {
       ytdNetProfit: pnl.netProfit,
+      closedQuarters,
+      latestClosedQuarter,
+      closedQuartersNetProfit,
+      cumulativeEarnedPool,
+      totalDeclaredYtd,
+      remainingUnclaimedPool,
       trueSpendableCash: banking.trueSpendableCash,
       chequeBalance: banking.chequeBalance,
       savingsBalance: banking.savingsBalance,

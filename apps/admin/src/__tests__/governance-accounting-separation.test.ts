@@ -213,4 +213,124 @@ describe('Governance accounting separation', () => {
     expect(getFiscalQuarterFromDate('2026-12-01')).toBe('Q4');
     expect(getFiscalQuarterFromDate('2027-02-28')).toBe('Q4');
   });
+
+  it('postQuarterlyDistributionEntry atomically inserts dividend_payouts and sets journal_entries.sourceId', async () => {
+    state.selectQueue.push([
+      { id: 'acc-5120', code: '5120', name: 'Staff Costs & Director Remuneration' },
+      { id: 'acc-1010', code: '1010', name: 'Business Cheque Account' },
+    ]);
+    state.selectQueue.push([{ id: 'div-pmg', name: 'Playhouse Media Group' }]);
+
+    const res = await postQuarterlyDistributionEntry({
+      date: '2026-11-24',
+      quarter: 'Q2',
+      payoutType: 'director_bonus',
+      accountCode: '1010',
+      grossAmount: 15000,
+      dwtWithheld: 0,
+      loanOffsetAmount: 0,
+      netCashPaid: 15000,
+      createdBy: 'user-1',
+      payoutRecord: {
+        fiscalYear: 2027,
+        solvencySignedBy: 'director@pmg.co.za',
+        notes: 'Q2 Board resolution',
+      },
+    });
+
+    expect(res.error).toBeUndefined();
+    expect(res.payoutId).toBeTruthy();
+
+    const jeInsert = insertCalls.find((c) => c.table === mockJournalEntries)?.values as Record<
+      string,
+      unknown
+    >;
+    const payoutInsert = insertCalls.find((c) => c.table === mockDividendPayouts)?.values as Record<
+      string,
+      unknown
+    >;
+
+    expect(jeInsert.sourceId).toBe(res.payoutId);
+    expect(payoutInsert.id).toBe(res.payoutId);
+    expect(payoutInsert.journalEntryId).toBe(res.entryId);
+    expect(payoutInsert.quarter).toBe('Q2');
+  });
+
+  it('getClosedFiscalQuarters only unlocks completed previous quarters', async () => {
+    const { getClosedFiscalQuarters } = await vi.importActual<typeof import('@pmg/db')>('@pmg/db');
+
+    expect(getClosedFiscalQuarters(2027, '2026-04-15')).toEqual([]);
+    expect(getClosedFiscalQuarters(2027, '2026-06-01')).toEqual(['Q1']);
+    expect(getClosedFiscalQuarters(2027, '2026-11-24')).toEqual(['Q1', 'Q2']);
+    expect(getClosedFiscalQuarters(2027, '2026-12-01')).toEqual(['Q1', 'Q2', 'Q3']);
+    expect(getClosedFiscalQuarters(2027, '2027-03-01')).toEqual(['Q1', 'Q2', 'Q3', 'Q4']);
+  });
+
+  it('calculateCarryForwardBonusPool carries forward unclaimed Q1 share into Q2 and eliminates the halving loop', async () => {
+    const { calculateCarryForwardBonusPool } =
+      await vi.importActual<typeof import('@pmg/db')>('@pmg/db');
+
+    // 1. Q1 closes with R65k profit (R40k above R25k floor -> R20k earned pool), R0 taken
+    const q1Open = calculateCarryForwardBonusPool({
+      closedQuartersNetProfit: 65000,
+      minCashReserve: 25000,
+      payoutRatioPercent: 50,
+      totalDeclaredYtd: 0,
+      trueSpendableCash: 65000,
+      closedQuartersCount: 1,
+    });
+    expect(q1Open.cumulativeEarnedPool).toBe(20000);
+    expect(q1Open.remainingUnclaimedPool).toBe(20000);
+    expect(q1Open.maxSafeDistribution).toBe(20000);
+
+    // 2. Director takes R10k in Q1 -> R10k carries forward
+    const afterQ1Partial = calculateCarryForwardBonusPool({
+      closedQuartersNetProfit: 65000,
+      minCashReserve: 25000,
+      payoutRatioPercent: 50,
+      totalDeclaredYtd: 10000,
+      trueSpendableCash: 55000,
+      closedQuartersCount: 1,
+    });
+    expect(afterQ1Partial.remainingUnclaimedPool).toBe(10000);
+    expect(afterQ1Partial.maxSafeDistribution).toBe(10000);
+
+    // 3. Q2 closes (+R20k profit -> R85k cumulative -> R30k earned pool).
+    //    With R10k already taken, Remaining Pool = R20k (R10k Q1 carry-forward + R10k Q2 new)
+    const afterQ2Close = calculateCarryForwardBonusPool({
+      closedQuartersNetProfit: 85000,
+      minCashReserve: 25000,
+      payoutRatioPercent: 50,
+      totalDeclaredYtd: 10000,
+      trueSpendableCash: 75000,
+      closedQuartersCount: 2,
+    });
+    expect(afterQ2Close.cumulativeEarnedPool).toBe(30000);
+    expect(afterQ2Close.remainingUnclaimedPool).toBe(20000);
+    expect(afterQ2Close.maxSafeDistribution).toBe(20000);
+
+    // 4. In Q3, director takes R15k for Q2 (100% safe!) -> R5k still unclaimed
+    const afterQ2Take15k = calculateCarryForwardBonusPool({
+      closedQuartersNetProfit: 85000,
+      minCashReserve: 25000,
+      payoutRatioPercent: 50,
+      totalDeclaredYtd: 25000,
+      trueSpendableCash: 60000,
+      closedQuartersCount: 2,
+    });
+    expect(afterQ2Take15k.remainingUnclaimedPool).toBe(5000);
+    expect(afterQ2Take15k.maxSafeDistribution).toBe(5000);
+
+    // 5. Director takes final R5k -> Remaining Pool & Max Safe drop to R0.00 (no halving loop!)
+    const afterExhausted = calculateCarryForwardBonusPool({
+      closedQuartersNetProfit: 85000,
+      minCashReserve: 25000,
+      payoutRatioPercent: 50,
+      totalDeclaredYtd: 30000,
+      trueSpendableCash: 55000,
+      closedQuartersCount: 2,
+    });
+    expect(afterExhausted.remainingUnclaimedPool).toBe(0);
+    expect(afterExhausted.maxSafeDistribution).toBe(0);
+  });
 });
