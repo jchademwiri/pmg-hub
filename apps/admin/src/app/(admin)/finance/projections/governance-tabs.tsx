@@ -459,8 +459,9 @@ export function DividendsTab({
         </div>
       </div>
 
-      {/* Quarterly Reserve & Bonus Projection Table (Fill R25k Base Reserve First -> 50% of New Excess) */}
+      {/* Quarterly Reserve & Bonus Schedule Table (Actuals from DB for elapsed months, Planned for upcoming months) */}
       {(() => {
+        const currentPeriod = today.slice(0, 7);
         const quarterDefs = [
           { key: 'Q1', label: 'Q1 (Mar–May)', slice: overview.months.slice(0, 3) },
           { key: 'Q2', label: 'Q2 (Jun–Aug)', slice: overview.months.slice(3, 6) },
@@ -470,47 +471,112 @@ export function DividendsTab({
 
         const baseFloor = policy.minCashReserve;
         const payoutFraction = policy.payoutRatioPercent / 100;
-        let runningReserve = 0;
+        let runningPlannedReserve = 0;
+        let runningActualReserve = 0;
 
         const quarterRows = quarterDefs.map((q) => {
-          const sales = q.slice.reduce((s, m) => s + m.revenueTarget, 0);
-          const opex = q.slice.reduce((s, m) => s + m.expenseBudget, 0);
-          const salary = q.slice.reduce((s, m) => s + m.directorSalaryBudget, 0);
-          const netProfitAdded = sales - opex - salary;
-          const reserveBeforeBonus = runningReserve + netProfitAdded;
-          const neededForBase = Math.max(0, Math.min(netProfitAdded, baseFloor - runningReserve));
-          const excessAboveBase = Math.max(0, reserveBeforeBonus - baseFloor);
-          const newExcessThisQuarter = Math.max(0, netProfitAdded - neededForBase);
-          const yourBonus =
-            reserveBeforeBonus > baseFloor
-              ? Number((newExcessThisQuarter * payoutFraction).toFixed(2))
+          const hasElapsedMonth = q.slice.some((m) => m.isClosed || m.period <= currentPeriod);
+          const allClosed = q.slice.every((m) => m.isClosed);
+          const status: 'closed' | 'active' | 'upcoming' = allClosed
+            ? 'closed'
+            : hasElapsedMonth
+              ? 'active'
+              : 'upcoming';
+
+          const plannedSales = q.slice.reduce((s, m) => s + m.revenueTarget, 0);
+          const plannedOpex = q.slice.reduce((s, m) => s + m.expenseBudget, 0);
+          const plannedSalary = q.slice.reduce((s, m) => s + m.directorSalaryBudget, 0);
+          const plannedNetProfit = plannedSales - plannedOpex - plannedSalary;
+
+          // Actual figures come strictly from DB for closed or current/elapsed months (0 for future months)
+          const actualSales = q.slice.reduce(
+            (s, m) => s + (m.isClosed || m.period <= currentPeriod ? m.actualRevenue : 0),
+            0,
+          );
+          const actualExpenses = q.slice.reduce(
+            (s, m) => s + (m.isClosed || m.period <= currentPeriod ? m.actualExpenses : 0),
+            0,
+          );
+          const actualNetProfit = actualSales - actualExpenses;
+
+          // Planned reserve progression
+          const plannedReserveBefore = runningPlannedReserve + plannedNetProfit;
+          const plannedNeededForBase = Math.max(
+            0,
+            Math.min(plannedNetProfit, baseFloor - runningPlannedReserve),
+          );
+          const plannedNewExcess = Math.max(0, plannedNetProfit - plannedNeededForBase);
+          const plannedBonus =
+            plannedReserveBefore > baseFloor
+              ? Number((plannedNewExcess * payoutFraction).toFixed(2))
               : 0;
-          const reserveAfterBonus = Number((reserveBeforeBonus - yourBonus).toFixed(2));
-          runningReserve = reserveAfterBonus;
+          const plannedReserveAfter = Number((plannedReserveBefore - plannedBonus).toFixed(2));
+          runningPlannedReserve = plannedReserveAfter;
+
+          // Actual DB reserve progression (only for elapsed/current months)
+          const actualPaidInQuarter = payouts
+            .filter((p) => p.quarter === q.key)
+            .reduce((s, p) => s + p.grossAmount, 0);
+          const actualReserveBefore = runningActualReserve + actualNetProfit;
+          const actualNeededForBase = Math.max(
+            0,
+            Math.min(Math.max(0, actualNetProfit), Math.max(0, baseFloor - runningActualReserve)),
+          );
+          const actualNewExcess =
+            actualReserveBefore > baseFloor
+              ? Math.max(0, actualNetProfit - actualNeededForBase)
+              : 0;
+          const actualSafeBonus =
+            hasElapsedMonth && actualReserveBefore > baseFloor
+              ? Number((actualNewExcess * payoutFraction).toFixed(2))
+              : 0;
+          const actualBonusTakenOrSafe =
+            actualPaidInQuarter > 0 ? actualPaidInQuarter : actualSafeBonus;
+          const actualReserveAfter = hasElapsedMonth
+            ? Number((actualReserveBefore - actualBonusTakenOrSafe).toFixed(2))
+            : runningActualReserve;
+          if (hasElapsedMonth) {
+            runningActualReserve = actualReserveAfter;
+          }
 
           return {
             key: q.key,
             label: q.label,
-            sales,
-            opex,
-            salary,
-            netProfitAdded,
-            reserveBeforeBonus,
-            excessAboveBase,
-            newExcessThisQuarter,
-            yourBonus,
-            reserveAfterBonus,
+            status,
+            hasElapsedMonth,
+            plannedSales,
+            plannedOpex,
+            plannedSalary,
+            plannedNetProfit,
+            plannedReserveBefore,
+            plannedNewExcess,
+            plannedBonus,
+            plannedReserveAfter,
+            actualSales,
+            actualExpenses,
+            actualNetProfit,
+            actualReserveBefore,
+            actualNewExcess,
+            actualSafeBonus,
+            actualPaidInQuarter,
+            actualReserveAfter,
           };
         });
 
-        const totalSales = quarterRows.reduce((s, r) => s + r.sales, 0);
-        const totalOpex = quarterRows.reduce((s, r) => s + r.opex, 0);
-        const totalSalary = quarterRows.reduce((s, r) => s + r.salary, 0);
-        const totalNetProfit = quarterRows.reduce((s, r) => s + r.netProfitAdded, 0);
-        const totalExcess = quarterRows.reduce((s, r) => s + r.newExcessThisQuarter, 0);
-        const totalBonus = quarterRows.reduce((s, r) => s + r.yourBonus, 0);
-        const endingReserve =
-          quarterRows.length > 0 ? quarterRows[quarterRows.length - 1]!.reserveAfterBonus : 0;
+        const totalPlannedSales = quarterRows.reduce((s, r) => s + r.plannedSales, 0);
+        const totalActualSales = quarterRows.reduce((s, r) => s + r.actualSales, 0);
+        const totalPlannedExpenses = quarterRows.reduce(
+          (s, r) => s + r.plannedOpex + r.plannedSalary,
+          0,
+        );
+        const totalActualExpenses = quarterRows.reduce((s, r) => s + r.actualExpenses, 0);
+        const totalPlannedNetProfit = quarterRows.reduce((s, r) => s + r.plannedNetProfit, 0);
+        const totalActualNetProfit = quarterRows.reduce((s, r) => s + r.actualNetProfit, 0);
+        const totalPlannedBonus = quarterRows.reduce((s, r) => s + r.plannedBonus, 0);
+        const totalActualBonus = quarterRows.reduce(
+          (s, r) => s + (r.actualPaidInQuarter > 0 ? r.actualPaidInQuarter : r.actualSafeBonus),
+          0,
+        );
 
         return (
           <div className="rounded-xl border bg-card overflow-hidden">
@@ -521,13 +587,14 @@ export function DividendsTab({
                   {label})
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Fills the {formatZAR(baseFloor)} Base Reserve first (no bonus while below{' '}
-                  {formatZAR(baseFloor)}), then distributes {policy.payoutRatioPercent}% of the
-                  excess above {formatZAR(baseFloor)}.
+                  Actual figures come strictly from real DB records up to today ({today}); future
+                  quarters show planned targets. Fills the {formatZAR(baseFloor)} Base Reserve
+                  first, then {policy.payoutRatioPercent}% of excess above {formatZAR(baseFloor)}.
                 </p>
               </div>
               <Badge variant="outline" className="text-xs">
-                Avg Bonus: {formatZAR(totalBonus / 4)} / qtr
+                YTD Actual Bonus: {formatZAR(totalActualBonus)} · Planned Avg:{' '}
+                {formatZAR(totalPlannedBonus / 4)}/qtr
               </Badge>
             </div>
 
@@ -536,9 +603,9 @@ export function DividendsTab({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Quarter</TableHead>
-                    <TableHead className="text-right">Projected Sales</TableHead>
-                    <TableHead className="text-right">Less OpEx &amp; Base Salary</TableHead>
-                    <TableHead className="text-right">Net Profit Added</TableHead>
+                    <TableHead className="text-right">Sales (Actual / Target)</TableHead>
+                    <TableHead className="text-right">Expenses (Actual / Budget)</TableHead>
+                    <TableHead className="text-right">Net Profit (Actual / Plan)</TableHead>
                     <TableHead className="text-right">Reserve Before Bonus</TableHead>
                     <TableHead className="text-right">
                       Excess Above {formatZAR(baseFloor)}
@@ -551,86 +618,195 @@ export function DividendsTab({
                 </TableHeader>
                 <TableBody>
                   {quarterRows.map((q) => {
-                    const belowBase = q.reserveBeforeBonus <= baseFloor;
+                    const isUpcoming = q.status === 'upcoming';
+                    const reserveBefore = isUpcoming
+                      ? q.plannedReserveBefore
+                      : q.actualReserveBefore;
+                    const belowBase = reserveBefore <= baseFloor;
+                    const excessVal = isUpcoming ? q.plannedNewExcess : q.actualNewExcess;
+                    const bonusVal = isUpcoming
+                      ? q.plannedBonus
+                      : q.actualPaidInQuarter > 0
+                        ? q.actualPaidInQuarter
+                        : q.actualSafeBonus;
+                    const reserveAfter = isUpcoming ? q.plannedReserveAfter : q.actualReserveAfter;
+
                     return (
-                      <TableRow key={q.key}>
-                        <TableCell className="font-semibold whitespace-nowrap">{q.label}</TableCell>
-                        <TableCell className="text-right tabular-nums text-muted-foreground">
-                          {formatZAR(q.sales)}
+                      <TableRow key={q.key} className={isUpcoming ? 'opacity-75' : undefined}>
+                        <TableCell className="font-semibold whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <span>{q.label}</span>
+                            {q.status === 'closed' ? (
+                              <Badge variant="secondary" className="text-[10px] py-0">
+                                Closed
+                              </Badge>
+                            ) : isUpcoming ? (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] py-0 text-muted-foreground border-dashed"
+                              >
+                                Upcoming
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] py-0 border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
+                              >
+                                Live
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
-                        <TableCell className="text-right tabular-nums text-muted-foreground">
-                          −{formatZAR(q.opex + q.salary)}{' '}
-                          <span className="text-[11px]">
-                            ({formatZAR(q.opex)} + {formatZAR(q.salary)})
-                          </span>
+                        <TableCell className="text-right tabular-nums">
+                          {isUpcoming ? (
+                            <span className="text-muted-foreground">
+                              — <span className="text-xs">/ {formatZAR(q.plannedSales)}</span>
+                            </span>
+                          ) : (
+                            <>
+                              <span className="font-medium">{formatZAR(q.actualSales)}</span>{' '}
+                              <span className="text-xs text-muted-foreground">
+                                / {formatZAR(q.plannedSales)}
+                              </span>
+                            </>
+                          )}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums font-medium text-emerald-600">
-                          +{formatZAR(q.netProfitAdded)}
+                        <TableCell className="text-right tabular-nums">
+                          {isUpcoming ? (
+                            <span className="text-muted-foreground">
+                              —{' '}
+                              <span className="text-xs">
+                                / {formatZAR(q.plannedOpex + q.plannedSalary)}
+                              </span>
+                            </span>
+                          ) : (
+                            <>
+                              <span className="font-medium">{formatZAR(q.actualExpenses)}</span>{' '}
+                              <span className="text-xs text-muted-foreground">
+                                / {formatZAR(q.plannedOpex + q.plannedSalary)}
+                              </span>
+                            </>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {isUpcoming ? (
+                            <span className="text-xs text-muted-foreground">
+                              Est. +{formatZAR(q.plannedNetProfit)}
+                            </span>
+                          ) : (
+                            <span
+                              className={`font-medium ${
+                                q.actualNetProfit >= 0 ? 'text-emerald-600' : 'text-red-600'
+                              }`}
+                            >
+                              {q.actualNetProfit >= 0 ? '+' : '−'}
+                              {formatZAR(Math.abs(q.actualNetProfit))}
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell
                           className={`text-right tabular-nums font-medium ${
-                            q.reserveBeforeBonus < 10000
-                              ? 'text-red-600'
-                              : belowBase
-                                ? 'text-amber-600'
-                                : 'text-emerald-600'
+                            isUpcoming
+                              ? 'text-muted-foreground text-xs font-normal'
+                              : reserveBefore < 10000
+                                ? 'text-red-600'
+                                : belowBase
+                                  ? 'text-amber-600'
+                                  : 'text-emerald-600'
                           }`}
                         >
-                          {formatZAR(q.reserveBeforeBonus)}
+                          {isUpcoming
+                            ? `Est. ${formatZAR(q.plannedReserveBefore)}`
+                            : formatZAR(q.actualReserveBefore)}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
                           {belowBase ? (
                             <span className="text-xs text-amber-600">
                               {formatZAR(0)} (filling {formatZAR(baseFloor)} base)
                             </span>
+                          ) : isUpcoming ? (
+                            <span className="text-xs text-muted-foreground">
+                              Est. {formatZAR(excessVal)}
+                            </span>
                           ) : (
-                            formatZAR(q.newExcessThisQuarter)
+                            formatZAR(excessVal)
                           )}
                         </TableCell>
                         <TableCell
                           className={`text-right tabular-nums font-semibold ${
-                            q.yourBonus > 0 ? 'text-emerald-600' : 'text-amber-600'
+                            isUpcoming
+                              ? 'text-muted-foreground text-xs font-normal'
+                              : bonusVal > 0
+                                ? 'text-emerald-600'
+                                : 'text-amber-600'
                           }`}
                         >
-                          {formatZAR(q.yourBonus)}
+                          {isUpcoming ? `Est. ${formatZAR(q.plannedBonus)}` : formatZAR(bonusVal)}
                         </TableCell>
                         <TableCell
                           className={`text-right tabular-nums font-semibold ${
-                            q.reserveAfterBonus < 10000
-                              ? 'text-red-600'
-                              : q.reserveAfterBonus < baseFloor
-                                ? 'text-amber-600'
-                                : 'text-emerald-600'
+                            isUpcoming
+                              ? 'text-muted-foreground text-xs font-normal'
+                              : reserveAfter < 10000
+                                ? 'text-red-600'
+                                : reserveAfter < baseFloor
+                                  ? 'text-amber-600'
+                                  : 'text-emerald-600'
                           }`}
                         >
-                          {formatZAR(q.reserveAfterBonus)}
+                          {isUpcoming
+                            ? `Est. ${formatZAR(q.plannedReserveAfter)}`
+                            : formatZAR(q.actualReserveAfter)}
                         </TableCell>
                       </TableRow>
                     );
                   })}
 
                   <TableRow className="bg-muted/40 font-semibold">
-                    <TableCell>{label} Total</TableCell>
+                    <TableCell>{label} Total (YTD Actual / Plan)</TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatZAR(totalSales)}
+                      {formatZAR(totalActualSales)}{' '}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        / {formatZAR(totalPlannedSales)}
+                      </span>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      −{formatZAR(totalOpex + totalSalary)}
+                      {formatZAR(totalActualExpenses)}{' '}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        / {formatZAR(totalPlannedExpenses)}
+                      </span>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-emerald-600">
-                      +{formatZAR(totalNetProfit)}
+                    <TableCell
+                      className={`text-right tabular-nums ${
+                        totalActualNetProfit > 0
+                          ? 'text-emerald-600'
+                          : totalActualNetProfit < 0
+                            ? 'text-red-600'
+                            : 'text-muted-foreground'
+                      }`}
+                    >
+                      {formatZAR(totalActualNetProfit)}{' '}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        / {formatZAR(totalPlannedNetProfit)}
+                      </span>
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-muted-foreground">
                       —
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatZAR(totalExcess)}
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      —
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-emerald-600">
-                      {formatZAR(totalBonus)}
+                      {formatZAR(totalActualBonus)}{' '}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        / {formatZAR(totalPlannedBonus)}
+                      </span>
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-emerald-600">
-                      {formatZAR(endingReserve)}
+                      {formatZAR(runningActualReserve)}{' '}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        / {formatZAR(runningPlannedReserve)}
+                      </span>
                     </TableCell>
                   </TableRow>
                 </TableBody>

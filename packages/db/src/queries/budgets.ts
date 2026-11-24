@@ -107,8 +107,13 @@ export type FiscalYearBudgetOverview = {
  */
 export async function getBudgetVsActualsForFiscalYear(
   fiscalYear: number,
+  todayStr?: string,
 ): Promise<FiscalYearBudgetOverview> {
   const periods = getFiscalYearPeriods(fiscalYear);
+  const currentPeriod = (todayStr ?? new Date().toISOString().slice(0, 10)).slice(0, 7);
+  const elapsedOrCurrentPeriods = periods.filter((p) => p <= currentPeriod);
+  const periodsForLiveGl =
+    elapsedOrCurrentPeriods.length > 0 ? elapsedOrCurrentPeriods : ['__none__'];
 
   // Auto-seed the planned FY2026/27 (2027 = R100k) or FY2027/28 (2028 = R186k, OpEx = R21.6k) seasonalized budget once if not yet present
   if (fiscalYear === 2027 || fiscalYear === 2028) {
@@ -187,7 +192,7 @@ export async function getBudgetVsActualsForFiscalYear(
       .where(
         and(
           eq(journalEntries.status, 'posted'),
-          inArray(journalEntries.period, periods),
+          inArray(journalEntries.period, periodsForLiveGl),
           inArray(chartAccounts.type, ['revenue', 'expense']),
         ),
       )
@@ -205,7 +210,7 @@ export async function getBudgetVsActualsForFiscalYear(
       .where(
         and(
           eq(journalEntries.status, 'posted'),
-          inArray(journalEntries.period, periods),
+          inArray(journalEntries.period, periodsForLiveGl),
           eq(chartAccounts.type, 'revenue'),
         ),
       )
@@ -271,13 +276,22 @@ export async function getBudgetVsActualsForFiscalYear(
     const totalExpenseBudget = expenseBudget + directorSalaryBudget;
     const taxReserveTarget = Number(plan?.taxReserveTarget ?? 0);
 
-    const actualRevenue = isClosed ? Number(snap!.revenue ?? 0) : (glRevByPeriod.get(period) ?? 0);
+    const isFutureUnclosed = !isClosed && period > currentPeriod;
+    const actualRevenue = isClosed
+      ? Number(snap!.revenue ?? 0)
+      : isFutureUnclosed
+        ? 0
+        : (glRevByPeriod.get(period) ?? 0);
     const actualExpenses = isClosed
       ? Number(snap!.expenses ?? 0)
-      : (glExpByPeriod.get(period) ?? 0);
+      : isFutureUnclosed
+        ? 0
+        : (glExpByPeriod.get(period) ?? 0);
 
     const budgetedProfit = revenueTarget - totalExpenseBudget;
     const actualProfit = actualRevenue - actualExpenses;
+    const revenueVariance = isFutureUnclosed ? 0 : actualRevenue - revenueTarget;
+    const expenseVariance = isFutureUnclosed ? 0 : totalExpenseBudget - actualExpenses;
 
     const pDivMap = targetsByPeriod.get(period);
     const divisionTargets = allDivisions.map((d) => ({
@@ -291,12 +305,12 @@ export async function getBudgetVsActualsForFiscalYear(
       isClosed,
       revenueTarget,
       actualRevenue,
-      revenueVariance: actualRevenue - revenueTarget,
+      revenueVariance,
       expenseBudget,
       directorSalaryBudget,
       totalExpenseBudget,
       actualExpenses,
-      expenseVariance: totalExpenseBudget - actualExpenses, // positive = under budget (good)
+      expenseVariance,
       taxReserveTarget,
       budgetedProfit,
       actualProfit,

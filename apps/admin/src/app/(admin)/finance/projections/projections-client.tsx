@@ -555,7 +555,7 @@ export function ProjectionsClient({
 
                   {/* Totals Row */}
                   <TableRow className="bg-muted/40 font-semibold">
-                    <TableCell>{overview.label} Total</TableCell>
+                    <TableCell>{overview.label} Total (YTD Actual vs Plan)</TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatZAR(totals.revenueTarget)}
                     </TableCell>
@@ -573,16 +573,14 @@ export function ProjectionsClient({
                     </TableCell>
                     <TableCell
                       className={`text-right tabular-nums ${
-                        totals.actualRevenue === 0 && totals.actualExpenses === 0
+                        totals.actualProfit > 0
                           ? 'text-emerald-600'
-                          : totals.actualProfit >= 0
-                            ? 'text-emerald-600'
-                            : 'text-red-600'
+                          : totals.actualProfit < 0
+                            ? 'text-red-600'
+                            : 'text-muted-foreground'
                       }`}
                     >
-                      {totals.actualRevenue === 0 && totals.actualExpenses === 0
-                        ? `Est. ${formatZAR(totals.budgetedProfit)}`
-                        : formatZAR(totals.actualProfit)}
+                      {formatZAR(totals.actualProfit)}
                     </TableCell>
                     <TableCell />
                   </TableRow>

@@ -10,6 +10,7 @@ import {
 } from '../schema';
 import { getProfitAndLoss } from './accounting';
 import { getBankingOverview } from './banking';
+import { getCurrentFiscalYear } from './budgets';
 
 export const VAT_COMPULSORY_THRESHOLD = 1_000_000;
 
@@ -96,13 +97,19 @@ export type GovernanceOverviewResult = {
  * - 2-Gate Quarterly Dividend Evaluator + 0% PAYE Bonus Headroom
  * - SARS Tax Provisioning (SBC vs 27% CIT), IRP6 dates, and VAT R1M tracker
  */
-export async function getGovernanceOverview(fiscalYear: number): Promise<GovernanceOverviewResult> {
+export async function getGovernanceOverview(
+  fiscalYear: number,
+  todayStr?: string,
+): Promise<GovernanceOverviewResult> {
   const fyPeriodKey = `${fiscalYear}-FY`;
-  const twelveMonthsAgo = new Date();
-  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+  const todayIso = todayStr ?? new Date().toISOString().slice(0, 10);
+  const currentFy = getCurrentFiscalYear(todayIso);
+  const isFutureFy = fiscalYear > currentFy;
+  const twelveMonthsAgo = new Date(`${todayIso}T00:00:00Z`);
+  twelveMonthsAgo.setUTCMonth(twelveMonthsAgo.getUTCMonth() - 12);
   const rollingStartDate = twelveMonthsAgo.toISOString().slice(0, 10);
 
-  const [policyRows, payoutRows, pnl, banking, rollingRevRows] = await Promise.all([
+  const [policyRows, payoutRows, rawPnl, banking, rollingRevRows] = await Promise.all([
     db
       .select()
       .from(dividendPolicies)
@@ -130,10 +137,26 @@ export async function getGovernanceOverview(fiscalYear: number): Promise<Governa
           eq(journalEntries.status, 'posted'),
           eq(chartAccounts.type, 'revenue'),
           sql`${journalEntries.entryDate} >= ${rollingStartDate}`,
+          sql`${journalEntries.entryDate} <= ${todayIso}`,
         ),
       )
       .catch(() => []),
   ]);
+
+  const pnl = isFutureFy
+    ? {
+        period: fyPeriodKey,
+        revenue: [],
+        expenses: [],
+        totalRevenue: 0,
+        totalExpenses: 0,
+        operatingProfit: 0,
+        otherIncome: 0,
+        netProfitBeforeTax: 0,
+        incomeTaxExpense: 0,
+        netProfit: 0,
+      }
+    : rawPnl;
 
   const rawPolicy = policyRows[0];
   const policy: GovernancePolicyView = {
