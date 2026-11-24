@@ -20,6 +20,7 @@ vi.mock('@pmg/db', () => {
     expenseCategories: { id: 'expenseCategories_id', name: 'name' },
     expenses: { id: 'expenses_id', category: 'category' },
     getAllExpenseCategories: vi.fn(),
+    getAllChartAccounts: vi.fn(),
     eq: vi.fn(),
     sql: Object.assign(
       (strings: TemplateStringsArray, ...values: unknown[]) => ({ strings, values }),
@@ -28,7 +29,7 @@ vi.mock('@pmg/db', () => {
   };
 });
 
-import { db, getAllExpenseCategories } from '@pmg/db';
+import { db, getAllExpenseCategories, getAllChartAccounts } from '@pmg/db';
 
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
@@ -149,6 +150,16 @@ describe('Finance Categories Module', () => {
       vi.mocked(getAllExpenseCategories).mockResolvedValue([
         { id: 'cat-1', name: 'Travel' },
         { id: 'cat-2', name: 'Marketing' },
+      ] as any);
+      vi.mocked(getAllChartAccounts).mockResolvedValue([
+        {
+          id: 'acc-5070',
+          code: '5070',
+          name: 'Travel',
+          type: 'expense',
+          isActive: true,
+          isPostingAccount: true,
+        },
       ] as any);
 
       const page = await ExpenseCategoriesPage();
