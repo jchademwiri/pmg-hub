@@ -456,7 +456,11 @@ export function DividendsTab({
           <p className="text-xs text-muted-foreground mt-1">
             {bothGatesPassed && gates.maxSafeDistribution > 0
               ? `At most ${policy.payoutRatioPercent}% of excess above ${formatZAR(policy.minCashReserve)}`
-              : `Warning — cash below ${formatZAR(policy.minCashReserve)} reserve floor`}
+              : !gates.cashGatePassed
+                ? `Warning — cash below ${formatZAR(policy.minCashReserve)} reserve floor`
+                : !gates.profitGatePassed
+                  ? 'Warning — YTD profit ≤ R 0,00'
+                  : `Warning — YTD profit does not exceed ${formatZAR(policy.minCashReserve)} reserve floor`}
           </p>
         </div>
 
@@ -549,9 +553,9 @@ export function DividendsTab({
           const plannedReserveAfter = Number((plannedReserveBefore - plannedBonus).toFixed(2));
           runningPlannedReserve = plannedReserveAfter;
 
-          // Actual DB reserve progression (only for elapsed/current months)
+          // Actual DB reserve progression (only for elapsed/current months, dated on or before today)
           const actualPaidInQuarter = payouts
-            .filter((p) => p.quarter === q.key)
+            .filter((p) => p.quarter === q.key && p.payoutDate <= today)
             .reduce((s, p) => s + p.grossAmount, 0);
           const actualReserveBefore = runningActualReserve + actualNetProfit;
           const actualNeededForBase = Math.max(
@@ -566,10 +570,9 @@ export function DividendsTab({
             hasElapsedMonth && actualReserveBefore > baseFloor
               ? Number((actualNewExcess * payoutFraction).toFixed(2))
               : 0;
-          const actualBonusTakenOrSafe =
-            actualPaidInQuarter > 0 ? actualPaidInQuarter : actualSafeBonus;
+          // Only deduct recorded payouts from actual reserve — never deduct undeclared estimates
           const actualReserveAfter = hasElapsedMonth
-            ? Number((actualReserveBefore - actualBonusTakenOrSafe).toFixed(2))
+            ? Number((actualReserveBefore - actualPaidInQuarter).toFixed(2))
             : runningActualReserve;
           if (hasElapsedMonth) {
             runningActualReserve = actualReserveAfter;
@@ -609,10 +612,7 @@ export function DividendsTab({
         const totalPlannedNetProfit = quarterRows.reduce((s, r) => s + r.plannedNetProfit, 0);
         const totalActualNetProfit = quarterRows.reduce((s, r) => s + r.actualNetProfit, 0);
         const totalPlannedBonus = quarterRows.reduce((s, r) => s + r.plannedBonus, 0);
-        const totalActualBonus = quarterRows.reduce(
-          (s, r) => s + (r.actualPaidInQuarter > 0 ? r.actualPaidInQuarter : r.actualSafeBonus),
-          0,
-        );
+        const totalActualBonus = quarterRows.reduce((s, r) => s + r.actualPaidInQuarter, 0);
 
         return (
           <div className="rounded-xl border bg-card overflow-hidden">
@@ -643,7 +643,7 @@ export function DividendsTab({
                     <TableHead className="px-3 text-right">OpEx</TableHead>
                     <TableHead className="px-3 text-right">Operating Profit</TableHead>
                     <TableHead className="px-3 text-right">Pre-Bonus</TableHead>
-                    <TableHead className="px-3 text-right">Excess &gt; Floor</TableHead>
+                    <TableHead className="px-3 text-right">New Excess</TableHead>
                     <TableHead className="px-3 text-right">
                       Bonus ({policy.payoutRatioPercent}%)
                     </TableHead>
@@ -658,11 +658,6 @@ export function DividendsTab({
                       : q.actualReserveBefore;
                     const belowBase = reserveBefore <= baseFloor;
                     const excessVal = isUpcoming ? q.plannedNewExcess : q.actualNewExcess;
-                    const bonusVal = isUpcoming
-                      ? q.plannedBonus
-                      : q.actualPaidInQuarter > 0
-                        ? q.actualPaidInQuarter
-                        : q.actualSafeBonus;
                     const reserveAfter = isUpcoming ? q.plannedReserveAfter : q.actualReserveAfter;
 
                     return (
@@ -776,12 +771,27 @@ export function DividendsTab({
                           className={`px-3 text-right tabular-nums font-semibold ${
                             isUpcoming
                               ? 'text-muted-foreground font-normal'
-                              : bonusVal > 0
+                              : q.actualPaidInQuarter > 0
                                 ? 'text-emerald-600'
-                                : 'text-amber-600'
+                                : q.actualSafeBonus > 0
+                                  ? 'text-muted-foreground font-normal'
+                                  : 'text-amber-600'
                           }`}
                         >
-                          {isUpcoming ? `Est. ${formatZAR(q.plannedBonus)}` : formatZAR(bonusVal)}
+                          {isUpcoming ? (
+                            `Est. ${formatZAR(q.plannedBonus)}`
+                          ) : q.actualPaidInQuarter > 0 ? (
+                            formatZAR(q.actualPaidInQuarter)
+                          ) : q.actualSafeBonus > 0 ? (
+                            <>
+                              <span>{formatZAR(0)}</span>
+                              <span className="block text-[10px] text-emerald-600/90">
+                                Avail: {formatZAR(q.actualSafeBonus)}
+                              </span>
+                            </>
+                          ) : (
+                            formatZAR(0)
+                          )}
                         </TableCell>
                         <TableCell
                           className={`px-3 text-right tabular-nums font-semibold ${

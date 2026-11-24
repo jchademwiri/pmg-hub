@@ -117,32 +117,32 @@ export async function getBudgetVsActualsForFiscalYear(
   todayStr?: string,
 ): Promise<FiscalYearBudgetOverview> {
   const periods = getFiscalYearPeriods(fiscalYear);
-  const currentPeriod = (todayStr ?? new Date().toISOString().slice(0, 10)).slice(0, 7);
+  const todayIso = todayStr ?? new Date().toISOString().slice(0, 10);
+  const currentPeriod = todayIso.slice(0, 7);
   const elapsedOrCurrentPeriods = periods.filter((p) => p <= currentPeriod);
   const periodsForLiveGl =
     elapsedOrCurrentPeriods.length > 0 ? elapsedOrCurrentPeriods : ['__none__'];
 
-  // Auto-seed the planned FY2026/27 (2027 = R100k) or FY2027/28 (2028 = R186k, OpEx = R21.6k) seasonalized budget once if not yet present
+  // Auto-seed the planned FY2026/27 (2027 = R100k) or FY2027/28 (2028 = R186k, OpEx = R21.6k) seasonalized budget once if not yet present,
+  // or upgrade ONLY if every existing month still has a legacy auto-seed note (preserving any user-edited custom months).
   if (fiscalYear === 2027 || fiscalYear === 2028) {
-    const existingPlan = await db
+    const existingPlans = await db
       .select({ id: budgetMonthlyPlan.id, notes: budgetMonthlyPlan.notes })
       .from(budgetMonthlyPlan)
       .where(eq(budgetMonthlyPlan.fiscalYear, fiscalYear))
-      .limit(1)
       .catch(() => []);
-    if (
-      existingPlan.length === 0 ||
-      (fiscalYear === 2027 &&
-        existingPlan[0]?.notes ===
-          'Seeded FY2026/27 seasonalized R100k plan (Dec R10k, Jan R4k)') ||
-      (fiscalYear === 2028 &&
-        (existingPlan[0]?.notes ===
-          'Seeded FY2027/28 seasonalized R240k plan from Excel Financial Plan' ||
-          existingPlan[0]?.notes ===
-            'Seeded FY2027/28 seasonalized R186k organic growth plan (+24.8% YoY)' ||
-          existingPlan[0]?.notes ===
-            'Seeded FY2027/28 seasonalized R186k plan (OpEx R21.6k, +24.8% YoY)'))
-    ) {
+    const legacyNotes =
+      fiscalYear === 2027
+        ? new Set(['Seeded FY2026/27 seasonalized R100k plan (Dec R10k, Jan R4k)'])
+        : new Set([
+            'Seeded FY2027/28 seasonalized R240k plan from Excel Financial Plan',
+            'Seeded FY2027/28 seasonalized R186k organic growth plan (+24.8% YoY)',
+            'Seeded FY2027/28 seasonalized R186k plan (OpEx R21.6k, +24.8% YoY)',
+          ]);
+    const allLegacyUnmodified =
+      existingPlans.length > 0 &&
+      existingPlans.every((p) => p.notes !== null && legacyNotes.has(p.notes));
+    if (existingPlans.length === 0 || allLegacyUnmodified) {
       await seedSeasonalizedBudgetPlan(fiscalYear).catch(() => {});
     }
   }
@@ -201,6 +201,7 @@ export async function getBudgetVsActualsForFiscalYear(
         and(
           eq(journalEntries.status, 'posted'),
           inArray(journalEntries.period, periodsForLiveGl),
+          sql`${journalEntries.entryDate} <= ${todayIso}`,
           inArray(chartAccounts.type, ['revenue', 'expense']),
         ),
       )
@@ -219,6 +220,7 @@ export async function getBudgetVsActualsForFiscalYear(
         and(
           eq(journalEntries.status, 'posted'),
           inArray(journalEntries.period, periodsForLiveGl),
+          sql`${journalEntries.entryDate} <= ${todayIso}`,
           eq(chartAccounts.type, 'revenue'),
         ),
       )

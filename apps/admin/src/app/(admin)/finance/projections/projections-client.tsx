@@ -365,7 +365,7 @@ export function ProjectionsClient({
             >
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Tax Reserve (Actual vs Plan)
+                  Tax Provision (Actual vs Plan)
                 </p>
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-lg ${
