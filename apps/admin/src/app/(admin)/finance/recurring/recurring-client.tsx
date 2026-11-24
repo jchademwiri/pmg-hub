@@ -75,6 +75,7 @@ interface RecurringClientProps {
   divisions: { id: string; name: string }[];
   activeItems: ActiveItem[];
   categories: string[];
+  todayStr?: string;
 }
 
 function generateRowId(): string {
