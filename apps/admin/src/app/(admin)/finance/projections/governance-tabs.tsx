@@ -599,21 +599,19 @@ export function DividendsTab({
             </div>
 
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="text-xs">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Quarter</TableHead>
-                    <TableHead className="text-right">Sales (Actual / Target)</TableHead>
-                    <TableHead className="text-right">Expenses (Actual / Budget)</TableHead>
-                    <TableHead className="text-right">Net Profit (Actual / Plan)</TableHead>
-                    <TableHead className="text-right">Reserve Before Bonus</TableHead>
-                    <TableHead className="text-right">
-                      Excess Above {formatZAR(baseFloor)}
+                    <TableHead className="px-3">Quarter</TableHead>
+                    <TableHead className="px-3 text-right">Sales</TableHead>
+                    <TableHead className="px-3 text-right">Expenses</TableHead>
+                    <TableHead className="px-3 text-right">Net Profit</TableHead>
+                    <TableHead className="px-3 text-right">Pre-Bonus</TableHead>
+                    <TableHead className="px-3 text-right">Excess &gt; Floor</TableHead>
+                    <TableHead className="px-3 text-right">
+                      Bonus ({policy.payoutRatioPercent}%)
                     </TableHead>
-                    <TableHead className="text-right">
-                      Your Bonus ({policy.payoutRatioPercent}%)
-                    </TableHead>
-                    <TableHead className="text-right">Company Reserve Balance</TableHead>
+                    <TableHead className="px-3 text-right">Reserve Bal.</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -633,64 +631,67 @@ export function DividendsTab({
 
                     return (
                       <TableRow key={q.key} className={isUpcoming ? 'opacity-75' : undefined}>
-                        <TableCell className="font-semibold whitespace-nowrap">
-                          <div className="flex items-center gap-2">
+                        <TableCell className="px-3 font-semibold whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
                             <span>{q.label}</span>
                             {q.status === 'closed' ? (
-                              <Badge variant="secondary" className="text-[10px] py-0">
+                              <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
                                 Closed
                               </Badge>
                             ) : isUpcoming ? (
                               <Badge
                                 variant="outline"
-                                className="text-[10px] py-0 text-muted-foreground border-dashed"
+                                className="text-[10px] py-0 px-1.5 text-muted-foreground border-dashed"
                               >
                                 Upcoming
                               </Badge>
                             ) : (
                               <Badge
                                 variant="outline"
-                                className="text-[10px] py-0 border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
+                                className="text-[10px] py-0 px-1.5 border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
                               >
                                 Live
                               </Badge>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">
+                        <TableCell className="px-3 text-right tabular-nums">
                           {isUpcoming ? (
-                            <span className="text-muted-foreground">
-                              — <span className="text-xs">/ {formatZAR(q.plannedSales)}</span>
-                            </span>
+                            <>
+                              <span className="text-muted-foreground">—</span>
+                              <span className="block text-[11px] text-muted-foreground">
+                                / {formatZAR(q.plannedSales)}
+                              </span>
+                            </>
                           ) : (
                             <>
-                              <span className="font-medium">{formatZAR(q.actualSales)}</span>{' '}
-                              <span className="text-xs text-muted-foreground">
+                              <span className="font-medium">{formatZAR(q.actualSales)}</span>
+                              <span className="block text-[11px] text-muted-foreground">
                                 / {formatZAR(q.plannedSales)}
                               </span>
                             </>
                           )}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">
+                        <TableCell className="px-3 text-right tabular-nums">
                           {isUpcoming ? (
-                            <span className="text-muted-foreground">
-                              —{' '}
-                              <span className="text-xs">
+                            <>
+                              <span className="text-muted-foreground">—</span>
+                              <span className="block text-[11px] text-muted-foreground">
                                 / {formatZAR(q.plannedOpex + q.plannedSalary)}
                               </span>
-                            </span>
+                            </>
                           ) : (
                             <>
-                              <span className="font-medium">{formatZAR(q.actualExpenses)}</span>{' '}
-                              <span className="text-xs text-muted-foreground">
+                              <span className="font-medium">{formatZAR(q.actualExpenses)}</span>
+                              <span className="block text-[11px] text-muted-foreground">
                                 / {formatZAR(q.plannedOpex + q.plannedSalary)}
                               </span>
                             </>
                           )}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">
+                        <TableCell className="px-3 text-right tabular-nums">
                           {isUpcoming ? (
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-muted-foreground">
                               Est. +{formatZAR(q.plannedNetProfit)}
                             </span>
                           ) : (
@@ -705,9 +706,9 @@ export function DividendsTab({
                           )}
                         </TableCell>
                         <TableCell
-                          className={`text-right tabular-nums font-medium ${
+                          className={`px-3 text-right tabular-nums font-medium ${
                             isUpcoming
-                              ? 'text-muted-foreground text-xs font-normal'
+                              ? 'text-muted-foreground font-normal'
                               : reserveBefore < 10000
                                 ? 'text-red-600'
                                 : belowBase
@@ -719,13 +720,16 @@ export function DividendsTab({
                             ? `Est. ${formatZAR(q.plannedReserveBefore)}`
                             : formatZAR(q.actualReserveBefore)}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">
+                        <TableCell className="px-3 text-right tabular-nums">
                           {belowBase ? (
-                            <span className="text-xs text-amber-600">
-                              {formatZAR(0)} (filling {formatZAR(baseFloor)} base)
-                            </span>
+                            <>
+                              <span className="text-amber-600 font-medium">{formatZAR(0)}</span>
+                              <span className="block text-[10px] text-amber-600/80">
+                                Filling floor
+                              </span>
+                            </>
                           ) : isUpcoming ? (
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-muted-foreground">
                               Est. {formatZAR(excessVal)}
                             </span>
                           ) : (
@@ -733,9 +737,9 @@ export function DividendsTab({
                           )}
                         </TableCell>
                         <TableCell
-                          className={`text-right tabular-nums font-semibold ${
+                          className={`px-3 text-right tabular-nums font-semibold ${
                             isUpcoming
-                              ? 'text-muted-foreground text-xs font-normal'
+                              ? 'text-muted-foreground font-normal'
                               : bonusVal > 0
                                 ? 'text-emerald-600'
                                 : 'text-amber-600'
@@ -744,9 +748,9 @@ export function DividendsTab({
                           {isUpcoming ? `Est. ${formatZAR(q.plannedBonus)}` : formatZAR(bonusVal)}
                         </TableCell>
                         <TableCell
-                          className={`text-right tabular-nums font-semibold ${
+                          className={`px-3 text-right tabular-nums font-semibold ${
                             isUpcoming
-                              ? 'text-muted-foreground text-xs font-normal'
+                              ? 'text-muted-foreground font-normal'
                               : reserveAfter < 10000
                                 ? 'text-red-600'
                                 : reserveAfter < baseFloor
@@ -763,21 +767,26 @@ export function DividendsTab({
                   })}
 
                   <TableRow className="bg-muted/40 font-semibold">
-                    <TableCell>{label} Total (YTD Actual / Plan)</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatZAR(totalActualSales)}{' '}
-                      <span className="text-xs font-normal text-muted-foreground">
+                    <TableCell className="px-3">
+                      <span>Total</span>
+                      <span className="block text-[11px] font-normal text-muted-foreground">
+                        YTD Actual / Plan
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-3 text-right tabular-nums">
+                      <span>{formatZAR(totalActualSales)}</span>
+                      <span className="block text-[11px] font-normal text-muted-foreground">
                         / {formatZAR(totalPlannedSales)}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatZAR(totalActualExpenses)}{' '}
-                      <span className="text-xs font-normal text-muted-foreground">
+                    <TableCell className="px-3 text-right tabular-nums">
+                      <span>{formatZAR(totalActualExpenses)}</span>
+                      <span className="block text-[11px] font-normal text-muted-foreground">
                         / {formatZAR(totalPlannedExpenses)}
                       </span>
                     </TableCell>
                     <TableCell
-                      className={`text-right tabular-nums ${
+                      className={`px-3 text-right tabular-nums ${
                         totalActualNetProfit > 0
                           ? 'text-emerald-600'
                           : totalActualNetProfit < 0
@@ -785,26 +794,26 @@ export function DividendsTab({
                             : 'text-muted-foreground'
                       }`}
                     >
-                      {formatZAR(totalActualNetProfit)}{' '}
-                      <span className="text-xs font-normal text-muted-foreground">
+                      <span>{formatZAR(totalActualNetProfit)}</span>
+                      <span className="block text-[11px] font-normal text-muted-foreground">
                         / {formatZAR(totalPlannedNetProfit)}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                    <TableCell className="px-3 text-right tabular-nums text-muted-foreground">
                       —
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                    <TableCell className="px-3 text-right tabular-nums text-muted-foreground">
                       —
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-emerald-600">
-                      {formatZAR(totalActualBonus)}{' '}
-                      <span className="text-xs font-normal text-muted-foreground">
+                    <TableCell className="px-3 text-right tabular-nums text-emerald-600">
+                      <span>{formatZAR(totalActualBonus)}</span>
+                      <span className="block text-[11px] font-normal text-muted-foreground">
                         / {formatZAR(totalPlannedBonus)}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-emerald-600">
-                      {formatZAR(runningActualReserve)}{' '}
-                      <span className="text-xs font-normal text-muted-foreground">
+                    <TableCell className="px-3 text-right tabular-nums text-emerald-600">
+                      <span>{formatZAR(runningActualReserve)}</span>
+                      <span className="block text-[11px] font-normal text-muted-foreground">
                         / {formatZAR(runningPlannedReserve)}
                       </span>
                     </TableCell>
