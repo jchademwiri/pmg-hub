@@ -177,7 +177,9 @@ export async function getGovernanceOverview(fiscalYear: number): Promise<Governa
   const profitGatePassed = pnl.netProfit > 0;
   const cashGatePassed = banking.trueSpendableCash > policy.minCashReserve;
   const payoutFraction = policy.payoutRatioPercent / 100;
-  const maxByProfit = Math.max(0, pnl.netProfit * payoutFraction);
+  // Both Gate 1 (Net Profit) and Gate 2 (True Spendable Cash) require filling the R25,000
+  // Base Reserve Floor first; at most 50% (payoutRatioPercent) of the excess above R25,000 is distributable.
+  const maxByProfit = Math.max(0, (pnl.netProfit - policy.minCashReserve) * payoutFraction);
   const maxByCash = Math.max(
     0,
     (banking.trueSpendableCash - policy.minCashReserve) * payoutFraction,

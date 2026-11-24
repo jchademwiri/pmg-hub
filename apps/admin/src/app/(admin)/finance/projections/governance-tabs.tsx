@@ -51,16 +51,18 @@ import {
   saveDividendPolicy,
 } from '@/actions/finance/governance';
 import { formatZAR, fmtDate } from '@/lib/format';
-import type { GovernanceOverviewResult } from '@pmg/db';
+import type { FiscalYearBudgetOverview, GovernanceOverviewResult } from '@pmg/db';
 
 const VAT_LIMIT = 1_000_000;
 
 export function DividendsTab({
   governance,
+  overview,
   label,
   today,
 }: {
   governance: GovernanceOverviewResult;
+  overview: FiscalYearBudgetOverview;
   label: string;
   today: string;
 }) {
@@ -456,6 +458,187 @@ export function DividendsTab({
           </p>
         </div>
       </div>
+
+      {/* Quarterly Reserve & Bonus Projection Table (Fill R25k Base Reserve First -> 50% of New Excess) */}
+      {(() => {
+        const quarterDefs = [
+          { key: 'Q1', label: 'Q1 (Mar–May)', slice: overview.months.slice(0, 3) },
+          { key: 'Q2', label: 'Q2 (Jun–Aug)', slice: overview.months.slice(3, 6) },
+          { key: 'Q3', label: 'Q3 (Sep–Nov)', slice: overview.months.slice(6, 9) },
+          { key: 'Q4', label: 'Q4 (Dec–Feb)', slice: overview.months.slice(9, 12) },
+        ] as const;
+
+        const baseFloor = policy.minCashReserve;
+        const payoutFraction = policy.payoutRatioPercent / 100;
+        let runningReserve = 0;
+
+        const quarterRows = quarterDefs.map((q) => {
+          const sales = q.slice.reduce((s, m) => s + m.revenueTarget, 0);
+          const opex = q.slice.reduce((s, m) => s + m.expenseBudget, 0);
+          const salary = q.slice.reduce((s, m) => s + m.directorSalaryBudget, 0);
+          const netProfitAdded = sales - opex - salary;
+          const reserveBeforeBonus = runningReserve + netProfitAdded;
+          const neededForBase = Math.max(0, Math.min(netProfitAdded, baseFloor - runningReserve));
+          const excessAboveBase = Math.max(0, reserveBeforeBonus - baseFloor);
+          const newExcessThisQuarter = Math.max(0, netProfitAdded - neededForBase);
+          const yourBonus =
+            reserveBeforeBonus > baseFloor
+              ? Number((newExcessThisQuarter * payoutFraction).toFixed(2))
+              : 0;
+          const reserveAfterBonus = Number((reserveBeforeBonus - yourBonus).toFixed(2));
+          runningReserve = reserveAfterBonus;
+
+          return {
+            key: q.key,
+            label: q.label,
+            sales,
+            opex,
+            salary,
+            netProfitAdded,
+            reserveBeforeBonus,
+            excessAboveBase,
+            newExcessThisQuarter,
+            yourBonus,
+            reserveAfterBonus,
+          };
+        });
+
+        const totalSales = quarterRows.reduce((s, r) => s + r.sales, 0);
+        const totalOpex = quarterRows.reduce((s, r) => s + r.opex, 0);
+        const totalSalary = quarterRows.reduce((s, r) => s + r.salary, 0);
+        const totalNetProfit = quarterRows.reduce((s, r) => s + r.netProfitAdded, 0);
+        const totalExcess = quarterRows.reduce((s, r) => s + r.newExcessThisQuarter, 0);
+        const totalBonus = quarterRows.reduce((s, r) => s + r.yourBonus, 0);
+        const endingReserve =
+          quarterRows.length > 0 ? quarterRows[quarterRows.length - 1]!.reserveAfterBonus : 0;
+
+        return (
+          <div className="rounded-xl border bg-card overflow-hidden">
+            <div className="px-5 py-3.5 border-b bg-muted/30 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-semibold">
+                  Quarterly Reserve &amp; {policy.payoutRatioPercent}% Excess Bonus Schedule (
+                  {label})
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Fills the {formatZAR(baseFloor)} Base Reserve first (no bonus while below{' '}
+                  {formatZAR(baseFloor)}), then distributes {policy.payoutRatioPercent}% of the
+                  excess above {formatZAR(baseFloor)}.
+                </p>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                Avg Bonus: {formatZAR(totalBonus / 4)} / qtr
+              </Badge>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Quarter</TableHead>
+                    <TableHead className="text-right">Projected Sales</TableHead>
+                    <TableHead className="text-right">Less OpEx &amp; Base Salary</TableHead>
+                    <TableHead className="text-right">Net Profit Added</TableHead>
+                    <TableHead className="text-right">Reserve Before Bonus</TableHead>
+                    <TableHead className="text-right">
+                      Excess Above {formatZAR(baseFloor)}
+                    </TableHead>
+                    <TableHead className="text-right">
+                      Your Bonus ({policy.payoutRatioPercent}%)
+                    </TableHead>
+                    <TableHead className="text-right">Company Reserve Balance</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {quarterRows.map((q) => {
+                    const belowBase = q.reserveBeforeBonus <= baseFloor;
+                    return (
+                      <TableRow key={q.key}>
+                        <TableCell className="font-semibold whitespace-nowrap">{q.label}</TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground">
+                          {formatZAR(q.sales)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground">
+                          −{formatZAR(q.opex + q.salary)}{' '}
+                          <span className="text-[11px]">
+                            ({formatZAR(q.opex)} + {formatZAR(q.salary)})
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums font-medium text-emerald-600">
+                          +{formatZAR(q.netProfitAdded)}
+                        </TableCell>
+                        <TableCell
+                          className={`text-right tabular-nums font-medium ${
+                            q.reserveBeforeBonus < 10000
+                              ? 'text-red-600'
+                              : belowBase
+                                ? 'text-amber-600'
+                                : 'text-emerald-600'
+                          }`}
+                        >
+                          {formatZAR(q.reserveBeforeBonus)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {belowBase ? (
+                            <span className="text-xs text-amber-600">
+                              {formatZAR(0)} (filling {formatZAR(baseFloor)} base)
+                            </span>
+                          ) : (
+                            formatZAR(q.newExcessThisQuarter)
+                          )}
+                        </TableCell>
+                        <TableCell
+                          className={`text-right tabular-nums font-semibold ${
+                            q.yourBonus > 0 ? 'text-emerald-600' : 'text-amber-600'
+                          }`}
+                        >
+                          {formatZAR(q.yourBonus)}
+                        </TableCell>
+                        <TableCell
+                          className={`text-right tabular-nums font-semibold ${
+                            q.reserveAfterBonus < 10000
+                              ? 'text-red-600'
+                              : q.reserveAfterBonus < baseFloor
+                                ? 'text-amber-600'
+                                : 'text-emerald-600'
+                          }`}
+                        >
+                          {formatZAR(q.reserveAfterBonus)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+
+                  <TableRow className="bg-muted/40 font-semibold">
+                    <TableCell>{label} Total</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatZAR(totalSales)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      −{formatZAR(totalOpex + totalSalary)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-emerald-600">
+                      +{formatZAR(totalNetProfit)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      —
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatZAR(totalExcess)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-emerald-600">
+                      {formatZAR(totalBonus)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-emerald-600">
+                      {formatZAR(endingReserve)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Payout History Table */}
       <div className="rounded-xl border bg-card overflow-hidden">

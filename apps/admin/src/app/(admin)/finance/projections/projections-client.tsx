@@ -182,7 +182,12 @@ export function ProjectionsClient({
       </div>
 
       {activeTab === 'dividends' ? (
-        <DividendsTab governance={governance} label={overview.label} today={today} />
+        <DividendsTab
+          governance={governance}
+          overview={overview}
+          label={overview.label}
+          today={today}
+        />
       ) : activeTab === 'tax' ? (
         <TaxProvisionTab governance={governance} label={overview.label} today={today} />
       ) : (
@@ -454,10 +459,10 @@ export function ProjectionsClient({
                     <TableHead>Month</TableHead>
                     <TableHead className="text-right">Rev Target</TableHead>
                     <TableHead className="text-right">Rev Actual</TableHead>
-                    <TableHead className="text-right">Rev Variance</TableHead>
-                    <TableHead className="text-right">Exp Budget</TableHead>
+                    <TableHead className="text-right">OpEx Budget</TableHead>
+                    <TableHead className="text-right">Base Salary</TableHead>
                     <TableHead className="text-right">Exp Actual</TableHead>
-                    <TableHead className="text-right">Net Profit</TableHead>
+                    <TableHead className="text-right">Net Profit Added</TableHead>
                     <TableHead className="w-16 text-right">Edit</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -506,26 +511,11 @@ export function ProjectionsClient({
                             formatZAR(m.actualRevenue)
                           )}
                         </TableCell>
-                        <TableCell
-                          className={`text-right tabular-nums text-xs font-medium ${
-                            isUpcoming
-                              ? 'text-muted-foreground'
-                              : m.revenueVariance >= 0
-                                ? 'text-emerald-600'
-                                : 'text-amber-600'
-                          }`}
-                        >
-                          {isUpcoming ? (
-                            '—'
-                          ) : (
-                            <>
-                              {m.revenueVariance >= 0 ? '+' : '−'}
-                              {formatZAR(Math.abs(m.revenueVariance))}
-                            </>
-                          )}
+                        <TableCell className="text-right tabular-nums text-muted-foreground">
+                          {formatZAR(m.expenseBudget)}
                         </TableCell>
                         <TableCell className="text-right tabular-nums text-muted-foreground">
-                          {formatZAR(m.totalExpenseBudget)}
+                          {formatZAR(m.directorSalaryBudget)}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
                           {isUpcoming ? (
@@ -571,28 +561,27 @@ export function ProjectionsClient({
                     <TableCell className="text-right tabular-nums">
                       {formatZAR(totals.actualRevenue)}
                     </TableCell>
-                    <TableCell
-                      className={`text-right tabular-nums ${
-                        totals.actualRevenue - totals.revenueTarget >= 0
-                          ? 'text-emerald-600'
-                          : 'text-amber-600'
-                      }`}
-                    >
-                      {totals.actualRevenue - totals.revenueTarget >= 0 ? '+' : '−'}
-                      {formatZAR(Math.abs(totals.actualRevenue - totals.revenueTarget))}
+                    <TableCell className="text-right tabular-nums">
+                      {formatZAR(totals.expenseBudget)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatZAR(totals.totalExpenseBudget)}
+                      {formatZAR(totals.directorSalaryBudget)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatZAR(totals.actualExpenses)}
                     </TableCell>
                     <TableCell
                       className={`text-right tabular-nums ${
-                        totals.actualProfit >= 0 ? 'text-emerald-600' : 'text-red-600'
+                        totals.actualRevenue === 0 && totals.actualExpenses === 0
+                          ? 'text-emerald-600'
+                          : totals.actualProfit >= 0
+                            ? 'text-emerald-600'
+                            : 'text-red-600'
                       }`}
                     >
-                      {formatZAR(totals.actualProfit)}
+                      {totals.actualRevenue === 0 && totals.actualExpenses === 0
+                        ? `Est. ${formatZAR(totals.budgetedProfit)}`
+                        : formatZAR(totals.actualProfit)}
                     </TableCell>
                     <TableCell />
                   </TableRow>
