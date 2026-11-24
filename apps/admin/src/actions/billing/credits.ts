@@ -1053,6 +1053,20 @@ export async function voidCreditNote(creditNoteId: string): Promise<{ error?: st
       };
     }
 
+    // Check if cash refunds have been issued against this credit note
+    const [refundAgg] = await db
+      .select({ total: sql<string>`coalesce(sum(${creditRefunds.amount}), 0)` })
+      .from(creditRefunds)
+      .where(eq(creditRefunds.creditNoteId, creditNoteId));
+
+    const totalRefunded = parseFloat(refundAgg?.total ?? '0');
+
+    if (totalRefunded > 0) {
+      return {
+        error: `Cannot void — R${totalRefunded.toFixed(2)} of this credit has already been refunded.`,
+      };
+    }
+
     await db.transaction(async (tx) => {
       const voidRes = await voidCreditNoteJournalEntries(creditNoteId, session.user.id, tx);
       if (voidRes.error) {

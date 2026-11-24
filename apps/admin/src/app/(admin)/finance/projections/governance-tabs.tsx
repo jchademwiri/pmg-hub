@@ -295,6 +295,7 @@ export function DividendsTab({
         dwtRatePercent: policy.dwtRatePercent,
         loanOffsetAmount: previewLoanOffset,
         solvencySignedOff,
+        poolOverrideConfirmed,
         notes,
       });
       if (res.error) {

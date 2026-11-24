@@ -49,12 +49,14 @@ export function CashTransferDialog({
   const cheque = accounts.find((a) => a.code === '1010');
   const savings = accounts.find((a) => a.code === '1020');
 
-  const defaultFrom = fromAccountId || cheque?.id || accounts[0]?.id || '';
+  const validFrom = accounts.some((a) => a.id === fromAccountId) ? fromAccountId : '';
+  const defaultFrom = validFrom || cheque?.id || accounts[0]?.id || '';
   const fallbackTo =
     savings && savings.id !== defaultFrom
       ? savings.id
       : accounts.find((a) => a.id !== defaultFrom)?.id || '';
-  const defaultTo = toAccountId && toAccountId !== defaultFrom ? toAccountId : fallbackTo;
+  const validTo = accounts.some((a) => a.id === toAccountId) ? toAccountId : '';
+  const defaultTo = validTo && validTo !== defaultFrom ? validTo : fallbackTo;
 
   const fromAccount = accounts.find((a) => a.id === defaultFrom);
   const toAccount = accounts.find((a) => a.id === defaultTo);
@@ -158,10 +160,14 @@ export function CashTransferDialog({
                 </span>
                 <span
                   className={`font-bold text-sm tabular-nums block mt-1 ${
-                    (fromBalance ?? 0) < 0 ? 'text-red-600' : 'text-foreground'
+                    fromBalance !== undefined && fromBalance < 0
+                      ? 'text-red-600'
+                      : fromBalance === undefined
+                        ? 'text-muted-foreground'
+                        : 'text-foreground'
                   }`}
                 >
-                  {formatZAR(fromBalance ?? 0)}
+                  {fromBalance !== undefined ? formatZAR(fromBalance) : 'Unavailable'}
                 </span>
                 {parsedAmount > 0 && fromBalance !== undefined && (
                   <span
@@ -179,8 +185,12 @@ export function CashTransferDialog({
                 <span className="text-muted-foreground block truncate">
                   To · {toAccount?.code} {toAccount?.name}
                 </span>
-                <span className="font-bold text-sm tabular-nums block mt-1 text-foreground">
-                  {formatZAR(toBalance ?? 0)}
+                <span
+                  className={`font-bold text-sm tabular-nums block mt-1 ${
+                    toBalance === undefined ? 'text-muted-foreground' : 'text-foreground'
+                  }`}
+                >
+                  {toBalance !== undefined ? formatZAR(toBalance) : 'Unavailable'}
                 </span>
                 {parsedAmount > 0 && toBalance !== undefined && (
                   <span className="text-[11px] tabular-nums block mt-0.5 text-emerald-600 font-medium">

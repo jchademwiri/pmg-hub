@@ -282,6 +282,7 @@ export function BankingClient({
         dwtRatePercent: policy.dwtRatePercent,
         loanOffsetAmount: previewLoanOffset,
         solvencySignedOff,
+        poolOverrideConfirmed,
         notes: payoutNotes,
       });
       if (res.error) {

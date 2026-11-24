@@ -240,7 +240,7 @@ export async function getGovernanceOverview(
                 eq(journalEntries.status, 'posted'),
                 inArray(journalEntries.period, closedQuarterPeriods),
                 inArray(chartAccounts.type, ['revenue', 'expense']),
-                sql`COALESCE(${journalEntries.sourceModule}, '') != 'governance'`,
+                sql`COALESCE(${journalEntries.sourceTable}, '') != 'dividend_payouts'`,
               ),
             )
             .groupBy(chartAccounts.type)

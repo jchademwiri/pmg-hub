@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import {
   getClosedFiscalQuarters,
+  getGovernanceOverview,
   getTrialBalance,
   upsertDividendPolicy,
   type BankAccountCode,
@@ -66,6 +67,7 @@ const RecordDistributionSchema = z.object({
   dwtRatePercent: z.coerce.number().min(0).max(100).default(20),
   loanOffsetAmount: z.coerce.number().min(0).default(0),
   solvencySignedOff: z.boolean(),
+  poolOverrideConfirmed: z.boolean().default(false),
   notes: z.string().max(500).optional(),
 });
 
@@ -87,10 +89,22 @@ export async function recordQuarterlyDistribution(
       };
     }
 
-    const closedQuarters = getClosedFiscalQuarters(d.fiscalYear, getSASTToday());
+    const today = getSASTToday();
+    const closedQuarters = getClosedFiscalQuarters(d.fiscalYear, today);
     if (!closedQuarters.includes(d.quarter)) {
       return {
         error: `${d.quarter} (FY${d.fiscalYear - 1}/${String(d.fiscalYear).slice(2)}) is not closed yet. Distributions can only be declared from completed previous quarters${closedQuarters.length > 0 ? ` (${closedQuarters.join(', ')})` : ''}.`,
+      };
+    }
+
+    // Recompute live Remaining Safe Pool on the server so stale client tabs cannot bypass the cap
+    const liveGovernance = await getGovernanceOverview(d.fiscalYear, today);
+    if (
+      d.grossAmount > liveGovernance.gates.maxSafeDistribution + 0.005 &&
+      !d.poolOverrideConfirmed
+    ) {
+      return {
+        error: `Gross amount (R${d.grossAmount.toFixed(2)}) exceeds your current Remaining Safe Pool (R${liveGovernance.gates.maxSafeDistribution.toFixed(2)}). Confirm the reserve override to proceed.`,
       };
     }
 

@@ -20,7 +20,7 @@ export default async function BankingPage() {
   const [overview, allAccounts, governance] = await Promise.all([
     getBankingOverview(),
     getActiveChartAccounts(),
-    getGovernanceOverview(currentFy),
+    getGovernanceOverview(currentFy, today),
   ]);
 
   const balanceByCode: Record<string, number> = {
