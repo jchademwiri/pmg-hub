@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   TrendingUp,
+  MessageCircle,
 } from 'lucide-react';
 import { BillingKpiCard } from '@/components/billing/billing-kpi-card';
 import { Button } from '@/components/ui/button';
@@ -28,12 +29,21 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatZAR } from '@/lib/format';
+import { buildWhatsAppNudgeUrl, type WhatsAppBankDetails } from '@/lib/billing/whatsapp';
 import { SendOverdueRemindersButton } from '@/components/billing/send-overdue-reminders-button';
 import type { ClientAgingRow, AgingRow } from '@pmg/db';
+
+export interface DivisionBillingMeta {
+  divisionName: string;
+  autoSendStatements: boolean;
+  bankDetails: WhatsAppBankDetails | null;
+}
 
 interface AgingReportClientProps {
   clientAging: ClientAgingRow[];
   globalAging: AgingRow[];
+  divisionMeta?: Record<string, DivisionBillingMeta>;
+  divisionsWithoutAutoStatements?: string[];
 }
 
 type SortField =
@@ -46,7 +56,12 @@ type SortField =
   | 'bucket_61_plus';
 type SortOrder = 'asc' | 'desc';
 
-export function AgingReportClient({ clientAging, globalAging }: AgingReportClientProps) {
+export function AgingReportClient({
+  clientAging,
+  globalAging,
+  divisionMeta = {},
+  divisionsWithoutAutoStatements = [],
+}: AgingReportClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const filterParam = searchParams.get('filter');
@@ -165,6 +180,22 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
 
   return (
     <div className="space-y-6">
+      {divisionsWithoutAutoStatements.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/35 bg-amber-500/10 px-4 py-2.5 text-xs text-amber-800 dark:text-amber-300">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>
+              Automated monthly statements are disabled for{' '}
+              <strong>{divisionsWithoutAutoStatements.join(', ')}</strong>. Enable auto-statements
+              to reduce overdue AR.
+            </span>
+          </div>
+          <Button variant="outline" size="sm" asChild className="h-7 text-xs">
+            <Link href="/settings/billing/statements">Configure Statements</Link>
+          </Button>
+        </div>
+      )}
+
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <BillingKpiCard
@@ -501,11 +532,24 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                   </TableHeader>
                   <TableBody>
                     {sortedClients.map((client) => {
-                      const hasOverdue =
-                        client.bucket_1_14 > 0 ||
-                        client.bucket_15_30 > 0 ||
-                        client.bucket_31_60 > 0 ||
-                        client.bucket_61_plus > 0;
+                      const overdueAmount =
+                        client.bucket_1_14 +
+                        client.bucket_15_30 +
+                        client.bucket_31_60 +
+                        client.bucket_61_plus;
+                      const hasOverdue = overdueAmount > 0;
+                      const divInfo = client.divisionId
+                        ? divisionMeta[client.divisionId]
+                        : undefined;
+                      const whatsappUrl = hasOverdue
+                        ? buildWhatsAppNudgeUrl({
+                            phone: client.phone,
+                            clientName: client.businessName || client.clientName,
+                            overdueAmount,
+                            divisionName: divInfo?.divisionName,
+                            bankDetails: divInfo?.bankDetails,
+                          })
+                        : null;
                       return (
                         <TableRow
                           key={client.clientId}
@@ -560,6 +604,19 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                                   <FileText className="size-4 text-muted-foreground" />
                                 </Link>
                               </Button>
+                              {whatsappUrl && (
+                                <Button
+                                  asChild
+                                  size="icon"
+                                  variant="ghost"
+                                  className="size-8"
+                                  title="Send WhatsApp Payment Nudge"
+                                >
+                                  <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                                    <MessageCircle className="size-4 text-emerald-600" />
+                                  </a>
+                                </Button>
+                              )}
                               {hasOverdue ? (
                                 <SendOverdueRemindersButton
                                   clientId={client.clientId}

@@ -12,6 +12,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { getSASTToday, fmtDateLong } from '@/lib/format';
+import { getStatutoryDeadlines } from '@/lib/compliance/statutory-calendar';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
@@ -25,6 +28,9 @@ export default async function ComplianceRadarPage() {
     getUpcomingExpirationsGlobal(),
     db.select({ id: clients.id, name: clients.name }).from(clients),
   ]);
+
+  const todayStr = getSASTToday();
+  const statutoryDeadlines = getStatutoryDeadlines(todayStr);
 
   const clientMap = new Map(allClients.map((c) => [c.id, c.name]));
   const today = new Date();
@@ -124,6 +130,75 @@ export default async function ComplianceRadarPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Statutory SARS & CIPC Deadlines Card */}
+      <Card className="border bg-card shadow-sm rounded-xl overflow-hidden">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <CardTitle>Statutory SARS &amp; CIPC Deadlines</CardTitle>
+            <CardDescription>
+              Playhouse Media Group (Pty) Ltd annual filing &amp; provisional tax calendar (Feb
+              FY-end).
+            </CardDescription>
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/finance/projections?tab=tax">Open SBC Tax &amp; 1030 Reserve</Link>
+          </Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="font-semibold text-foreground py-3">Obligation</TableHead>
+                <TableHead className="font-semibold text-foreground py-3">Authority</TableHead>
+                <TableHead className="font-semibold text-foreground py-3">Due Date</TableHead>
+                <TableHead className="font-semibold text-foreground py-3">Countdown</TableHead>
+                <TableHead className="font-semibold text-foreground py-3 text-right">
+                  Action
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {statutoryDeadlines.map((d) => (
+                <TableRow key={d.id}>
+                  <TableCell className="py-3">
+                    <div className="font-medium text-sm">{d.title}</div>
+                    <div className="text-xs text-muted-foreground">{d.description}</div>
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <Badge variant="outline" className="font-mono text-xs">
+                      {d.authority}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="py-3 text-sm whitespace-nowrap">
+                    {fmtDateLong(d.dueDate)}
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <Badge
+                      variant={
+                        d.severity === 'overdue' || d.severity === 'critical'
+                          ? 'destructive'
+                          : d.severity === 'upcoming'
+                            ? 'secondary'
+                            : 'outline'
+                      }
+                    >
+                      {d.daysLeft < 0
+                        ? `Overdue (${Math.abs(d.daysLeft)}d)`
+                        : `${d.daysLeft} days left`}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="py-3 text-right">
+                    <Button variant="ghost" size="sm" asChild className="text-xs">
+                      <Link href={d.actionHref}>{d.actionLabel}</Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Card className="border bg-card shadow-sm rounded-xl overflow-hidden">
         <CardHeader>
