@@ -37,20 +37,27 @@ git push origin <branch>
 
 ### 4. Create Pull Request
 
-Write a clean, well-structured Markdown PR description (using headings, bullet points, code spans, and a verification checklist). **Always pass the PR body via `--body-file` (e.g. a UTF-8 `.md` file or stdin) instead of inline `--body "..."`** so PowerShell/shell escaping never mangles backticks or turns `\b`/`\f`/`\t`/`\a` into control characters.
+Write a clean, well-structured Markdown PR description matching `.github/pull_request_template.md` — **never leave empty `<!-- ... -->` placeholder comments** (all completed local gates must be checked `[x]`; only the post-merge staging verification item remains `[ ]` until tested on `dev`). **Always pass the PR body via `--body-file` (e.g. a UTF-8 `.md` file or stdin) instead of inline `--body "..."`** so PowerShell/shell escaping never mangles backticks or turns `\b`/`\f`/`\t`/`\a` into control characters.
 
-Recommended PR Markdown template:
+Required PR Markdown template:
 
 ```markdown
 ## Summary
-- <concise bullet describing the main change and affected modules>
-- <additional bullets for secondary changes>
+<1–2 sentences explaining what this PR does and why>
 
-## Verification
-- [x] `bun run check-types`
-- [x] `bunx prettier --check` on changed files
-- [x] `bun run test`
-- [x] `bun run build`
+## Changes
+- **<Area / Module>** (`path/to/file.ts`): <concise description of change>
+- **<Area / Module>** (`path/to/file.tsx`): <concise description of change>
+
+## Test plan
+- [x] `bun run check-types` clean
+- [x] `bunx prettier --check` clean on changed files
+- [x] `bun run test` passed (<test count / suites>)
+- [x] `bun run build` succeeded locally
+- [ ] Staging verification on `dev` (<what to click & verify after merging to `dev`>)
+
+## Related
+- Target branch: `dev` (staging)
 ```
 
 ```bash
@@ -58,23 +65,37 @@ gh pr create --base <target> --head <branch> --title "<type>(<scope>): <summary>
 ```
 (Remove any temporary `<pr-body.md>` file after `gh pr create` completes.)
 
-### 5. Monitor CI Checks
+### 5. Monitor CI Checks & Triage AI Bot Reviews (CodeRabbit & Codex)
 
-```bash
-gh pr checks
-```
+1. Wait for all CI checks to finish:
+   ```bash
+   gh pr checks <pr-number> --watch --interval 10
+   ```
+   Fix any failing checks until all checks are green.
 
-Fix any failures until all checks are green.
+2. Fetch and evaluate all review comments from **CodeRabbit** (`coderabbitai[bot]`) and **ChatGPT Codex Connector** (`chatgpt-codex-connector[bot]`):
+   ```bash
+   gh api repos/{owner}/{repo}/pulls/<pr-number>/comments --jq '.[] | {user: .user.login, path: .path, line: .line, body: .body}'
+   ```
+   - **Evaluate critically:** Fix all valid P1/P2 bugs, missing exports, edge cases, and security/accounting catches; commit, push, and re-verify CI.
+   - **Skip noise:** Briefly note any stylistic nitpicks or out-of-scope suggestions that were intentionally skipped.
+
+3. **Post-Merge `DB Migrate` Verification (Mandatory for Schema/Migration PRs):**
+   Whenever a PR touching `packages/db/src/migrations/**` or `packages/db/src/schema/**` is merged into `dev` or `master`, immediately verify the triggered `DB Migrate` GitHub Action run:
+   ```bash
+   gh run list --workflow=db-migrate.yml --branch <target> --limit 1
+   ```
+   If the run fails, inspect `gh run view <run-id> --log-failed` and immediately fix or report the exact error before moving on to the next task.
 
 ### 6. Summary & Next Step Guidance
 
-Present the PR link and remind the user of the next pipeline command:
+Once CI is green and bot review comments are triaged, **always return the full clickable PR URL prominently** (same as `/release`) with a brief bot-review triage note, and clearly distinguish merging to `dev` (staging) vs. `/release` (production):
 
 ```
-✅ Pull Request #<number> created: <url>
+✅ Pull Request #<number> ready to merge: <url>
 All CI checks passed!
 
-👉 Next Step: Review & merge the PR into dev (or run `/release` to auto-merge and prepare release).
+👉 Next Step: Merge PR #<number> into `dev` to deploy to staging for testing (click Merge on GitHub or tell me "merge to dev"). Only run `/release` later when you are ready to promote `dev` → `master` (production).
 ```
 
 ## Rules

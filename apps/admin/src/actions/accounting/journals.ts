@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache';
 import {
   getDb,
   chartAccounts,
+  dividendPayouts,
+  expenses,
   journalEntries,
   journalLines,
   accountingPeriods,
@@ -20,6 +22,8 @@ import {
   closePeriod,
   lockPeriod,
   reopenPeriod,
+  getTrialBalance,
+  inArray,
 } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 
@@ -296,18 +300,41 @@ export async function voidJournalEntry(id: string, reason: string): Promise<{ er
     if (!entry) return { error: 'Journal entry not found.' };
     if (entry.status === 'void') return { error: 'Entry is already voided.' };
 
-    await db
-      .update(journalEntries)
-      .set({
-        status: 'void',
-        voidedAt: new Date(),
-        voidedBy: session.user.id,
-        voidReason: reason || null,
-        updatedAt: new Date(),
-      })
-      .where(eq(journalEntries.id, id));
+    // Prevent voiding entries in closed or locked periods
+    if (!(await isPeriodOpen(entry.period))) {
+      return {
+        error: `Period ${entry.period} is closed or locked and entries cannot be voided.`,
+      };
+    }
 
+    await db.transaction(async (tx) => {
+      await tx
+        .update(journalEntries)
+        .set({
+          status: 'void',
+          voidedAt: new Date(),
+          voidedBy: session.user.id,
+          voidReason: reason || null,
+          updatedAt: new Date(),
+        })
+        .where(eq(journalEntries.id, id));
+
+      // Keep sub-ledgers in sync when a banking/governance/expenses-originated journal entry is voided:
+      if (entry.sourceTable === 'expenses' && entry.sourceId) {
+        await tx.delete(expenses).where(eq(expenses.id, entry.sourceId));
+      }
+
+      if (entry.sourceModule === 'governance') {
+        await tx.delete(dividendPayouts).where(eq(dividendPayouts.journalEntryId, id));
+      }
+    });
+
+    revalidatePath('/accounting');
     revalidatePath('/accounting/journals');
+    revalidatePath('/finance');
+    revalidatePath('/finance/banking');
+    revalidatePath('/finance/expenses');
+    revalidatePath('/finance/projections');
     // Only revalidate report pages if the entry was posted (affects balances)
     if (entry.status === 'posted') {
       revalidatePath('/accounting/trial-balance');
@@ -436,7 +463,7 @@ export async function recordCashTransfer(data: {
     const { fromAccountId, toAccountId, amount, date, description } = data;
 
     if (amount <= 0) return { error: 'Transfer amount must be positive.' };
-    if (fromAccountId === toAccountId)
+    if (!fromAccountId || !toAccountId || fromAccountId === toAccountId)
       return { error: 'Source and destination accounts must be different.' };
 
     const period = date.slice(0, 7);
@@ -446,6 +473,35 @@ export async function recordCashTransfer(data: {
     await ensureOpenPeriod(period);
 
     const db = getDb();
+
+    // Only allow transfers between liquid bank accounts (1010 / 1020 / 1030)
+    const LIQUID_CODES = ['1010', '1020', '1030'];
+    const transferAccounts = await db
+      .select({ id: chartAccounts.id, code: chartAccounts.code })
+      .from(chartAccounts)
+      .where(inArray(chartAccounts.id, [fromAccountId, toAccountId]));
+    const fromAcc = transferAccounts.find((a) => a.id === fromAccountId);
+    const toAcc = transferAccounts.find((a) => a.id === toAccountId);
+    if (
+      !fromAcc ||
+      !toAcc ||
+      !LIQUID_CODES.includes(fromAcc.code) ||
+      !LIQUID_CODES.includes(toAcc.code)
+    ) {
+      return { error: 'Transfers are only allowed between bank accounts (1010, 1020, 1030).' };
+    }
+    if (fromAcc.code === toAcc.code) {
+      return { error: 'Source and destination accounts must be different.' };
+    }
+
+    // Prevent overdrawing the source account
+    const tb = await getTrialBalance();
+    const available = tb.find((r) => r.accountCode === fromAcc.code)?.balance ?? 0;
+    if (amount > available + 0.005) {
+      return {
+        error: `Insufficient funds in ${fromAcc.code}: available R${available.toFixed(2)}, transfer R${amount.toFixed(2)}.`,
+      };
+    }
 
     // Default to first active division
     const [division] = await db.select({ id: chartAccounts.id }).from(chartAccounts).limit(1);
@@ -500,6 +556,8 @@ export async function recordCashTransfer(data: {
     revalidatePath('/accounting/journals');
     revalidatePath('/accounting/general-ledger');
     revalidatePath('/accounting/trial-balance');
+    revalidatePath('/finance');
+    revalidatePath('/finance/banking');
     return { entryId: entry.id };
   } catch (err) {
     console.error('Failed to record cash transfer:', err);

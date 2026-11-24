@@ -414,6 +414,27 @@
       "when": 1795234891788,
       "tag": "0058_add_leave_entry_proof_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1795438204337,
+      "tag": "0059_add_bank_reconciliations",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1795439500820,
+      "tag": "0060_add_budgets_and_projections",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1795441679989,
+      "tag": "0061_add_dividends_and_governance",
+      "breakpoints": true
     }
   ]
 }

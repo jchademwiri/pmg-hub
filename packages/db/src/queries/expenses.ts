@@ -160,10 +160,26 @@ export async function getDistinctExpenseMonths(): Promise<string[]> {
   return result.map((r) => r.month);
 }
 
+const CORE_EXPENSE_CATEGORIES = ['Director Salary', 'Bank Charges'] as const;
+
+export async function ensureCoreExpenseCategories(): Promise<void> {
+  try {
+    for (const name of CORE_EXPENSE_CATEGORIES) {
+      await db
+        .insert(expenseCategories)
+        .values({ name })
+        .onConflictDoNothing({ target: expenseCategories.name });
+    }
+  } catch {
+    // Non-fatal in test mocks or read-only contexts
+  }
+}
+
 /**
  * Returns all expense categories ordered by name ascending.
  */
 export async function getAllExpenseCategories(): Promise<{ id: string; name: string }[]> {
+  await ensureCoreExpenseCategories();
   return db
     .select({ id: expenseCategories.id, name: expenseCategories.name })
     .from(expenseCategories)

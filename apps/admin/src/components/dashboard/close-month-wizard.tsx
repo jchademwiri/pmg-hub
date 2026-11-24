@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Loader2, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { closeMonth, runPreCloseChecks } from '@/app/actions/snapshots';
@@ -26,6 +27,8 @@ interface PreCloseChecks {
   draftInvoices: number;
   incomeTotal: number;
   expenseTotal: number;
+  bankReconciled?: boolean;
+  bankChequeStatus?: string;
 }
 
 interface CloseMonthWizardProps {
@@ -67,7 +70,8 @@ export function CloseMonthWizard({ open, onOpenChange, period, summary }: CloseM
   const hasWarnings = checks
     ? checks.uncategorizedExpenses > 0 ||
       checks.draftInvoices > 0 ||
-      (checks.incomeTotal === 0 && checks.expenseTotal === 0)
+      (checks.incomeTotal === 0 && checks.expenseTotal === 0) ||
+      checks.bankReconciled === false
     : false;
 
   const loadChecks = async () => {
@@ -130,7 +134,12 @@ export function CloseMonthWizard({ open, onOpenChange, period, summary }: CloseM
         </div>
 
         {step === 0 ? (
-          <ReviewFigures summary={summary} isProfitable={isProfitable} periodLabel={periodLabel} />
+          <ReviewFigures
+            summary={summary}
+            isProfitable={isProfitable}
+            period={period}
+            periodLabel={periodLabel}
+          />
         ) : (
           <ChecksAndConfirm
             checks={checks}
@@ -185,18 +194,25 @@ function StepBadge({ active, done, label }: { active: boolean; done?: boolean; l
 function ReviewFigures({
   summary,
   isProfitable,
+  period,
   periodLabel,
 }: {
   summary: CloseMonthWizardProps['summary'];
   isProfitable: boolean;
+  period: string;
   periodLabel: string;
 }) {
+  const isFy2027Plus = period >= '2027-03';
   return (
     <div className="flex flex-col gap-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <FigureTile label="Revenue" value={summary.revenue} tone="revenue" />
         <FigureTile label="Expenses" value={summary.expenses} tone="expense" />
-        <FigureTile label="PMG Share (25%)" value={summary.pmgShare} tone="share" />
+        <FigureTile
+          label={isFy2027Plus ? 'Reserve / Tax Allocation' : 'PMG Share (25%)'}
+          value={summary.pmgShare}
+          tone="share"
+        />
         <FigureTile
           label={isProfitable ? 'Total Profit' : 'Net Loss'}
           value={summary.profitPool}
@@ -230,6 +246,18 @@ function ChecksAndConfirm({
 }) {
   const checkItems = checks
     ? [
+        {
+          label: 'ISO 9001 Bank Reconciliation',
+          detail:
+            checks.bankReconciled === true
+              ? '1010 Cheque Account is reconciled to R0.00 variance for this period.'
+              : checks.bankChequeStatus === 'variance'
+                ? 'Bank reconciliation has an unresolved variance. Clear it in Banking & Recon.'
+                : 'Bank statement has not been reconciled for this period yet.',
+          passed: checks.bankReconciled === true,
+          actionHref: checks.bankReconciled === true ? undefined : '/finance/banking',
+          actionLabel: checks.bankReconciled === true ? undefined : 'Reconcile now →',
+        },
         {
           label: 'Expenses are categorized',
           detail:
@@ -278,12 +306,22 @@ function ChecksAndConfirm({
             className="flex items-start gap-3 rounded-md border border-border p-3"
           >
             {item.passed ? (
-              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
             ) : (
-              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-500" />
             )}
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-medium">{item.label}</span>
+            <div className="flex flex-1 flex-col gap-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium">{item.label}</span>
+                {item.actionHref && item.actionLabel && (
+                  <Link
+                    href={item.actionHref}
+                    className="text-xs font-medium text-primary hover:underline shrink-0"
+                  >
+                    {item.actionLabel}
+                  </Link>
+                )}
+              </div>
               <span className="text-sm text-muted-foreground">{item.detail}</span>
             </div>
           </div>

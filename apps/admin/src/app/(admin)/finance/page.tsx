@@ -9,7 +9,6 @@ import {
   getActiveRates,
   getTrialBalance,
   getActiveChartAccounts,
-  getCurrentOpenPeriod,
   getAllAccountingPeriods,
   getProfitAndLoss,
 } from '@pmg/db';
@@ -38,7 +37,6 @@ export default async function FinanceOverviewPage({
     invoiceData,
     trialBalance,
     allAccounts,
-    currentPeriod,
     allPeriods,
     profitAndLoss,
   ] = await Promise.all([
@@ -51,7 +49,6 @@ export default async function FinanceOverviewPage({
     getAllInvoices({}, { page: 1, pageSize: 5 }),
     getTrialBalance(period),
     getActiveChartAccounts(),
-    getCurrentOpenPeriod(),
     getAllAccountingPeriods(),
     getProfitAndLoss(period),
   ]);
@@ -65,9 +62,16 @@ export default async function FinanceOverviewPage({
   const accountsReceivableBalance =
     trialBalance.find((r) => r.accountCode === '1100')?.balance ?? 0;
 
+  // Live (all-time) bank balances for the transfer dialog — independent of the period filter
+  const liveTrialBalance = period ? await getTrialBalance() : trialBalance;
   const liquidAccounts = allAccounts
-    .filter((a) => a.type === 'asset')
-    .map((a) => ({ id: a.id, code: a.code, name: a.name }));
+    .filter((a) => a.type === 'asset' && ['1010', '1020', '1030'].includes(a.code))
+    .map((a) => ({
+      id: a.id,
+      code: a.code,
+      name: a.name,
+      balance: liveTrialBalance.find((r) => r.accountCode === a.code)?.balance ?? 0,
+    }));
 
   const periodList = allPeriods.map((p) => p.period);
 
@@ -79,23 +83,19 @@ export default async function FinanceOverviewPage({
       />
 
       <div>
-        <h2 className="text-lg font-semibold">Finance & Accounting Overview</h2>
+        <h2 className="text-lg font-semibold">Finance Overview</h2>
         <p className="text-sm text-muted-foreground">
-          Cash liquidity, operational spend, P&amp;L performance, and double-entry ledger health.
+          Cash liquidity, operational spend, division revenue, and treasury management.
         </p>
       </div>
 
       <FinanceOverviewClient
         periods={periodList}
         selectedPeriod={period || ''}
-        currentPeriod={
-          currentPeriod ? { period: currentPeriod.period, status: currentPeriod.status } : null
-        }
         summary={{ revenue, expenses, pmgShare, profitPool }}
         liquidBalances={{ cheque: chequeBalance, savings: savingsBalance }}
         liquidAccounts={liquidAccounts}
         accountsReceivableBalance={accountsReceivableBalance}
-        trialBalance={trialBalance}
         profitAndLoss={profitAndLoss}
         revenueByDivision={revenueByDivision}
         recentInvoices={invoiceData.data.map((inv) => ({

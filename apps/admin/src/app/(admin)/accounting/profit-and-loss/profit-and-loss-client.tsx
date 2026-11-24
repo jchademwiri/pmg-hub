@@ -497,12 +497,14 @@ export function ProfitAndLossClient({
         </div>
 
         <div className="rounded-xl border bg-card p-4 shadow-xs">
-          <p className="text-xs font-medium text-muted-foreground">Total Expenses</p>
+          <p className="text-xs font-medium text-muted-foreground">Operating Expenses</p>
           <p className="mt-1 text-xl font-bold font-mono tabular-nums text-destructive">
-            {formatZAR(data.totalExpenses)}
+            {formatZAR(data.totalOperatingExpenses ?? data.totalExpenses)}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {data.expenses.length} {data.expenses.length === 1 ? 'account' : 'accounts'}
+            {(data.directorRemuneration ?? 0) > 0
+              ? `Excl. ${formatZAR(data.directorRemuneration)} Director Pay`
+              : `${(data.operatingExpenses ?? data.expenses).length} ${(data.operatingExpenses ?? data.expenses).length === 1 ? 'account' : 'accounts'}`}
           </p>
         </div>
 
@@ -518,7 +520,11 @@ export function ProfitAndLossClient({
             {formatZAR(data.netProfit)}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {selectedDivisionName ? `Filtered: ${selectedDivisionName}` : 'All divisions'}
+            {(data.directorRemuneration ?? 0) > 0
+              ? `Operating Profit: ${formatZAR(data.operatingProfit ?? data.netProfit)}`
+              : selectedDivisionName
+                ? `Filtered: ${selectedDivisionName}`
+                : 'All divisions'}
           </p>
         </div>
 
@@ -536,6 +542,56 @@ export function ProfitAndLossClient({
           </p>
         </div>
       </div>
+
+      {/* IFRS Operating-to-Net Profit Bridge (shown when Director Remuneration or Tax is present) */}
+      {((data.directorRemuneration ?? 0) > 0 || (data.incomeTaxExpense ?? 0) > 0) && (
+        <div className="rounded-xl border bg-card px-5 py-4 shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-2 mb-2 border-b">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Profit Bridge (Operating Profit → Director Remuneration → Net Profit)
+            </h3>
+            <Badge variant="outline" className="text-[11px]">
+              IFRS for SMEs
+            </Badge>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+            <div className="rounded-lg bg-muted/40 px-3 py-2.5">
+              <span className="text-muted-foreground block">Operating Profit (Pre-Director)</span>
+              <span className="mt-0.5 block font-mono text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+                {formatZAR(data.operatingProfit ?? data.totalRevenue - data.totalExpenses)}
+              </span>
+            </div>
+            <div className="rounded-lg bg-muted/40 px-3 py-2.5">
+              <span className="text-muted-foreground block">
+                Less: Director Remuneration (5120)
+              </span>
+              <span className="mt-0.5 block font-mono text-sm font-semibold tabular-nums text-amber-600 dark:text-amber-400">
+                -{formatZAR(data.directorRemuneration ?? 0)}
+              </span>
+            </div>
+            <div className="rounded-lg bg-muted/40 px-3 py-2.5">
+              <span className="text-muted-foreground block">Net Profit Before Tax</span>
+              <span className="mt-0.5 block font-mono text-sm font-semibold tabular-nums">
+                {formatZAR(data.netProfitBeforeTax ?? data.netProfit)}
+              </span>
+            </div>
+            <div className="rounded-lg bg-muted/40 px-3 py-2.5">
+              <span className="text-muted-foreground block">
+                {(data.incomeTaxExpense ?? 0) > 0
+                  ? `Net Profit (After ${formatZAR(data.incomeTaxExpense)} Tax)`
+                  : 'Net Profit After Tax'}
+              </span>
+              <span
+                className={`mt-0.5 block font-mono text-sm font-bold tabular-nums ${
+                  isProfit ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'
+                }`}
+              >
+                {formatZAR(data.netProfit)}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Side-by-Side Revenue & Expenses Cards */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">

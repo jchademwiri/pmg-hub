@@ -17,3 +17,6 @@ export * from './luno';
 export * from './recurring';
 export * from './onboarding';
 export * from './leave';
+export * from './banking';
+export * from './budgets';
+export * from './governance';

@@ -31,10 +31,34 @@ export const CORE_CHART_ACCOUNTS = [
     description: 'PMG Share cash holding account',
   },
   {
+    code: '1030',
+    name: 'Tax Reserve Account',
+    type: 'asset' as const,
+    description: 'Dedicated cash pocket for SARS CIT and DWT provisions',
+  },
+  {
     code: '1100',
     name: 'Accounts Receivable',
     type: 'asset' as const,
     description: 'Unpaid customer invoices',
+  },
+  {
+    code: '1250',
+    name: "Director's Loan Account",
+    type: 'asset' as const,
+    description: 'Loan to/from director (clear by 28 Feb per SARS s64E(4))',
+  },
+  {
+    code: '1500',
+    name: 'Property, Plant & Equipment',
+    type: 'asset' as const,
+    description: 'Capitalized fixed assets costing R7,000 or more',
+  },
+  {
+    code: '1510',
+    name: 'Accumulated Depreciation',
+    type: 'asset' as const,
+    description: 'Contra-asset reducing carrying value of PPE',
   },
   {
     code: '2140',
@@ -49,6 +73,24 @@ export const CORE_CHART_ACCOUNTS = [
     description: 'VAT collected on sales invoices (when VAT registered)',
   },
   {
+    code: '2160',
+    name: 'SARS Income Tax & DWT Payable',
+    type: 'liability' as const,
+    description: 'Provisioned corporate income tax and 20% Dividends Tax owed to SARS',
+  },
+  {
+    code: '3010',
+    name: "Owner's Capital",
+    type: 'equity' as const,
+    description: 'Issued share capital and owner capital injections',
+  },
+  {
+    code: '3040',
+    name: 'Dividends Declared',
+    type: 'equity' as const,
+    description: 'Contra-equity for formal shareholder dividends (Companies Act s46)',
+  },
+  {
     code: '3150',
     name: 'PMG Share Equity Reserve',
     type: 'equity' as const,
@@ -59,6 +101,12 @@ export const CORE_CHART_ACCOUNTS = [
     name: 'Sales Revenue',
     type: 'revenue' as const,
     description: 'Gross income from client billing',
+  },
+  {
+    code: '4030',
+    name: 'Interest Income',
+    type: 'revenue' as const,
+    description: 'Bank and savings account interest earned',
   },
   {
     code: '5010',
@@ -73,10 +121,28 @@ export const CORE_CHART_ACCOUNTS = [
     description: 'Claude, Antigravity, software tools',
   },
   {
+    code: '5030',
+    name: 'Office & Small Equipment',
+    type: 'expense' as const,
+    description: 'Office supplies, stationery, printing & SARS <R7,000 small-asset write-offs',
+  },
+  {
     code: '5090',
     name: 'Contractor & Freelance Fees',
     type: 'expense' as const,
     description: 'Direct project subcontractor costs',
+  },
+  {
+    code: '5110',
+    name: 'Bank Charges',
+    type: 'expense' as const,
+    description: 'Monthly bank account fees, EFT fees, and card charges',
+  },
+  {
+    code: '5120',
+    name: 'Staff Costs & Director Remuneration',
+    type: 'expense' as const,
+    description: 'Monthly director salary and 0% PAYE performance bonuses',
   },
   {
     code: '5130',
@@ -95,6 +161,18 @@ export const CORE_CHART_ACCOUNTS = [
     name: 'Bad Debt Expense',
     type: 'expense' as const,
     description: 'Uncollectible invoice write-offs',
+  },
+  {
+    code: '5160',
+    name: 'Income Tax Expense',
+    type: 'expense' as const,
+    description: 'Monthly and annual SARS corporate income tax provision',
+  },
+  {
+    code: '5170',
+    name: 'Depreciation Expense',
+    type: 'expense' as const,
+    description: 'Annual wear-and-tear depreciation on capitalized PPE',
   },
 ];
 
@@ -119,6 +197,9 @@ export async function ensureCoreChartAccounts() {
           },
         });
     }
+
+    // Ensure all existing chart of accounts are active and selectable
+    await db.update(chartAccounts).set({ isActive: true }).where(eq(chartAccounts.isActive, false));
 
     // Repair any historical PMG Share journal lines that erroneously credited
     // Equity Reserve (3150) instead of Business Cheque Account (1010), which
@@ -930,6 +1011,17 @@ export type ProfitAndLossResult = {
   totalRevenue: number;
   expenses: ProfitAndLossRow[];
   totalExpenses: number;
+  /** Operating expenses excluding 5120 Director Remuneration and 5160 Income Tax */
+  operatingExpenses: ProfitAndLossRow[];
+  totalOperatingExpenses: number;
+  /** Operating Profit (EBIT / Before Director Pay & Tax) = totalRevenue - totalOperatingExpenses */
+  operatingProfit: number;
+  /** 5120 Staff Costs & Director Remuneration */
+  directorRemuneration: number;
+  /** Net Profit Before Tax = operatingProfit - directorRemuneration */
+  netProfitBeforeTax: number;
+  /** 5160 Income Tax Expense */
+  incomeTaxExpense: number;
   netProfit: number;
 };
 
@@ -1088,13 +1180,28 @@ export async function getProfitAndLoss(
 
   const totalRevenue = revenue.reduce((s, r) => s + r.amount, 0);
   const totalExpenses = expenses.reduce((s, r) => s + r.amount, 0);
+  const operatingExpenses = expenses.filter(
+    (e) => e.accountCode !== '5120' && e.accountCode !== '5160',
+  );
+  const totalOperatingExpenses = operatingExpenses.reduce((s, r) => s + r.amount, 0);
+  const directorRemuneration = expenses.find((e) => e.accountCode === '5120')?.amount ?? 0;
+  const incomeTaxExpense = expenses.find((e) => e.accountCode === '5160')?.amount ?? 0;
+  const operatingProfit = totalRevenue - totalOperatingExpenses;
+  const netProfitBeforeTax = operatingProfit - directorRemuneration;
+  const netProfit = totalRevenue - totalExpenses;
 
   return {
     revenue,
     totalRevenue,
     expenses,
     totalExpenses,
-    netProfit: totalRevenue - totalExpenses,
+    operatingExpenses,
+    totalOperatingExpenses,
+    operatingProfit,
+    directorRemuneration,
+    netProfitBeforeTax,
+    incomeTaxExpense,
+    netProfit,
   };
 }
 
@@ -1634,6 +1741,38 @@ export async function getUnpostedInvoicesReconciliation(): Promise<
   }));
 }
 
+export type UnpostedPaymentReconciliationRow = {
+  id: string;
+  date: string;
+  description: string | null;
+  amount: number;
+};
+
+/**
+ * Sweeps for recorded cash payments (`income`) that have no posted journal entry
+ * in the general ledger, preventing silent AR/Cash drift.
+ */
+export async function getUnpostedPaymentsReconciliation(): Promise<
+  UnpostedPaymentReconciliationRow[]
+> {
+  const result = await db.execute(sql`
+    SELECT i.id, i.date::text AS date, i.description, CAST(i.amount AS NUMERIC) AS amount
+    FROM income i
+    WHERE NOT EXISTS (
+      SELECT 1 FROM journal_entries je
+      WHERE je.source_table = 'income' AND je.source_id = i.id AND je.status = 'posted'
+    )
+    ORDER BY i.date ASC
+  `);
+
+  return (result.rows as any[]).map((r) => ({
+    id: String(r.id),
+    date: String(r.date),
+    description: r.description ? String(r.description) : null,
+    amount: Number(r.amount),
+  }));
+}
+
 // ── Annual Financial Statements (AFS) ─────────────────────────────────────────
 
 export type AfsNoteRow = {
@@ -1820,15 +1959,31 @@ export async function getAnnualFinancialStatements(
     };
   });
 
-  // Calculate equity movements
+  // Calculate equity movements (including 3040 Dividends Declared contra-equity)
   const openingShareCapital = 100.0;
-  const closingShareCapital = 100.0;
   const priorNetProfit = priorPnl.netProfit;
   const currentNetProfit = pnl.netProfit;
+  const priorDividendsDeclared = Math.abs(
+    priorBalanceSheet.equity.find((e) => e.accountCode === '3040')?.amount ?? 0,
+  );
+  const currentDividendsDeclared = Math.abs(
+    balanceSheet.equity.find((e) => e.accountCode === '3040')?.amount ?? 0,
+  );
   const priorOpeningRetained = 0;
-  const priorClosingRetained = priorOpeningRetained + priorNetProfit;
+  const priorClosingRetained = priorOpeningRetained + priorNetProfit - priorDividendsDeclared;
   const currentOpeningRetained = priorClosingRetained;
-  const currentClosingRetained = currentOpeningRetained + currentNetProfit;
+  const currentClosingRetained =
+    currentOpeningRetained + currentNetProfit - currentDividendsDeclared;
+
+  // Income Tax Expense (5160) & Interest / Investment Revenues (4030)
+  const currentIncomeTax = pnl.expenses.find((e) => e.accountCode === '5160')?.amount ?? 0;
+  const priorIncomeTax = priorPnl.expenses.find((e) => e.accountCode === '5160')?.amount ?? 0;
+  const currentProfitBeforeTax = pnl.netProfit + currentIncomeTax;
+  const priorProfitBeforeTax = priorPnl.netProfit + priorIncomeTax;
+  const currentInterestIncome = pnl.revenue.find((r) => r.accountCode === '4030')?.amount ?? 0;
+  const priorInterestIncome = priorPnl.revenue.find((r) => r.accountCode === '4030')?.amount ?? 0;
+  const currentOperatingProfit = currentProfitBeforeTax - currentInterestIncome;
+  const priorOperatingProfit = priorProfitBeforeTax - priorInterestIncome;
 
   // Notes data
   const revenueNotes: AfsNoteRow[] = divisionBreakdown.map((div) => ({
@@ -1845,6 +2000,7 @@ export async function getAnnualFinancialStatements(
   const cashNotes: AfsNoteRow[] = balanceSheet.assets
     .filter(
       (a) =>
+        a.accountCode.startsWith('10') ||
         a.accountName.toLowerCase().includes('bank') ||
         a.accountName.toLowerCase().includes('cash') ||
         a.accountName.toLowerCase().includes('savings'),
@@ -1887,7 +2043,7 @@ export async function getAnnualFinancialStatements(
         'The directors are not aware of any material matter or circumstance arising since the end of the financial year that would significantly impact these financial statements.',
       businessActivities: {
         revenue: { current: pnl.totalRevenue, prior: priorPnl.totalRevenue },
-        operatingProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
+        operatingProfit: { current: currentOperatingProfit, prior: priorOperatingProfit },
         netProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
         totalAssets: { current: balanceSheet.totalAssets, prior: priorBalanceSheet.totalAssets },
         totalLiabilities: {
@@ -1943,11 +2099,14 @@ export async function getAnnualFinancialStatements(
       },
       expenses: pnl.expenses,
       totalExpenses: { current: pnl.totalExpenses, prior: priorPnl.totalExpenses },
-      operatingProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
-      investmentRevenues: { current: 0, prior: 0 },
+      operatingProfit: { current: currentOperatingProfit, prior: priorOperatingProfit },
+      investmentRevenues: {
+        current: currentInterestIncome,
+        prior: priorInterestIncome,
+      },
       financeCosts: { current: 0, prior: 0 },
-      profitBeforeTax: { current: pnl.netProfit, prior: priorPnl.netProfit },
-      incomeTaxExpense: { current: 0, prior: 0 },
+      profitBeforeTax: { current: currentProfitBeforeTax, prior: priorProfitBeforeTax },
+      incomeTaxExpense: { current: currentIncomeTax, prior: priorIncomeTax },
       netProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
     },
     statementOfChangesInEquity: {
@@ -1972,10 +2131,10 @@ export async function getAnnualFinancialStatements(
       divisionBreakdown,
       expenses: pnl.expenses,
       totalExpenses: { current: pnl.totalExpenses, prior: priorPnl.totalExpenses },
-      operatingProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
+      operatingProfit: { current: currentOperatingProfit, prior: priorOperatingProfit },
       financeCosts: { current: 0, prior: 0 },
-      profitBeforeTax: { current: pnl.netProfit, prior: priorPnl.netProfit },
-      incomeTaxExpense: { current: 0, prior: 0 },
+      profitBeforeTax: { current: currentProfitBeforeTax, prior: priorProfitBeforeTax },
+      incomeTaxExpense: { current: currentIncomeTax, prior: priorIncomeTax },
       netProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
     },
     notes: {

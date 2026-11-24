@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, Send, Ban, Plus } from 'lucide-react';
+import { Lock, Send, Ban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -12,12 +12,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { fmtDate, fmtDateTime, fmtMonthYear } from '@/lib/format';
+import { fmtDate, fmtMonthYear } from '@/lib/format';
 import { toast } from 'sonner';
 import type { JournalEntry } from '@pmg/db';
 
 interface JournalsTableProps {
   entries: JournalEntry[];
+  closedPeriods?: string[];
   postAction: (id: string) => Promise<{ error?: string }>;
   voidAction: (id: string, reason: string) => Promise<{ error?: string }>;
 }
@@ -28,9 +29,15 @@ const STATUS_STYLES: Record<string, string> = {
   void: 'bg-zinc-500/15 text-zinc-600',
 };
 
-export function JournalsTable({ entries, postAction, voidAction }: JournalsTableProps) {
+export function JournalsTable({
+  entries,
+  closedPeriods = [],
+  postAction,
+  voidAction,
+}: JournalsTableProps) {
   const router = useRouter();
   const [processing, setProcessing] = React.useState<string | null>(null);
+  const closedPeriodSet = React.useMemo(() => new Set(closedPeriods), [closedPeriods]);
 
   async function handlePost(id: string) {
     setProcessing(id);
@@ -105,28 +112,39 @@ export function JournalsTable({ entries, postAction, voidAction }: JournalsTable
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      {entry.status === 'draft' && (
+                      {closedPeriodSet.has(entry.period) ? (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
+                          title={`Period ${entry.period} is closed — entries cannot be posted or voided`}
+                        >
+                          <Lock className="h-3 w-3" /> Closed
+                        </span>
+                      ) : (
                         <>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => handlePost(entry.id)}
-                            disabled={processing === entry.id}
-                            title="Post entry"
-                            aria-label="Post entry"
-                          >
-                            <Send className="h-3.5 w-3.5 text-emerald-600" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => handleVoid(entry.id)}
-                            disabled={processing === entry.id}
-                            title="Void entry"
-                            aria-label="Void entry"
-                          >
-                            <Ban className="h-3.5 w-3.5 text-destructive" />
-                          </Button>
+                          {entry.status === 'draft' && (
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={() => handlePost(entry.id)}
+                              disabled={processing === entry.id}
+                              title="Post entry"
+                              aria-label="Post entry"
+                            >
+                              <Send className="h-3.5 w-3.5 text-emerald-600" />
+                            </Button>
+                          )}
+                          {entry.status !== 'void' && (
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={() => handleVoid(entry.id)}
+                              disabled={processing === entry.id}
+                              title="Void entry"
+                              aria-label="Void entry"
+                            >
+                              <Ban className="h-3.5 w-3.5 text-destructive" />
+                            </Button>
+                          )}
                         </>
                       )}
                     </div>

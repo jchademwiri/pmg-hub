@@ -32,18 +32,22 @@ function mockChain(returnValue: unknown[]) {
     then: (resolve: (v: unknown) => unknown) => Promise.resolve(returnValue).then(resolve),
     catch: (reject: (e: unknown) => unknown) => Promise.resolve(returnValue).catch(reject),
   };
-  const fullChain = {
-    from: vi.fn().mockReturnValue(thenable),
-    innerJoin: vi.fn().mockReturnThis(),
-    groupBy: vi.fn().mockReturnThis(),
+  const fullChain: Record<string, ReturnType<typeof vi.fn>> = {
+    from: vi.fn(),
+    innerJoin: vi.fn(),
+    where: vi.fn(),
+    groupBy: vi.fn(),
     orderBy: vi.fn().mockResolvedValue(returnValue),
   };
-  // from() returns a thenable for simple selects; also supports chaining
-  fullChain.from.mockReturnValue({
+  const chainableThenable = {
     ...fullChain,
     then: (resolve: (v: unknown) => unknown) => Promise.resolve(returnValue).then(resolve),
     catch: (reject: (e: unknown) => unknown) => Promise.resolve(returnValue).catch(reject),
-  });
+  };
+  fullChain.from!.mockReturnValue(chainableThenable);
+  fullChain.innerJoin!.mockReturnValue(chainableThenable);
+  fullChain.where!.mockReturnValue(chainableThenable);
+  fullChain.groupBy!.mockReturnValue(chainableThenable);
   mockSelect.mockReturnValue(fullChain);
   return fullChain;
 }

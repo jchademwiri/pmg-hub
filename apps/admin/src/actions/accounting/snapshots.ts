@@ -14,6 +14,7 @@ import {
   closePeriod,
   reopenPeriod,
   getTrialBalance,
+  getReconciliationForPeriod,
 } from '@pmg/db';
 import { getSASTParts } from '@/lib/format';
 import { getSessionOrRedirect, requireRole } from '@/lib/auth';
@@ -46,18 +47,23 @@ export async function runPreCloseChecks(period: string): Promise<{
   draftInvoices: number;
   incomeTotal: number;
   expenseTotal: number;
+  bankReconciled: boolean;
+  bankChequeStatus: string;
 }> {
   await getSessionOrRedirect();
-  const [uncategorizedExpenses, draftInvoices, totals] = await Promise.all([
+  const [uncategorizedExpenses, draftInvoices, totals, recon] = await Promise.all([
     getUncategorizedExpensesCount(period),
     getDraftInvoicesCount(parseInt(period.split('-')[0], 10)),
     getPeriodTotals(period),
+    getReconciliationForPeriod(period),
   ]);
   return {
     uncategorizedExpenses,
     draftInvoices,
     incomeTotal: totals.income,
     expenseTotal: totals.expenses,
+    bankReconciled: recon.isFullyReconciled,
+    bankChequeStatus: recon.chequeRecord?.status ?? 'missing',
   };
 }
 
@@ -90,6 +96,7 @@ export async function closeMonth(
     await closePeriod(period, session.user.id);
     revalidatePath('/dashboard');
     revalidatePath('/insights/snapshots');
+    revalidatePath('/finance/projections');
     return {};
   } catch (err) {
     return { error: (err as Error).message };

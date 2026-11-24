@@ -25,7 +25,12 @@ If there is an open PR targeting `dev` from the working branch or recent task:
    ```bash
    gh pr merge <pr-number> --merge
    ```
-3. Report in summary: `Merged feature PR #<number> into dev before release.`
+3. If the merged PR touched `packages/db/src/migrations/**` or `packages/db/src/schema/**`, verify the post-merge `DB Migrate` workflow run on `dev` succeeded before proceeding:
+   ```bash
+   gh run list --workflow=db-migrate.yml --branch dev --limit 1
+   ```
+   (And remind the developer to verify the post-merge `DB Migrate` run on `master` after the Release PR is merged.)
+4. Report in summary: `Merged feature PR #<number> into dev before release.`
 
 ### 2. Sync & Audit
 
@@ -57,24 +62,36 @@ git log --oneline origin/master..origin/dev
 
 ### 4. Create Release PR
 
+Write a clean, well-structured Markdown Release PR body (using `## Release vX.Y.Z`, grouped changelog bullets, and a checked `## Verification` checklist — **always pass via `--body-file`** so shell escaping never mangles backticks):
+
 ```bash
 gh pr create --base master --head dev \
-  --title "release: vX.Y.Z" --body "<changelog>"
+  --title "release: vX.Y.Z" --body-file <release-pr-body.md>
 ```
+(Remove the temporary `<release-pr-body.md>` file after `gh pr create` completes.)
 
-### 5. Monitor CI
+### 5. Monitor CI & Triage AI Bot Reviews (CodeRabbit & Codex)
 
-```bash
-gh pr checks
-```
+1. Wait for all CI checks to pass (including `Security / Dependency audit`):
+   ```bash
+   gh pr checks <pr-number> --watch --interval 10
+   ```
+   Fix any failing checks until all checks are green.
+
+2. Fetch and evaluate all review comments from **CodeRabbit** (`coderabbitai[bot]`) and **ChatGPT Codex Connector** (`chatgpt-codex-connector[bot]`):
+   ```bash
+   gh api repos/{owner}/{repo}/pulls/<pr-number>/comments --jq '.[] | {user: .user.login, path: .path, line: .line, body: .body}'
+   ```
+   - **Evaluate critically:** Fix any valid P1/P2 bugs, regressions, or security/accounting issues on `dev`, push, and re-verify CI before promoting to `master`.
+   - **Skip noise:** Briefly note any stylistic nitpicks intentionally skipped.
 
 ### 6. Summary & Next Step Guidance
 
-Present the release summary and next step reminder:
+Present the clickable Release PR link, brief bot-review triage note, and next step reminder:
 
 ```
 📦 Release PR #<number> created: <url>
-CI checks passing!
+All CI checks passed & AI bot reviews triaged!
 
-👉 Next Step: Review & merge the Release PR into master (or ask me to merge it), then run `/tag vX.Y.Z`.
+👉 Next Step: Review & merge the Release PR into master (or run `/tag vX.Y.Z` to auto-merge, tag, push, and health-check all 6 production endpoints).
 ```

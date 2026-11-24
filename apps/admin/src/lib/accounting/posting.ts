@@ -35,16 +35,23 @@ import {
   chartAccounts,
   journalEntries,
   journalLines,
+  expenses,
+  dividendPayouts,
   paymentAllocations,
+  distributionSettings,
   and,
   eq,
   inArray,
+  sql,
   divisions,
   deriveDivisionPrefix,
   ACCOUNT_RATES,
   getNextJournalEntryNumber,
   ensureOpenPeriod,
   reopenPeriod,
+  getTrialBalance,
+  upsertBankReconciliation,
+  type BankAccountCode,
   type ChartAccount,
 } from '@pmg/db';
 
@@ -52,10 +59,19 @@ import {
 const BANK_ACCOUNT_CODE = '1010'; // Business Cheque Account
 const SAVINGS_ACCOUNT_CODE = '1020'; // Savings Account (PMG Share destination)
 const ACCOUNTS_RECEIVABLE_CODE = '1100'; // Accounts Receivable
+const CLIENT_CREDITS_CODE = '2140'; // Client Overpayment Credits (Liability)
 const VAT_OUTPUT_CODE = '2150'; // VAT Output Control (Liability)
 const SALES_REVENUE_CODE = '4010'; // Sales Revenue
 const MISC_EXPENSE_CODE = '5140'; // Miscellaneous Expense (fallback)
 const BAD_DEBT_EXPENSE_CODE = '5150'; // Bad Debt Expense
+const SMALL_EQUIPMENT_EXPENSE_CODE = '5030'; // Office & Small Equipment (< R7,000 SARS write-off)
+const FIXED_ASSETS_PPE_CODE = '1500'; // Property, Plant & Equipment (>= R7,000 capitalized)
+
+export const SARS_SMALL_ASSET_THRESHOLD = 7000;
+
+export function resolveAssetPurchaseAccountCode(cost: number): '5030' | '1500' {
+  return cost < SARS_SMALL_ASSET_THRESHOLD ? SMALL_EQUIPMENT_EXPENSE_CODE : FIXED_ASSETS_PPE_CODE;
+}
 
 // ── Expense category → chart account mapping ────────────────────────────────
 const EXPENSE_ACCOUNT_MAP: { keywords: string[]; code: string }[] = [
@@ -72,7 +88,10 @@ const EXPENSE_ACCOUNT_MAP: { keywords: string[]; code: string }[] = [
   { keywords: ['shipping', 'shipment', 'delivery', 'courier'], code: '5070' },
   { keywords: ['utility', 'electricity', 'water', 'municipal'], code: '5100' },
   { keywords: ['bank', 'charge', 'fee', 'processing'], code: '5110' },
-  { keywords: ['staff', 'salary', 'wage', 'employee'], code: '5120' },
+  {
+    keywords: ['staff', 'salary', 'wage', 'employee', 'director', 'remuneration', 'bonus'],
+    code: '5120',
+  },
   { keywords: ['reinvest', 'growth', 'development'], code: '5130' },
 ];
 
@@ -1121,5 +1140,1171 @@ export async function voidInvoiceWriteOffJournalEntries(
   } catch (err) {
     console.error('Failed to void write-off journal entries:', err);
     return { error: 'Failed to void write-off journal entries.' };
+  }
+}
+
+// ── Post Journal Entry for Fixed Asset Purchase (SARS R7,000 Rule) ──────────
+
+/**
+ * Posts a balanced double-entry journal entry when a fixed asset is purchased:
+ *   - cost < R7,000 (SARS small-asset write-off):
+ *       Dr 5030 Office & Small Equipment / Cr 1010 Business Cheque Account
+ *   - cost >= R7,000 (capitalized PPE):
+ *       Dr 1500 Property, Plant & Equipment / Cr 1010 Business Cheque Account
+ */
+export async function postAssetPurchaseJournalEntry(data: {
+  assetId: string;
+  name: string;
+  cost: number;
+  date: string;
+  divisionId?: string;
+}): Promise<{ error?: string; entryId?: string; accountCode?: string }> {
+  try {
+    const { assetId, name, cost, date } = data;
+    if (cost <= 0) return {};
+
+    const period = date.slice(0, 7);
+    const p = await ensureOpenPeriod(period);
+    if (p.status !== 'open') {
+      return { error: `Accounting period ${period} is closed.` };
+    }
+
+    const db = getDb();
+    const debitCode = resolveAssetPurchaseAccountCode(cost);
+
+    // Ensure 1500 PPE and 5030 Small Equipment exist before lookup
+    await db
+      .insert(chartAccounts)
+      .values([
+        {
+          code: FIXED_ASSETS_PPE_CODE,
+          name: 'Property, Plant & Equipment',
+          type: 'asset',
+          description: 'Capitalized fixed assets costing R7,000 or more',
+          isActive: true,
+          isPostingAccount: true,
+        },
+        {
+          code: SMALL_EQUIPMENT_EXPENSE_CODE,
+          name: 'Office & Small Equipment',
+          type: 'expense',
+          description: 'Office supplies and small assets under R7,000 (SARS immediate write-off)',
+          isActive: true,
+          isPostingAccount: true,
+        },
+      ])
+      .onConflictDoNothing({ target: chartAccounts.code });
+
+    const accountMap = await getAccountsByCode([BANK_ACCOUNT_CODE, debitCode], db);
+    const bankAccount = accountMap.get(BANK_ACCOUNT_CODE);
+    const debitAccount = accountMap.get(debitCode);
+
+    if (!bankAccount || !debitAccount) {
+      return {
+        error: `Required chart accounts not found (${BANK_ACCOUNT_CODE}, ${debitCode}).`,
+      };
+    }
+
+    // Resolve corporate division (prefer Playhouse Media Group, fallback to first active division)
+    let resolvedDivisionId = data.divisionId;
+    if (!resolvedDivisionId) {
+      const allDivs = await db.select({ id: divisions.id, name: divisions.name }).from(divisions);
+      const pmgDiv = allDivs.find((d) => d.name.toLowerCase().includes('playhouse'));
+      resolvedDivisionId = pmgDiv?.id ?? allDivs[0]?.id;
+    }
+    if (!resolvedDivisionId) {
+      return { error: 'No division found to post asset purchase journal entry.' };
+    }
+
+    const entryId = randomUUID();
+    const now = new Date();
+    const isSmallAsset = cost < SARS_SMALL_ASSET_THRESHOLD;
+
+    await db.transaction(async (tx) => {
+      const entryNumber = await getNextJournalEntryNumber(tx, date);
+      const desc = isSmallAsset
+        ? `Small asset write-off (<R7k): ${name}`
+        : `Fixed asset purchase (PPE): ${name}`;
+
+      await tx.insert(journalEntries).values({
+        id: entryId,
+        entryNumber,
+        entryDate: date,
+        period,
+        divisionId: resolvedDivisionId!,
+        description: desc,
+        status: 'posted',
+        sourceModule: 'assets',
+        sourceTable: 'assets',
+        sourceId: assetId,
+        sourceDocumentNumber: entryNumber,
+        postedAt: now,
+        postedBy: 'system',
+        createdBy: 'system',
+      });
+
+      await tx.insert(journalLines).values({
+        id: randomUUID(),
+        journalEntryId: entryId,
+        accountId: debitAccount.id,
+        debit: String(cost.toFixed(2)),
+        credit: null,
+        description: isSmallAsset ? `Small asset (<R7k) — ${name}` : `Capitalized PPE — ${name}`,
+      });
+
+      await tx.insert(journalLines).values({
+        id: randomUUID(),
+        journalEntryId: entryId,
+        accountId: bankAccount.id,
+        debit: null,
+        credit: String(cost.toFixed(2)),
+        description: `Asset purchase paid from Cheque — ${name}`,
+      });
+    });
+
+    return { entryId, accountCode: debitCode };
+  } catch (err) {
+    console.error('Failed to auto-post asset purchase journal entry:', err);
+    return {
+      error: `Asset journal auto-post failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
+// ── Banking, Reconciliation & Owner Withdrawal Journal Helpers ───────────────
+
+async function resolveCorporateDivisionId(db: ReturnType<typeof getDb>, divisionId?: string) {
+  if (divisionId) return divisionId;
+  const allDivs = await db.select({ id: divisions.id, name: divisions.name }).from(divisions);
+  const pmgDiv = allDivs.find((d) => d.name.toLowerCase().includes('playhouse'));
+  return pmgDiv?.id ?? allDivs[0]?.id;
+}
+
+async function postSimpleTwoLineJournal(data: {
+  date: string;
+  debitCode: string;
+  creditCode: string;
+  amount: number;
+  description: string;
+  debitLineDescription: string;
+  creditLineDescription: string;
+  sourceModule: string;
+  expenseMirror?: { category: string };
+  createdBy?: string;
+  divisionId?: string;
+}): Promise<{ error?: string; entryId?: string }> {
+  try {
+    const absAmount = Math.abs(data.amount);
+    if (absAmount < 0.01) return {};
+
+    const period = data.date.slice(0, 7);
+    const p = await ensureOpenPeriod(period);
+    if (p.status !== 'open') {
+      return { error: `Accounting period ${period} is ${p.status} and cannot be posted to.` };
+    }
+
+    const db = getDb();
+    const accountMap = await getAccountsByCode([data.debitCode, data.creditCode], db);
+    const debitAccount = accountMap.get(data.debitCode);
+    const creditAccount = accountMap.get(data.creditCode);
+
+    if (!debitAccount || !creditAccount) {
+      return {
+        error: `Required chart accounts not found (${data.debitCode}, ${data.creditCode}).`,
+      };
+    }
+
+    const resolvedDivisionId = await resolveCorporateDivisionId(db, data.divisionId);
+    if (!resolvedDivisionId) {
+      return { error: 'No division found to post journal entry.' };
+    }
+
+    const entryId = randomUUID();
+    const now = new Date();
+    const actor = data.createdBy || 'system';
+
+    await db.transaction(async (tx) => {
+      const entryNumber = await getNextJournalEntryNumber(tx, data.date);
+
+      let expenseId: string | undefined;
+      if (data.expenseMirror) {
+        expenseId = randomUUID();
+        await tx.insert(expenses).values({
+          id: expenseId,
+          date: data.date,
+          divisionId: resolvedDivisionId,
+          category: data.expenseMirror.category,
+          description: data.description,
+          amount: absAmount.toFixed(2),
+        });
+      }
+
+      await tx.insert(journalEntries).values({
+        id: entryId,
+        entryNumber,
+        entryDate: data.date,
+        period,
+        divisionId: resolvedDivisionId,
+        description: data.description,
+        status: 'posted',
+        sourceModule: data.expenseMirror ? 'expenses' : data.sourceModule,
+        sourceTable: expenseId ? 'expenses' : null,
+        sourceId: expenseId ?? null,
+        sourceDocumentNumber: entryNumber,
+        postedAt: now,
+        postedBy: actor,
+        createdBy: actor,
+      });
+
+      await tx.insert(journalLines).values([
+        {
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: debitAccount.id,
+          debit: absAmount.toFixed(2),
+          credit: null,
+          description: data.debitLineDescription,
+        },
+        {
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: creditAccount.id,
+          debit: null,
+          credit: absAmount.toFixed(2),
+          description: data.creditLineDescription,
+        },
+      ]);
+    });
+
+    return { entryId };
+  } catch (err) {
+    console.error('Failed to post banking journal entry:', err);
+    return {
+      error: `Journal posting failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
+export type BankReconciliationContraCode = '5110' | '4030' | '1250' | '3010';
+
+/**
+ * Posts a balanced bank reconciliation adjustment entry.
+ * delta = statementBalance - bookBalance:
+ *  - delta > 0: Dr <bank> / Cr <contra>
+ *  - delta < 0: Dr <contra> / Cr <bank>
+ */
+export async function postBankReconciliationAdjustment(data: {
+  accountCode: BankAccountCode;
+  date: string;
+  delta: number;
+  contraCode: BankReconciliationContraCode;
+  description: string;
+  createdBy?: string;
+}): Promise<{ error?: string; entryId?: string }> {
+  const isIncrease = data.delta > 0;
+  return postSimpleTwoLineJournal({
+    date: data.date,
+    debitCode: isIncrease ? data.accountCode : data.contraCode,
+    creditCode: isIncrease ? data.contraCode : data.accountCode,
+    amount: Math.abs(data.delta),
+    description: data.description,
+    debitLineDescription: `Bank reconciliation adjustment (${data.accountCode})`,
+    creditLineDescription: `Bank reconciliation adjustment (${data.contraCode})`,
+    sourceModule: 'banking',
+    createdBy: data.createdBy,
+  });
+}
+
+export type OwnerWithdrawalMode = 'director_loan' | 'loan_repayment' | 'salary_advance';
+
+/**
+ * Posts a Director's Loan withdrawal (Dr 1250 / Cr <bank>), Director's Loan repayment
+ * (Dr <bank> / Cr 1250), or Director Salary / Advance (Dr 5120 / Cr <bank>).
+ */
+export async function postOwnerWithdrawalJournalEntry(data: {
+  date: string;
+  amount: number;
+  mode: OwnerWithdrawalMode;
+  accountCode?: BankAccountCode;
+  description: string;
+  createdBy?: string;
+}): Promise<{ error?: string; entryId?: string }> {
+  const bankCode = data.accountCode ?? BANK_ACCOUNT_CODE;
+  const mapping: Record<
+    OwnerWithdrawalMode,
+    { debitCode: string; creditCode: string; label: string }
+  > = {
+    director_loan: {
+      debitCode: '1250',
+      creditCode: bankCode,
+      label: "Director's Loan withdrawal",
+    },
+    loan_repayment: {
+      debitCode: bankCode,
+      creditCode: '1250',
+      label: "Director's Loan repayment",
+    },
+    salary_advance: {
+      debitCode: '5120',
+      creditCode: bankCode,
+      label: 'Director remuneration / advance',
+    },
+  };
+
+  const selected = mapping[data.mode];
+  return postSimpleTwoLineJournal({
+    date: data.date,
+    debitCode: selected.debitCode,
+    creditCode: selected.creditCode,
+    amount: data.amount,
+    description: data.description || selected.label,
+    debitLineDescription: selected.label,
+    creditLineDescription: selected.label,
+    sourceModule: 'banking',
+    expenseMirror: data.mode === 'salary_advance' ? { category: 'Director Salary' } : undefined,
+    createdBy: data.createdBy,
+  });
+}
+
+/**
+ * Posts a 1-click Bank Fee (Dr 5110 / Cr <bank>) or Interest Received (Dr <bank> / Cr 4030).
+ */
+export async function postQuickBankEntry(data: {
+  type: 'bank_fee' | 'interest';
+  accountCode: BankAccountCode;
+  date: string;
+  amount: number;
+  description: string;
+  createdBy?: string;
+}): Promise<{ error?: string; entryId?: string }> {
+  const isFee = data.type === 'bank_fee';
+  return postSimpleTwoLineJournal({
+    date: data.date,
+    debitCode: isFee ? '5110' : data.accountCode,
+    creditCode: isFee ? data.accountCode : '4030',
+    amount: data.amount,
+    description: data.description || (isFee ? 'Monthly bank charges' : 'Bank interest received'),
+    debitLineDescription: isFee ? 'Bank charges' : `Interest credited to ${data.accountCode}`,
+    creditLineDescription: isFee ? `Bank fee deducted from ${data.accountCode}` : 'Interest income',
+    sourceModule: 'banking',
+    expenseMirror: isFee ? { category: 'Bank Charges' } : undefined,
+    createdBy: data.createdBy,
+  });
+}
+
+/**
+ * Runs the FY2027/28 Year-End Bank True-Up (2027-02-28) & Opening Balance Transition:
+ * 1. Computes book balances strictly as of 2027-02-28 (ignoring March 2027+ entries).
+ * 2. Posts any variance for 1010 and 1020 against 1250 Director's Loan (drawdown) or
+ *    3010 Owner's Capital (injection) on 2027-02-28.
+ * 3. Records reconciled 2027-02 bank_reconciliations rows.
+ * 4. Inserts a date-effective pmg_share = 0% row effective 2027-03-01 (idempotent).
+ */
+export async function postFy2027OpeningBalanceTrueUp(data: {
+  realChequeBalance: number;
+  realSavingsBalance: number;
+  createdBy?: string;
+}): Promise<{ error?: string; postedEntries: number }> {
+  try {
+    const trueUpDate = '2027-02-28';
+    const trueUpPeriod = '2027-02';
+    const tb = await getTrialBalance(undefined, undefined, undefined, trueUpDate);
+    const byCode = new Map(tb.map((r) => [r.accountCode, r.balance]));
+
+    const bookCheque = byCode.get('1010') ?? 0;
+    const bookSavings = byCode.get('1020') ?? 0;
+
+    let postedEntries = 0;
+
+    const accounts: Array<{ code: BankAccountCode; book: number; real: number; label: string }> = [
+      { code: '1010', book: bookCheque, real: data.realChequeBalance, label: 'Cheque Account' },
+      { code: '1020', book: bookSavings, real: data.realSavingsBalance, label: 'Savings Account' },
+    ];
+
+    for (const acc of accounts) {
+      const delta = acc.real - acc.book;
+      let adjustmentJournalId: string | null = null;
+
+      if (Math.abs(delta) >= 0.01) {
+        const contraCode: BankReconciliationContraCode = delta < 0 ? '1250' : '3010';
+        const res = await postBankReconciliationAdjustment({
+          accountCode: acc.code,
+          date: trueUpDate,
+          delta,
+          contraCode,
+          description: `FY2026/27 Year-End True-Up (${acc.label}) for FY2027/28 Opening Balance`,
+          createdBy: data.createdBy,
+        });
+        if (res.error) return { error: res.error, postedEntries };
+        adjustmentJournalId = res.entryId ?? null;
+        postedEntries++;
+      }
+
+      await upsertBankReconciliation({
+        period: trueUpPeriod,
+        accountCode: acc.code,
+        statementDate: trueUpDate,
+        statementBalance: acc.real,
+        bookBalance: acc.real,
+        variance: 0,
+        adjustmentJournalId,
+        status: 'reconciled',
+        notes: 'FY2026/27 Year-End True-Up & FY2027/28 Opening Balance confirmation',
+        reconciledBy: data.createdBy ?? 'system',
+      });
+    }
+
+    // Sunset pmg_share to 0% effective 2027-03-01 (idempotent)
+    const db = getDb();
+    const existingSunset = await db
+      .select({ id: distributionSettings.id })
+      .from(distributionSettings)
+      .where(
+        and(
+          eq(distributionSettings.rateKey, 'pmg_share'),
+          sql`${distributionSettings.effectiveFrom} >= '2027-03-01'`,
+          sql`${distributionSettings.rateValue}::numeric = 0`,
+        ),
+      )
+      .limit(1);
+
+    if (existingSunset.length === 0) {
+      await db.insert(distributionSettings).values({
+        rateKey: 'pmg_share',
+        rateValue: '0.0000',
+        effectiveFrom: new Date('2027-03-01T00:00:00Z'),
+        effectiveTo: null,
+        description: 'FY2027/28 (Pty) Ltd governance transition — PMG Share sunsetted (0%)',
+        distributionBasis: 'net_profit',
+        isActive: true,
+      });
+    }
+
+    return { postedEntries };
+  } catch (err) {
+    console.error('Failed to run FY2027 opening balance true-up:', err);
+    return {
+      error: `FY2027 transition failed: ${err instanceof Error ? err.message : String(err)}`,
+      postedEntries: 0,
+    };
+  }
+}
+
+// ── Phase 5: Monthly SARS Tax Provisioning & Quarterly Dividend / Bonus GL ──
+
+/**
+ * Posts a monthly or periodic SARS Corporate Income Tax provision:
+ *   Dr 5160 Income Tax Expense / Cr 2160 SARS Income Tax & DWT Payable
+ */
+export async function postMonthlyTaxProvisionEntry(data: {
+  date: string;
+  amount: number;
+  description?: string;
+  createdBy?: string;
+}): Promise<{ error?: string; entryId?: string }> {
+  return postSimpleTwoLineJournal({
+    date: data.date,
+    debitCode: '5160',
+    creditCode: '2160',
+    amount: data.amount,
+    description: data.description || `SARS Income Tax provision (${data.date.slice(0, 7)})`,
+    debitLineDescription: 'Corporate Income Tax provision',
+    creditLineDescription: 'SARS Income Tax payable accrual',
+    sourceModule: 'governance',
+    createdBy: data.createdBy,
+  });
+}
+
+/**
+ * Posts a balanced multi-line journal entry for a quarterly distribution:
+ * - director_bonus (0% PAYE within threshold):
+ *     Dr 5120 Staff Costs & Director Remuneration = grossAmount
+ *     Cr 1250 Director's Loan Account = loanOffsetAmount (if > 0)
+ *     Cr 1010 Business Cheque Account = netCashPaid (if > 0)
+ * - dividend (Companies Act s46 + 20% DWT):
+ *     Dr 3040 Dividends Declared = grossAmount
+ *     Cr 2160 SARS Income Tax & DWT Payable = dwtWithheld (if > 0)
+ *     Cr 1250 Director's Loan Account = loanOffsetAmount (if > 0)
+ *     Cr 1010 Business Cheque Account = netCashPaid (if > 0)
+ */
+export async function postQuarterlyDistributionEntry(data: {
+  date: string;
+  quarter: string;
+  payoutType: 'director_bonus' | 'dividend';
+  accountCode?: BankAccountCode;
+  grossAmount: number;
+  dwtWithheld: number;
+  loanOffsetAmount: number;
+  netCashPaid: number;
+  description?: string;
+  createdBy?: string;
+  payoutRecord?: {
+    fiscalYear: number;
+    solvencySignedBy: string;
+    notes: string | null;
+  };
+}): Promise<{ error?: string; entryId?: string; payoutId?: string }> {
+  try {
+    if (data.grossAmount < 0.01) {
+      return { error: 'Gross distribution amount must be greater than zero.' };
+    }
+
+    const totalCredits = Number(
+      (data.dwtWithheld + data.loanOffsetAmount + data.netCashPaid).toFixed(2),
+    );
+    if (Math.abs(data.grossAmount - totalCredits) >= 0.01) {
+      return {
+        error: `Distribution lines do not balance (gross ${data.grossAmount.toFixed(2)} vs credits ${totalCredits.toFixed(2)}).`,
+      };
+    }
+
+    const period = data.date.slice(0, 7);
+    const p = await ensureOpenPeriod(period);
+    if (p.status !== 'open') {
+      return { error: `Accounting period ${period} is ${p.status} and cannot be posted to.` };
+    }
+
+    const bankCode = data.accountCode ?? BANK_ACCOUNT_CODE;
+    const debitCode = data.payoutType === 'director_bonus' ? '5120' : '3040';
+    const codes = [debitCode, bankCode];
+    if (data.dwtWithheld > 0) codes.push('2160');
+    if (data.loanOffsetAmount > 0) codes.push('1250');
+
+    const db = getDb();
+    const accountMap = await getAccountsByCode(codes, db);
+    const debitAccount = accountMap.get(debitCode);
+    const bankAccount = accountMap.get(bankCode);
+    const sarsAccount = data.dwtWithheld > 0 ? accountMap.get('2160') : null;
+    const loanAccount = data.loanOffsetAmount > 0 ? accountMap.get('1250') : null;
+
+    if (
+      !debitAccount ||
+      (data.netCashPaid > 0 && !bankAccount) ||
+      (data.dwtWithheld > 0 && !sarsAccount) ||
+      (data.loanOffsetAmount > 0 && !loanAccount)
+    ) {
+      return { error: `Required chart accounts not found (${codes.join(', ')}).` };
+    }
+
+    const resolvedDivisionId = await resolveCorporateDivisionId(db);
+    if (!resolvedDivisionId) {
+      return { error: 'No division found to post distribution journal entry.' };
+    }
+
+    const entryId = randomUUID();
+    const payoutId = data.payoutRecord ? randomUUID() : undefined;
+    const now = new Date();
+    const actor = data.createdBy || 'system';
+    const label =
+      data.payoutType === 'director_bonus'
+        ? `${data.quarter} Director Bonus (0% PAYE)`
+        : `${data.quarter} Dividend Declared (Companies Act s46)`;
+
+    await db.transaction(async (tx) => {
+      const entryNumber = await getNextJournalEntryNumber(tx, data.date);
+
+      // Director bonuses (5120) and Dividends (3040) are posted directly to the
+      // General Ledger & dividend_payouts audit log — never mirrored into the
+      // operational `expenses` table, which would distort monthly OpEx KPIs and
+      // double-count against the Quarterly Reserve Schedule.
+      await tx.insert(journalEntries).values({
+        id: entryId,
+        entryNumber,
+        entryDate: data.date,
+        period,
+        divisionId: resolvedDivisionId,
+        description: data.description?.trim() || label,
+        status: 'posted',
+        sourceModule: 'governance',
+        sourceTable: 'dividend_payouts',
+        sourceId: payoutId ?? null,
+        sourceDocumentNumber: entryNumber,
+        postedAt: now,
+        postedBy: actor,
+        createdBy: actor,
+      });
+
+      const lines: Array<{
+        id: string;
+        journalEntryId: string;
+        accountId: string;
+        debit: string | null;
+        credit: string | null;
+        description: string;
+      }> = [
+        {
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: debitAccount.id,
+          debit: data.grossAmount.toFixed(2),
+          credit: null,
+          description: label,
+        },
+      ];
+
+      if (data.dwtWithheld > 0 && sarsAccount) {
+        lines.push({
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: sarsAccount.id,
+          debit: null,
+          credit: data.dwtWithheld.toFixed(2),
+          description: `20% Dividends Withholding Tax (DWT) — ${data.quarter}`,
+        });
+      }
+
+      if (data.loanOffsetAmount > 0 && loanAccount) {
+        lines.push({
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: loanAccount.id,
+          debit: null,
+          credit: data.loanOffsetAmount.toFixed(2),
+          description: `Offset against Director's Loan Account (1250) — ${data.quarter}`,
+        });
+      }
+
+      if (data.netCashPaid > 0 && bankAccount) {
+        lines.push({
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: bankAccount.id,
+          debit: null,
+          credit: data.netCashPaid.toFixed(2),
+          description: `Net cash payout from ${bankAccount.name} (${bankCode}) — ${data.quarter}`,
+        });
+      }
+
+      await tx.insert(journalLines).values(lines);
+
+      if (data.payoutRecord && payoutId) {
+        await tx.insert(dividendPayouts).values({
+          id: payoutId,
+          fiscalYear: data.payoutRecord.fiscalYear,
+          quarter: data.quarter,
+          payoutDate: data.date,
+          payoutType: data.payoutType,
+          grossAmount: data.grossAmount.toFixed(2),
+          dwtWithheld: data.dwtWithheld.toFixed(2),
+          loanOffsetAmount: data.loanOffsetAmount.toFixed(2),
+          netCashPaid: data.netCashPaid.toFixed(2),
+          solvencySignedOff: true,
+          solvencySignedBy: data.payoutRecord.solvencySignedBy,
+          solvencySignedAt: now,
+          journalEntryId: entryId,
+          notes: data.payoutRecord.notes,
+          updatedAt: now,
+        });
+      }
+    });
+
+    return { entryId, payoutId };
+  } catch (err) {
+    console.error('Failed to post quarterly distribution journal entry:', err);
+    return {
+      error: `Distribution posting failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
+/**
+ * Atomically voids a declared quarterly distribution (0% PAYE Director Bonus or
+ * Companies Act s46 Dividend):
+ * - Marks the linked General Ledger journal entry as `void`
+ * - Deletes any legacy mirrored row in `expenses` (if `sourceTable === 'expenses'`)
+ * - Removes the `dividend_payouts` audit record
+ */
+export async function voidQuarterlyDistributionEntry(data: {
+  payoutId: string;
+  voidedBy?: string;
+  reason?: string;
+}): Promise<{ error?: string; voidedJournalId?: string | null }> {
+  try {
+    const db = getDb();
+    const [payout] = await db
+      .select()
+      .from(dividendPayouts)
+      .where(eq(dividendPayouts.id, data.payoutId))
+      .limit(1);
+
+    if (!payout) {
+      return { error: 'Distribution payout record not found.' };
+    }
+
+    const actor = data.voidedBy || 'system';
+    const reason = data.reason?.trim() || 'Distribution payout voided by director';
+    const now = new Date();
+
+    let linkedEntry: {
+      id: string;
+      period: string;
+      status: string;
+      sourceTable: string | null;
+      sourceId: string | null;
+    } | null = null;
+
+    if (payout.journalEntryId) {
+      const [je] = await db
+        .select({
+          id: journalEntries.id,
+          period: journalEntries.period,
+          status: journalEntries.status,
+          sourceTable: journalEntries.sourceTable,
+          sourceId: journalEntries.sourceId,
+        })
+        .from(journalEntries)
+        .where(eq(journalEntries.id, payout.journalEntryId))
+        .limit(1);
+
+      if (je) {
+        const p = await ensureOpenPeriod(je.period);
+        if (p.status !== 'open') {
+          return {
+            error: `Accounting period ${je.period} is ${p.status}. Reopen the period before voiding this distribution.`,
+          };
+        }
+        linkedEntry = je;
+      }
+    }
+
+    await db.transaction(async (tx) => {
+      if (linkedEntry && linkedEntry.status !== 'void') {
+        await tx
+          .update(journalEntries)
+          .set({
+            status: 'void',
+            voidedAt: now,
+            voidedBy: actor,
+            voidReason: reason,
+            updatedAt: now,
+          })
+          .where(eq(journalEntries.id, linkedEntry.id));
+      }
+
+      if (linkedEntry?.sourceTable === 'expenses' && linkedEntry.sourceId) {
+        await tx.delete(expenses).where(eq(expenses.id, linkedEntry.sourceId));
+      }
+
+      await tx.delete(dividendPayouts).where(eq(dividendPayouts.id, payout.id));
+    });
+
+    return { voidedJournalId: linkedEntry?.id ?? null };
+  } catch (err) {
+    console.error('Failed to void quarterly distribution:', err);
+    return {
+      error: `Failed to void distribution: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
+// ── Credit Notes, Applications & Refunds ─────────────────────────────────────
+
+/**
+ * Posts the double-entry journal entry when a credit note is issued:
+ * - Overpayment credit note (reclassifies negative AR from payment):
+ *     Dr Accounts Receivable (1100) / Cr Client Overpayment Credits (2140)
+ * - Standard credit note / manual adjustment / promotional credit:
+ *     Dr Sales Revenue (4010) / Cr Client Overpayment Credits (2140)
+ */
+export async function postCreditNoteIssueJournalEntry(data: {
+  creditNoteId: string;
+  documentNumber: string;
+  type: 'overpayment' | 'manual_adjustment' | 'credit_note' | 'promotional';
+  amount: number;
+  date: string;
+  divisionId: string;
+  reason?: string | null;
+  postedBy?: string;
+  tx?: any;
+}): Promise<{ error?: string; entryId?: string }> {
+  try {
+    if (data.amount <= 0) return { error: 'Credit note amount must be positive.' };
+
+    const period = data.date.slice(0, 7);
+    const p = await ensureOpenPeriod(period, data.tx);
+    if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
+
+    const db = data.tx || getDb();
+    const debitCode = data.type === 'overpayment' ? ACCOUNTS_RECEIVABLE_CODE : SALES_REVENUE_CODE;
+    const accountMap = await getAccountsByCode([debitCode, CLIENT_CREDITS_CODE], db);
+
+    const debitAccount = accountMap.get(debitCode);
+    const creditLiabilityAccount = accountMap.get(CLIENT_CREDITS_CODE);
+
+    if (!debitAccount || !creditLiabilityAccount) {
+      return {
+        error: `Required chart accounts not found (${debitCode}, ${CLIENT_CREDITS_CODE}).`,
+      };
+    }
+
+    const entryId = randomUUID();
+    const now = new Date();
+    const actor = data.postedBy || 'system';
+    const amountStr = data.amount.toFixed(2);
+    const baseDesc =
+      data.type === 'overpayment'
+        ? `Overpayment credit ${data.documentNumber}${data.reason ? ` — ${data.reason}` : ''}`
+        : `Credit note ${data.documentNumber} issued${data.reason ? ` — ${data.reason}` : ''}`;
+
+    const runInsideTx = async (tx: any) => {
+      const entryNumber = await getNextJournalEntryNumber(tx, data.date);
+      const formattedDesc = await formatDivisionDescription(tx, data.divisionId, baseDesc);
+
+      await tx.insert(journalEntries).values({
+        id: entryId,
+        entryNumber,
+        entryDate: data.date,
+        period,
+        divisionId: data.divisionId,
+        description: formattedDesc,
+        status: 'posted',
+        sourceModule: 'billing',
+        sourceTable: 'credit_notes',
+        sourceId: data.creditNoteId,
+        sourceDocumentNumber: data.documentNumber,
+        postedAt: now,
+        postedBy: actor,
+        createdBy: actor,
+      });
+
+      await tx.insert(journalLines).values([
+        {
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: debitAccount.id,
+          debit: amountStr,
+          credit: null,
+          description:
+            data.type === 'overpayment'
+              ? `Reclassify overpayment from AR — ${data.documentNumber}`
+              : `Revenue credit adjustment — ${data.documentNumber}`,
+        },
+        {
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: creditLiabilityAccount.id,
+          debit: null,
+          credit: amountStr,
+          description: `Client credit liability — ${data.documentNumber}`,
+        },
+      ]);
+    };
+
+    if (data.tx) {
+      await runInsideTx(data.tx);
+    } else {
+      await db.transaction(runInsideTx);
+    }
+
+    return { entryId };
+  } catch (err) {
+    console.error('Failed to post credit note issue journal entry:', err);
+    return {
+      error: `Credit note journal posting failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
+/**
+ * Posts the double-entry journal entry when a credit note is applied to an invoice:
+ *   Dr Client Overpayment Credits (2140) / Cr Accounts Receivable (1100)
+ */
+export async function postCreditApplicationJournalEntry(data: {
+  creditApplicationId: string;
+  creditNoteDocumentNumber: string;
+  invoiceDocumentNumber: string;
+  amount: number;
+  date: string;
+  divisionId: string;
+  postedBy?: string;
+  tx?: any;
+}): Promise<{ error?: string; entryId?: string }> {
+  try {
+    if (data.amount <= 0) return { error: 'Credit application amount must be positive.' };
+
+    const period = data.date.slice(0, 7);
+    const p = await ensureOpenPeriod(period, data.tx);
+    if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
+
+    const db = data.tx || getDb();
+    const accountMap = await getAccountsByCode([CLIENT_CREDITS_CODE, ACCOUNTS_RECEIVABLE_CODE], db);
+
+    const creditLiabilityAccount = accountMap.get(CLIENT_CREDITS_CODE);
+    const accountsReceivable = accountMap.get(ACCOUNTS_RECEIVABLE_CODE);
+
+    if (!creditLiabilityAccount || !accountsReceivable) {
+      return {
+        error: `Required chart accounts not found (${CLIENT_CREDITS_CODE}, ${ACCOUNTS_RECEIVABLE_CODE}).`,
+      };
+    }
+
+    const entryId = randomUUID();
+    const now = new Date();
+    const actor = data.postedBy || 'system';
+    const amountStr = data.amount.toFixed(2);
+    const baseDesc = `Credit ${data.creditNoteDocumentNumber} applied to ${data.invoiceDocumentNumber}`;
+
+    const runInsideTx = async (tx: any) => {
+      const entryNumber = await getNextJournalEntryNumber(tx, data.date);
+      const formattedDesc = await formatDivisionDescription(tx, data.divisionId, baseDesc);
+
+      await tx.insert(journalEntries).values({
+        id: entryId,
+        entryNumber,
+        entryDate: data.date,
+        period,
+        divisionId: data.divisionId,
+        description: formattedDesc,
+        status: 'posted',
+        sourceModule: 'billing',
+        sourceTable: 'credit_applications',
+        sourceId: data.creditApplicationId,
+        sourceDocumentNumber: data.invoiceDocumentNumber,
+        postedAt: now,
+        postedBy: actor,
+        createdBy: actor,
+      });
+
+      await tx.insert(journalLines).values([
+        {
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: creditLiabilityAccount.id,
+          debit: amountStr,
+          credit: null,
+          description: `Apply client credit ${data.creditNoteDocumentNumber}`,
+        },
+        {
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: accountsReceivable.id,
+          debit: null,
+          credit: amountStr,
+          description: `AR settled by credit — ${data.invoiceDocumentNumber}`,
+        },
+      ]);
+    };
+
+    if (data.tx) {
+      await runInsideTx(data.tx);
+    } else {
+      await db.transaction(runInsideTx);
+    }
+
+    return { entryId };
+  } catch (err) {
+    console.error('Failed to post credit application journal entry:', err);
+    return {
+      error: `Credit application journal posting failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
+/**
+ * Posts the double-entry journal entry when a credit note is refunded in cash:
+ *   Dr Client Overpayment Credits (2140) / Cr Business Cheque Account (1010)
+ */
+export async function postCreditRefundJournalEntry(data: {
+  creditRefundId: string;
+  creditNoteDocumentNumber: string;
+  amount: number;
+  date: string;
+  divisionId: string;
+  reference?: string | null;
+  postedBy?: string;
+  tx?: any;
+}): Promise<{ error?: string; entryId?: string }> {
+  try {
+    if (data.amount <= 0) return { error: 'Refund amount must be positive.' };
+
+    const period = data.date.slice(0, 7);
+    const p = await ensureOpenPeriod(period, data.tx);
+    if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
+
+    const db = data.tx || getDb();
+    const accountMap = await getAccountsByCode([CLIENT_CREDITS_CODE, BANK_ACCOUNT_CODE], db);
+
+    const creditLiabilityAccount = accountMap.get(CLIENT_CREDITS_CODE);
+    const bankAccount = accountMap.get(BANK_ACCOUNT_CODE);
+
+    if (!creditLiabilityAccount || !bankAccount) {
+      return {
+        error: `Required chart accounts not found (${CLIENT_CREDITS_CODE}, ${BANK_ACCOUNT_CODE}).`,
+      };
+    }
+
+    const entryId = randomUUID();
+    const now = new Date();
+    const actor = data.postedBy || 'system';
+    const amountStr = data.amount.toFixed(2);
+    const baseDesc = `Cash refund for ${data.creditNoteDocumentNumber}${data.reference ? ` (Ref: ${data.reference})` : ''}`;
+
+    const runInsideTx = async (tx: any) => {
+      const entryNumber = await getNextJournalEntryNumber(tx, data.date);
+      const formattedDesc = await formatDivisionDescription(tx, data.divisionId, baseDesc);
+
+      await tx.insert(journalEntries).values({
+        id: entryId,
+        entryNumber,
+        entryDate: data.date,
+        period,
+        divisionId: data.divisionId,
+        description: formattedDesc,
+        status: 'posted',
+        sourceModule: 'billing',
+        sourceTable: 'credit_refunds',
+        sourceId: data.creditRefundId,
+        sourceDocumentNumber: data.creditNoteDocumentNumber,
+        postedAt: now,
+        postedBy: actor,
+        createdBy: actor,
+      });
+
+      await tx.insert(journalLines).values([
+        {
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: creditLiabilityAccount.id,
+          debit: amountStr,
+          credit: null,
+          description: `Client credit refunded — ${data.creditNoteDocumentNumber}`,
+        },
+        {
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: bankAccount.id,
+          debit: null,
+          credit: amountStr,
+          description: `Cash refund paid — ${data.creditNoteDocumentNumber}`,
+        },
+      ]);
+    };
+
+    if (data.tx) {
+      await runInsideTx(data.tx);
+    } else {
+      await db.transaction(runInsideTx);
+    }
+
+    return { entryId };
+  } catch (err) {
+    console.error('Failed to post credit refund journal entry:', err);
+    return {
+      error: `Credit refund journal posting failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
+/**
+ * Voids all posted journal entries linked to a voided credit note.
+ */
+export async function voidCreditNoteJournalEntries(
+  creditNoteId: string,
+  voidedBy?: string,
+  tx?: any,
+): Promise<{ error?: string; voidedCount?: number }> {
+  try {
+    const db = tx || getDb();
+    const entries = await db
+      .select({ id: journalEntries.id, period: journalEntries.period })
+      .from(journalEntries)
+      .where(
+        and(
+          eq(journalEntries.sourceTable, 'credit_notes'),
+          eq(journalEntries.sourceId, creditNoteId),
+          eq(journalEntries.status, 'posted'),
+        ),
+      );
+
+    if (entries.length === 0) return { voidedCount: 0 };
+
+    for (const entry of entries) {
+      const p = await ensureOpenPeriod(entry.period, tx);
+      if (p.status !== 'open') {
+        return {
+          error: `Accounting period ${entry.period} is ${p.status}. Reopen the period before voiding this credit note.`,
+        };
+      }
+    }
+
+    const now = new Date();
+    const actor = voidedBy || 'system';
+    const ids = entries.map((e: { id: string }) => e.id);
+
+    await db
+      .update(journalEntries)
+      .set({
+        status: 'void',
+        voidedAt: now,
+        voidedBy: actor,
+        voidReason: 'Credit note voided',
+        updatedAt: now,
+      })
+      .where(inArray(journalEntries.id, ids));
+
+    return { voidedCount: ids.length };
+  } catch (err) {
+    console.error('Failed to void credit note journal entries:', err);
+    return {
+      error: `Failed to void credit note journal entries: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
+/**
+ * Voids all posted journal entries linked to reversed credit applications (e.g. when an invoice is voided).
+ */
+export async function voidCreditApplicationJournalEntries(
+  applicationIds: string[],
+  voidedBy?: string,
+  tx?: any,
+): Promise<{ error?: string; voidedCount?: number }> {
+  try {
+    if (applicationIds.length === 0) return { voidedCount: 0 };
+
+    const db = tx || getDb();
+    const entries = await db
+      .select({ id: journalEntries.id, period: journalEntries.period })
+      .from(journalEntries)
+      .where(
+        and(
+          eq(journalEntries.sourceTable, 'credit_applications'),
+          inArray(journalEntries.sourceId, applicationIds),
+          eq(journalEntries.status, 'posted'),
+        ),
+      );
+
+    if (entries.length === 0) return { voidedCount: 0 };
+
+    for (const entry of entries) {
+      const p = await ensureOpenPeriod(entry.period, tx);
+      if (p.status !== 'open') {
+        return {
+          error: `Accounting period ${entry.period} is ${p.status}. Reopen the period before reversing credit applications.`,
+        };
+      }
+    }
+
+    const now = new Date();
+    const actor = voidedBy || 'system';
+    const ids = entries.map((e: { id: string }) => e.id);
+
+    await db
+      .update(journalEntries)
+      .set({
+        status: 'void',
+        voidedAt: now,
+        voidedBy: actor,
+        voidReason: 'Credit application reversed (invoice voided)',
+        updatedAt: now,
+      })
+      .where(inArray(journalEntries.id, ids));
+
+    return { voidedCount: ids.length };
+  } catch (err) {
+    console.error('Failed to void credit application journal entries:', err);
+    return {
+      error: `Failed to void credit application journal entries: ${err instanceof Error ? err.message : String(err)}`,
+    };
   }
 }

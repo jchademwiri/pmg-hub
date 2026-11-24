@@ -23,3 +23,6 @@ export * from './recurring';
 export * from './documents';
 export * from './onboarding';
 export * from './leave';
+export * from './banking';
+export * from './budgets';
+export * from './governance';
