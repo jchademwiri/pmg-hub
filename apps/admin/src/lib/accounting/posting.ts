@@ -36,6 +36,7 @@ import {
   journalEntries,
   journalLines,
   expenses,
+  dividendPayouts,
   paymentAllocations,
   distributionSettings,
   and,
@@ -1695,19 +1696,10 @@ export async function postQuarterlyDistributionEntry(data: {
     await db.transaction(async (tx) => {
       const entryNumber = await getNextJournalEntryNumber(tx, data.date);
 
-      let expenseId: string | undefined;
-      if (data.payoutType === 'director_bonus') {
-        expenseId = randomUUID();
-        await tx.insert(expenses).values({
-          id: expenseId,
-          date: data.date,
-          divisionId: resolvedDivisionId,
-          category: 'Director Salary',
-          description: data.description?.trim() || label,
-          amount: data.grossAmount.toFixed(2),
-        });
-      }
-
+      // Director bonuses (5120) and Dividends (3040) are posted directly to the
+      // General Ledger & dividend_payouts audit log — never mirrored into the
+      // operational `expenses` table, which would distort monthly OpEx KPIs and
+      // double-count against the Quarterly Reserve Schedule.
       await tx.insert(journalEntries).values({
         id: entryId,
         entryNumber,
@@ -1717,8 +1709,8 @@ export async function postQuarterlyDistributionEntry(data: {
         description: data.description?.trim() || label,
         status: 'posted',
         sourceModule: 'governance',
-        sourceTable: expenseId ? 'expenses' : null,
-        sourceId: expenseId ?? null,
+        sourceTable: 'dividend_payouts',
+        sourceId: null,
         sourceDocumentNumber: entryNumber,
         postedAt: now,
         postedBy: actor,
@@ -1784,6 +1776,96 @@ export async function postQuarterlyDistributionEntry(data: {
     console.error('Failed to post quarterly distribution journal entry:', err);
     return {
       error: `Distribution posting failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
+/**
+ * Atomically voids a declared quarterly distribution (0% PAYE Director Bonus or
+ * Companies Act s46 Dividend):
+ * - Marks the linked General Ledger journal entry as `void`
+ * - Deletes any legacy mirrored row in `expenses` (if `sourceTable === 'expenses'`)
+ * - Removes the `dividend_payouts` audit record
+ */
+export async function voidQuarterlyDistributionEntry(data: {
+  payoutId: string;
+  voidedBy?: string;
+  reason?: string;
+}): Promise<{ error?: string; voidedJournalId?: string | null }> {
+  try {
+    const db = getDb();
+    const [payout] = await db
+      .select()
+      .from(dividendPayouts)
+      .where(eq(dividendPayouts.id, data.payoutId))
+      .limit(1);
+
+    if (!payout) {
+      return { error: 'Distribution payout record not found.' };
+    }
+
+    const actor = data.voidedBy || 'system';
+    const reason = data.reason?.trim() || 'Distribution payout voided by director';
+    const now = new Date();
+
+    let linkedEntry: {
+      id: string;
+      period: string;
+      status: string;
+      sourceTable: string | null;
+      sourceId: string | null;
+    } | null = null;
+
+    if (payout.journalEntryId) {
+      const [je] = await db
+        .select({
+          id: journalEntries.id,
+          period: journalEntries.period,
+          status: journalEntries.status,
+          sourceTable: journalEntries.sourceTable,
+          sourceId: journalEntries.sourceId,
+        })
+        .from(journalEntries)
+        .where(eq(journalEntries.id, payout.journalEntryId))
+        .limit(1);
+
+      if (je) {
+        const p = await ensureOpenPeriod(je.period);
+        if (p.status !== 'open') {
+          return {
+            error: `Accounting period ${je.period} is ${p.status}. Reopen the period before voiding this distribution.`,
+          };
+        }
+        linkedEntry = je;
+      }
+    }
+
+    await db.transaction(async (tx) => {
+      if (linkedEntry && linkedEntry.status !== 'void') {
+        await tx
+          .update(journalEntries)
+          .set({
+            status: 'void',
+            voidedAt: now,
+            voidedBy: actor,
+            voidReason: reason,
+            updatedAt: now,
+          })
+          .where(eq(journalEntries.id, linkedEntry.id));
+      }
+
+      if (linkedEntry?.sourceTable === 'expenses' && linkedEntry.sourceId) {
+        await tx.delete(expenses).where(eq(expenses.id, linkedEntry.sourceId));
+      }
+
+      await tx.delete(dividendPayouts).where(eq(dividendPayouts.id, payout.id));
+    });
+
+    return { voidedJournalId: linkedEntry?.id ?? null };
+  } catch (err) {
+    console.error('Failed to void quarterly distribution:', err);
+    return {
+      error: `Failed to void distribution: ${err instanceof Error ? err.message : String(err)}`,
     };
   }
 }
