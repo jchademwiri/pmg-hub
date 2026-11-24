@@ -26,6 +26,25 @@ export function formatFiscalYearLabel(fiscalYear: number): string {
   return `FY${startYear}/${String(fiscalYear).slice(-2)}`;
 }
 
+/**
+ * Returns the South African fiscal year (ending year) for an ISO date or YYYY-MM string.
+ * E.g. '2026-11-23' -> 2027 (FY2026/27, Mar 2026 – Feb 2027).
+ */
+export function getCurrentFiscalYear(dateStr?: string): number {
+  const iso = dateStr ?? new Date().toISOString().slice(0, 10);
+  const [yStr, mStr] = iso.split('-');
+  const year = parseInt(yStr || '2026', 10);
+  const month = parseInt(mStr || '1', 10);
+  return month >= 3 ? year + 1 : year;
+}
+
+export function getPeriodFiscalYear(period: string): number {
+  const [yStr, mStr] = period.split('-');
+  const year = parseInt(yStr || '2026', 10);
+  const month = parseInt(mStr || '1', 10);
+  return month >= 3 ? year + 1 : year;
+}
+
 export type BudgetMonthRow = {
   period: string;
   isClosed: boolean;
@@ -52,12 +71,18 @@ export type DivisionBudgetSummaryRow = {
   attainmentPercent: number;
 };
 
+export type FiscalYearOption = {
+  value: number;
+  label: string;
+};
+
 export type FiscalYearBudgetOverview = {
   fiscalYear: number;
   label: string;
   startPeriod: string;
   endPeriod: string;
   hasBudget: boolean;
+  availableFiscalYears: FiscalYearOption[];
   months: BudgetMonthRow[];
   divisions: Array<{ id: string; name: string }>;
   divisionSummary: DivisionBudgetSummaryRow[];
@@ -85,74 +110,109 @@ export async function getBudgetVsActualsForFiscalYear(
 ): Promise<FiscalYearBudgetOverview> {
   const periods = getFiscalYearPeriods(fiscalYear);
 
-  const [planRows, divTargetRows, snapshotRows, allDivisions, glMonthlyRows, glDivRows] =
-    await Promise.all([
-      db
-        .select()
-        .from(budgetMonthlyPlan)
-        .where(eq(budgetMonthlyPlan.fiscalYear, fiscalYear))
-        .orderBy(asc(budgetMonthlyPlan.period))
-        .catch(() => []),
-      db
-        .select({
-          period: budgetRevenueTargets.period,
-          divisionId: budgetRevenueTargets.divisionId,
-          targetAmount: budgetRevenueTargets.targetAmount,
-        })
-        .from(budgetRevenueTargets)
-        .where(eq(budgetRevenueTargets.fiscalYear, fiscalYear))
-        .catch(() => []),
-      db
-        .select({
-          period: snapshots.period,
-          revenue: snapshots.revenue,
-          expenses: snapshots.expenses,
-        })
-        .from(snapshots)
-        .where(inArray(snapshots.period, periods))
-        .catch(() => []),
-      db
-        .select({ id: divisions.id, name: divisions.name })
-        .from(divisions)
-        .orderBy(asc(divisions.name)),
-      db
-        .select({
-          period: journalEntries.period,
-          accountType: chartAccounts.type,
-          totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`,
-          totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
-        })
-        .from(journalLines)
-        .innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
-        .innerJoin(chartAccounts, eq(journalLines.accountId, chartAccounts.id))
-        .where(
-          and(
-            eq(journalEntries.status, 'posted'),
-            inArray(journalEntries.period, periods),
-            inArray(chartAccounts.type, ['revenue', 'expense']),
-          ),
-        )
-        .groupBy(journalEntries.period, chartAccounts.type)
-        .catch(() => []),
-      db
-        .select({
-          divisionId: journalEntries.divisionId,
-          totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`,
-          totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
-        })
-        .from(journalLines)
-        .innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
-        .innerJoin(chartAccounts, eq(journalLines.accountId, chartAccounts.id))
-        .where(
-          and(
-            eq(journalEntries.status, 'posted'),
-            inArray(journalEntries.period, periods),
-            eq(chartAccounts.type, 'revenue'),
-          ),
-        )
-        .groupBy(journalEntries.divisionId)
-        .catch(() => []),
-    ]);
+  // Auto-seed the planned FY2026/27 (2027 = R100k) or FY2027/28 (2028 = R240k) seasonalized budget once if not yet present
+  if (fiscalYear === 2027 || fiscalYear === 2028) {
+    const existingPlan = await db
+      .select({ id: budgetMonthlyPlan.id })
+      .from(budgetMonthlyPlan)
+      .where(eq(budgetMonthlyPlan.fiscalYear, fiscalYear))
+      .limit(1)
+      .catch(() => []);
+    if (existingPlan.length === 0) {
+      await seedSeasonalizedBudgetPlan(fiscalYear).catch(() => {});
+    }
+  }
+
+  const [
+    planRows,
+    divTargetRows,
+    snapshotRows,
+    allDivisions,
+    glMonthlyRows,
+    glDivRows,
+    distinctBudgetFys,
+    distinctSnapPeriods,
+    distinctGlPeriods,
+  ] = await Promise.all([
+    db
+      .select()
+      .from(budgetMonthlyPlan)
+      .where(eq(budgetMonthlyPlan.fiscalYear, fiscalYear))
+      .orderBy(asc(budgetMonthlyPlan.period))
+      .catch(() => []),
+    db
+      .select({
+        period: budgetRevenueTargets.period,
+        divisionId: budgetRevenueTargets.divisionId,
+        targetAmount: budgetRevenueTargets.targetAmount,
+      })
+      .from(budgetRevenueTargets)
+      .where(eq(budgetRevenueTargets.fiscalYear, fiscalYear))
+      .catch(() => []),
+    db
+      .select({
+        period: snapshots.period,
+        revenue: snapshots.revenue,
+        expenses: snapshots.expenses,
+      })
+      .from(snapshots)
+      .where(inArray(snapshots.period, periods))
+      .catch(() => []),
+    db
+      .select({ id: divisions.id, name: divisions.name })
+      .from(divisions)
+      .orderBy(asc(divisions.name)),
+    db
+      .select({
+        period: journalEntries.period,
+        accountType: chartAccounts.type,
+        totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`,
+        totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
+      })
+      .from(journalLines)
+      .innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
+      .innerJoin(chartAccounts, eq(journalLines.accountId, chartAccounts.id))
+      .where(
+        and(
+          eq(journalEntries.status, 'posted'),
+          inArray(journalEntries.period, periods),
+          inArray(chartAccounts.type, ['revenue', 'expense']),
+        ),
+      )
+      .groupBy(journalEntries.period, chartAccounts.type)
+      .catch(() => []),
+    db
+      .select({
+        divisionId: journalEntries.divisionId,
+        totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`,
+        totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
+      })
+      .from(journalLines)
+      .innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
+      .innerJoin(chartAccounts, eq(journalLines.accountId, chartAccounts.id))
+      .where(
+        and(
+          eq(journalEntries.status, 'posted'),
+          inArray(journalEntries.period, periods),
+          eq(chartAccounts.type, 'revenue'),
+        ),
+      )
+      .groupBy(journalEntries.divisionId)
+      .catch(() => []),
+    db
+      .selectDistinct({ fiscalYear: budgetMonthlyPlan.fiscalYear })
+      .from(budgetMonthlyPlan)
+      .catch(() => []),
+    db
+      .selectDistinct({ period: snapshots.period })
+      .from(snapshots)
+      .catch(() => []),
+    db
+      .selectDistinct({ period: journalEntries.period })
+      .from(journalEntries)
+      .where(eq(journalEntries.status, 'posted'))
+      .catch(() => []),
+  ]);
 
   const planByPeriod = new Map(planRows.map((p) => [p.period, p]));
   const snapByPeriod = new Map(snapshotRows.map((s) => [s.period, s]));
@@ -273,12 +333,32 @@ export async function getBudgetVsActualsForFiscalYear(
     };
   });
 
+  // Build dynamic list of fiscal years from actual DB records + current FY + planned FY2027/28 (2028)
+  const fySet = new Set<number>([getCurrentFiscalYear(), 2028, fiscalYear]);
+  for (const row of distinctBudgetFys) {
+    if (row.fiscalYear >= 2024 && row.fiscalYear <= 2040) fySet.add(row.fiscalYear);
+  }
+  for (const row of distinctSnapPeriods) {
+    if (row.period) fySet.add(getPeriodFiscalYear(row.period));
+  }
+  for (const row of distinctGlPeriods) {
+    if (row.period) fySet.add(getPeriodFiscalYear(row.period));
+  }
+  const availableFiscalYears: FiscalYearOption[] = Array.from(fySet)
+    .filter((fy) => fy >= 2027 && fy <= 2040)
+    .sort((a, b) => a - b)
+    .map((fy) => ({
+      value: fy,
+      label: `${formatFiscalYearLabel(fy)} (Mar ${fy - 1} – Feb ${fy})`,
+    }));
+
   return {
     fiscalYear,
     label: formatFiscalYearLabel(fiscalYear),
     startPeriod: periods[0]!,
     endPeriod: periods[periods.length - 1]!,
     hasBudget: planRows.length > 0,
+    availableFiscalYears,
     months,
     divisions: allDivisions,
     divisionSummary,
@@ -353,26 +433,57 @@ export async function upsertMonthlyBudgetPlan(data: {
   });
 }
 
-// Seasonal weights across SA fiscal year (Mar–Feb) summing to 1.00:
-// Lighter in Dec/Jan SA holiday period; stronger in Q2–Q3 tender season.
-const SEASONAL_WEIGHTS = [
-  0.075, // Mar
-  0.08, // Apr
-  0.085, // May
-  0.09, // Jun
-  0.095, // Jul
-  0.095, // Aug
-  0.095, // Sep
-  0.095, // Oct
-  0.09, // Nov
-  0.055, // Dec
-  0.06, // Jan
-  0.085, // Feb
+// Exact monthly targets from PMG_FY2027_28_Financial_Plan.xlsx:
+// - Sheet 1 (Transition Runway Nov 2026–Feb 2027) & FY2026/27 R100,000 plan (Dec R10,000, Jan R4,000, Feb R12,000)
+// - Sheet 2 (FY2027/28 R240,000 Seasonalized Plan: TES R210k | AWS R18k | PMG R12k, with Dec R13,000 & Jan R7,500)
+const FY2027_MONTHLY_TARGETS: Array<{
+  tes: number;
+  aws: number;
+  pmg: number;
+  opex: number;
+  salary: number;
+  taxReserve: number;
+}> = [
+  { tes: 5500, aws: 500, pmg: 300, opex: 1600, salary: 0, taxReserve: 500 }, // Mar 2026 (R6,300)
+  { tes: 6500, aws: 550, pmg: 350, opex: 1600, salary: 0, taxReserve: 500 }, // Apr 2026 (R7,400)
+  { tes: 7000, aws: 600, pmg: 400, opex: 1600, salary: 0, taxReserve: 500 }, // May 2026 (R8,000)
+  { tes: 7400, aws: 650, pmg: 450, opex: 1600, salary: 0, taxReserve: 500 }, // Jun 2026 (R8,500)
+  { tes: 7800, aws: 700, pmg: 500, opex: 1600, salary: 0, taxReserve: 500 }, // Jul 2026 (R9,000)
+  { tes: 8300, aws: 700, pmg: 500, opex: 1600, salary: 0, taxReserve: 500 }, // Aug 2026 (R9,500)
+  { tes: 8300, aws: 700, pmg: 500, opex: 1600, salary: 0, taxReserve: 500 }, // Sep 2026 (R9,500)
+  { tes: 8550, aws: 750, pmg: 500, opex: 1600, salary: 0, taxReserve: 500 }, // Oct 2026 (R9,800)
+  { tes: 7000, aws: 600, pmg: 400, opex: 1600, salary: 0, taxReserve: 500 }, // Nov 2026 (R8,000)
+  { tes: 8750, aws: 750, pmg: 500, opex: 1600, salary: 0, taxReserve: 500 }, // Dec 2026 (R10,000 — agreed R8k–R10k before 18 Dec holiday close)
+  { tes: 3500, aws: 300, pmg: 200, opex: 1600, salary: 0, taxReserve: 500 }, // Jan 2027 (R4,000 — agreed slow Jan month)
+  { tes: 8900, aws: 700, pmg: 400, opex: 1600, salary: 0, taxReserve: 500 }, // Feb 2027 (R10,000 — year-end recovery; FY total = R100,000)
+];
+
+const FY2028_MONTHLY_TARGETS: Array<{
+  tes: number;
+  aws: number;
+  pmg: number;
+  opex: number;
+  salary: number;
+  taxReserve: number;
+}> = [
+  { tes: 18500, aws: 1500, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1220 }, // Mar 2027 (R21,000)
+  { tes: 17000, aws: 1500, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1070 }, // Apr 2027 (R19,500)
+  { tes: 18250, aws: 1500, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1195 }, // May 2027 (R20,750)
+  { tes: 18750, aws: 1500, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1245 }, // Jun 2027 (R21,250)
+  { tes: 19500, aws: 1500, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1320 }, // Jul 2027 (R22,000)
+  { tes: 21000, aws: 1500, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1470 }, // Aug 2027 (R23,500)
+  { tes: 20500, aws: 1500, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1420 }, // Sep 2027 (R23,000)
+  { tes: 22000, aws: 1750, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1595 }, // Oct 2027 (R24,750)
+  { tes: 20500, aws: 1750, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1445 }, // Nov 2027 (R23,250)
+  { tes: 10750, aws: 1250, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 420 }, // Dec 2027 (R13,000)
+  { tes: 5250, aws: 1250, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 0 }, // Jan 2028 (R7,500)
+  { tes: 18000, aws: 1500, pmg: 1000, opex: 3800, salary: 5000, taxReserve: 1170 }, // Feb 2028 (R20,500)
 ];
 
 /**
- * Seeds a seasonalized R240,000 annual plan (TES R210k | AWS R18k | PMG R12k)
- * for the specified fiscal year (e.g. 2028 = FY2027/28).
+ * Seeds the seasonalized annual budget plan from PMG_FY2027_28_Financial_Plan.xlsx:
+ * - FY2026/27 (2027): R100,000 (TES R87,500 | AWS R7,500 | PMG R5,000), Dec R10,000, Jan R4,000, Feb R10,000
+ * - FY2027/28 (2028): R240,000 (TES R210,000 | AWS R18,000 | PMG R12,000) matching Sheet 2 of the Excel Financial Plan
  */
 export async function seedSeasonalizedBudgetPlan(fiscalYear: number) {
   const periods = getFiscalYearPeriods(fiscalYear);
@@ -382,35 +493,30 @@ export async function seedSeasonalizedBudgetPlan(fiscalYear: number) {
   const awsDiv = allDivisions.find((d) => d.name.toLowerCase().includes('apex'));
   const pmgDiv = allDivisions.find((d) => d.name.toLowerCase().includes('playhouse'));
 
-  const ANNUAL_TES = 210000;
-  const ANNUAL_AWS = 18000;
-  const ANNUAL_PMG = 12000;
-  const MONTHLY_OPEX = 3500;
-  const MONTHLY_DIRECTOR_SALARY = 5000;
-  const MONTHLY_TAX_RESERVE = 1500;
+  const isFy2027 = fiscalYear === 2027;
+  const schedule = isFy2027 ? FY2027_MONTHLY_TARGETS : FY2028_MONTHLY_TARGETS;
+  const PLAN_NOTE = isFy2027
+    ? 'Seeded FY2026/27 seasonalized R100k plan (Dec R10k, Jan R4k)'
+    : 'Seeded FY2027/28 seasonalized R240k plan from Excel Financial Plan';
 
   for (let i = 0; i < periods.length; i++) {
     const period = periods[i]!;
-    const w = SEASONAL_WEIGHTS[i]!;
-
-    const tesAmt = Math.round(ANNUAL_TES * w);
-    const awsAmt = Math.round(ANNUAL_AWS * w);
-    const pmgAmt = Math.round(ANNUAL_PMG * w);
-    const revTotal = tesAmt + awsAmt + pmgAmt;
+    const row = schedule[i]!;
+    const revTotal = row.tes + row.aws + row.pmg;
 
     const divisionTargets: Array<{ divisionId: string; targetAmount: number }> = [];
-    if (tesDiv) divisionTargets.push({ divisionId: tesDiv.id, targetAmount: tesAmt });
-    if (awsDiv) divisionTargets.push({ divisionId: awsDiv.id, targetAmount: awsAmt });
-    if (pmgDiv) divisionTargets.push({ divisionId: pmgDiv.id, targetAmount: pmgAmt });
+    if (tesDiv) divisionTargets.push({ divisionId: tesDiv.id, targetAmount: row.tes });
+    if (awsDiv) divisionTargets.push({ divisionId: awsDiv.id, targetAmount: row.aws });
+    if (pmgDiv) divisionTargets.push({ divisionId: pmgDiv.id, targetAmount: row.pmg });
 
     await upsertMonthlyBudgetPlan({
       fiscalYear,
       period,
       revenueTarget: revTotal,
-      expenseBudget: MONTHLY_OPEX,
-      directorSalaryBudget: MONTHLY_DIRECTOR_SALARY,
-      taxReserveTarget: MONTHLY_TAX_RESERVE,
-      notes: 'Seeded FY2027/28 seasonalized R240k plan',
+      expenseBudget: row.opex,
+      directorSalaryBudget: row.salary,
+      taxReserveTarget: row.taxReserve,
+      notes: PLAN_NOTE,
       divisionTargets,
     });
   }

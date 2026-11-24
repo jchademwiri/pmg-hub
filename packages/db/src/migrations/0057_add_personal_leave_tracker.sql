@@ -1,6 +1,6 @@
-CREATE TYPE "public"."leave_status" AS ENUM('PLANNED', 'TAKEN', 'CANCELLED');--> statement-breakpoint
-CREATE TYPE "public"."leave_type" AS ENUM('ANNUAL', 'SICK', 'FAMILY_RESPONSIBILITY');--> statement-breakpoint
-CREATE TABLE "leave_entries" (
+DO $$ BEGIN CREATE TYPE "public"."leave_status" AS ENUM('PLANNED', 'TAKEN', 'CANCELLED'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."leave_type" AS ENUM('ANNUAL', 'SICK', 'FAMILY_RESPONSIBILITY'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "leave_entries" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"type" "leave_type" NOT NULL,
 	"status" "leave_status" DEFAULT 'PLANNED' NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE "leave_entries" (
 	CONSTRAINT "leave_entries_date_order" CHECK ("leave_entries"."end_date" >= "leave_entries"."start_date")
 );
 --> statement-breakpoint
-CREATE TABLE "leave_settings" (
+CREATE TABLE IF NOT EXISTS "leave_settings" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"employment_start_date" date DEFAULT '2022-01-01' NOT NULL,
 	"anchor_date" date DEFAULT '2026-10-31' NOT NULL,
@@ -37,5 +37,5 @@ CREATE TABLE "leave_settings" (
 	CONSTRAINT "leave_settings_family_reset_month_valid" CHECK ("leave_settings"."family_reset_month" >= 1 AND "leave_settings"."family_reset_month" <= 12)
 );
 --> statement-breakpoint
-CREATE INDEX "leave_entries_start_date_idx" ON "leave_entries" USING btree ("start_date");--> statement-breakpoint
-CREATE INDEX "leave_entries_type_status_idx" ON "leave_entries" USING btree ("type","status");
+CREATE INDEX IF NOT EXISTS "leave_entries_start_date_idx" ON "leave_entries" USING btree ("start_date");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "leave_entries_type_status_idx" ON "leave_entries" USING btree ("type","status");

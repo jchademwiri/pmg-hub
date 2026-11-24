@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache';
 import {
   getDb,
   chartAccounts,
+  dividendPayouts,
+  expenses,
   journalEntries,
   journalLines,
   accountingPeriods,
@@ -303,21 +305,34 @@ export async function voidJournalEntry(id: string, reason: string): Promise<{ er
       };
     }
 
-    await db
-      .update(journalEntries)
-      .set({
-        status: 'void',
-        voidedAt: new Date(),
-        voidedBy: session.user.id,
-        voidReason: reason || null,
-        updatedAt: new Date(),
-      })
-      .where(eq(journalEntries.id, id));
+    await db.transaction(async (tx) => {
+      await tx
+        .update(journalEntries)
+        .set({
+          status: 'void',
+          voidedAt: new Date(),
+          voidedBy: session.user.id,
+          voidReason: reason || null,
+          updatedAt: new Date(),
+        })
+        .where(eq(journalEntries.id, id));
+
+      // Keep sub-ledgers in sync when a banking/governance/expenses-originated journal entry is voided:
+      if (entry.sourceTable === 'expenses' && entry.sourceId) {
+        await tx.delete(expenses).where(eq(expenses.id, entry.sourceId));
+      }
+
+      if (entry.sourceModule === 'governance') {
+        await tx.delete(dividendPayouts).where(eq(dividendPayouts.journalEntryId, id));
+      }
+    });
 
     revalidatePath('/accounting');
     revalidatePath('/accounting/journals');
     revalidatePath('/finance');
     revalidatePath('/finance/banking');
+    revalidatePath('/finance/expenses');
+    revalidatePath('/finance/projections');
     // Only revalidate report pages if the entry was posted (affects balances)
     if (entry.status === 'posted') {
       revalidatePath('/accounting/trial-balance');

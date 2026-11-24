@@ -1416,33 +1416,35 @@ export async function postBankReconciliationAdjustment(data: {
 export type OwnerWithdrawalMode = 'director_loan' | 'loan_repayment' | 'salary_advance';
 
 /**
- * Posts a Director's Loan withdrawal (Dr 1250 / Cr 1010), Director's Loan repayment
- * (Dr 1010 / Cr 1250), or Director Salary / Advance (Dr 5120 / Cr 1010).
+ * Posts a Director's Loan withdrawal (Dr 1250 / Cr <bank>), Director's Loan repayment
+ * (Dr <bank> / Cr 1250), or Director Salary / Advance (Dr 5120 / Cr <bank>).
  */
 export async function postOwnerWithdrawalJournalEntry(data: {
   date: string;
   amount: number;
   mode: OwnerWithdrawalMode;
+  accountCode?: BankAccountCode;
   description: string;
   createdBy?: string;
 }): Promise<{ error?: string; entryId?: string }> {
+  const bankCode = data.accountCode ?? BANK_ACCOUNT_CODE;
   const mapping: Record<
     OwnerWithdrawalMode,
     { debitCode: string; creditCode: string; label: string }
   > = {
     director_loan: {
       debitCode: '1250',
-      creditCode: BANK_ACCOUNT_CODE,
+      creditCode: bankCode,
       label: "Director's Loan withdrawal",
     },
     loan_repayment: {
-      debitCode: BANK_ACCOUNT_CODE,
+      debitCode: bankCode,
       creditCode: '1250',
       label: "Director's Loan repayment",
     },
     salary_advance: {
       debitCode: '5120',
-      creditCode: BANK_ACCOUNT_CODE,
+      creditCode: bankCode,
       label: 'Director remuneration / advance',
     },
   };
@@ -1627,6 +1629,7 @@ export async function postQuarterlyDistributionEntry(data: {
   date: string;
   quarter: string;
   payoutType: 'director_bonus' | 'dividend';
+  accountCode?: BankAccountCode;
   grossAmount: number;
   dwtWithheld: number;
   loanOffsetAmount: number;
@@ -1654,15 +1657,16 @@ export async function postQuarterlyDistributionEntry(data: {
       return { error: `Accounting period ${period} is ${p.status} and cannot be posted to.` };
     }
 
+    const bankCode = data.accountCode ?? BANK_ACCOUNT_CODE;
     const debitCode = data.payoutType === 'director_bonus' ? '5120' : '3040';
-    const codes = [debitCode, BANK_ACCOUNT_CODE];
+    const codes = [debitCode, bankCode];
     if (data.dwtWithheld > 0) codes.push('2160');
     if (data.loanOffsetAmount > 0) codes.push('1250');
 
     const db = getDb();
     const accountMap = await getAccountsByCode(codes, db);
     const debitAccount = accountMap.get(debitCode);
-    const bankAccount = accountMap.get(BANK_ACCOUNT_CODE);
+    const bankAccount = accountMap.get(bankCode);
     const sarsAccount = data.dwtWithheld > 0 ? accountMap.get('2160') : null;
     const loanAccount = data.loanOffsetAmount > 0 ? accountMap.get('1250') : null;
 
@@ -1691,6 +1695,19 @@ export async function postQuarterlyDistributionEntry(data: {
     await db.transaction(async (tx) => {
       const entryNumber = await getNextJournalEntryNumber(tx, data.date);
 
+      let expenseId: string | undefined;
+      if (data.payoutType === 'director_bonus') {
+        expenseId = randomUUID();
+        await tx.insert(expenses).values({
+          id: expenseId,
+          date: data.date,
+          divisionId: resolvedDivisionId,
+          category: 'Director Salary',
+          description: data.description?.trim() || label,
+          amount: data.grossAmount.toFixed(2),
+        });
+      }
+
       await tx.insert(journalEntries).values({
         id: entryId,
         entryNumber,
@@ -1700,6 +1717,8 @@ export async function postQuarterlyDistributionEntry(data: {
         description: data.description?.trim() || label,
         status: 'posted',
         sourceModule: 'governance',
+        sourceTable: expenseId ? 'expenses' : null,
+        sourceId: expenseId ?? null,
         sourceDocumentNumber: entryNumber,
         postedAt: now,
         postedBy: actor,
@@ -1753,7 +1772,7 @@ export async function postQuarterlyDistributionEntry(data: {
           accountId: bankAccount.id,
           debit: null,
           credit: data.netCashPaid.toFixed(2),
-          description: `Net cash payout from Cheque Account — ${data.quarter}`,
+          description: `Net cash payout from ${bankAccount.name} (${bankCode}) — ${data.quarter}`,
         });
       }
 

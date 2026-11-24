@@ -1,5 +1,11 @@
 import type { Metadata } from 'next';
-import { getActiveChartAccounts, getBankingOverview } from '@pmg/db';
+import {
+  formatFiscalYearLabel,
+  getActiveChartAccounts,
+  getBankingOverview,
+  getCurrentFiscalYear,
+  getGovernanceOverview,
+} from '@pmg/db';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
 import { formatZAR, getSASTToday } from '@/lib/format';
 import { BankingClient } from './banking-client';
@@ -8,16 +14,18 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Banking & Reconciliation' };
 
 export default async function BankingPage() {
-  const [overview, allAccounts] = await Promise.all([
+  const today = getSASTToday();
+  const currentFy = getCurrentFiscalYear(today);
+
+  const [overview, allAccounts, governance] = await Promise.all([
     getBankingOverview(),
     getActiveChartAccounts(),
+    getGovernanceOverview(currentFy),
   ]);
 
   const liquidAccounts = allAccounts
     .filter((a) => a.type === 'asset' && ['1010', '1020', '1030'].includes(a.code))
     .map((a) => ({ id: a.id, code: a.code, name: a.name }));
-
-  const today = getSASTToday();
 
   return (
     <div className="flex flex-col gap-6">
@@ -50,6 +58,8 @@ export default async function BankingPage() {
           })),
         }}
         liquidAccounts={liquidAccounts}
+        governance={governance}
+        fyLabel={formatFiscalYearLabel(currentFy)}
         today={today}
       />
     </div>

@@ -84,16 +84,117 @@ export function DividendsTab({
   const [payoutType, setPayoutType] = React.useState<'director_bonus' | 'dividend'>(
     gates.recommendedPayoutType,
   );
-  const [grossAmount, setGrossAmount] = React.useState(
-    gates.maxSafeDistribution > 0 ? String(gates.maxSafeDistribution) : '',
+  const [accountCode, setAccountCode] = React.useState<'1010' | '1020' | '1030'>(
+    gates.recommendedAccountCode,
   );
+
+  const selectedAccountBalance =
+    accountCode === '1010'
+      ? gates.chequeBalance
+      : accountCode === '1020'
+        ? gates.savingsBalance
+        : gates.taxReserveBalance;
+
+  const accountLabelMap: Record<'1010' | '1020' | '1030', string> = {
+    '1010': '1010 · Cheque Account',
+    '1020': '1020 · Savings Account',
+    '1030': '1030 · Tax Reserve',
+  };
+
+  // Max cash available in the selected bank account + any director's loan offset
+  const maxTakeableFromAccount = Math.max(
+    0,
+    Number(
+      (Math.max(0, selectedAccountBalance) + Math.max(0, gates.directorsLoanBalance)).toFixed(2),
+    ),
+  );
+  // Recommended safe gross payout: capped by 2-Gate Max Safe Payout, 0% PAYE headroom (if bonus), and selected account balance
+  const recommendedSafeAmount = Math.max(
+    0,
+    Number(
+      Math.min(
+        gates.maxSafeDistribution,
+        maxTakeableFromAccount,
+        payoutType === 'director_bonus' && gates.payeBonusHeadroom > 0
+          ? gates.payeBonusHeadroom
+          : Infinity,
+      ).toFixed(2),
+    ),
+  );
+
+  // Suggested prefill amount: uses Recommended Safe Payout when both gates pass (> 0),
+  // otherwise falls back to max takeable from the selected account (capped by 0% PAYE headroom if bonus)
+  const suggestedPrefillAmount =
+    recommendedSafeAmount > 0
+      ? recommendedSafeAmount
+      : Math.max(
+          0,
+          Number(
+            Math.min(
+              maxTakeableFromAccount,
+              payoutType === 'director_bonus' && gates.payeBonusHeadroom > 0
+                ? gates.payeBonusHeadroom
+                : Infinity,
+            ).toFixed(2),
+          ),
+        );
+
+  const [grossAmount, setGrossAmount] = React.useState(String(suggestedPrefillAmount));
   const [loanOffset, setLoanOffset] = React.useState(
     gates.directorsLoanBalance > 0
-      ? String(Math.min(gates.directorsLoanBalance, gates.maxSafeDistribution))
+      ? String(Math.min(gates.directorsLoanBalance, suggestedPrefillAmount))
       : '0',
   );
   const [solvencySignedOff, setSolvencySignedOff] = React.useState(false);
   const [notes, setNotes] = React.useState('');
+
+  function openDeclarePayoutModal() {
+    const recAcct = gates.recommendedAccountCode;
+    const recAcctBal =
+      recAcct === '1010'
+        ? gates.chequeBalance
+        : recAcct === '1020'
+          ? gates.savingsBalance
+          : gates.taxReserveBalance;
+    const recType = gates.recommendedPayoutType;
+    const maxFromAcct = Math.max(0, recAcctBal) + Math.max(0, gates.directorsLoanBalance);
+    const recSafe = Math.max(
+      0,
+      Number(
+        Math.min(
+          gates.maxSafeDistribution,
+          maxFromAcct,
+          recType === 'director_bonus' && gates.payeBonusHeadroom > 0
+            ? gates.payeBonusHeadroom
+            : Infinity,
+        ).toFixed(2),
+      ),
+    );
+    const recPrefill =
+      recSafe > 0
+        ? recSafe
+        : Math.max(
+            0,
+            Number(
+              Math.min(
+                maxFromAcct,
+                recType === 'director_bonus' && gates.payeBonusHeadroom > 0
+                  ? gates.payeBonusHeadroom
+                  : Infinity,
+              ).toFixed(2),
+            ),
+          );
+    setAccountCode(recAcct);
+    setPayoutType(recType);
+    setGrossAmount(String(recPrefill));
+    setLoanOffset(
+      gates.directorsLoanBalance > 0
+        ? String(Math.min(gates.directorsLoanBalance, recPrefill))
+        : '0',
+    );
+    setSolvencySignedOff(false);
+    setPayoutOpen(true);
+  }
 
   const parsedGross = parseFloat(grossAmount) || 0;
   const previewDwt =
@@ -103,6 +204,11 @@ export function DividendsTab({
   const afterTax = Math.max(0, Number((parsedGross - previewDwt).toFixed(2)));
   const previewLoanOffset = Math.min(Math.max(0, parseFloat(loanOffset) || 0), afterTax);
   const previewNetCash = Math.max(0, Number((afterTax - previewLoanOffset).toFixed(2)));
+
+  const exceedsSelectedAccount = previewNetCash > Math.max(0, selectedAccountBalance) + 0.005;
+  const exceedsSafeGateCap = parsedGross > gates.maxSafeDistribution + 0.005;
+  const exceedsPayeHeadroom =
+    payoutType === 'director_bonus' && parsedGross > gates.payeBonusHeadroom + 0.005;
 
   function handleSavePolicy(e: React.FormEvent) {
     e.preventDefault();
@@ -131,6 +237,12 @@ export function DividendsTab({
       toast.error('Gross amount must be greater than zero.');
       return;
     }
+    if (exceedsSelectedAccount) {
+      toast.error(
+        `Net cash payout (${formatZAR(previewNetCash)}) exceeds available balance in ${accountLabelMap[accountCode]} (${formatZAR(selectedAccountBalance)}).`,
+      );
+      return;
+    }
     if (!solvencySignedOff) {
       toast.error('Companies Act s46 Solvency & Liquidity sign-off is required.');
       return;
@@ -142,6 +254,7 @@ export function DividendsTab({
         quarter,
         payoutDate,
         payoutType,
+        accountCode,
         grossAmount: parsedGross,
         dwtRatePercent: policy.dwtRatePercent,
         loanOffsetAmount: previewLoanOffset,
@@ -187,7 +300,7 @@ export function DividendsTab({
           >
             <Settings2 className="size-3.5" /> Policy Settings
           </Button>
-          <Button size="sm" onClick={() => setPayoutOpen(true)} className="gap-1.5">
+          <Button size="sm" onClick={openDeclarePayoutModal} className="gap-1.5">
             <Plus className="size-3.5" /> Declare Payout
           </Button>
         </div>
@@ -198,8 +311,8 @@ export function DividendsTab({
         <div
           className={`rounded-xl border p-5 ${
             gates.profitGatePassed
-              ? 'border-emerald-500/25 bg-emerald-500/5'
-              : 'border-amber-500/25 bg-amber-500/5'
+              ? 'border-emerald-500/30 bg-emerald-500/5'
+              : 'border-red-500/35 bg-red-500/5'
           }`}
         >
           <div className="flex items-center justify-between">
@@ -209,10 +322,18 @@ export function DividendsTab({
             {gates.profitGatePassed ? (
               <CheckCircle2 className="size-4 text-emerald-600" />
             ) : (
-              <XCircle className="size-4 text-amber-600" />
+              <XCircle className="size-4 text-red-600" />
             )}
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums">{formatZAR(gates.ytdNetProfit)}</p>
+          <p
+            className={`text-2xl font-bold mt-2 tabular-nums ${
+              gates.profitGatePassed
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-red-600 dark:text-red-400'
+            }`}
+          >
+            {formatZAR(gates.ytdNetProfit)}
+          </p>
           <p className="text-xs text-muted-foreground mt-1">
             {gates.profitGatePassed ? 'Passed — positive YTD profit' : 'Blocked — YTD profit ≤ R0'}
           </p>
@@ -220,9 +341,11 @@ export function DividendsTab({
 
         <div
           className={`rounded-xl border p-5 ${
-            gates.cashGatePassed
-              ? 'border-emerald-500/25 bg-emerald-500/5'
-              : 'border-amber-500/25 bg-amber-500/5'
+            gates.trueSpendableCash < 0
+              ? 'border-red-500/35 bg-red-500/5'
+              : gates.cashGatePassed
+                ? 'border-emerald-500/30 bg-emerald-500/5'
+                : 'border-amber-500/35 bg-amber-500/5'
           }`}
         >
           <div className="flex items-center justify-between">
@@ -232,10 +355,22 @@ export function DividendsTab({
             {gates.cashGatePassed ? (
               <CheckCircle2 className="size-4 text-emerald-600" />
             ) : (
-              <XCircle className="size-4 text-amber-600" />
+              <XCircle
+                className={`size-4 ${
+                  gates.trueSpendableCash < 0 ? 'text-red-600' : 'text-amber-600'
+                }`}
+              />
             )}
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums">
+          <p
+            className={`text-2xl font-bold mt-2 tabular-nums ${
+              gates.trueSpendableCash < 0
+                ? 'text-red-600 dark:text-red-400'
+                : gates.cashGatePassed
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-amber-600 dark:text-amber-400'
+            }`}
+          >
             {formatZAR(gates.trueSpendableCash)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
@@ -244,31 +379,63 @@ export function DividendsTab({
           </p>
         </div>
 
-        <div className="rounded-xl border bg-card p-5">
+        <div
+          className={`rounded-xl border p-5 ${
+            bothGatesPassed && gates.maxSafeDistribution > 0
+              ? 'border-emerald-500/30 bg-emerald-500/5'
+              : 'border-amber-500/35 bg-amber-500/5'
+          }`}
+        >
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Max Safe Payout
             </p>
-            <Wallet className="size-4 text-primary" />
+            {bothGatesPassed && gates.maxSafeDistribution > 0 ? (
+              <Wallet className="size-4 text-emerald-600" />
+            ) : (
+              <AlertTriangle className="size-4 text-amber-600" />
+            )}
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums text-primary">
+          <p
+            className={`text-2xl font-bold mt-2 tabular-nums ${
+              bothGatesPassed && gates.maxSafeDistribution > 0
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-amber-600 dark:text-amber-400'
+            }`}
+          >
             {formatZAR(gates.maxSafeDistribution)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            {bothGatesPassed
+            {bothGatesPassed && gates.maxSafeDistribution > 0
               ? `Capped at ${policy.payoutRatioPercent}% profit & cash floor`
-              : 'Requires both gates passed'}
+              : 'Blocked — requires both gates passed'}
           </p>
         </div>
 
-        <div className="rounded-xl border bg-card p-5">
+        <div
+          className={`rounded-xl border p-5 ${
+            gates.payeBonusHeadroom > 0
+              ? 'border-emerald-500/30 bg-emerald-500/5'
+              : 'border-amber-500/35 bg-amber-500/5'
+          }`}
+        >
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               0% PAYE Headroom
             </p>
-            <ShieldCheck className="size-4 text-emerald-600" />
+            {gates.payeBonusHeadroom > 0 ? (
+              <ShieldCheck className="size-4 text-emerald-600" />
+            ) : (
+              <AlertTriangle className="size-4 text-amber-600" />
+            )}
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums text-emerald-600">
+          <p
+            className={`text-2xl font-bold mt-2 tabular-nums ${
+              gates.payeBonusHeadroom > 0
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-amber-600 dark:text-amber-400'
+            }`}
+          >
             {formatZAR(gates.payeBonusHeadroom)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
@@ -350,7 +517,7 @@ export function DividendsTab({
 
       {/* Policy Settings Dialog */}
       <Dialog open={policyOpen} onOpenChange={setPolicyOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <form onSubmit={handleSavePolicy}>
             <DialogHeader>
               <DialogTitle>Governance Policy — {label}</DialogTitle>
@@ -359,7 +526,7 @@ export function DividendsTab({
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field>
                   <FieldLabel htmlFor="pol-reserve">Min Cash Reserve (R)</FieldLabel>
                   <Input
@@ -383,7 +550,7 @@ export function DividendsTab({
                   />
                 </Field>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field>
                   <FieldLabel htmlFor="pol-paye">0% PAYE Threshold (R)</FieldLabel>
                   <Input
@@ -429,7 +596,7 @@ export function DividendsTab({
 
       {/* Declare Payout Dialog */}
       <Dialog open={payoutOpen} onOpenChange={setPayoutOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-3xl">
           <form onSubmit={handleRecordPayout}>
             <DialogHeader>
               <DialogTitle>Declare Quarterly Distribution ({label})</DialogTitle>
@@ -439,15 +606,50 @@ export function DividendsTab({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid gap-4 py-4 max-h-[68vh] overflow-y-auto pr-1">
-              <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3.5 py-2">
+              {/* Compact 3-Column Recommended Safe Payout Strip */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 rounded-lg border border-primary/25 bg-primary/5 p-3 text-xs">
+                <div>
+                  <span className="text-muted-foreground block">Recommended Safe Payout</span>
+                  <button
+                    type="button"
+                    onClick={() => setGrossAmount(String(recommendedSafeAmount))}
+                    className="font-bold text-sm tabular-nums text-primary hover:underline cursor-pointer mt-0.5"
+                    title="Click to apply recommended safe payout"
+                  >
+                    {formatZAR(recommendedSafeAmount)} (Apply)
+                  </button>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block">
+                    2-Gate Cap ({policy.payoutRatioPercent}% Profit &amp; Floor)
+                  </span>
+                  <span className="font-semibold text-sm tabular-nums block mt-0.5">
+                    {formatZAR(gates.maxSafeDistribution)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block truncate">
+                    Avail. in {accountLabelMap[accountCode]}
+                  </span>
+                  <span
+                    className={`font-semibold text-sm tabular-nums block mt-0.5 ${
+                      selectedAccountBalance < 0 ? 'text-red-600' : 'text-foreground'
+                    }`}
+                  >
+                    {formatZAR(Math.max(0, selectedAccountBalance))}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field>
                   <FieldLabel htmlFor="pay-quarter">Quarter</FieldLabel>
                   <Select
                     value={quarter}
                     onValueChange={(v) => setQuarter(v as 'Q1' | 'Q2' | 'Q3' | 'Q4')}
                   >
-                    <SelectTrigger id="pay-quarter">
+                    <SelectTrigger id="pay-quarter" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -470,30 +672,73 @@ export function DividendsTab({
                 </Field>
               </div>
 
-              <Field>
-                <FieldLabel htmlFor="pay-type">Distribution Method</FieldLabel>
-                <Select
-                  value={payoutType}
-                  onValueChange={(v) => setPayoutType(v as 'director_bonus' | 'dividend')}
-                >
-                  <SelectTrigger id="pay-type">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="director_bonus">
-                      0% PAYE Director Bonus (Dr 5120 — Recommended up to{' '}
-                      {formatZAR(gates.payeBonusHeadroom)})
-                    </SelectItem>
-                    <SelectItem value="dividend">
-                      Formal Dividend (Dr 3040 + {policy.dwtRatePercent}% DWT to 2160)
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field className="min-w-0">
+                  <FieldLabel htmlFor="pay-account" className="truncate">
+                    Pay From Bank Account{' '}
+                    <span className="text-[11px] font-normal text-emerald-600">
+                      (Rec: {gates.recommendedAccountCode})
+                    </span>
+                  </FieldLabel>
+                  <Select
+                    value={accountCode}
+                    onValueChange={(v) => setAccountCode(v as '1010' | '1020' | '1030')}
+                  >
+                    <SelectTrigger id="pay-account" className="w-full truncate">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1010">
+                        1010 · Cheque Account (Avail: {formatZAR(gates.chequeBalance)})
+                        {gates.recommendedAccountCode === '1010' ? ' ★ Recommended' : ''}
+                      </SelectItem>
+                      <SelectItem value="1020">
+                        1020 · Savings Account (Avail: {formatZAR(gates.savingsBalance)})
+                        {gates.recommendedAccountCode === '1020' ? ' ★ Recommended' : ''}
+                      </SelectItem>
+                      <SelectItem value="1030">
+                        1030 · Tax Reserve (Avail: {formatZAR(gates.taxReserveBalance)})
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
 
-              <div className="grid grid-cols-2 gap-3">
+                <Field className="min-w-0">
+                  <FieldLabel htmlFor="pay-type">Distribution Method</FieldLabel>
+                  <Select
+                    value={payoutType}
+                    onValueChange={(v) => setPayoutType(v as 'director_bonus' | 'dividend')}
+                  >
+                    <SelectTrigger id="pay-type" className="w-full truncate">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="director_bonus">
+                        0% PAYE Director Bonus (Dr 5120 — up to {formatZAR(gates.payeBonusHeadroom)}
+                        )
+                      </SelectItem>
+                      <SelectItem value="dividend">
+                        Formal Dividend (Dr 3040 + {policy.dwtRatePercent}% DWT to 2160)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Field>
-                  <FieldLabel htmlFor="pay-gross">Gross Amount (R)</FieldLabel>
+                  <div className="flex items-center justify-between gap-1">
+                    <FieldLabel htmlFor="pay-gross">Gross Amount (R)</FieldLabel>
+                    <button
+                      type="button"
+                      onClick={() => setGrossAmount(String(suggestedPrefillAmount))}
+                      className="text-[11px] font-medium text-primary hover:underline cursor-pointer"
+                    >
+                      {recommendedSafeAmount > 0
+                        ? `Safe Max (${formatZAR(recommendedSafeAmount)})`
+                        : `Acct Max (${formatZAR(suggestedPrefillAmount)})`}
+                    </button>
+                  </div>
                   <Input
                     id="pay-gross"
                     type="number"
@@ -505,7 +750,7 @@ export function DividendsTab({
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="pay-offset">
+                  <FieldLabel htmlFor="pay-offset" className="truncate">
                     Offset 1250 Loan (Bal: {formatZAR(gates.directorsLoanBalance)})
                   </FieldLabel>
                   <Input
@@ -517,66 +762,113 @@ export function DividendsTab({
                     onChange={(e) => setLoanOffset(e.target.value)}
                   />
                 </Field>
+                <Field>
+                  <FieldLabel htmlFor="pay-notes">Board Resolution / Notes</FieldLabel>
+                  <Input
+                    id="pay-notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="e.g. Q2 Board resolution"
+                  />
+                </Field>
               </div>
 
-              {/* Live GL Preview */}
-              <div className="rounded-lg border bg-muted/40 p-3 text-xs space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Gross Declared:</span>
-                  <span className="font-semibold tabular-nums">{formatZAR(parsedGross)}</span>
+              {/* Warnings when exceeding Account Balance, 2-Gate Safe Cap, or 0% PAYE Headroom */}
+              {exceedsSelectedAccount && (
+                <div className="flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 p-2.5 text-xs text-red-600 dark:text-red-400">
+                  <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Insufficient funds in {accountLabelMap[accountCode]}:</strong> Net cash
+                    payout ({formatZAR(previewNetCash)}) exceeds available balance (
+                    {formatZAR(selectedAccountBalance)}). Reduce to{' '}
+                    <strong>{formatZAR(maxTakeableFromAccount)}</strong> or switch bank account.
+                  </span>
                 </div>
-                {previewDwt > 0 && (
-                  <div className="flex justify-between text-amber-600">
-                    <span>Less {policy.dwtRatePercent}% DWT (Cr 2160 SARS Payable):</span>
-                    <span className="font-semibold tabular-nums">−{formatZAR(previewDwt)}</span>
-                  </div>
-                )}
-                {previewLoanOffset > 0 && (
-                  <div className="flex justify-between text-blue-600">
-                    <span>Less Director&apos;s Loan Offset (Cr 1250):</span>
-                    <span className="font-semibold tabular-nums">
-                      −{formatZAR(previewLoanOffset)}
-                    </span>
-                  </div>
-                )}
-                <div className="flex justify-between border-t pt-1 font-semibold text-emerald-600">
-                  <span>Net Cash Paid (Cr 1010 Cheque):</span>
-                  <span className="tabular-nums">{formatZAR(previewNetCash)}</span>
+              )}
+
+              {!exceedsSelectedAccount && exceedsSafeGateCap && (
+                <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-2.5 text-xs text-amber-700 dark:text-amber-300">
+                  <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>
+                      Exceeds 2-Gate Max Safe Payout ({formatZAR(gates.maxSafeDistribution)}):
+                    </strong>{' '}
+                    Breaches your {policy.payoutRatioPercent}% profit retention cap or drops True
+                    Spendable Cash below your {formatZAR(policy.minCashReserve)} reserve floor.
+                  </span>
                 </div>
+              )}
+
+              {!exceedsSelectedAccount && exceedsPayeHeadroom && (
+                <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-2.5 text-xs text-amber-700 dark:text-amber-300">
+                  <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>
+                      Exceeds 0% PAYE Tax-Free Headroom ({formatZAR(gates.payeBonusHeadroom)}):
+                    </strong>{' '}
+                    Any bonus above {formatZAR(gates.payeBonusHeadroom)} pushes annual director pay
+                    over {formatZAR(policy.payeTaxFreeThreshold)} and attracts SARS PAYE.
+                  </span>
+                </div>
+              )}
+
+              {/* Side-by-Side Live GL Preview & Companies Act s46 Sign-Off */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch">
+                <div className="rounded-lg border bg-muted/40 p-3 text-xs flex flex-col justify-between gap-1.5">
+                  <div className="space-y-1">
+                    <div className="flex justify-between gap-2">
+                      <span className="text-muted-foreground">Gross Declared:</span>
+                      <span className="font-semibold tabular-nums">{formatZAR(parsedGross)}</span>
+                    </div>
+                    {previewDwt > 0 && (
+                      <div className="flex justify-between gap-2 text-amber-600">
+                        <span>Less {policy.dwtRatePercent}% DWT (Cr 2160):</span>
+                        <span className="font-semibold tabular-nums">−{formatZAR(previewDwt)}</span>
+                      </div>
+                    )}
+                    {previewLoanOffset > 0 && (
+                      <div className="flex justify-between gap-2 text-blue-600">
+                        <span>Less 1250 Loan Offset:</span>
+                        <span className="font-semibold tabular-nums">
+                          −{formatZAR(previewLoanOffset)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div
+                    className={`flex justify-between gap-2 border-t pt-1.5 font-semibold ${
+                      exceedsSelectedAccount ? 'text-red-600' : 'text-emerald-600'
+                    }`}
+                  >
+                    <span>Net Cash Paid (Cr {accountLabelMap[accountCode]}):</span>
+                    <span className="tabular-nums">{formatZAR(previewNetCash)}</span>
+                  </div>
+                </div>
+
+                <label className="flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs leading-snug cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={solvencySignedOff}
+                    onChange={(e) => setSolvencySignedOff(e.target.checked)}
+                    className="size-4 rounded border-input accent-primary mt-0.5 shrink-0"
+                  />
+                  <span>
+                    <strong>Companies Act s46 Solvency &amp; Liquidity Test:</strong> I confirm that
+                    immediately after this distribution, company assets exceed liabilities and it
+                    can pay its debts as they fall due for the next 12 months.
+                  </span>
+                </label>
               </div>
-
-              <Field>
-                <FieldLabel htmlFor="pay-notes">Board Resolution / Notes</FieldLabel>
-                <Input
-                  id="pay-notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="e.g. Q2 Board resolution — surplus payout"
-                />
-              </Field>
-
-              {/* Mandatory Companies Act s46 Sign-Off */}
-              <label className="flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={solvencySignedOff}
-                  onChange={(e) => setSolvencySignedOff(e.target.checked)}
-                  className="size-4 rounded border-input accent-primary mt-0.5 shrink-0"
-                />
-                <span>
-                  <strong>Companies Act s46 Solvency &amp; Liquidity Test (Mandatory):</strong> I
-                  confirm that immediately after this distribution, the company&apos;s assets exceed
-                  its liabilities and it will be able to pay its debts as they become due in the
-                  ordinary course of business for the next 12 months.
-                </span>
-              </label>
             </div>
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setPayoutOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isPending || !solvencySignedOff}>
+              <Button
+                type="submit"
+                disabled={isPending || !solvencySignedOff || exceedsSelectedAccount}
+              >
                 {isPending ? 'Posting…' : 'Sign Off & Post Distribution'}
               </Button>
             </DialogFooter>

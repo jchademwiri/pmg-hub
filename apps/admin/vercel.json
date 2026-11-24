@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "cd ../.. && bun run turbo run build --filter=admin...",
-  "ignoreCommand": "npx turbo-ignore",
+  "ignoreCommand": "npx turbo-ignore admin --fallback=HEAD^1",
   "crons": [
     {
       "path": "/api/cron/credit-expiry",
