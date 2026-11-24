@@ -88,7 +88,7 @@ interface BankingClientProps {
     isFy2027PmgShareSunset: boolean;
     isFy2027OpeningReconciled: boolean;
   };
-  liquidAccounts: Array<{ id: string; code: string; name: string }>;
+  liquidAccounts: Array<{ id: string; code: string; name: string; balance?: number }>;
   governance: GovernanceOverviewResult;
   fyLabel: string;
   today: string;

@@ -23,9 +23,14 @@ export default async function BankingPage() {
     getGovernanceOverview(currentFy),
   ]);
 
+  const balanceByCode: Record<string, number> = {
+    '1010': overview.chequeBalance,
+    '1020': overview.savingsBalance,
+    '1030': overview.taxReserveBalance,
+  };
   const liquidAccounts = allAccounts
     .filter((a) => a.type === 'asset' && ['1010', '1020', '1030'].includes(a.code))
-    .map((a) => ({ id: a.id, code: a.code, name: a.name }));
+    .map((a) => ({ id: a.id, code: a.code, name: a.name, balance: balanceByCode[a.code] ?? 0 }));
 
   return (
     <div className="flex flex-col gap-6">

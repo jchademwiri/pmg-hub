@@ -45,7 +45,7 @@ interface FinanceOverviewClientProps {
     cheque: number;
     savings: number;
   };
-  liquidAccounts?: Array<{ id: string; code: string; name: string }>;
+  liquidAccounts?: Array<{ id: string; code: string; name: string; balance?: number }>;
   accountsReceivableBalance?: number;
   profitAndLoss: ProfitAndLossResult;
   revenueByDivision: Array<{ divisionName: string; total: number }>;

@@ -62,9 +62,16 @@ export default async function FinanceOverviewPage({
   const accountsReceivableBalance =
     trialBalance.find((r) => r.accountCode === '1100')?.balance ?? 0;
 
+  // Live (all-time) bank balances for the transfer dialog — independent of the period filter
+  const liveTrialBalance = period ? await getTrialBalance() : trialBalance;
   const liquidAccounts = allAccounts
-    .filter((a) => a.type === 'asset')
-    .map((a) => ({ id: a.id, code: a.code, name: a.name }));
+    .filter((a) => a.type === 'asset' && ['1010', '1020', '1030'].includes(a.code))
+    .map((a) => ({
+      id: a.id,
+      code: a.code,
+      name: a.name,
+      balance: liveTrialBalance.find((r) => r.accountCode === a.code)?.balance ?? 0,
+    }));
 
   const periodList = allPeriods.map((p) => p.period);
 

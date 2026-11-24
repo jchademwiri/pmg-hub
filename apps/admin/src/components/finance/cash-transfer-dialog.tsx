@@ -21,14 +21,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { recordCashTransfer } from '@/app/actions/accounting';
-import { getSASTToday } from '@/lib/format';
-import { Loader2, ArrowRightLeft } from 'lucide-react';
+import { formatZAR, getSASTToday } from '@/lib/format';
+import { Loader2, ArrowRightLeft, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CashTransferDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  accounts: { id: string; code: string; name: string }[];
+  accounts: { id: string; code: string; name: string; balance?: number }[];
   suggestedAmount?: number;
 }
 
@@ -50,7 +50,37 @@ export function CashTransferDialog({
   const savings = accounts.find((a) => a.code === '1020');
 
   const defaultFrom = fromAccountId || cheque?.id || accounts[0]?.id || '';
-  const defaultTo = toAccountId || savings?.id || accounts[1]?.id || '';
+  const fallbackTo =
+    savings && savings.id !== defaultFrom
+      ? savings.id
+      : accounts.find((a) => a.id !== defaultFrom)?.id || '';
+  const defaultTo = toAccountId && toAccountId !== defaultFrom ? toAccountId : fallbackTo;
+
+  const fromAccount = accounts.find((a) => a.id === defaultFrom);
+  const toAccount = accounts.find((a) => a.id === defaultTo);
+  const parsedAmount = parseFloat(amount) || 0;
+  const fromBalance = fromAccount?.balance;
+  const toBalance = toAccount?.balance;
+  const exceedsFromBalance =
+    fromBalance !== undefined && parsedAmount > Math.max(0, fromBalance) + 0.005;
+  const isSameAccount = !defaultFrom || !defaultTo || defaultFrom === defaultTo;
+
+  const handleFromChange = (newFromId: string) => {
+    const prevFrom = defaultFrom;
+    setFromAccountId(newFromId);
+    if (newFromId === defaultTo) {
+      const nextTo =
+        prevFrom && prevFrom !== newFromId
+          ? prevFrom
+          : accounts.find((a) => a.id !== newFromId)?.id || '';
+      setToAccountId(nextTo);
+    }
+  };
+
+  const handleToChange = (newToId: string) => {
+    if (newToId === defaultFrom) return;
+    setToAccountId(newToId);
+  };
 
   const handleAutofill = () => {
     if (suggestedAmount && suggestedAmount > 0) {
@@ -67,8 +97,15 @@ export function CashTransferDialog({
       return;
     }
 
-    if (defaultFrom === defaultTo) {
+    if (isSameAccount) {
       toast.error('Source and destination accounts must be different.');
+      return;
+    }
+
+    if (exceedsFromBalance && fromBalance !== undefined) {
+      toast.error(
+        `Transfer amount (${formatZAR(numAmount)}) exceeds available balance in ${fromAccount?.code} (${formatZAR(fromBalance)}).`,
+      );
       return;
     }
 
@@ -107,18 +144,57 @@ export function CashTransferDialog({
             Record Cash Transfer
           </DialogTitle>
           <DialogDescription>
-            Record physical movement of funds between bank & savings accounts.
+            Record physical movement of funds between bank &amp; savings accounts.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          {suggestedAmount && suggestedAmount > 0 && (
+          {/* Live Account Balances & Post-Transfer Preview */}
+          {(fromBalance !== undefined || toBalance !== undefined) && (
+            <div className="grid grid-cols-2 divide-x rounded-lg border bg-muted/30 text-xs">
+              <div className="p-3 min-w-0">
+                <span className="text-muted-foreground block truncate">
+                  From · {fromAccount?.code} {fromAccount?.name}
+                </span>
+                <span
+                  className={`font-bold text-sm tabular-nums block mt-1 ${
+                    (fromBalance ?? 0) < 0 ? 'text-red-600' : 'text-foreground'
+                  }`}
+                >
+                  {formatZAR(fromBalance ?? 0)}
+                </span>
+                {parsedAmount > 0 && fromBalance !== undefined && (
+                  <span
+                    className={`text-[11px] tabular-nums block mt-0.5 ${
+                      fromBalance - parsedAmount < 0
+                        ? 'text-red-600 font-medium'
+                        : 'text-muted-foreground'
+                    }`}
+                  >
+                    After: {formatZAR(fromBalance - parsedAmount)}
+                  </span>
+                )}
+              </div>
+              <div className="p-3 min-w-0">
+                <span className="text-muted-foreground block truncate">
+                  To · {toAccount?.code} {toAccount?.name}
+                </span>
+                <span className="font-bold text-sm tabular-nums block mt-1 text-foreground">
+                  {formatZAR(toBalance ?? 0)}
+                </span>
+                {parsedAmount > 0 && toBalance !== undefined && (
+                  <span className="text-[11px] tabular-nums block mt-0.5 text-emerald-600 font-medium">
+                    After: {formatZAR(toBalance + parsedAmount)}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {suggestedAmount !== undefined && suggestedAmount > 0 && (
             <div className="flex items-center justify-between p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs">
               <span className="text-blue-600 dark:text-blue-400 font-medium">
-                Pending PMG Share Transfer:{' '}
-                <strong>
-                  R {suggestedAmount.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}
-                </strong>
+                Pending PMG Share Transfer: <strong>{formatZAR(suggestedAmount)}</strong>
               </span>
               <Button
                 type="button"
@@ -135,7 +211,7 @@ export function CashTransferDialog({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5 min-w-0">
               <Label className="text-xs">From Account (Out)</Label>
-              <Select value={defaultFrom} onValueChange={setFromAccountId}>
+              <Select value={defaultFrom} onValueChange={handleFromChange}>
                 <SelectTrigger className="h-9 text-xs w-full min-w-0 truncate">
                   <SelectValue placeholder="Select account" />
                 </SelectTrigger>
@@ -143,6 +219,7 @@ export function CashTransferDialog({
                   {accounts.map((a) => (
                     <SelectItem key={a.id} value={a.id} className="text-xs">
                       {a.code} · {a.name}
+                      {a.balance !== undefined ? ` (${formatZAR(a.balance)})` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -151,14 +228,21 @@ export function CashTransferDialog({
 
             <div className="space-y-1.5 min-w-0">
               <Label className="text-xs">To Account (In)</Label>
-              <Select value={defaultTo} onValueChange={setToAccountId}>
+              <Select value={defaultTo} onValueChange={handleToChange}>
                 <SelectTrigger className="h-9 text-xs w-full min-w-0 truncate">
                   <SelectValue placeholder="Select account" />
                 </SelectTrigger>
                 <SelectContent>
                   {accounts.map((a) => (
-                    <SelectItem key={a.id} value={a.id} className="text-xs">
+                    <SelectItem
+                      key={a.id}
+                      value={a.id}
+                      disabled={a.id === defaultFrom}
+                      className="text-xs"
+                    >
                       {a.code} · {a.name}
+                      {a.balance !== undefined ? ` (${formatZAR(a.balance)})` : ''}
+                      {a.id === defaultFrom ? ' · Source' : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -167,10 +251,22 @@ export function CashTransferDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs">Transfer Amount (ZAR)</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs">Transfer Amount (ZAR)</Label>
+              {fromBalance !== undefined && fromBalance > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setAmount(fromBalance.toFixed(2))}
+                  className="text-[11px] font-medium text-primary hover:underline cursor-pointer"
+                >
+                  Use Max ({formatZAR(fromBalance)})
+                </button>
+              )}
+            </div>
             <Input
               type="number"
               step="0.01"
+              min="0.01"
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -178,6 +274,16 @@ export function CashTransferDialog({
               required
             />
           </div>
+
+          {exceedsFromBalance && fromBalance !== undefined && (
+            <div className="flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 p-2.5 text-xs text-red-600 dark:text-red-400">
+              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+              <span>
+                <strong>Insufficient funds in {fromAccount?.code}:</strong> Available balance is{' '}
+                <strong>{formatZAR(Math.max(0, fromBalance))}</strong>.
+              </span>
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <Label className="text-xs">Description</Label>
@@ -198,7 +304,7 @@ export function CashTransferDialog({
             <Button
               type="submit"
               size="sm"
-              disabled={loading}
+              disabled={loading || isSameAccount || exceedsFromBalance}
               className="gap-1.5 bg-blue-600 hover:bg-blue-500 text-white"
             >
               {loading ? (
