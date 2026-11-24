@@ -1098,53 +1098,63 @@ export function DividendsTab({
 
       {/* Declare Payout Dialog */}
       <Dialog open={payoutOpen} onOpenChange={setPayoutOpen}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="sm:max-w-2xl">
           <form onSubmit={handleRecordPayout}>
-            <DialogHeader>
+            <DialogHeader className="pb-2">
               <DialogTitle>Declare Quarterly Distribution ({label})</DialogTitle>
               <DialogDescription>
-                Posts a balanced double-entry journal and records your mandatory Companies Act s46
-                board sign-off.
+                Posts a balanced double-entry journal and records your Companies Act s46 sign-off.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid gap-3.5 py-2">
-              {/* Compact 3-Column Recommended Safe Payout Strip */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 rounded-lg border border-primary/25 bg-primary/5 p-3 text-xs">
-                <div>
-                  <span className="text-muted-foreground block">Recommended Safe Payout</span>
-                  <button
-                    type="button"
-                    onClick={() => setGrossAmount(String(recommendedSafeAmount))}
-                    className="font-bold text-sm tabular-nums text-primary hover:underline cursor-pointer mt-0.5"
-                    title="Click to apply recommended safe payout"
+            <div className="grid gap-4 py-2">
+              {/* Clean 3-Column Summary Strip */}
+              <div className="grid grid-cols-3 divide-x rounded-lg border bg-muted/30 text-xs">
+                <div className="p-3">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-muted-foreground">Safe Max Payout</span>
+                    <button
+                      type="button"
+                      onClick={() => setGrossAmount(String(suggestedPrefillAmount))}
+                      className="text-[11px] font-medium text-primary hover:underline cursor-pointer"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                  <span
+                    className={`font-bold text-sm tabular-nums block mt-1 ${
+                      recommendedSafeAmount > 0 ? 'text-emerald-600' : 'text-amber-600'
+                    }`}
                   >
-                    {formatZAR(recommendedSafeAmount)} (Apply)
-                  </button>
-                </div>
-                <div>
-                  <span className="text-muted-foreground block">
-                    2-Gate Cap ({policy.payoutRatioPercent}% Profit &amp; Floor)
-                  </span>
-                  <span className="font-semibold text-sm tabular-nums block mt-0.5">
-                    {formatZAR(gates.maxSafeDistribution)}
+                    {formatZAR(recommendedSafeAmount)}
                   </span>
                 </div>
-                <div>
+                <div className="p-3">
                   <span className="text-muted-foreground block truncate">
-                    Avail. in {accountLabelMap[accountCode]}
+                    Avail. ({accountCode})
                   </span>
                   <span
-                    className={`font-semibold text-sm tabular-nums block mt-0.5 ${
+                    className={`font-bold text-sm tabular-nums block mt-1 ${
                       selectedAccountBalance < 0 ? 'text-red-600' : 'text-foreground'
                     }`}
                   >
                     {formatZAR(Math.max(0, selectedAccountBalance))}
                   </span>
                 </div>
+                <div className="p-3">
+                  <span className="text-muted-foreground block truncate">0% PAYE Headroom</span>
+                  <span
+                    className={`font-bold text-sm tabular-nums block mt-1 ${
+                      gates.payeBonusHeadroom > 0 ? 'text-emerald-600' : 'text-amber-600'
+                    }`}
+                  >
+                    {formatZAR(gates.payeBonusHeadroom)}
+                  </span>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Row 1: Quarter & Payout Date */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
                 <Field>
                   <FieldLabel htmlFor="pay-quarter">Quarter</FieldLabel>
                   <Select
@@ -1174,10 +1184,11 @@ export function DividendsTab({
                 </Field>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Row 2: Bank Account & Method */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
                 <Field className="min-w-0">
-                  <FieldLabel htmlFor="pay-account" className="truncate">
-                    Pay From Bank Account{' '}
+                  <FieldLabel htmlFor="pay-account">
+                    Pay From Account{' '}
                     <span className="text-[11px] font-normal text-emerald-600">
                       (Rec: {gates.recommendedAccountCode})
                     </span>
@@ -1186,20 +1197,20 @@ export function DividendsTab({
                     value={accountCode}
                     onValueChange={(v) => setAccountCode(v as '1010' | '1020' | '1030')}
                   >
-                    <SelectTrigger id="pay-account" className="w-full truncate">
+                    <SelectTrigger id="pay-account" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="1010">
-                        1010 · Cheque Account (Avail: {formatZAR(gates.chequeBalance)})
-                        {gates.recommendedAccountCode === '1010' ? ' ★ Recommended' : ''}
+                        1010 · Cheque ({formatZAR(gates.chequeBalance)})
+                        {gates.recommendedAccountCode === '1010' ? ' ★' : ''}
                       </SelectItem>
                       <SelectItem value="1020">
-                        1020 · Savings Account (Avail: {formatZAR(gates.savingsBalance)})
-                        {gates.recommendedAccountCode === '1020' ? ' ★ Recommended' : ''}
+                        1020 · Savings ({formatZAR(gates.savingsBalance)})
+                        {gates.recommendedAccountCode === '1020' ? ' ★' : ''}
                       </SelectItem>
                       <SelectItem value="1030">
-                        1030 · Tax Reserve (Avail: {formatZAR(gates.taxReserveBalance)})
+                        1030 · Tax Reserve ({formatZAR(gates.taxReserveBalance)})
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -1211,34 +1222,38 @@ export function DividendsTab({
                     value={payoutType}
                     onValueChange={(v) => setPayoutType(v as 'director_bonus' | 'dividend')}
                   >
-                    <SelectTrigger id="pay-type" className="w-full truncate">
+                    <SelectTrigger id="pay-type" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="director_bonus">
-                        0% PAYE Director Bonus (Dr 5120 — up to {formatZAR(gates.payeBonusHeadroom)}
-                        )
+                        0% PAYE Director Bonus (Dr 5120)
                       </SelectItem>
                       <SelectItem value="dividend">
-                        Formal Dividend (Dr 3040 + {policy.dwtRatePercent}% DWT to 2160)
+                        Formal Dividend (Dr 3040 · {policy.dwtRatePercent}% DWT)
                       </SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Row 3: Gross Amount (+ Optional Loan Offset when > 0) & Notes */}
+              <div
+                className={`grid grid-cols-1 gap-4 items-end ${
+                  gates.directorsLoanBalance > 0 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'
+                }`}
+              >
                 <Field>
-                  <div className="flex items-center justify-between gap-1">
-                    <FieldLabel htmlFor="pay-gross">Gross Amount (R)</FieldLabel>
+                  <div className="flex items-center justify-between gap-2">
+                    <FieldLabel htmlFor="pay-gross" className="whitespace-nowrap">
+                      Gross Amount (R)
+                    </FieldLabel>
                     <button
                       type="button"
                       onClick={() => setGrossAmount(String(suggestedPrefillAmount))}
-                      className="text-[11px] font-medium text-primary hover:underline cursor-pointer"
+                      className="text-[11px] font-medium text-primary hover:underline cursor-pointer whitespace-nowrap"
                     >
-                      {recommendedSafeAmount > 0
-                        ? `Safe Max (${formatZAR(recommendedSafeAmount)})`
-                        : `Acct Max (${formatZAR(suggestedPrefillAmount)})`}
+                      {recommendedSafeAmount > 0 ? 'Use Safe Max' : 'Use Acct Max'}
                     </button>
                   </div>
                   <Input
@@ -1251,26 +1266,32 @@ export function DividendsTab({
                     required
                   />
                 </Field>
+
+                {gates.directorsLoanBalance > 0 && (
+                  <Field>
+                    <FieldLabel htmlFor="pay-offset" className="whitespace-nowrap">
+                      Offset 1250 Loan ({formatZAR(gates.directorsLoanBalance)})
+                    </FieldLabel>
+                    <Input
+                      id="pay-offset"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={loanOffset}
+                      onChange={(e) => setLoanOffset(e.target.value)}
+                    />
+                  </Field>
+                )}
+
                 <Field>
-                  <FieldLabel htmlFor="pay-offset" className="truncate">
-                    Offset 1250 Loan (Bal: {formatZAR(gates.directorsLoanBalance)})
+                  <FieldLabel htmlFor="pay-notes" className="whitespace-nowrap">
+                    Board Resolution / Notes
                   </FieldLabel>
-                  <Input
-                    id="pay-offset"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={loanOffset}
-                    onChange={(e) => setLoanOffset(e.target.value)}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="pay-notes">Board Resolution / Notes</FieldLabel>
                   <Input
                     id="pay-notes"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="e.g. Q2 Board resolution"
+                    placeholder="e.g. Q3 Board resolution"
                   />
                 </Field>
               </div>
