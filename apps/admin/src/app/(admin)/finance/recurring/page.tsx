@@ -11,13 +11,16 @@ import {
   getRecurringInvoiceHistory,
 } from '@pmg/db';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
+import { getSASTToday } from '@/lib/format';
 import { RecurringClient } from './recurring-client';
+import { toMonthlyAmount } from './recurring-utils';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Recurring Subscriptions & Retainers' };
+export const metadata: Metadata = { title: 'Recurring Billing & Subscriptions' };
 
 export default async function RecurringFinancePage() {
   const db = getDb();
+  const todayStr = getSASTToday();
 
   const [
     invoicesData,
@@ -38,8 +41,8 @@ export default async function RecurringFinancePage() {
   ]);
 
   const activeInboundMRR = invoicesData
-    .filter((i) => i.status === 'active' && i.frequency === 'monthly')
-    .reduce((sum, i) => sum + parseFloat(i.total), 0);
+    .filter((i) => i.status === 'active')
+    .reduce((sum, i) => sum + toMonthlyAmount(parseFloat(i.total), i.frequency), 0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -48,10 +51,10 @@ export default async function RecurringFinancePage() {
       />
 
       <div>
-        <h2 className="text-lg font-semibold">Recurring Retainers & Subscriptions</h2>
+        <h2 className="text-lg font-semibold">Recurring Billing &amp; Subscriptions</h2>
         <p className="text-sm text-muted-foreground">
-          Manage monthly client retainers (auto-billed on 26th with statement attached) and track
-          outbound software/hosting subscriptions (Claude, Antigravity, Hetzner VPS).
+          Manage client retainers you bill on repeat and track software, hosting, and domain
+          renewals (yours or client-linked).
         </p>
       </div>
 
@@ -75,6 +78,7 @@ export default async function RecurringFinancePage() {
           divisions={divisionsData}
           activeItems={itemsData}
           categories={categoriesData.map((cat) => cat.name)}
+          todayStr={todayStr}
         />
       </Suspense>
     </div>

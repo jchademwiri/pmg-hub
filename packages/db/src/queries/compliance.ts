@@ -41,6 +41,10 @@ export async function getComplianceRecordsByClient(
     .orderBy(asc(complianceDocuments.expiryDate));
 }
 
+export async function getAllComplianceRecordsGlobal(): Promise<ComplianceDocument[]> {
+  return db.select().from(complianceDocuments).orderBy(asc(complianceDocuments.expiryDate));
+}
+
 export async function getUpcomingExpirationsGlobal(): Promise<ComplianceDocument[]> {
   // Return all documents expiring within the next 60 days,
   // as well as any documents that have already expired (so they stay on the admin radar).

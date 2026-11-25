@@ -54,8 +54,7 @@ export async function createAsset(
     if (!parsed.success) {
       return { error: parsed.error.issues[0]?.message ?? 'Validation error' };
     }
-    // Investments are sourced live from Luno — the register never creates
-    // investment rows, so force the kind here regardless of what the client sends.
+    // Fixed assets register only manages physical/fixed assets.
     const v = { ...parsed.data, kind: 'fixed_asset' as const };
 
     const created = await createAssetRow({
@@ -110,9 +109,7 @@ export async function updateAsset(id: string, data: AssetInput): Promise<{ error
     if (!parsed.success) {
       return { error: parsed.error.issues[0]?.message ?? 'Validation error' };
     }
-    // Same policy as createAsset: investments are sourced live from Luno, so
-    // an existing row can't be turned into one via update either, regardless
-    // of what the client sends.
+    // Same policy as createAsset: enforce fixed_asset kind on update.
     const v = { ...parsed.data, kind: 'fixed_asset' as const };
 
     await updateAssetRow(id, {
