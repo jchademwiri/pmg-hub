@@ -467,7 +467,38 @@ const breadcrumbSchema = {
       });
     }
 
+    function trackTemplateView() {
+      const btn = document.getElementById('download-btn');
+      const slug = btn?.getAttribute('data-slug');
+      if (!slug) return;
+      const key = `tes:viewed:${slug}`;
+      try {
+        if (window.sessionStorage.getItem(key)) return;
+        window.sessionStorage.setItem(key, '1');
+      } catch {
+        // ignore storage errors in private browsing
+      }
+      const payload = JSON.stringify({ slug });
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(
+          '/api/templates/view',
+          new Blob([payload], { type: 'application/json' }),
+        );
+      } else {
+        fetch('/api/templates/view', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+          keepalive: true,
+        }).catch(() => {});
+      }
+    }
+
     setupDownload();
-    document.addEventListener('astro:page-load', setupDownload);
+    trackTemplateView();
+    document.addEventListener('astro:page-load', () => {
+      setupDownload();
+      trackTemplateView();
+    });
   </script>
 </Layout>

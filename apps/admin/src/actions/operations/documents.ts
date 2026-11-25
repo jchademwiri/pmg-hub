@@ -17,6 +17,9 @@ import { getSessionOrRedirect, requireRole } from '@/lib/auth';
 
 const MAX_DOCUMENT_SIZE_BYTES = 25 * 1024 * 1024; // 25MB
 
+export type DocumentActionResult<T = object> =
+  ({ success: true } & T) | { success: false; error: string };
+
 const ALLOWED_DOCUMENT_TYPES: Record<string, { ext: string; label: string }> = {
   'application/pdf': { ext: 'pdf', label: 'PDF' },
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': {
@@ -59,7 +62,7 @@ function sanitizeRichContent(rawHtml: string): string {
   const trimmed = rawHtml.trim();
   if (!trimmed) return '';
 
-  return sanitizeHtml(trimmed, {
+  const baseOptions: sanitizeHtml.IOptions = {
     allowedTags: [
       'h2',
       'h3',
@@ -107,7 +110,18 @@ function sanitizeRichContent(rawHtml: string): string {
         };
       },
     },
-  });
+  };
+
+  try {
+    return sanitizeHtml(trimmed, baseOptions);
+  } catch (err) {
+    console.warn('sanitizeHtml with allowedStyles failed, retrying without style rules:', err);
+    return sanitizeHtml(trimmed, {
+      ...baseOptions,
+      allowedAttributes: { a: ['href', 'target', 'rel'] },
+      allowedStyles: undefined,
+    });
+  }
 }
 
 function normalizeSlug(raw: string): string {
@@ -149,167 +163,84 @@ function buildR2Key(category: PublicDocumentCategory, slug: string, ext: string)
   return `tender-templates/${folder}/${slug}-${Date.now()}.${ext}`;
 }
 
-export async function createDocumentAction(formData: FormData) {
-  await getSessionOrRedirect();
-
-  const file = formData.get('file') as File | null;
-  const title = (formData.get('title') as string)?.trim();
-  const rawSlug = (formData.get('slug') as string)?.trim() || title || '';
-  const slug = normalizeSlug(rawSlug);
-  const code = (formData.get('code') as string)?.trim() || null;
-  const subtitle = (formData.get('subtitle') as string)?.trim() || '';
-  const category = parseCategory(formData.get('category'));
-  const seoTitle = (formData.get('seoTitle') as string)?.trim() || null;
-  const seoDescription = (formData.get('seoDescription') as string)?.trim() || '';
-  const keywords = parseJsonStringArray(formData.get('keywords'));
-  const content = sanitizeRichContent((formData.get('content') as string) || '');
-  const commonMistakes = parseJsonStringArray(formData.get('commonMistakes'));
-  const isPublished = formData.get('isPublished') !== 'false';
-  const sortOrderRaw = Number(formData.get('sortOrder'));
-  const sortOrder = Number.isFinite(sortOrderRaw) ? Math.max(0, Math.round(sortOrderRaw)) : 100;
-
-  if (!file || typeof file === 'string' || file.size === 0) {
-    throw new Error('Please upload a PDF, Word (.docx), or Excel (.xlsx) file.');
-  }
-  if (!title || !slug) {
-    throw new Error('Document Title and URL Slug are required.');
-  }
-  if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
-    throw new Error('File size exceeds the 25MB limit.');
-  }
-
-  const fileMeta = resolveFileMetadata(file);
-  if (!fileMeta) {
-    throw new Error('Unsupported file type. Please upload a PDF, DOCX, or XLSX file.');
-  }
-
-  // Check if slug already exists
-  const [existing] = await db
-    .select({ id: publicDocuments.id })
-    .from(publicDocuments)
-    .where(eq(publicDocuments.slug, slug))
-    .limit(1);
-
-  if (existing) {
-    throw new Error(
-      `A template with slug "${slug}" already exists. Edit the existing template or use a different slug.`,
-    );
-  }
-
-  const { client, bucket } = getR2Client();
-  const s3Key = buildR2Key(category, slug, fileMeta.ext);
-  const buffer = Buffer.from(await file.arrayBuffer());
-
-  await client.send(
-    new PutObjectCommand({
-      Bucket: bucket,
-      Key: s3Key,
-      Body: buffer,
-      ContentType: fileMeta.mimeType,
-    }),
-  );
-
-  const cleanDownloadFileName = `${slug}.${fileMeta.ext}`;
-
-  await db.insert(publicDocuments).values({
-    slug,
-    code,
-    title,
-    subtitle,
-    category,
-    seoTitle,
-    seoDescription,
-    keywords,
-    content,
-    commonMistakes,
-    s3Key,
-    fileName: cleanDownloadFileName,
-    fileSize: file.size,
-    mimeType: fileMeta.mimeType,
-    isPublished,
-    sortOrder,
-    downloadCount: 0,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
-
-  revalidatePath('/documents');
-  return { success: true, slug, s3Key };
+function getErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof Error && err.message) return err.message;
+  return fallback;
 }
 
-export async function updateDocumentAction(id: string, formData: FormData) {
+export async function createDocumentAction(
+  formData: FormData,
+): Promise<DocumentActionResult<{ slug: string; s3Key: string }>> {
   await getSessionOrRedirect();
 
-  if (!id) throw new Error('Document ID is required.');
+  try {
+    const file = formData.get('file') as File | null;
+    const title = (formData.get('title') as string)?.trim();
+    const rawSlug = (formData.get('slug') as string)?.trim() || title || '';
+    const slug = normalizeSlug(rawSlug);
+    const code = (formData.get('code') as string)?.trim() || null;
+    const subtitle = (formData.get('subtitle') as string)?.trim() || '';
+    const category = parseCategory(formData.get('category'));
+    const seoTitle = (formData.get('seoTitle') as string)?.trim() || null;
+    const seoDescription = (formData.get('seoDescription') as string)?.trim() || '';
+    const keywords = parseJsonStringArray(formData.get('keywords'));
+    const content = sanitizeRichContent((formData.get('content') as string) || '');
+    const commonMistakes = parseJsonStringArray(formData.get('commonMistakes'));
+    const isPublished = formData.get('isPublished') !== 'false';
+    const sortOrderRaw = Number(formData.get('sortOrder'));
+    const sortOrder = Number.isFinite(sortOrderRaw) ? Math.max(0, Math.round(sortOrderRaw)) : 100;
 
-  const [existing] = await db
-    .select()
-    .from(publicDocuments)
-    .where(eq(publicDocuments.id, id))
-    .limit(1);
-
-  if (!existing) {
-    throw new Error('Document not found.');
-  }
-
-  const title = (formData.get('title') as string)?.trim();
-  if (!title) {
-    throw new Error('Document Title is required.');
-  }
-
-  const code = (formData.get('code') as string)?.trim() || null;
-  const subtitle = (formData.get('subtitle') as string)?.trim() || '';
-  const category = parseCategory(formData.get('category'));
-  const seoTitle = (formData.get('seoTitle') as string)?.trim() || null;
-  const seoDescription = (formData.get('seoDescription') as string)?.trim() || '';
-  const keywords = parseJsonStringArray(formData.get('keywords'));
-  const content = sanitizeRichContent((formData.get('content') as string) || '');
-  const commonMistakes = parseJsonStringArray(formData.get('commonMistakes'));
-  const isPublished = formData.get('isPublished') !== 'false';
-  const sortOrderRaw = Number(formData.get('sortOrder'));
-  const sortOrder = Number.isFinite(sortOrderRaw)
-    ? Math.max(0, Math.round(sortOrderRaw))
-    : existing.sortOrder;
-
-  const replacementFile = formData.get('file') as File | null;
-  let nextS3Key = existing.s3Key;
-  let nextFileName = existing.fileName;
-  let nextFileSize = existing.fileSize;
-  let nextMimeType = existing.mimeType;
-  let oldS3KeyToDelete: string | null = null;
-
-  if (replacementFile && typeof replacementFile !== 'string' && replacementFile.size > 0) {
-    if (replacementFile.size > MAX_DOCUMENT_SIZE_BYTES) {
-      throw new Error('File size exceeds the 25MB limit.');
+    if (!file || typeof file === 'string' || file.size === 0) {
+      return {
+        success: false,
+        error: 'Please upload a PDF, Word (.docx), or Excel (.xlsx) file.',
+      };
     }
-    const fileMeta = resolveFileMetadata(replacementFile);
+    if (!title || !slug) {
+      return { success: false, error: 'Document Title and URL Slug are required.' };
+    }
+    if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
+      return { success: false, error: 'File size exceeds the 25MB limit.' };
+    }
+
+    const fileMeta = resolveFileMetadata(file);
     if (!fileMeta) {
-      throw new Error('Unsupported file type. Please upload a PDF, DOCX, or XLSX file.');
+      return {
+        success: false,
+        error: 'Unsupported file type. Please upload a PDF, DOCX, or XLSX file.',
+      };
+    }
+
+    const [existing] = await db
+      .select({ id: publicDocuments.id })
+      .from(publicDocuments)
+      .where(eq(publicDocuments.slug, slug))
+      .limit(1);
+
+    if (existing) {
+      return {
+        success: false,
+        error: `A template with slug "${slug}" already exists. Edit the existing template or use a different slug.`,
+      };
     }
 
     const { client, bucket } = getR2Client();
-    const newKey = buildR2Key(category, existing.slug, fileMeta.ext);
-    const buffer = Buffer.from(await replacementFile.arrayBuffer());
+    const s3Key = buildR2Key(category, slug, fileMeta.ext);
+    const buffer = Buffer.from(await file.arrayBuffer());
 
     await client.send(
       new PutObjectCommand({
         Bucket: bucket,
-        Key: newKey,
+        Key: s3Key,
         Body: buffer,
         ContentType: fileMeta.mimeType,
       }),
     );
 
-    oldS3KeyToDelete = existing.s3Key;
-    nextS3Key = newKey;
-    nextFileName = `${existing.slug}.${fileMeta.ext}`;
-    nextFileSize = replacementFile.size;
-    nextMimeType = fileMeta.mimeType;
-  }
+    const cleanDownloadFileName = `${slug}.${fileMeta.ext}`;
 
-  await db
-    .update(publicDocuments)
-    .set({
+    await db.insert(publicDocuments).values({
+      slug,
       code,
       title,
       subtitle,
@@ -319,83 +250,236 @@ export async function updateDocumentAction(id: string, formData: FormData) {
       keywords,
       content,
       commonMistakes,
-      s3Key: nextS3Key,
-      fileName: nextFileName,
-      fileSize: nextFileSize,
-      mimeType: nextMimeType,
+      s3Key,
+      fileName: cleanDownloadFileName,
+      fileSize: file.size,
+      mimeType: fileMeta.mimeType,
       isPublished,
       sortOrder,
+      viewCount: 0,
+      downloadCount: 0,
+      createdAt: new Date(),
       updatedAt: new Date(),
-    })
-    .where(eq(publicDocuments.id, id));
+    });
 
-  if (oldS3KeyToDelete && oldS3KeyToDelete !== nextS3Key) {
-    await deleteR2Object(oldS3KeyToDelete);
+    revalidatePath('/documents');
+    return { success: true, slug, s3Key };
+  } catch (err) {
+    console.error('[createDocumentAction] Failed:', err);
+    return {
+      success: false,
+      error: getErrorMessage(err, 'Failed to create template. Please try again.'),
+    };
   }
-
-  revalidatePath('/documents');
-  return { success: true, slug: existing.slug, s3Key: nextS3Key };
 }
 
-export async function toggleDocumentPublishAction(id: string, isPublished: boolean) {
+export async function updateDocumentAction(
+  id: string,
+  formData: FormData,
+): Promise<DocumentActionResult<{ slug: string; s3Key: string }>> {
   await getSessionOrRedirect();
 
-  await db
-    .update(publicDocuments)
-    .set({
-      isPublished,
-      updatedAt: new Date(),
-    })
-    .where(eq(publicDocuments.id, id));
+  try {
+    if (!id) return { success: false, error: 'Document ID is required.' };
 
-  revalidatePath('/documents');
-  return { success: true };
+    const [existing] = await db
+      .select()
+      .from(publicDocuments)
+      .where(eq(publicDocuments.id, id))
+      .limit(1);
+
+    if (!existing) {
+      return { success: false, error: 'Document not found.' };
+    }
+
+    const title = (formData.get('title') as string)?.trim();
+    if (!title) {
+      return { success: false, error: 'Document Title is required.' };
+    }
+
+    const code = (formData.get('code') as string)?.trim() || null;
+    const subtitle = (formData.get('subtitle') as string)?.trim() || '';
+    const category = parseCategory(formData.get('category'));
+    const seoTitle = (formData.get('seoTitle') as string)?.trim() || null;
+    const seoDescription = (formData.get('seoDescription') as string)?.trim() || '';
+    const keywords = parseJsonStringArray(formData.get('keywords'));
+    const content = sanitizeRichContent((formData.get('content') as string) || '');
+    const commonMistakes = parseJsonStringArray(formData.get('commonMistakes'));
+    const isPublished = formData.get('isPublished') !== 'false';
+    const sortOrderRaw = Number(formData.get('sortOrder'));
+    const sortOrder = Number.isFinite(sortOrderRaw)
+      ? Math.max(0, Math.round(sortOrderRaw))
+      : existing.sortOrder;
+
+    const replacementFile = formData.get('file') as File | null;
+    let nextS3Key = existing.s3Key;
+    let nextFileName = existing.fileName;
+    let nextFileSize = existing.fileSize;
+    let nextMimeType = existing.mimeType;
+    let oldS3KeyToDelete: string | null = null;
+
+    if (replacementFile && typeof replacementFile !== 'string' && replacementFile.size > 0) {
+      if (replacementFile.size > MAX_DOCUMENT_SIZE_BYTES) {
+        return { success: false, error: 'File size exceeds the 25MB limit.' };
+      }
+      const fileMeta = resolveFileMetadata(replacementFile);
+      if (!fileMeta) {
+        return {
+          success: false,
+          error: 'Unsupported file type. Please upload a PDF, DOCX, or XLSX file.',
+        };
+      }
+
+      const { client, bucket } = getR2Client();
+      const newKey = buildR2Key(category, existing.slug, fileMeta.ext);
+      const buffer = Buffer.from(await replacementFile.arrayBuffer());
+
+      await client.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: newKey,
+          Body: buffer,
+          ContentType: fileMeta.mimeType,
+        }),
+      );
+
+      oldS3KeyToDelete = existing.s3Key;
+      nextS3Key = newKey;
+      nextFileName = `${existing.slug}.${fileMeta.ext}`;
+      nextFileSize = replacementFile.size;
+      nextMimeType = fileMeta.mimeType;
+    }
+
+    await db
+      .update(publicDocuments)
+      .set({
+        code,
+        title,
+        subtitle,
+        category,
+        seoTitle,
+        seoDescription,
+        keywords,
+        content,
+        commonMistakes,
+        s3Key: nextS3Key,
+        fileName: nextFileName,
+        fileSize: nextFileSize,
+        mimeType: nextMimeType,
+        isPublished,
+        sortOrder,
+        updatedAt: new Date(),
+      })
+      .where(eq(publicDocuments.id, id));
+
+    if (oldS3KeyToDelete && oldS3KeyToDelete !== nextS3Key) {
+      await deleteR2Object(oldS3KeyToDelete);
+    }
+
+    revalidatePath('/documents');
+    revalidatePath(`/documents/${id}/edit`);
+    return { success: true, slug: existing.slug, s3Key: nextS3Key };
+  } catch (err) {
+    console.error('[updateDocumentAction] Failed:', err);
+    return {
+      success: false,
+      error: getErrorMessage(err, 'Failed to update template. Please try again.'),
+    };
+  }
 }
 
-export async function deleteDocumentAction(id: string) {
+export async function toggleDocumentPublishAction(
+  id: string,
+  isPublished: boolean,
+): Promise<DocumentActionResult> {
+  await getSessionOrRedirect();
+
+  try {
+    await db
+      .update(publicDocuments)
+      .set({
+        isPublished,
+        updatedAt: new Date(),
+      })
+      .where(eq(publicDocuments.id, id));
+
+    revalidatePath('/documents');
+    return { success: true };
+  } catch (err) {
+    console.error('[toggleDocumentPublishAction] Failed:', err);
+    return {
+      success: false,
+      error: getErrorMessage(err, 'Failed to update publish status.'),
+    };
+  }
+}
+
+export async function deleteDocumentAction(id: string): Promise<DocumentActionResult> {
   const session = await getSessionOrRedirect();
   if (!requireRole(session, 'admin')) {
-    throw new Error('Only admins can delete public templates.');
+    return { success: false, error: 'Only admins can delete public templates.' };
   }
 
-  const [existing] = await db
-    .select()
-    .from(publicDocuments)
-    .where(eq(publicDocuments.id, id))
-    .limit(1);
+  try {
+    const [existing] = await db
+      .select()
+      .from(publicDocuments)
+      .where(eq(publicDocuments.id, id))
+      .limit(1);
 
-  if (!existing) {
-    throw new Error('Document not found.');
+    if (!existing) {
+      return { success: false, error: 'Document not found.' };
+    }
+
+    await db.delete(publicDocuments).where(eq(publicDocuments.id, id));
+
+    if (existing.s3Key) {
+      await deleteR2Object(existing.s3Key);
+    }
+
+    revalidatePath('/documents');
+    return { success: true };
+  } catch (err) {
+    console.error('[deleteDocumentAction] Failed:', err);
+    return {
+      success: false,
+      error: getErrorMessage(err, 'Failed to delete template.'),
+    };
   }
-
-  await db.delete(publicDocuments).where(eq(publicDocuments.id, id));
-
-  if (existing.s3Key) {
-    await deleteR2Object(existing.s3Key);
-  }
-
-  revalidatePath('/documents');
-  return { success: true };
 }
 
-export async function getDocumentPreviewUrlAction(id: string) {
+export async function getDocumentPreviewUrlAction(
+  id: string,
+): Promise<DocumentActionResult<{ url: string; fileName: string }>> {
   await getSessionOrRedirect();
 
-  const [doc] = await db.select().from(publicDocuments).where(eq(publicDocuments.id, id)).limit(1);
+  try {
+    const [doc] = await db
+      .select()
+      .from(publicDocuments)
+      .where(eq(publicDocuments.id, id))
+      .limit(1);
 
-  if (!doc) {
-    throw new Error('Document not found.');
+    if (!doc) {
+      return { success: false, error: 'Document not found.' };
+    }
+
+    const { client, bucket } = getR2Client();
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: doc.s3Key,
+      ResponseContentDisposition: `inline; filename="${doc.fileName || `${doc.slug}.pdf`}"`,
+    });
+
+    const url = await getSignedUrl(client, command, { expiresIn: 300 });
+    return { success: true, url, fileName: doc.fileName || `${doc.slug}.pdf` };
+  } catch (err) {
+    console.error('[getDocumentPreviewUrlAction] Failed:', err);
+    return {
+      success: false,
+      error: getErrorMessage(err, 'Could not generate preview link.'),
+    };
   }
-
-  const { client, bucket } = getR2Client();
-  const command = new GetObjectCommand({
-    Bucket: bucket,
-    Key: doc.s3Key,
-    ResponseContentDisposition: `inline; filename="${doc.fileName || `${doc.slug}.pdf`}"`,
-  });
-
-  const url = await getSignedUrl(client, command, { expiresIn: 300 });
-  return { success: true, url, fileName: doc.fileName || `${doc.slug}.pdf` };
 }
 
 // Backwards-compatible alias if any caller still references uploadDocumentAction

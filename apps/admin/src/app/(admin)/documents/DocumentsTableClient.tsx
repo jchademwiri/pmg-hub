@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useTransition } from 'react';
+import Link from 'next/link';
 import {
   Upload,
   Search,
@@ -12,8 +13,9 @@ import {
   MoreHorizontal,
   FileText,
   Download,
-  CheckCircle2,
-  FileClock,
+  TrendingUp,
+  X,
+  Globe,
 } from 'lucide-react';
 import {
   PUBLIC_DOCUMENT_CATEGORIES,
@@ -38,6 +40,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -52,7 +55,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { DocumentFormDialog } from './DocumentFormDialog';
 import {
   toggleDocumentPublishAction,
   deleteDocumentAction,
@@ -107,19 +109,28 @@ interface DocumentsTableClientProps {
 export function DocumentsTableClient({ documents, canDelete }: DocumentsTableClientProps) {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'all' | PublicDocumentCategory>('all');
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingDoc, setEditingDoc] = useState<PublicDocument | null>(null);
   const [deletingDoc, setDeletingDoc] = useState<PublicDocument | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const stats = useMemo(() => {
     const published = documents.filter((d) => d.isPublished).length;
     const totalDownloads = documents.reduce((acc, d) => acc + (d.downloadCount || 0), 0);
+    const totalViews = documents.reduce((acc, d) => acc + (d.viewCount || 0), 0);
+    const topDoc =
+      documents.length > 0
+        ? [...documents].sort((a, b) => (b.downloadCount || 0) - (a.downloadCount || 0))[0]
+        : null;
+    const conversionRate =
+      totalViews > 0 ? `${Math.min(100, Math.round((totalDownloads / totalViews) * 100))}%` : null;
+
     return {
       total: documents.length,
       published,
       drafts: documents.length - published,
+      totalViews,
       totalDownloads,
+      topDoc,
+      conversionRate,
     };
   }, [documents]);
 
@@ -137,20 +148,14 @@ export function DocumentsTableClient({ documents, canDelete }: DocumentsTableCli
     });
   }, [documents, search, selectedCategory]);
 
-  const handleOpenCreate = () => {
-    setEditingDoc(null);
-    setDialogOpen(true);
-  };
-
-  const handleOpenEdit = (doc: PublicDocument) => {
-    setEditingDoc(doc);
-    setDialogOpen(true);
-  };
-
   const handleTogglePublish = (doc: PublicDocument, checked: boolean) => {
     startTransition(async () => {
       try {
-        await toggleDocumentPublishAction(doc.id, checked);
+        const res = await toggleDocumentPublishAction(doc.id, checked);
+        if (!res.success) {
+          toast.error(res.error);
+          return;
+        }
         toast.success(
           checked ? `"${doc.title}" is now live on /templates` : `"${doc.title}" moved to draft`,
         );
@@ -163,6 +168,10 @@ export function DocumentsTableClient({ documents, canDelete }: DocumentsTableCli
   const handlePreview = async (doc: PublicDocument) => {
     try {
       const res = await getDocumentPreviewUrlAction(doc.id);
+      if (!res.success) {
+        toast.error(res.error);
+        return;
+      }
       if (res.url) {
         window.open(res.url, '_blank', 'noopener,noreferrer');
       }
@@ -186,7 +195,11 @@ export function DocumentsTableClient({ documents, canDelete }: DocumentsTableCli
     const target = deletingDoc;
     startTransition(async () => {
       try {
-        await deleteDocumentAction(target.id);
+        const res = await deleteDocumentAction(target.id);
+        if (!res.success) {
+          toast.error(res.error);
+          return;
+        }
         toast.success(`Deleted "${target.title}" and removed file from R2`);
         setDeletingDoc(null);
       } catch (err) {
@@ -206,80 +219,150 @@ export function DocumentsTableClient({ documents, canDelete }: DocumentsTableCli
             templates directly to tenderedgesolutions.co.za/templates.
           </p>
         </div>
-        <Button onClick={handleOpenCreate} className="font-semibold shadow-sm shrink-0">
-          <Upload className="mr-2 h-4 w-4" />
-          Upload New Template
+        <Button asChild className="font-semibold shadow-sm shrink-0">
+          <Link href="/documents/new">
+            <Upload className="mr-2 h-4 w-4" />
+            Upload New Template
+          </Link>
         </Button>
       </div>
 
       {/* KPI Strip */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Total Templates
-            </CardTitle>
-            <FileText className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Published Live
-            </CardTitle>
-            <CheckCircle2 className="size-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.published}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Drafts
-            </CardTitle>
-            <FileClock className="size-4 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.drafts}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <div className="rounded-xl border border-border/80 bg-card p-5 shadow-xs flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Templates
+            </span>
+            <div className="flex size-8 items-center justify-center rounded-lg bg-muted text-foreground">
+              <FileText className="size-4" />
+            </div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold tabular-nums tracking-tight">{stats.total}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              <span className="text-emerald-500 font-medium">{stats.published} live</span>
+              {' · '}
+              <span>{stats.drafts} drafts</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border/80 bg-card p-5 shadow-xs flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Page Visits
+            </span>
+            <div className="flex size-8 items-center justify-center rounded-lg bg-sky-500/10 text-sky-500 border border-sky-500/20">
+              <Eye className="size-4" />
+            </div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold tabular-nums tracking-tight">
+              {stats.totalViews.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Unique session visits on /templates
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border/80 bg-card p-5 shadow-xs flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Total Downloads
-            </CardTitle>
-            <Download className="size-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalDownloads.toLocaleString()}</div>
-          </CardContent>
-        </Card>
+            </span>
+            <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+              <Download className="size-4" />
+            </div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold tabular-nums tracking-tight">
+              {stats.totalDownloads.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1 truncate">
+              {stats.topDoc
+                ? `Top: ${stats.topDoc.code || stats.topDoc.title} (${stats.topDoc.downloadCount})`
+                : 'No downloads yet'}
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border/80 bg-card p-5 shadow-xs flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Download Rate
+            </span>
+            <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
+              <TrendingUp className="size-4" />
+            </div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold tabular-nums tracking-tight">
+              {stats.conversionRate ?? '—'}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats.conversionRate ? 'Downloads per page visit' : 'Tracking starts on next visit'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Wide Search Bar above Template Library */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search templates by title, code (e.g. SBD 4, B-BBEE EME), subtitle, or URL slug..."
+            className="pl-10 pr-10 h-11 text-sm bg-card border-border/80"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              aria-label="Clear search"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          )}
+        </div>
+        {(search || selectedCategory !== 'all') && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
+            <span>
+              Showing <strong className="text-foreground">{filteredDocs.length}</strong> of{' '}
+              {documents.length}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearch('');
+                setSelectedCategory('all');
+              }}
+              className="h-8 text-xs"
+            >
+              Reset
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Main Table Card */}
-      <Card>
+      <Card className="border-border/80">
         <CardHeader className="space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <CardTitle>Template Library</CardTitle>
-              <CardDescription>
-                Hosted on Cloudflare R2 (`tender-templates/*`) with automatic SEO pages and dynamic
-                XML sitemap indexing.
-              </CardDescription>
-            </div>
-            <div className="relative w-full md:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search title, code, or slug..."
-                className="pl-9 h-9 text-sm"
-              />
-            </div>
+          <div>
+            <CardTitle>Template Library</CardTitle>
+            <CardDescription className="mt-1">
+              Hosted on Cloudflare R2 (
+              <code className="text-xs font-mono bg-muted px-1 py-0.5 rounded">
+                tender-templates/*
+              </code>
+              ) with automatic SEO pages and dynamic XML sitemap indexing.
+            </CardDescription>
           </div>
 
           {/* Category Filter Pills */}
@@ -325,15 +408,16 @@ export function DocumentsTableClient({ documents, canDelete }: DocumentsTableCli
                 <TableHead>Format</TableHead>
                 <TableHead>Published</TableHead>
                 <TableHead>Public URL</TableHead>
+                <TableHead className="text-right">Visits</TableHead>
                 <TableHead className="text-right">Downloads</TableHead>
                 <TableHead className="text-right">Updated</TableHead>
-                <TableHead className="w-12 text-right">Actions</TableHead>
+                <TableHead className="w-14 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredDocs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground h-28">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground h-28">
                     {documents.length === 0
                       ? 'No templates uploaded yet. Click "Upload New Template" to get started.'
                       : 'No templates match your current filter.'}
@@ -355,12 +439,17 @@ export function DocumentsTableClient({ documents, canDelete }: DocumentsTableCli
                             {doc.code && (
                               <Badge
                                 variant="outline"
-                                className="text-[10px] font-mono px-1.5 py-0"
+                                className="text-[10px] font-mono px-1.5 py-0 shrink-0"
                               >
                                 {doc.code}
                               </Badge>
                             )}
-                            <span className="font-medium truncate">{doc.title}</span>
+                            <Link
+                              href={`/documents/${doc.id}/edit`}
+                              className="font-medium truncate hover:text-primary hover:underline"
+                            >
+                              {doc.title}
+                            </Link>
                           </div>
                           {doc.subtitle && (
                             <span className="text-xs text-muted-foreground truncate">
@@ -370,12 +459,15 @@ export function DocumentsTableClient({ documents, canDelete }: DocumentsTableCli
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary" className="text-xs font-normal">
+                        <Badge
+                          variant="secondary"
+                          className="text-xs font-normal whitespace-nowrap"
+                        >
                           {catMeta.label}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 whitespace-nowrap">
                           <span
                             className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-semibold ${fmt.className}`}
                           >
@@ -387,7 +479,7 @@ export function DocumentsTableClient({ documents, canDelete }: DocumentsTableCli
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 whitespace-nowrap">
                           <Switch
                             checked={doc.isPublished}
                             disabled={isPending}
@@ -404,21 +496,29 @@ export function DocumentsTableClient({ documents, canDelete }: DocumentsTableCli
                           href={`${PUBLIC_BASE_URL}/templates/${doc.slug}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono"
+                          className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono whitespace-nowrap"
                         >
                           /templates/{doc.slug}
-                          <ExternalLink className="size-3" />
+                          <ExternalLink className="size-3 shrink-0" />
                         </a>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right tabular-nums">
+                        <div className="font-semibold text-foreground">
+                          {(doc.viewCount || 0).toLocaleString()}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground whitespace-nowrap">
+                          {formatDate(doc.lastViewedAt)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
                         <div className="font-bold text-foreground">
                           {(doc.downloadCount || 0).toLocaleString()}
                         </div>
-                        <div className="text-[11px] text-muted-foreground">
+                        <div className="text-[11px] text-muted-foreground whitespace-nowrap">
                           {formatDate(doc.lastDownloadedAt)}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right text-xs text-muted-foreground">
+                      <TableCell className="text-right text-xs text-muted-foreground whitespace-nowrap">
                         {formatDate(doc.updatedAt)}
                       </TableCell>
                       <TableCell className="text-right">
@@ -429,28 +529,60 @@ export function DocumentsTableClient({ documents, canDelete }: DocumentsTableCli
                               <span className="sr-only">Open menu</span>
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleOpenEdit(doc)}>
-                              <Pencil className="mr-2 size-4" />
-                              Edit Template
+                          <DropdownMenuContent align="end" className="w-56 p-1.5">
+                            <DropdownMenuLabel className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-2 py-1.5">
+                              Template Actions
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              asChild
+                              className="cursor-pointer whitespace-nowrap py-2"
+                            >
+                              <Link
+                                href={`/documents/${doc.id}/edit`}
+                                className="flex items-center gap-2.5"
+                              >
+                                <Pencil className="size-4 text-muted-foreground shrink-0" />
+                                <span>Edit template</span>
+                              </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handlePreview(doc)}>
-                              <Eye className="mr-2 size-4" />
-                              Preview / Download File
+                            <DropdownMenuItem
+                              onClick={() => handlePreview(doc)}
+                              className="cursor-pointer whitespace-nowrap py-2 flex items-center gap-2.5"
+                            >
+                              <Eye className="size-4 text-muted-foreground shrink-0" />
+                              <span>Preview / Download file</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleCopyLink(doc)}>
-                              <Copy className="mr-2 size-4" />
-                              Copy Public Link
+                            <DropdownMenuItem
+                              asChild
+                              className="cursor-pointer whitespace-nowrap py-2"
+                            >
+                              <a
+                                href={`${PUBLIC_BASE_URL}/templates/${doc.slug}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex items-center gap-2.5"
+                              >
+                                <Globe className="size-4 text-muted-foreground shrink-0" />
+                                <span>Open public page</span>
+                              </a>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleCopyLink(doc)}
+                              className="cursor-pointer whitespace-nowrap py-2 flex items-center gap-2.5"
+                            >
+                              <Copy className="size-4 text-muted-foreground shrink-0" />
+                              <span>Copy public link</span>
                             </DropdownMenuItem>
                             {canDelete && (
                               <>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   onClick={() => setDeletingDoc(doc)}
-                                  className="text-destructive focus:text-destructive"
+                                  className="cursor-pointer whitespace-nowrap py-2 flex items-center gap-2.5 text-destructive focus:text-destructive focus:bg-destructive/10"
                                 >
-                                  <Trash2 className="mr-2 size-4" />
-                                  Delete Template
+                                  <Trash2 className="size-4 shrink-0" />
+                                  <span>Delete template</span>
                                 </DropdownMenuItem>
                               </>
                             )}
@@ -465,9 +597,6 @@ export function DocumentsTableClient({ documents, canDelete }: DocumentsTableCli
           </Table>
         </CardContent>
       </Card>
-
-      {/* Create / Edit Dialog */}
-      <DocumentFormDialog open={dialogOpen} onOpenChange={setDialogOpen} document={editingDoc} />
 
       {/* Delete Confirmation */}
       <AlertDialog open={Boolean(deletingDoc)} onOpenChange={(o) => !o && setDeletingDoc(null)}>
