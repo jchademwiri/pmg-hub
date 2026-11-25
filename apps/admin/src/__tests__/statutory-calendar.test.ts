@@ -9,8 +9,9 @@ describe('statutory-calendar', () => {
       expect(deadlines[i]!.daysLeft).toBeGreaterThanOrEqual(deadlines[i - 1]!.daysLeft);
     }
 
+    // Feb 28, 2027 is a Sunday -> SARS IRP6 shifts to preceding Friday (2027-02-26)
     const irp6Second = deadlines.find((d) => d.id === 'sars-irp6-2');
-    expect(irp6Second?.dueDate).toBe('2027-02-28');
+    expect(irp6Second?.dueDate).toBe('2027-02-26');
     expect(irp6Second?.actionHref).toBe('/finance/projections?tab=tax');
 
     const irp6First = deadlines.find((d) => d.id === 'sars-irp6-1');

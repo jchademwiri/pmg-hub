@@ -127,7 +127,12 @@ async function resolveExpenseChartAccount(
     .limit(1);
 
   const explicitAccount = mappedRows[0]?.account as ChartAccount | undefined;
-  if (explicitAccount && explicitAccount.isActive) {
+  if (
+    explicitAccount &&
+    explicitAccount.isActive &&
+    explicitAccount.isPostingAccount &&
+    explicitAccount.type === 'expense'
+  ) {
     return { account: explicitAccount, resolvedCode: explicitAccount.code };
   }
 
@@ -1154,8 +1159,28 @@ export async function postUnpostedExpensesCatchUp(createdBy = 'system'): Promise
     const now = new Date();
 
     await db.transaction(async (tx) => {
+      // Re-verify period status inside the transaction to prevent race with period close/lock
+      const txPeriod = await ensureOpenPeriod(targetPeriod, tx);
+      if (txPeriod.status !== 'open') {
+        throw new Error(`Accounting period ${targetPeriod} is ${txPeriod.status}.`);
+      }
+
       for (const exp of unposted) {
         if (!Number.isFinite(exp.amount) || exp.amount <= 0) continue;
+
+        // Re-check inside tx to guarantee idempotency against concurrent catch-up clicks
+        const existingPosted = await tx
+          .select({ id: journalEntries.id })
+          .from(journalEntries)
+          .where(
+            and(
+              eq(journalEntries.sourceTable, 'expenses'),
+              eq(journalEntries.sourceId, exp.id),
+              eq(journalEntries.status, 'posted'),
+            ),
+          )
+          .limit(1);
+        if (existingPosted.length > 0) continue;
 
         const { account: expenseAccount, resolvedCode } = await resolveExpenseChartAccount(
           exp.category,

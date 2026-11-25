@@ -28,6 +28,20 @@ function febLastDay(year: number): string {
   return `${year}-02-${isLeapYear(year) ? '29' : '28'}`;
 }
 
+/**
+ * SARS requires provisional tax payments falling on a Saturday or Sunday
+ * to be made on the preceding business day (Friday).
+ */
+function toPrecedingBusinessDay(isoDate: string): string {
+  const [y, m, d] = isoDate.split('-').map(Number);
+  if (!y || !m || !d) return isoDate;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const dow = dt.getUTCDay(); // 0 = Sun, 6 = Sat
+  if (dow === 6) dt.setUTCDate(dt.getUTCDate() - 1);
+  else if (dow === 0) dt.setUTCDate(dt.getUTCDate() - 2);
+  return dt.toISOString().slice(0, 10);
+}
+
 function diffDaysISO(targetDateStr: string, todayStr: string): number {
   const [ty, tm, td] = targetDateStr.split('-').map(Number);
   const [ny, nm, nd] = todayStr.split('-').map(Number);
@@ -45,13 +59,21 @@ function classifySeverity(daysLeft: number): StatutorySeverity {
 /**
  * Returns the next occurrence of a fixed annual month/day on or after `todayStr`.
  */
-function nextAnnualDate(month: number, dayOrFebEnd: number | 'feb_end', todayStr: string): string {
+function nextAnnualDate(
+  month: number,
+  dayOrFebEnd: number | 'feb_end',
+  todayStr: string,
+  adjustToBusinessDay = false,
+): string {
   const [y] = todayStr.split('-').map(Number);
   const year = y || 2026;
 
   const makeDate = (yr: number) => {
-    if (dayOrFebEnd === 'feb_end') return febLastDay(yr);
-    return `${yr}-${String(month).padStart(2, '0')}-${String(dayOrFebEnd).padStart(2, '0')}`;
+    const raw =
+      dayOrFebEnd === 'feb_end'
+        ? febLastDay(yr)
+        : `${yr}-${String(month).padStart(2, '0')}-${String(dayOrFebEnd).padStart(2, '0')}`;
+    return adjustToBusinessDay ? toPrecedingBusinessDay(raw) : raw;
   };
 
   const thisYearDate = makeDate(year);
@@ -67,10 +89,10 @@ export function getStatutoryDeadlines(
   todayStr: string,
   cipcAnniversaryMonth = 3,
 ): StatutoryDeadline[] {
-  const irp6FirstDate = nextAnnualDate(8, 31, todayStr);
-  const irp6SecondDate = nextAnnualDate(2, 'feb_end', todayStr);
+  const irp6FirstDate = nextAnnualDate(8, 31, todayStr, true);
+  const irp6SecondDate = nextAnnualDate(2, 'feb_end', todayStr, true);
   // ITR14 is due within 12 months of the February FY-end (i.e. next Feb 28/29)
-  const itr14Date = nextAnnualDate(2, 'feb_end', todayStr);
+  const itr14Date = nextAnnualDate(2, 'feb_end', todayStr, false);
 
   // CIPC Annual Return & Beneficial Ownership due within 30 business days of registration anniversary month
   const cipcMonth = Math.min(Math.max(1, cipcAnniversaryMonth), 12);

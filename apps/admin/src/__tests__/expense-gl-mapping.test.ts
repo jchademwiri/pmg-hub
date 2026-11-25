@@ -137,7 +137,9 @@ describe('Expense GL mapping & catch-up posting', () => {
             id: 'acc-5090',
             code: '5090',
             name: 'Contractors',
+            type: 'expense',
             isActive: true,
+            isPostingAccount: true,
           },
         },
       ],
@@ -209,10 +211,23 @@ describe('Expense GL mapping & catch-up posting', () => {
     ]);
     mockGetCurrentOpenPeriod.mockResolvedValue({ period: '2026-11', status: 'open' });
 
-    // Queue: bank account, exp 1 explicit FK, exp 2 unmapped -> fallback 5070
+    // Queue: bank account, exp 1 existingPosted=[], exp 1 explicit FK, exp 2 existingPosted=[], exp 2 unmapped -> fallback 5070
     state.selectQueue = [
       [{ id: 'acc-1010', code: '1010', name: 'Cheque', isActive: true }],
-      [{ account: { id: 'acc-5030', code: '5030', name: 'Office', isActive: true } }],
+      [],
+      [
+        {
+          account: {
+            id: 'acc-5030',
+            code: '5030',
+            name: 'Office',
+            type: 'expense',
+            isActive: true,
+            isPostingAccount: true,
+          },
+        },
+      ],
+      [],
       [],
       [{ id: 'acc-5070', code: '5070', name: 'Travel', isActive: true }],
     ];
