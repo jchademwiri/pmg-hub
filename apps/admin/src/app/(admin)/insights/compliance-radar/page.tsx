@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getUpcomingExpirationsGlobal, db, clients } from '@pmg/db';
+import { getUpcomingExpirationsGlobal, db, clients, asc } from '@pmg/db';
 import { differenceInDays, format } from 'date-fns';
 import { StickyPageHeader } from '@/components/ui/sticky-page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getSASTToday, fmtDateLong } from '@/lib/format';
 import { getStatutoryDeadlines } from '@/lib/compliance/statutory-calendar';
+import { AddComplianceRecordDialog } from './add-compliance-record-dialog';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
@@ -26,13 +27,16 @@ export const dynamic = 'force-dynamic';
 export default async function ComplianceRadarPage() {
   const [records, allClients] = await Promise.all([
     getUpcomingExpirationsGlobal(),
-    db.select({ id: clients.id, name: clients.name }).from(clients),
+    db
+      .select({ id: clients.id, name: clients.name, businessName: clients.businessName })
+      .from(clients)
+      .orderBy(asc(clients.name)),
   ]);
 
   const todayStr = getSASTToday();
   const statutoryDeadlines = getStatutoryDeadlines(todayStr);
 
-  const clientMap = new Map(allClients.map((c) => [c.id, c.name]));
+  const clientMap = new Map(allClients.map((c) => [c.id, c.businessName || c.name]));
   const today = new Date();
 
   const expired = [];
@@ -93,6 +97,7 @@ export default async function ComplianceRadarPage() {
       <StickyPageHeader
         title="Compliance Radar"
         description="Monitor upcoming expirations across all clients globally."
+        actions={<AddComplianceRecordDialog clients={allClients} />}
       />
 
       <div className="grid gap-6 md:grid-cols-3">
