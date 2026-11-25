@@ -38,32 +38,89 @@ export function YoYComparisonTable({ data, className }: YoYComparisonTableProps)
       label: 'Total Revenue',
       key: 'totalInvoiced',
       isCurrency: true,
+      invertTrendColor: false,
       colorClass: 'text-blue-600 dark:text-blue-400 font-medium',
     },
     {
       label: 'Total Income',
       key: 'totalIncome',
       isCurrency: true,
+      invertTrendColor: false,
       colorClass: 'text-emerald-600 dark:text-emerald-500 font-medium',
     },
     {
       label: 'Total Expenses',
       key: 'totalExpenses',
       isCurrency: true,
+      invertTrendColor: true,
       colorClass: 'text-muted-foreground',
     },
     {
       label: 'Net Profit',
       key: 'netProfit',
       isCurrency: true,
+      invertTrendColor: false,
       colorClass: 'text-emerald-600 dark:text-emerald-500 font-bold',
     },
   ];
 
-  const getTrendIcon = (currentVal: number, priorVal: number) => {
-    if (currentVal > priorVal) return <TrendingUp className="h-4 w-4 text-emerald-500" />;
-    if (currentVal < priorVal) return <TrendingDown className="h-4 w-4 text-red-500" />;
-    return <Minus className="h-4 w-4 text-blue-500" />;
+  const renderTrend = (currentVal: number, priorVal: number, invertColor: boolean) => {
+    if (priorVal === 0 && currentVal === 0) {
+      return (
+        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground tabular-nums">
+          <Minus className="h-3.5 w-3.5" />
+          0.0%
+        </span>
+      );
+    }
+
+    if (priorVal === 0) {
+      const color =
+        currentVal > 0
+          ? invertColor
+            ? 'text-amber-600 dark:text-amber-400'
+            : 'text-emerald-600 dark:text-emerald-400'
+          : 'text-red-600 dark:text-red-400';
+      return (
+        <span className={cn('inline-flex items-center gap-1 text-xs font-medium', color)}>
+          {currentVal > 0 ? (
+            <TrendingUp className="h-3.5 w-3.5" />
+          ) : (
+            <TrendingDown className="h-3.5 w-3.5" />
+          )}
+          New
+        </span>
+      );
+    }
+
+    const pct = ((currentVal - priorVal) / Math.abs(priorVal)) * 100;
+    const isUp = currentVal > priorVal;
+    const isDown = currentVal < priorVal;
+    const isPositiveOutcome = invertColor ? isDown : isUp;
+    const isNegativeOutcome = invertColor ? isUp : isDown;
+    const color = isPositiveOutcome
+      ? 'text-emerald-600 dark:text-emerald-400'
+      : isNegativeOutcome
+        ? invertColor
+          ? 'text-amber-600 dark:text-amber-400'
+          : 'text-red-600 dark:text-red-400'
+        : 'text-muted-foreground';
+
+    const sign = pct > 0 ? '+' : '';
+    return (
+      <span
+        className={cn('inline-flex items-center gap-1 text-xs font-semibold tabular-nums', color)}
+      >
+        {isUp ? (
+          <TrendingUp className="h-3.5 w-3.5 shrink-0" />
+        ) : isDown ? (
+          <TrendingDown className="h-3.5 w-3.5 shrink-0" />
+        ) : (
+          <Minus className="h-3.5 w-3.5 shrink-0" />
+        )}
+        {`${sign}${pct.toFixed(1)}%`}
+      </span>
+    );
   };
 
   const renderCell = (row: (typeof rows)[number], record: (typeof data)[number]) => {
@@ -117,9 +174,10 @@ export function YoYComparisonTable({ data, className }: YoYComparisonTableProps)
               <TableCell className="py-4">
                 <div className="flex items-center justify-end">
                   {prior ? (
-                    getTrendIcon(
+                    renderTrend(
                       Number(current[row.key as keyof typeof current]),
                       Number(prior[row.key as keyof typeof prior]),
+                      row.invertTrendColor,
                     )
                   ) : (
                     <span className="text-muted-foreground">—</span>

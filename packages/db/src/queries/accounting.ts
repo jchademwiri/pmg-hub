@@ -1717,6 +1717,14 @@ export type UnpostedInvoiceReconciliationRow = {
 };
 
 /**
+ * Start of FY2026/27 when the PMG-Hub double-entry General Ledger went live.
+ * Pre-cutover historical archive rows (e.g. FY2025/26 Zoho Books imports)
+ * are excluded from unposted GL reconciliation sweeps so they never trigger
+ * false-positive unposted warnings on /accounting.
+ */
+export const GL_CUTOVER_DATE = '2026-03-01';
+
+/**
  * Sweeps for active invoices (issued, partially_paid, paid, written_off)
  * that have 0 debits/credits posted in the general ledger.
  */
@@ -1729,6 +1737,7 @@ export async function getUnpostedInvoicesReconciliation(): Promise<
     LEFT JOIN journal_entries je ON je.source_table = 'invoices' AND je.source_id = i.id
     LEFT JOIN journal_lines jl ON jl.journal_entry_id = je.id
     WHERE i.status IN ('paid', 'written_off', 'issued', 'partially_paid')
+      AND i.invoice_date >= ${GL_CUTOVER_DATE}
     GROUP BY i.id, i.document_number, i.status, i.total
     HAVING COALESCE(SUM(jl.debit), 0) = 0 AND COALESCE(SUM(jl.credit), 0) = 0
   `);
@@ -1758,10 +1767,11 @@ export async function getUnpostedPaymentsReconciliation(): Promise<
   const result = await db.execute(sql`
     SELECT i.id, i.date::text AS date, i.description, CAST(i.amount AS NUMERIC) AS amount
     FROM income i
-    WHERE NOT EXISTS (
-      SELECT 1 FROM journal_entries je
-      WHERE je.source_table = 'income' AND je.source_id = i.id AND je.status = 'posted'
-    )
+    WHERE i.date >= ${GL_CUTOVER_DATE}
+      AND NOT EXISTS (
+        SELECT 1 FROM journal_entries je
+        WHERE je.source_table = 'income' AND je.source_id = i.id AND je.status = 'posted'
+      )
     ORDER BY i.date ASC
   `);
 
@@ -1798,10 +1808,11 @@ export async function getUnpostedExpensesReconciliation(): Promise<
       CAST(e.amount AS NUMERIC) AS amount,
       e.division_id AS "divisionId"
     FROM expenses e
-    WHERE NOT EXISTS (
-      SELECT 1 FROM journal_entries je
-      WHERE je.source_table = 'expenses' AND je.source_id = e.id AND je.status = 'posted'
-    )
+    WHERE e.date >= ${GL_CUTOVER_DATE}
+      AND NOT EXISTS (
+        SELECT 1 FROM journal_entries je
+        WHERE je.source_table = 'expenses' AND je.source_id = e.id AND je.status = 'posted'
+      )
     ORDER BY e.date ASC
   `);
 
