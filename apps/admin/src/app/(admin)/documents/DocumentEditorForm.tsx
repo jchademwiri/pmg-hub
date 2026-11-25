@@ -25,9 +25,9 @@ import {
 import {
   PUBLIC_DOCUMENT_CATEGORIES,
   PUBLIC_DOCUMENT_CATEGORY_META,
-  type PublicDocument,
   type PublicDocumentCategory,
-} from '@pmg/db';
+} from '@pmg/utils/public-documents';
+import type { PublicDocument } from '@pmg/db';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
