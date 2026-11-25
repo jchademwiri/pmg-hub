@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, Pencil, Search, Trash2, X } from 'lucide-react';
+import { MessageCircle, Pencil, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -93,7 +93,6 @@ export function ComplianceRadarClient({ records, statutoryDeadlines }: Complianc
 
   const [scope, setScope] = useState<'watchlist' | 'all'>('watchlist');
   const [bucketFilter, setBucketFilter] = useState<BucketFilter>('all');
-  const [search, setSearch] = useState('');
 
   // Edit dialog state
   const [editTarget, setEditTarget] = useState<ComplianceRadarRow | null>(null);
@@ -117,18 +116,14 @@ export function ComplianceRadarClient({ records, statutoryDeadlines }: Complianc
   }, [records]);
 
   const filteredRecords = useMemo(() => {
-    const q = search.trim().toLowerCase();
     return records.filter((r) => {
       if (bucketFilter === 'expired' && r.daysLeft >= 0) return false;
       if (bucketFilter === 'critical' && (r.daysLeft < 0 || r.daysLeft > 14)) return false;
       if (bucketFilter === 'upcoming' && (r.daysLeft <= 14 || r.daysLeft > 60)) return false;
       if (bucketFilter === 'all' && scope === 'watchlist' && r.daysLeft > 60) return false;
-
-      if (!q) return true;
-      const docName = (r.documentType === 'CUSTOM' ? r.customName : r.documentType) ?? '';
-      return r.clientName.toLowerCase().includes(q) || docName.toLowerCase().includes(q);
+      return true;
     });
-  }, [records, scope, bucketFilter, search]);
+  }, [records, scope, bucketFilter]);
 
   function toggleBucket(next: BucketFilter) {
     setBucketFilter((prev) => (prev === next ? 'all' : next));
@@ -265,18 +260,28 @@ export function ComplianceRadarClient({ records, statutoryDeadlines }: Complianc
 
       {/* Expiration Watchlist / All Tracked Card */}
       <Card className="border bg-card shadow-sm rounded-xl overflow-hidden">
-        <CardHeader className="flex flex-col gap-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div>
-              <CardTitle>Expiration Watchlist</CardTitle>
-              <CardDescription>
-                {scope === 'watchlist' && bucketFilter === 'all'
-                  ? 'Client documents expiring within the next 60 days or already expired.'
-                  : 'Showing tracked compliance documents across all clients.'}
-              </CardDescription>
-            </div>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <CardTitle>Expiration Watchlist</CardTitle>
+            <CardDescription>
+              {scope === 'watchlist' && bucketFilter === 'all'
+                ? 'Client documents expiring within the next 60 days or already expired.'
+                : 'Showing tracked compliance documents across all clients.'}
+            </CardDescription>
+          </div>
 
-            <div className="flex items-center rounded-md border p-0.5 bg-muted/40 self-start sm:self-auto">
+          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+            {bucketFilter !== 'all' && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => setBucketFilter('all')}
+              >
+                Clear {bucketFilter} <X className="h-3.5 w-3.5 ml-1" />
+              </Button>
+            )}
+            <div className="flex items-center rounded-md border p-0.5 bg-muted/40">
               <button
                 type="button"
                 onClick={() => {
@@ -306,28 +311,6 @@ export function ComplianceRadarClient({ records, statutoryDeadlines }: Complianc
                 All Tracked ({records.length})
               </button>
             </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative flex-1 min-w-[220px] max-w-md">
-              <Search className="h-4 w-4 text-muted-foreground absolute left-2.5 top-2.5" />
-              <Input
-                placeholder="Search by client or document type..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-8 h-9"
-              />
-            </div>
-            {bucketFilter !== 'all' && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 text-xs"
-                onClick={() => setBucketFilter('all')}
-              >
-                Clear {bucketFilter} filter <X className="h-3.5 w-3.5 ml-1" />
-              </Button>
-            )}
           </div>
         </CardHeader>
 
