@@ -919,11 +919,28 @@ async function seedZoho2025() {
     }
   }
 
+  // 5. Idempotently ensure PMG-INV-2026-001 carries reference "2025 Invoices"
+  const [inv2026_001] = await db
+    .select({ id: invoices.id, reference: invoices.reference })
+    .from(invoices)
+    .where(eq(invoices.documentNumber, 'PMG-INV-2026-001'))
+    .limit(1);
+
+  let updatedInv001Reference = false;
+  if (inv2026_001 && inv2026_001.reference !== '2025 Invoices') {
+    await db
+      .update(invoices)
+      .set({ reference: '2025 Invoices', updatedAt: new Date() })
+      .where(eq(invoices.id, inv2026_001.id));
+    updatedInv001Reference = true;
+  }
+
   console.log('Zoho FY2025/26 seed complete:', {
     insertedInvoices,
     insertedIncome,
     skippedExisting: ZOHO_2025_INVOICES.length - insertedInvoices,
     openingArPosted,
+    updatedInv001Reference,
   });
 }
 
