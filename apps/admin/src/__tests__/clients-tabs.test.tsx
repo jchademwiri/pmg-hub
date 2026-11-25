@@ -115,4 +115,53 @@ describe('ClientsPageClient Status Tabs', () => {
     expect(screen.getAllByText('Acme Active Corp').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Dormant Enterprise').length).toBeGreaterThan(0);
   });
+
+  it('filters clients by search query and quick filter pills with balance visibility', async () => {
+    const user = userEvent.setup();
+
+    const extendedClients: ClientWithIncomeCount[] = [
+      ...mockClients,
+      {
+        id: 'client-retainer-1',
+        name: 'Sarah Jones',
+        businessName: 'Retainer Tech (Pty) Ltd',
+        email: 'sarah@retainertech.co.za',
+        phone: '082 555 9999',
+        divisionId: 'div-1',
+        divisionName: 'PMG',
+        isActive: true,
+        isRetainer: true,
+        excludeFromAutoStatements: false,
+        createdAt: new Date('2026-01-03'),
+        incomeCount: 5,
+        portalInvitationSentAt: null,
+        userId: 'user-1',
+      },
+    ];
+
+    renderWithProviders(
+      <ClientsPageClient
+        clients={extendedClients}
+        divisions={mockDivisions}
+        balancesByClient={{
+          'client-active-1': { outstanding: 4500, overdue: 4500 },
+        }}
+        createAction={vi.fn()}
+        deleteAction={vi.fn()}
+        toggleActiveAction={vi.fn()}
+      />,
+    );
+
+    // Search filters by business name / email
+    const searchInput = screen.getByPlaceholderText(/search by client/i);
+    await user.type(searchInput, 'retainertech');
+    expect(screen.getAllByText('Retainer Tech (Pty) Ltd').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Acme Active Corp')).not.toBeInTheDocument();
+
+    // Clear search and test Overdue quick filter
+    await user.clear(searchInput);
+    await user.click(screen.getByRole('button', { name: 'Overdue' }));
+    expect(screen.getAllByText('Acme Active Corp').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Retainer Tech (Pty) Ltd')).not.toBeInTheDocument();
+  });
 });
