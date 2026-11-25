@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -25,20 +26,29 @@ import {
 import { SearchableClientSelect } from '@/components/billing/searchable-client-select';
 import { addComplianceRecord } from '@/app/actions/compliance';
 
-const COMPLIANCE_DOCUMENT_TYPES = [
+const FALLBACK_DOCUMENT_TYPES = [
   'SARS Tax Clearance PIN',
   'B-BBEE Affidavit / Certificate',
   'CIPC Annual Returns',
   'COIDA / Letter of Good Standing',
   'CIDB Registration (Annual & 3-Year Renewals)',
-  'CUSTOM',
+  'CSD Registration Report',
+  'NHBRC Certificate',
+  'PSIRA Certificate',
+  'Public Liability Insurance',
+  'ISO 9001 Certificate',
+  'Municipal Rates Clearance',
 ] as const;
 
 interface AddComplianceRecordDialogProps {
   clients: Array<{ id: string; name: string; businessName: string | null }>;
+  documentTypes?: string[];
 }
 
-export function AddComplianceRecordDialog({ clients }: AddComplianceRecordDialogProps) {
+export function AddComplianceRecordDialog({
+  clients,
+  documentTypes,
+}: AddComplianceRecordDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -47,6 +57,13 @@ export function AddComplianceRecordDialog({ clients }: AddComplianceRecordDialog
   const [documentType, setDocumentType] = useState('');
   const [customName, setCustomName] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
+
+  const typeOptions = useMemo(() => {
+    const base =
+      documentTypes && documentTypes.length > 0 ? documentTypes : [...FALLBACK_DOCUMENT_TYPES];
+    const filtered = base.filter((t) => t !== 'CUSTOM');
+    return [...filtered, 'CUSTOM'];
+  }, [documentTypes]);
 
   function resetForm() {
     setClientId('');
@@ -118,13 +135,22 @@ export function AddComplianceRecordDialog({ clients }: AddComplianceRecordDialog
           </div>
 
           <div className="space-y-1.5">
-            <Label>Document Type *</Label>
+            <div className="flex items-center justify-between">
+              <Label>Document Type *</Label>
+              <Link
+                href="/settings/compliance"
+                className="text-xs text-primary hover:underline"
+                onClick={() => setOpen(false)}
+              >
+                Manage types
+              </Link>
+            </div>
             <Select value={documentType} onValueChange={setDocumentType}>
               <SelectTrigger>
                 <SelectValue placeholder="Select document type" />
               </SelectTrigger>
               <SelectContent>
-                {COMPLIANCE_DOCUMENT_TYPES.map((t) => (
+                {typeOptions.map((t) => (
                   <SelectItem key={t} value={t}>
                     {t}
                   </SelectItem>
@@ -137,10 +163,13 @@ export function AddComplianceRecordDialog({ clients }: AddComplianceRecordDialog
             <div className="space-y-1.5">
               <Label>Custom Document Name *</Label>
               <Input
-                placeholder="e.g. PSIRA Certificate, Industry License"
+                placeholder="e.g. Industry License"
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground">
+                Saved automatically to your document types so you can reuse or edit it later.
+              </p>
             </div>
           )}
 

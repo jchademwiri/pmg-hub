@@ -39,13 +39,18 @@ import { fmtDateLong } from '@/lib/format';
 import { normalizeSAPhoneNumber } from '@/lib/billing/whatsapp';
 import type { StatutoryDeadline } from '@/lib/compliance/statutory-calendar';
 
-const COMPLIANCE_DOCUMENT_TYPES = [
+const FALLBACK_DOCUMENT_TYPES = [
   'SARS Tax Clearance PIN',
   'B-BBEE Affidavit / Certificate',
   'CIPC Annual Returns',
   'COIDA / Letter of Good Standing',
   'CIDB Registration (Annual & 3-Year Renewals)',
-  'CUSTOM',
+  'CSD Registration Report',
+  'NHBRC Certificate',
+  'PSIRA Certificate',
+  'Public Liability Insurance',
+  'ISO 9001 Certificate',
+  'Municipal Rates Clearance',
 ] as const;
 
 export interface ComplianceRadarRow {
@@ -62,6 +67,7 @@ export interface ComplianceRadarRow {
 interface ComplianceRadarClientProps {
   records: ComplianceRadarRow[];
   statutoryDeadlines: StatutoryDeadline[];
+  documentTypes?: string[];
 }
 
 type BucketFilter = 'all' | 'expired' | 'critical' | 'upcoming';
@@ -87,7 +93,11 @@ function buildComplianceWhatsAppUrl(row: ComplianceRadarRow): string | null {
   return `https://wa.me/${digits}?text=${encodeURIComponent(msg)}`;
 }
 
-export function ComplianceRadarClient({ records, statutoryDeadlines }: ComplianceRadarClientProps) {
+export function ComplianceRadarClient({
+  records,
+  statutoryDeadlines,
+  documentTypes,
+}: ComplianceRadarClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -102,6 +112,20 @@ export function ComplianceRadarClient({ records, statutoryDeadlines }: Complianc
 
   // Delete confirm state
   const [deleteTarget, setDeleteTarget] = useState<ComplianceRadarRow | null>(null);
+
+  const editTypeOptions = useMemo(() => {
+    const base =
+      documentTypes && documentTypes.length > 0 ? documentTypes : [...FALLBACK_DOCUMENT_TYPES];
+    const list = base.filter((t) => t !== 'CUSTOM');
+    if (
+      editTarget?.documentType &&
+      editTarget.documentType !== 'CUSTOM' &&
+      !list.includes(editTarget.documentType)
+    ) {
+      list.unshift(editTarget.documentType);
+    }
+    return [...list, 'CUSTOM'];
+  }, [documentTypes, editTarget]);
 
   const counts = useMemo(() => {
     let expired = 0;
@@ -507,7 +531,7 @@ export function ComplianceRadarClient({ records, statutoryDeadlines }: Complianc
                   <SelectValue placeholder="Select document type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {COMPLIANCE_DOCUMENT_TYPES.map((t) => (
+                  {editTypeOptions.map((t) => (
                     <SelectItem key={t} value={t}>
                       {t}
                     </SelectItem>
@@ -522,8 +546,11 @@ export function ComplianceRadarClient({ records, statutoryDeadlines }: Complianc
                 <Input
                   value={editCustomName}
                   onChange={(e) => setEditCustomName(e.target.value)}
-                  placeholder="e.g. PSIRA Certificate"
+                  placeholder="e.g. Industry License"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Saved automatically to your document types so you can reuse or edit it later.
+                </p>
               </div>
             )}
 

@@ -18,7 +18,15 @@ import { ComplianceFormDialog } from './compliance-form-dialog';
 import { useTransition } from 'react';
 import { toast } from 'sonner';
 
-export function ComplianceTable({ clientId, records }: { clientId: string; records: any[] }) {
+export function ComplianceTable({
+  clientId,
+  records,
+  documentTypes,
+}: {
+  clientId: string;
+  records: any[];
+  documentTypes?: string[];
+}) {
   const [isPending, startTransition] = useTransition();
 
   const handleDelete = (id: string) => {
@@ -38,7 +46,7 @@ export function ComplianceTable({ clientId, records }: { clientId: string; recor
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-xl">Compliance Documents</CardTitle>
-          <ComplianceFormDialog clientId={clientId} />
+          <ComplianceFormDialog clientId={clientId} documentTypes={documentTypes} />
         </CardHeader>
         <CardContent>
           <Table>
@@ -94,7 +102,11 @@ export function ComplianceTable({ clientId, records }: { clientId: string; recor
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <ComplianceFormDialog clientId={clientId} record={record} />
+                        <ComplianceFormDialog
+                          clientId={clientId}
+                          record={record}
+                          documentTypes={documentTypes}
+                        />
                         <Button
                           variant="ghost"
                           size="icon"
