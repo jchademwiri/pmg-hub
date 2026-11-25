@@ -549,17 +549,17 @@ export function InboundRetainersTab({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Reference</Label>
+                <Label>Schedule Reference</Label>
                 <Input
-                  placeholder="e.g. Monthly Website & Hosting"
+                  placeholder="e.g. Website Hosting & Maintenance Retainer"
                   value={reference}
                   onChange={(e) => setReference(e.target.value)}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Frequency</Label>
+                <Label>Billing Cycle / Frequency</Label>
                 <Select
                   value={frequency}
                   onValueChange={(v) => setFrequency(v as RecurringFrequency)}
@@ -568,37 +568,44 @@ export function InboundRetainersTab({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="quarterly">Quarterly (3 Mo)</SelectItem>
-                    <SelectItem value="semi_annually">Bi-Annually (6 Mo)</SelectItem>
-                    <SelectItem value="annually">Yearly (12 Mo)</SelectItem>
+                    <SelectItem value="monthly">Monthly (Every 1 Month)</SelectItem>
+                    <SelectItem value="quarterly">Quarterly (Every 3 Months)</SelectItem>
+                    <SelectItem value="semi_annually">Bi-Annually (Every 6 Months)</SelectItem>
+                    <SelectItem value="annually">Yearly (Every 12 Months)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Next Invoice Date *</Label>
+                <Label>First / Next Invoice Date *</Label>
                 <Input
                   type="date"
                   value={nextRunDate}
                   onChange={(e) => setNextRunDate(e.target.value)}
                 />
+                <p className="text-[11px] text-muted-foreground">
+                  First scheduled run date (defaults to the 26th)
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label>End Date (Optional)</Label>
+                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                <p className="text-[11px] text-muted-foreground">
+                  Leave blank to run indefinitely until paused or cancelled
+                </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-              <div className="space-y-1.5">
-                <Label>End Date (optional)</Label>
-                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            <div className="flex items-center justify-between rounded-md border p-3">
+              <div>
+                <Label className="text-sm">Auto-email invoice &amp; statement</Label>
+                <p className="text-xs text-muted-foreground">
+                  Email client automatically with live statement attached when generated
+                </p>
               </div>
-              <div className="flex items-center justify-between rounded-md border p-3 mt-4">
-                <div>
-                  <Label className="text-sm">Auto-email invoice &amp; statement</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Email client automatically when generated
-                  </p>
-                </div>
-                <Switch checked={autoSendEmail} onCheckedChange={setAutoSendEmail} />
-              </div>
+              <Switch checked={autoSendEmail} onCheckedChange={setAutoSendEmail} />
             </div>
 
             <div className="space-y-1.5">
