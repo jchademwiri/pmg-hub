@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getDb, publicDocuments, eq, sql, bridgeDatabaseEnv } from '@pmg/db';
+import { getDb, publicDocuments, eq, and, sql, bridgeDatabaseEnv } from '@pmg/db';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -72,6 +72,17 @@ const KNOWN_FORMS: Record<string, { title: string; filename: string; staticPath:
   },
 };
 
+function resolveExtensionFromMime(mimeType?: string | null): string {
+  const mime = (mimeType || '').toLowerCase();
+  if (mime.includes('wordprocessingml')) return 'docx';
+  if (mime.includes('spreadsheetml')) return 'xlsx';
+  return 'pdf';
+}
+
+function sanitizeDownloadFilename(raw: string): string {
+  return raw.replace(/[^a-zA-Z0-9._-]/g, '_');
+}
+
 export const GET: APIRoute = async ({ request }) => {
   const { searchParams } = new URL(request.url);
   const formSlug = searchParams.get('form')?.trim();
@@ -87,7 +98,7 @@ export const GET: APIRoute = async ({ request }) => {
           error: message,
           code,
           whatsappUrl: `https://wa.me/27745017094?text=${encodeURIComponent(
-            `Hi, I need help downloading the ${formSlug || 'SBD'} form.`,
+            `Hi, I need help downloading the ${formSlug || 'tender'} template.`,
           )}`,
         }),
         {
@@ -97,10 +108,9 @@ export const GET: APIRoute = async ({ request }) => {
       );
     }
 
-    // Direct browser navigation fallback: redirect back to UI with error param
     const redirectUrl = formSlug
-      ? `/sbd-forms/${encodeURIComponent(formSlug)}?error=${encodeURIComponent(code)}`
-      : `/sbd-forms?error=${encodeURIComponent(code)}`;
+      ? `/templates/${encodeURIComponent(formSlug)}?error=${encodeURIComponent(code)}`
+      : `/templates?error=${encodeURIComponent(code)}`;
 
     return new Response(null, {
       status: 302,
@@ -119,6 +129,9 @@ export const GET: APIRoute = async ({ request }) => {
   const knownForm = KNOWN_FORMS[formSlug];
   let docTitle = knownForm?.title || formSlug.toUpperCase();
   let s3Key: string | null = null;
+  let storedFileName: string | null = null;
+  let storedMimeType: string | null = null;
+  let dbUnpublished = false;
 
   // Attempt database lookup & download count increment
   try {
@@ -126,12 +139,14 @@ export const GET: APIRoute = async ({ request }) => {
     const docs = await db
       .select()
       .from(publicDocuments)
-      .where(eq(publicDocuments.slug, formSlug))
+      .where(and(eq(publicDocuments.slug, formSlug), eq(publicDocuments.isPublished, true)))
       .limit(1);
 
     if (docs[0]) {
       docTitle = docs[0].title;
       s3Key = docs[0].s3Key;
+      storedFileName = docs[0].fileName || null;
+      storedMimeType = docs[0].mimeType || null;
 
       await db
         .update(publicDocuments)
@@ -141,21 +156,25 @@ export const GET: APIRoute = async ({ request }) => {
         })
         .where(eq(publicDocuments.id, docs[0].id))
         .catch((err) => console.warn('Could not increment download count:', err));
+    } else if (!knownForm) {
+      dbUnpublished = true;
     }
   } catch (dbError) {
     console.warn('Database lookup/counter error in /api/download:', dbError);
   }
 
-  // If not found in DB and not a known static form, return 404
-  if (!s3Key && !knownForm) {
+  if ((!s3Key && !knownForm) || dbUnpublished) {
     return errorResponse(
-      'The requested form was not found in the database.',
+      'The requested template was not found or is no longer published.',
       'FORM_NOT_FOUND',
       404,
     );
   }
 
-  const safeFilename = knownForm?.filename || `${formSlug.replace(/[^a-zA-Z0-9._-]/g, '_')}.pdf`;
+  const ext = resolveExtensionFromMime(storedMimeType);
+  const safeFilename = sanitizeDownloadFilename(
+    storedFileName || knownForm?.filename || `${formSlug}.${ext}`,
+  );
   let downloadUrl: string | null = null;
 
   // 1. Try Cloudflare R2 presigned URL if configured and object key exists

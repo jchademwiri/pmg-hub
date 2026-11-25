@@ -1,0 +1,200 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { PUBLIC_DOCUMENT_CATEGORY_META } from '@pmg/db';
+import {
+  getPublishedDocuments,
+  getActiveCategoryList,
+  formatFileMeta,
+} from '../../lib/public-documents';
+
+const documents = await getPublishedDocuments();
+const activeCategories = getActiveCategoryList(documents);
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+
+const SITE_URL = 'https://www.tenderedgesolutions.co.za';
+const pageTitle =
+  'Download Free Tender Templates, SBD Forms & B-BBEE Affidavits | TenderEdge Solutions';
+const pageDescription =
+  'Download official South African tender templates — SBD 4, SBD 6.1, SBD 8, SBD 9, B-BBEE EME & QSE sworn affidavits, MBD forms, and compliance checklists in PDF & Word.';
+
+const collectionSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: pageTitle,
+  description: pageDescription,
+  url: `${SITE_URL}/templates`,
+  mainEntity: {
+    '@type': 'ItemList',
+    numberOfItems: documents.length,
+    itemListElement: documents.map((doc, idx) => ({
+      '@type': 'ListItem',
+      position: idx + 1,
+      url: `${SITE_URL}/templates/${doc.slug}`,
+      name: doc.code ? `${doc.code} — ${doc.title}` : doc.title,
+    })),
+  },
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+    { '@type': 'ListItem', position: 2, name: 'Tender Templates', item: `${SITE_URL}/templates` },
+  ],
+};
+---
+
+<Layout title={pageTitle} description={pageDescription} canonical={`${SITE_URL}/templates`}>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(collectionSchema)} />
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+  </Fragment>
+
+  <section class="relative min-h-[52vh] flex flex-col justify-center pt-28 pb-16 md:pt-36 md:pb-20 px-6 md:px-12 diagonal-lines border-b border-border">
+    <div class="max-w-7xl mx-auto w-full">
+      <p class="text-primary uppercase tracking-widest font-medium text-[10px] md:text-[11px] mb-4">
+        SOUTH AFRICAN TENDER COMPLIANCE LIBRARY
+      </p>
+      <h1 class="font-condensed uppercase text-5xl md:text-7xl lg:text-8xl leading-[0.9] mb-6">
+        TENDER TEMPLATES<br />
+        <span class="text-primary">&amp; OFFICIAL FORMS.</span>
+      </h1>
+      <p class="text-muted-foreground text-lg md:text-xl max-w-3xl">
+        Download free official SBD forms (SBD 4, SBD 6.1, SBD 8, SBD 9), B-BBEE EME &amp; QSE
+        sworn affidavits, MBD municipal forms, and tender compliance checklists. Read our guides to
+        avoid disqualification, or let our tender specialists compile your submission.
+      </p>
+
+      <!-- Crawlable Category Filter Links -->
+      <div class="mt-10 flex flex-wrap gap-2.5">
+        <a
+          href="/templates"
+          class="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-4 py-2 text-xs font-bold uppercase tracking-wider shadow-sm"
+        >
+          All Templates
+          <span class="opacity-80">({documents.length})</span>
+        </a>
+        {
+          activeCategories.map((cat) => (
+            <a
+              href={`/templates/category/${cat.urlSlug}`}
+              class="inline-flex items-center gap-2 rounded-full bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/50 px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-colors"
+            >
+              {cat.label}
+              <span class="text-[11px] opacity-70">({cat.count})</span>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="py-16 md:py-24 px-6 md:px-12">
+    <div class="max-w-7xl mx-auto w-full">
+      {
+        documents.length === 0 ? (
+          <div class="rounded-xl border border-dashed border-border p-12 text-center">
+            <p class="text-lg font-medium text-foreground">No templates published yet.</p>
+            <p class="mt-2 text-sm text-muted-foreground">
+              Check back soon for downloadable SBD forms, B-BBEE affidavits, and compliance guides.
+            </p>
+          </div>
+        ) : (
+          <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {documents.map((doc) => {
+              const catMeta =
+                PUBLIC_DOCUMENT_CATEGORY_META[doc.category] || PUBLIC_DOCUMENT_CATEGORY_META.other;
+              const fileMeta = formatFileMeta(doc.mimeType, doc.fileSize, doc.fileName || doc.s3Key);
+
+              return (
+                <a
+                  href={`/templates/${doc.slug}`}
+                  class="group flex flex-col bg-card border border-border rounded-xl p-6 transition-all hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
+                >
+                  <div class="flex items-center justify-between gap-2 mb-4">
+                    <span class="inline-flex items-center rounded-md bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                      {catMeta.label}
+                    </span>
+                    <span class="inline-flex items-center rounded border border-border bg-background/60 px-2 py-0.5 text-[10px] font-mono font-semibold text-muted-foreground">
+                      {fileMeta.shortLabel}
+                      {fileMeta.sizeLabel ? ` • ${fileMeta.sizeLabel}` : ''}
+                    </span>
+                  </div>
+
+                  {doc.code && (
+                    <p class="text-primary font-condensed text-3xl font-bold leading-none mb-1">
+                      {doc.code}
+                    </p>
+                  )}
+                  <h2 class="text-foreground text-lg font-bold tracking-tight group-hover:text-primary transition-colors">
+                    {doc.title}
+                  </h2>
+                  {doc.subtitle && (
+                    <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground mt-1 mb-3">
+                      {doc.subtitle}
+                    </p>
+                  )}
+                  <p class="text-muted-foreground text-sm flex-1 line-clamp-3 mt-1">
+                    {doc.seoDescription || doc.subtitle}
+                  </p>
+                  <div class="mt-6 pt-4 border-t border-border/50 flex items-center justify-between text-primary text-xs font-semibold uppercase tracking-wider">
+                    <span class="inline-flex items-center gap-2 group-hover:translate-x-1 transition-transform">
+                      View &amp; Download
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                      </svg>
+                    </span>
+                    <span class="text-[11px] font-normal text-muted-foreground normal-case">
+                      Free {fileMeta.shortLabel}
+                    </span>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        )
+      }
+    </div>
+  </section>
+
+  <section class="py-20 px-6 md:px-12 bg-white/5 border-t border-border dot-grid">
+    <div class="max-w-3xl mx-auto text-center">
+      <h3 class="font-condensed uppercase text-4xl md:text-5xl text-foreground mb-4">
+        NEED HELP WITH YOUR TENDER SUBMISSION?
+      </h3>
+      <p class="text-muted-foreground text-lg mb-8">
+        Our specialists can prepare your SBD forms, B-BBEE sworn affidavit, CSD profile, and full
+        compliance pack so you never get disqualified on technicalities.
+      </p>
+      <div class="flex flex-wrap items-center justify-center gap-4">
+        <a
+          href="https://wa.me/27745017094?text=Hi%2C+I'm+interested+in+your+tender+compliance+services+and+templates."
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center justify-center bg-primary text-primary-foreground px-8 py-4 rounded-md font-bold uppercase tracking-wider hover:bg-primary-hover transition-colors"
+        >
+          Contact Our Tender Experts
+        </a>
+        <a
+          href="/onboard"
+          class="inline-flex items-center justify-center border border-border bg-card text-foreground px-8 py-4 rounded-md font-bold uppercase tracking-wider hover:border-primary/60 transition-colors"
+        >
+          Start Tender Assessment
+        </a>
+      </div>
+    </div>
+  </section>
+</Layout>
