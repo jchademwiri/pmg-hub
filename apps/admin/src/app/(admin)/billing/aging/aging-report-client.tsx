@@ -461,7 +461,7 @@ export function AgingReportClient({
 
               {/* Desktop View */}
               <div className="hidden md:block overflow-hidden border rounded-lg bg-card">
-                <Table className="table-fixed w-full" containerClassName="overflow-hidden">
+                <Table className="table-fixed w-full" containerClassName="overflow-x-auto">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="px-2 text-xs">
@@ -527,7 +527,7 @@ export function AgingReportClient({
                           <SortIcon field="bucket_61_plus" />
                         </button>
                       </TableHead>
-                      <TableHead className="w-[75px] px-2 text-center text-xs">Actions</TableHead>
+                      <TableHead className="w-[120px] px-2 text-right text-xs">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -589,15 +589,15 @@ export function AgingReportClient({
                             {client.bucket_61_plus > 0 ? formatZAR(client.bucket_61_plus) : '—'}
                           </TableCell>
                           <TableCell
-                            className="px-2 text-center"
+                            className="px-2 text-right"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <div className="flex items-center justify-center gap-2">
+                            <div className="flex items-center justify-end gap-1">
                               <Button
                                 asChild
                                 size="icon"
                                 variant="ghost"
-                                className="size-8"
+                                className="size-7"
                                 title="View Statement"
                               >
                                 <Link href={`/billing/statements/${client.clientId}`}>
@@ -609,7 +609,7 @@ export function AgingReportClient({
                                   asChild
                                   size="icon"
                                   variant="ghost"
-                                  className="size-8"
+                                  className="size-7"
                                   title="Send WhatsApp Payment Nudge"
                                 >
                                   <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
@@ -624,7 +624,7 @@ export function AgingReportClient({
                                     <Button
                                       size="icon"
                                       variant="ghost"
-                                      className="size-8"
+                                      className="size-7"
                                       title="Send Overdue Reminder"
                                     >
                                       <Mail className="size-4 text-red-500" />
@@ -635,7 +635,7 @@ export function AgingReportClient({
                                 <Button
                                   size="icon"
                                   variant="ghost"
-                                  className="size-8 opacity-40 cursor-not-allowed"
+                                  className="size-7 opacity-40 cursor-not-allowed"
                                   disabled
                                   title="No Overdue Balance"
                                 >
