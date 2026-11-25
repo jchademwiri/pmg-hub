@@ -29,7 +29,7 @@ export function getDb() {
       connectionTimeoutMillis: 10_000,
     });
     // Prevent unhandled 'error' events on idle WebSocket clients from crashing the Node process
-    pool.on('error', (err) => {
+    pool.on('error', (err: unknown) => {
       console.error('[db pool] Unexpected idle client error:', err);
     });
     _db = drizzle({ client: pool, schema });

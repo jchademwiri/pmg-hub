@@ -25,6 +25,7 @@ import {
 import {
   PUBLIC_DOCUMENT_CATEGORIES,
   PUBLIC_DOCUMENT_CATEGORY_META,
+  isPublicDocumentCategory,
   type PublicDocumentCategory,
 } from '@pmg/utils/public-documents';
 import type { PublicDocument } from '@pmg/db';
@@ -260,7 +261,9 @@ export function DocumentEditorForm({ document }: DocumentEditorFormProps) {
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<StoredDraft>;
         if (parsed && typeof parsed === 'object') {
-          if (parsed.category) setCategory(parsed.category);
+          if (typeof parsed.category === 'string' && isPublicDocumentCategory(parsed.category)) {
+            setCategory(parsed.category);
+          }
           if (typeof parsed.code === 'string') setCode(parsed.code);
           if (typeof parsed.title === 'string') setTitle(parsed.title);
           if (typeof parsed.subtitle === 'string') setSubtitle(parsed.subtitle);
@@ -514,7 +517,8 @@ export function DocumentEditorForm({ document }: DocumentEditorFormProps) {
     }
   };
 
-  const categoryMeta = PUBLIC_DOCUMENT_CATEGORY_META[category];
+  const categoryMeta =
+    PUBLIC_DOCUMENT_CATEGORY_META[category] ?? PUBLIC_DOCUMENT_CATEGORY_META.other;
   const formattedSavedTime = lastSavedAt
     ? new Date(lastSavedAt).toLocaleTimeString('en-GB', {
         hour: '2-digit',
@@ -682,7 +686,9 @@ export function DocumentEditorForm({ document }: DocumentEditorFormProps) {
                   </Label>
                   <Select
                     value={category}
-                    onValueChange={(val) => setCategory(val as PublicDocumentCategory)}
+                    onValueChange={(val) => {
+                      if (isPublicDocumentCategory(val)) setCategory(val);
+                    }}
                   >
                     <SelectTrigger id="doc-category" className="h-10">
                       <SelectValue placeholder="Select category" />
