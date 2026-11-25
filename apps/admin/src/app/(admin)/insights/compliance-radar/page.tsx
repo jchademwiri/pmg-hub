@@ -1,5 +1,11 @@
 import type { Metadata } from 'next';
-import { getAllComplianceRecordsGlobal, db, clients, asc } from '@pmg/db';
+import {
+  getAllComplianceRecordsGlobal,
+  getComplianceDocumentTypes,
+  db,
+  clients,
+  asc,
+} from '@pmg/db';
 import { StickyPageHeader } from '@/components/ui/sticky-page-header';
 import { getSASTToday } from '@/lib/format';
 import { getStatutoryDeadlines } from '@/lib/compliance/statutory-calendar';
@@ -20,7 +26,7 @@ function diffDaysISO(targetDateStr: string, todayStr: string): number {
 }
 
 export default async function ComplianceRadarPage() {
-  const [records, allClients] = await Promise.all([
+  const [records, allClients, activeTypes] = await Promise.all([
     getAllComplianceRecordsGlobal(),
     db
       .select({
@@ -31,7 +37,10 @@ export default async function ComplianceRadarPage() {
       })
       .from(clients)
       .orderBy(asc(clients.name)),
+    getComplianceDocumentTypes({ activeOnly: true }),
   ]);
+
+  const documentTypes = activeTypes.map((t) => t.name);
 
   const todayStr = getSASTToday();
   const statutoryDeadlines = getStatutoryDeadlines(todayStr);
@@ -59,10 +68,14 @@ export default async function ComplianceRadarPage() {
       <StickyPageHeader
         title="Compliance Radar"
         description="Monitor upcoming expirations across all clients globally."
-        actions={<AddComplianceRecordDialog clients={allClients} />}
+        actions={<AddComplianceRecordDialog clients={allClients} documentTypes={documentTypes} />}
       />
 
-      <ComplianceRadarClient records={radarRows} statutoryDeadlines={statutoryDeadlines} />
+      <ComplianceRadarClient
+        records={radarRows}
+        statutoryDeadlines={statutoryDeadlines}
+        documentTypes={documentTypes}
+      />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import {
   addComplianceRecord as dbAddComplianceRecord,
   deleteComplianceRecord as dbDeleteComplianceRecord,
   updateComplianceRecord as dbUpdateComplianceRecord,
+  ensureComplianceDocumentType,
   getDb,
   complianceDocuments,
   eq,
@@ -34,6 +35,18 @@ const ComplianceSchema = z
     }
   });
 
+async function resolveAndPersistDocumentType(
+  documentType: string,
+  customName?: string,
+): Promise<{ documentType: string; customName: null }> {
+  if (documentType === 'CUSTOM') {
+    const trimmed = (customName ?? '').trim();
+    await ensureComplianceDocumentType(trimmed);
+    return { documentType: trimmed, customName: null };
+  }
+  return { documentType, customName: null };
+}
+
 export async function addClientComplianceRecord(formData: FormData): Promise<{ error?: string }> {
   try {
     const { client } = await getPortalSessionOrRedirect();
@@ -47,9 +60,11 @@ export async function addClientComplianceRecord(formData: FormData): Promise<{ e
     }
 
     const parsed = result.data;
+    const resolved = await resolveAndPersistDocumentType(parsed.documentType, parsed.customName);
 
     await dbAddComplianceRecord({
       ...parsed,
+      ...resolved,
       clientId: client.id,
       uploadedBy: 'CLIENT',
       uploadedById: client.id,
@@ -115,8 +130,12 @@ export async function updateClientComplianceRecord(
     }
 
     const parsed = result.data;
+    const resolved = await resolveAndPersistDocumentType(parsed.documentType, parsed.customName);
 
-    await dbUpdateComplianceRecord(id, parsed);
+    await dbUpdateComplianceRecord(id, {
+      ...parsed,
+      ...resolved,
+    });
 
     revalidatePath('/compliance');
     revalidatePath('/dashboard');

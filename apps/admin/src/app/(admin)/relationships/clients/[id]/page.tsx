@@ -15,6 +15,7 @@ import {
   getOrganisationSettings,
   getAllProjectScheduleEntries,
   getComplianceRecordsByClient,
+  getComplianceDocumentTypes,
   type InvoiceDetail,
   type QuotationDetail,
 } from '@pmg/db';
@@ -68,6 +69,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
     orgSettings,
     projects,
     complianceRecords,
+    complianceDocumentTypes,
   ] = await Promise.all([
     getClientById(id),
     getAllIncome({ clientId: id }),
@@ -81,6 +83,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
     getOrganisationSettings(),
     getAllProjectScheduleEntries({ clientId: id }),
     getComplianceRecordsByClient(id),
+    getComplianceDocumentTypes({ activeOnly: true }),
   ]);
 
   if (!client) notFound();
@@ -132,6 +135,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
       creditHistory={creditHistory}
       projects={projects}
       complianceRecords={complianceRecords}
+      complianceDocumentTypes={complianceDocumentTypes.map((t) => t.name)}
     />
   );
 }

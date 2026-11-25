@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import {
   Table,
   TableBody,
@@ -28,16 +28,27 @@ import {
 } from '@/app/actions/compliance';
 import type { ComplianceDocument } from '@pmg/db';
 
-const DEFAULT_TYPES = [
+const FALLBACK_DOCUMENT_TYPES = [
   'SARS Tax Clearance PIN',
   'B-BBEE Affidavit / Certificate',
   'CIPC Annual Returns',
   'COIDA / Letter of Good Standing',
   'CIDB Registration (Annual & 3-Year Renewals)',
-  'CUSTOM',
-];
+  'CSD Registration Report',
+  'NHBRC Certificate',
+  'PSIRA Certificate',
+  'Public Liability Insurance',
+  'ISO 9001 Certificate',
+  'Municipal Rates Clearance',
+] as const;
 
-export function ComplianceClient({ records }: { records: ComplianceDocument[] }) {
+export function ComplianceClient({
+  records,
+  documentTypes,
+}: {
+  records: ComplianceDocument[];
+  documentTypes?: string[];
+}) {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -45,6 +56,16 @@ export function ComplianceClient({ records }: { records: ComplianceDocument[] })
   const [documentType, setDocumentType] = useState('');
   const [customName, setCustomName] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
+
+  const typeOptions = useMemo(() => {
+    const base =
+      documentTypes && documentTypes.length > 0 ? documentTypes : [...FALLBACK_DOCUMENT_TYPES];
+    const list = base.filter((t) => t !== 'CUSTOM');
+    if (documentType && documentType !== 'CUSTOM' && !list.includes(documentType)) {
+      list.unshift(documentType);
+    }
+    return [...list, 'CUSTOM'];
+  }, [documentTypes, documentType]);
 
   const today = new Date();
 
@@ -70,11 +91,17 @@ export function ComplianceClient({ records }: { records: ComplianceDocument[] })
       toast.error('Please select a document type and expiry date');
       return;
     }
+    if (documentType === 'CUSTOM' && !customName.trim()) {
+      toast.error('Please enter a custom document name');
+      return;
+    }
 
     startTransition(async () => {
       const formData = new FormData();
       formData.append('documentType', documentType);
-      if (customName) formData.append('customName', customName);
+      if (documentType === 'CUSTOM' && customName.trim()) {
+        formData.append('customName', customName.trim());
+      }
       formData.append('expiryDate', expiryDate);
 
       let result;
@@ -155,7 +182,7 @@ export function ComplianceClient({ records }: { records: ComplianceDocument[] })
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
-                    {DEFAULT_TYPES.map((t) => (
+                    {typeOptions.map((t) => (
                       <SelectItem key={t} value={t}>
                         {t}
                       </SelectItem>
