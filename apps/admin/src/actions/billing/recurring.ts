@@ -1013,12 +1013,16 @@ export async function setRecurringExpenseStatus(
  */
 export async function markRecurringExpenseAsPaid(
   id: string,
-  paymentDate?: string,
+  paymentDateOrOptions?: string | { paymentDate?: string; actualAmount?: number },
 ): Promise<{ error?: string; expenseId?: string }> {
   try {
     await getSessionOrRedirect();
     const db = getDb();
-    const date = paymentDate || getSASTToday();
+    const opts =
+      typeof paymentDateOrOptions === 'string'
+        ? { paymentDate: paymentDateOrOptions }
+        : (paymentDateOrOptions ?? {});
+    const date = opts.paymentDate || getSASTToday();
 
     if (await isPeriodClosed(date)) {
       const minDate = await getMinAllowedDate();
@@ -1033,7 +1037,17 @@ export async function markRecurringExpenseAsPaid(
 
     if (!subscription) return { error: 'Subscription not found.' };
 
-    const amountNum = parseFloat(subscription.amount);
+    const amountNum =
+      opts.actualAmount != null && Number.isFinite(opts.actualAmount)
+        ? opts.actualAmount
+        : parseFloat(subscription.amount);
+    if (!Number.isFinite(amountNum) || amountNum <= 0) {
+      return { error: 'Payment amount must be greater than 0.' };
+    }
+    const amountStr = amountNum.toFixed(2);
+    const expenseDescription = subscription.notes?.trim()
+      ? `${subscription.vendorName.trim()} — ${subscription.notes.trim()}`
+      : subscription.vendorName.trim();
 
     const createdExpenseId = await db.transaction(async (tx) => {
       // 1. Insert official expense
@@ -1044,22 +1058,26 @@ export async function markRecurringExpenseAsPaid(
           clientId: subscription.clientId ?? null,
           date,
           category: subscription.category,
-          description: subscription.vendorName.trim(),
-          amount: subscription.amount,
+          description: expenseDescription,
+          amount: amountStr,
         })
         .returning({ id: expenses.id });
 
       if (!exp) throw new Error('Failed to record expense.');
 
-      // 2. Auto-post journal entry: Dr Expense (5020/5010) / Cr Bank (1010)
-      await postExpenseJournalEntry({
+      // 2. Auto-post journal entry atomically inside the same transaction
+      const journalRes = await postExpenseJournalEntry({
         expenseId: exp.id,
         amount: amountNum,
         date,
         category: subscription.category,
-        description: `Subscription: ${subscription.vendorName}`,
+        description: `Subscription: ${expenseDescription}`,
         divisionId: subscription.divisionId,
+        tx,
       });
+      if (journalRes.error) {
+        throw new Error(journalRes.error);
+      }
 
       // 3. Advance next due date according to frequency
       const nextDate = advanceNextRunDate(
@@ -1087,6 +1105,8 @@ export async function markRecurringExpenseAsPaid(
     return { expenseId: createdExpenseId };
   } catch (err) {
     console.error('Failed to mark subscription as paid:', err);
-    return { error: 'Failed to record subscription payment.' };
+    return {
+      error: err instanceof Error ? err.message : 'Failed to record subscription payment.',
+    };
   }
 }
