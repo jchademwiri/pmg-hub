@@ -509,7 +509,7 @@ export function InboundRetainersTab({
 
       {/* Add / Edit Retainer Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? 'Edit Client Retainer' : 'Add Client Retainer'}</DialogTitle>
             <DialogDescription>
