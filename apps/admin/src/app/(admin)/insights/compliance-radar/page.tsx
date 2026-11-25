@@ -136,113 +136,115 @@ export default async function ComplianceRadarPage() {
         </Card>
       </div>
 
-      {/* Statutory SARS & CIPC Deadlines Card */}
-      <Card className="border bg-card shadow-sm rounded-xl overflow-hidden">
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div>
-            <CardTitle>Statutory SARS &amp; CIPC Deadlines</CardTitle>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+        {/* Expiration Watchlist Card */}
+        <Card className="border bg-card shadow-sm rounded-xl overflow-hidden">
+          <CardHeader>
+            <CardTitle>Expiration Watchlist</CardTitle>
             <CardDescription>
-              Playhouse Media Group (Pty) Ltd annual filing &amp; provisional tax calendar (Feb
-              FY-end).
+              Client documents expiring within the next 60 days or already expired.
             </CardDescription>
-          </div>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/finance/projections?tab=tax">Open SBC Tax &amp; 1030 Reserve</Link>
-          </Button>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-muted/50">
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="font-semibold text-foreground py-3">Obligation</TableHead>
-                <TableHead className="font-semibold text-foreground py-3">Authority</TableHead>
-                <TableHead className="font-semibold text-foreground py-3">Due Date</TableHead>
-                <TableHead className="font-semibold text-foreground py-3">Countdown</TableHead>
-                <TableHead className="font-semibold text-foreground py-3 text-right">
-                  Action
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {statutoryDeadlines.map((d) => (
-                <TableRow key={d.id}>
-                  <TableCell className="py-3">
-                    <div className="font-medium text-sm">{d.title}</div>
-                    <div className="text-xs text-muted-foreground">{d.description}</div>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <Badge variant="outline" className="font-mono text-xs">
-                      {d.authority}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="py-3 text-sm whitespace-nowrap">
-                    {fmtDateLong(d.dueDate)}
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <Badge
-                      variant={
-                        d.severity === 'overdue' || d.severity === 'critical'
-                          ? 'destructive'
-                          : d.severity === 'upcoming'
-                            ? 'secondary'
-                            : 'outline'
-                      }
-                    >
-                      {d.daysLeft < 0
-                        ? `Overdue (${Math.abs(d.daysLeft)}d)`
-                        : `${d.daysLeft} days left`}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="py-3 text-right">
-                    <Button variant="ghost" size="sm" asChild className="text-xs">
-                      <Link href={d.actionHref}>{d.actionLabel}</Link>
-                    </Button>
-                  </TableCell>
+          </CardHeader>
+          <CardContent className="p-0 overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="font-semibold text-foreground py-3">Client</TableHead>
+                  <TableHead className="font-semibold text-foreground py-3">Document</TableHead>
+                  <TableHead className="font-semibold text-foreground py-3">Expiry</TableHead>
+                  <TableHead className="font-semibold text-foreground py-3">Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {records.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground h-32">
+                      No compliance documents are expiring soon.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {expired.map((r) => (
+                  <DocumentRow key={r.id} record={r} />
+                ))}
+                {critical.map((r) => (
+                  <DocumentRow key={r.id} record={r} />
+                ))}
+                {upcoming.map((r) => (
+                  <DocumentRow key={r.id} record={r} />
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
-      <Card className="border bg-card shadow-sm rounded-xl overflow-hidden">
-        <CardHeader>
-          <CardTitle>Expiration Watchlist</CardTitle>
-          <CardDescription>
-            All documents expiring within the next 60 days, and documents that are already expired.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-muted/50">
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="font-semibold text-foreground py-4">Client</TableHead>
-                <TableHead className="font-semibold text-foreground py-4">Document</TableHead>
-                <TableHead className="font-semibold text-foreground py-4">Expiry Date</TableHead>
-                <TableHead className="font-semibold text-foreground py-4">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {records.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground h-32">
-                    No compliance documents are expiring soon.
-                  </TableCell>
+        {/* Statutory SARS & CIPC Deadlines Card */}
+        <Card className="border bg-card shadow-sm rounded-xl overflow-hidden">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <CardTitle>Statutory SARS &amp; CIPC Deadlines</CardTitle>
+              <CardDescription>
+                Playhouse Media Group (Pty) Ltd annual filing &amp; provisional tax calendar (Feb
+                FY-end).
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" asChild className="shrink-0">
+              <Link href="/finance/projections?tab=tax">Tax &amp; 1030 Reserve</Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="p-0 overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="font-semibold text-foreground py-3">Obligation</TableHead>
+                  <TableHead className="font-semibold text-foreground py-3">Due</TableHead>
+                  <TableHead className="font-semibold text-foreground py-3">Countdown</TableHead>
+                  <TableHead className="font-semibold text-foreground py-3 text-right">
+                    Action
+                  </TableHead>
                 </TableRow>
-              )}
-              {expired.map((r) => (
-                <DocumentRow key={r.id} record={r} />
-              ))}
-              {critical.map((r) => (
-                <DocumentRow key={r.id} record={r} />
-              ))}
-              {upcoming.map((r) => (
-                <DocumentRow key={r.id} record={r} />
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {statutoryDeadlines.map((d) => (
+                  <TableRow key={d.id}>
+                    <TableCell className="py-3">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-medium text-sm">{d.title}</span>
+                        <Badge variant="outline" className="font-mono text-[10px] px-1.5 py-0">
+                          {d.authority}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{d.description}</div>
+                    </TableCell>
+                    <TableCell className="py-3 text-xs whitespace-nowrap">
+                      {fmtDateLong(d.dueDate)}
+                    </TableCell>
+                    <TableCell className="py-3 whitespace-nowrap">
+                      <Badge
+                        variant={
+                          d.severity === 'overdue' || d.severity === 'critical'
+                            ? 'destructive'
+                            : d.severity === 'upcoming'
+                              ? 'secondary'
+                              : 'outline'
+                        }
+                      >
+                        {d.daysLeft < 0
+                          ? `Overdue (${Math.abs(d.daysLeft)}d)`
+                          : `${d.daysLeft}d left`}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-3 text-right whitespace-nowrap">
+                      <Button variant="ghost" size="sm" asChild className="text-xs h-7 px-2">
+                        <Link href={d.actionHref}>{d.actionLabel}</Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
