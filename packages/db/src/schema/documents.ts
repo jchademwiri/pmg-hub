@@ -139,6 +139,8 @@ export const publicDocuments = pgTable(
     mimeType: text('mime_type').notNull().default('application/pdf'),
     isPublished: boolean('is_published').notNull().default(true),
     sortOrder: integer('sort_order').notNull().default(100),
+    viewCount: integer('view_count').default(0).notNull(),
+    lastViewedAt: timestamp('last_viewed_at'),
     downloadCount: integer('download_count').default(0).notNull(),
     lastDownloadedAt: timestamp('last_downloaded_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),

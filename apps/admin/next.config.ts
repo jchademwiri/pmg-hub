@@ -8,7 +8,7 @@ const monorepoRoot = resolve(appDir, '../..');
 loadEnvConfig(monorepoRoot);
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['takumi-pdf', '@takumi-rs/helpers', '@takumi-rs/core'],
+  serverExternalPackages: ['takumi-pdf', '@takumi-rs/helpers', '@takumi-rs/core', 'sanitize-html'],
   outputFileTracingRoot: monorepoRoot,
   outputFileTracingIncludes: {
     '/**': [
@@ -42,7 +42,7 @@ const nextConfig: NextConfig = {
       'date-fns',
     ],
     serverActions: {
-      bodySizeLimit: '10mb',
+      bodySizeLimit: '25mb',
       allowedOrigins: ['localhost:3000', '192.168.0.190:3000'],
     },
   },
