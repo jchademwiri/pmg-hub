@@ -27,13 +27,13 @@
   },
   "devDependencies": {
     "@pmg/typescript-config": "workspace:*",
-    "@types/node": "^20.10.0",
+    "@types/node": "^22.15.3",
     "@types/pg": "^8.23.1",
     "dotenv": "^18.0.4",
     "drizzle-kit": "^0.31.11",
     "fast-check": "^4.10.2",
     "pg": "^8.23.0",
     "typescript": "^5.4.0",
-    "vitest": "^3.2.7"
+    "vitest": "^5.1.2"
   }
 }
