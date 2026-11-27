@@ -41,7 +41,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "tailwindcss": "^4",
-    "typescript": "^5",
+    "typescript": "catalog:",
     "vitest": "^5.1.2",
     "jsdom": "^31.0.1"
   },

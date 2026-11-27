@@ -21,10 +21,11 @@
     "@tailwindcss/vite": "4.3.5",
     "@tailwindcss/node": "4.3.5",
     "@tailwindcss/oxide": "4.3.5",
-    "typescript": "5.9.2",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@typescript/native": "npm:typescript@^7.0.2",
     "prettier": "^3.10.1",
     "prettier-plugin-astro": "^1.1.2",
     "prettier-plugin-tailwindcss": "^0.8.1",

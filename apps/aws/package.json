@@ -39,7 +39,7 @@
     "@types/react-dom": "^19.3.0",
     "vitest": "^5.1.2",
     "fast-check": "^4.11.0",
-    "typescript": "^5.9.3",
+    "typescript": "catalog:",
     "prettier": "^3.10.1",
     "prettier-plugin-astro": "^1.1.2",
     "prettier-plugin-tailwindcss": "^0.8.1"

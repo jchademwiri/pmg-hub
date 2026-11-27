@@ -33,7 +33,7 @@
     "drizzle-kit": "^0.31.11",
     "fast-check": "^4.11.0",
     "pg": "^8.23.1",
-    "typescript": "^5.4.0",
+    "typescript": "catalog:",
     "vitest": "^5.1.2"
   }
 }
