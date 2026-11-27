@@ -49,6 +49,7 @@ const BRAND = {
 	title="Client Compliance Setup | Tender Edge Solutions"
 	description="Complete your client profile to activate your tender compliance, CSD, and CIDB filings."
 	robots="noindex, nofollow"
+	showFloatingWhatsApp={false}
 >
 	<main class="relative min-h-[calc(100vh-140px)] pt-28 md:pt-36 pb-20 px-4 sm:px-6 flex items-center justify-center overflow-hidden">
 		<!-- Subtle ambient glow matching TES gold accents -->
@@ -106,6 +107,25 @@ const BRAND = {
 									<line x1="15" y1="12" x2="3" y2="12"></line>
 								</svg>
 								<span>Go to Client Portal</span>
+							</a>
+						</div>
+						<div class="mt-2 rounded-xl border border-primary/25 bg-primary/5 p-4 text-left space-y-2">
+							<p class="text-[10px] font-bold uppercase tracking-widest text-primary">
+								Fast-Track Your Next Bid
+							</p>
+							<p class="text-xs text-muted-foreground leading-relaxed">
+								Need an upcoming bid compiled end-to-end? Ask us about{' '}
+								<strong class="text-foreground">Full Tender Preparation</strong> (including
+								optional hand-delivery with video proof) or{' '}
+								<strong class="text-foreground">Supplier &amp; Vendor Database Registration</strong>.
+							</p>
+							<a
+								href={`https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Hi Tender Edge Solutions, I just completed onboarding and want to fast-track a tender submission or database registration.')}`}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline underline-offset-4"
+							>
+								<span>Book Fast-Track Support on WhatsApp →</span>
 							</a>
 						</div>
 						<a href="/" class="text-xs text-muted-foreground hover:text-foreground transition-colors pt-2">

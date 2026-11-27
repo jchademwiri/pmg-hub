@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '@/layouts/Layout.astro';
+import UpsellBanner from '@/components/UpsellBanner.astro';
 
 export const prerender = true;
 
@@ -185,5 +186,10 @@ const blogSchema = {
         }
       </div>
     </section>
+
+    <UpsellBanner
+      showTemplatesLink={true}
+      whatsappText="Hi, I was reading your tender compliance blog and need help with my tender submission."
+    />
   </div>
 </Layout>

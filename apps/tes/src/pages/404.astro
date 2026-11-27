@@ -8,7 +8,18 @@ import Layout from '@/layouts/Layout.astro';
     <h1 class='text-9xl font-bold text-primary'>404</h1>
     <p class='text-2xl font-semibold mb-4'>It looks like you are lost</p>
     <p class='text-muted-foreground mb-8'>The page you're looking for doesn't exist or has been moved.</p>
-    <a href='/' class='btn-primary'>Return Home</a>
+    <div class='error-actions'>
+      <a href='/' class='btn-primary'>Return Home</a>
+      <a href='/templates' class='btn-outline'>Browse Free Templates</a>
+      <a
+        href="https://wa.me/27745017094?text=Hi%2C+I+couldn%27t+find+a+page+on+TenderEdge+Solutions+and+need+help."
+        target='_blank'
+        rel='noopener noreferrer'
+        class='btn-outline'
+      >
+        WhatsApp Support
+      </a>
+    </div>
   </div>
 </Layout>
 
@@ -21,6 +32,13 @@ import Layout from '@/layouts/Layout.astro';
     align-items: center;
     text-align: center;
     padding: 4rem 1rem;
+  }
+  .error-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
   }
   .text-9xl { font-size: 8rem; }
   .text-2xl { font-size: 1.5rem; }
@@ -41,4 +59,18 @@ import Layout from '@/layouts/Layout.astro';
     text-decoration: none;
   }
   .btn-primary:hover { background: var(--primary-hover); }
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--foreground);
+    font-weight: 600;
+    border-radius: var(--radius);
+    transition: border-color 0.2s;
+    text-decoration: none;
+  }
+  .btn-outline:hover { border-color: var(--primary); }
 </style>
