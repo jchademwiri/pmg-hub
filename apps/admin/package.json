@@ -37,6 +37,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "drizzle-orm": "^0.45.3",
+    "htmlparser2": "^12.0.0",
     "lucide-react": "^1.48.0",
     "next": "16.4.5",
     "next-themes": "^0.4.6",
@@ -46,7 +47,6 @@
     "react-dom": "19.3.0",
     "recharts": "3.10.1",
     "resend": "^6.30.0",
-    "sanitize-html": "^2.18.2",
     "server-only": "^0.0.1",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.0"
@@ -62,7 +62,6 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/sanitize-html": "^2.16.2",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",

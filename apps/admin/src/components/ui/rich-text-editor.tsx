@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -30,6 +30,7 @@ import {
   Minus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { looksLikeMarkdown, markdownToHtml } from '@/lib/markdown-to-html';
 
 interface RichTextEditorProps {
   value: string;
@@ -84,6 +85,7 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
+  const editorRef = useRef<Editor | null>(null);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -121,6 +123,25 @@ export function RichTextEditor({
     ],
     content: value || '',
     editorProps: {
+      handlePaste: (_view, event) => {
+        const clipboard = event.clipboardData;
+        if (!clipboard) return false;
+        const html = clipboard.getData('text/html');
+        const plain = clipboard.getData('text/plain');
+        // Preserve real rich HTML (from Word, Google Docs, webpages, rendered chat);
+        // auto-convert plain Markdown (including text copied from syntax-highlighted code blocks)
+        const hasSemanticRichHtml =
+          Boolean(html) && /<(h[1-6]|ul|ol|li|strong|b|em|i|a\s|blockquote|table)\b/i.test(html);
+        if (!hasSemanticRichHtml && plain && looksLikeMarkdown(plain)) {
+          event.preventDefault();
+          const converted = markdownToHtml(plain);
+          if (converted && editorRef.current) {
+            editorRef.current.commands.insertContent(converted);
+            return true;
+          }
+        }
+        return false;
+      },
       attributes: {
         class: cn(
           'prose prose-sm dark:prose-invert max-w-none px-4 py-3 focus:outline-none',
@@ -144,7 +165,11 @@ export function RichTextEditor({
     },
   });
 
-  // Keep editor in sync when parent resets or loads a different document
+  // Keep ref and editor in sync when parent resets or loads a different document
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
+
   useEffect(() => {
     if (!editor) return;
     const current = editor.isEmpty ? '' : editor.getHTML();

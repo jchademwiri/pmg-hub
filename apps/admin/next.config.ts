@@ -8,7 +8,7 @@ const monorepoRoot = resolve(appDir, '../..');
 loadEnvConfig(monorepoRoot);
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['takumi-pdf', '@takumi-rs/helpers', '@takumi-rs/core', 'sanitize-html'],
+  serverExternalPackages: ['takumi-pdf', '@takumi-rs/helpers', '@takumi-rs/core'],
   outputFileTracingRoot: monorepoRoot,
   outputFileTracingIncludes: {
     '/**': [

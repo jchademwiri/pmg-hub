@@ -2,7 +2,6 @@
 
 import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import sanitizeHtml from 'sanitize-html';
 import {
   db,
   publicDocuments,
@@ -14,6 +13,7 @@ import {
 import { revalidatePath } from 'next/cache';
 import { getR2Client, deleteR2Object } from '@/lib/r2';
 import { getSessionOrRedirect, requireRole } from '@/lib/auth';
+import { sanitizeRichContent } from '@/lib/sanitize-rich-html';
 
 const MAX_DOCUMENT_SIZE_BYTES = 25 * 1024 * 1024; // 25MB
 
@@ -56,72 +56,6 @@ function resolveFileMetadata(file: File): { ext: string; mimeType: string } | nu
   }
 
   return null;
-}
-
-function sanitizeRichContent(rawHtml: string): string {
-  const trimmed = rawHtml.trim();
-  if (!trimmed) return '';
-
-  const baseOptions: sanitizeHtml.IOptions = {
-    allowedTags: [
-      'h2',
-      'h3',
-      'p',
-      'strong',
-      'b',
-      'em',
-      'i',
-      'u',
-      's',
-      'mark',
-      'code',
-      'pre',
-      'ul',
-      'ol',
-      'li',
-      'blockquote',
-      'a',
-      'br',
-      'hr',
-    ],
-    allowedAttributes: {
-      a: ['href', 'target', 'rel'],
-      p: ['style'],
-      h2: ['style'],
-      h3: ['style'],
-    },
-    allowedStyles: {
-      '*': {
-        'text-align': [/^(left|center|right|justify)$/],
-      },
-    },
-    allowedSchemes: ['http', 'https', 'mailto'],
-    allowProtocolRelative: false,
-    transformTags: {
-      a: (tagName, attribs) => {
-        const href = attribs.href || '';
-        const isExternal = /^https?:\/\//i.test(href);
-        return {
-          tagName,
-          attribs: {
-            href,
-            ...(isExternal ? { target: '_blank', rel: 'noopener noreferrer nofollow' } : {}),
-          },
-        };
-      },
-    },
-  };
-
-  try {
-    return sanitizeHtml(trimmed, baseOptions);
-  } catch (err) {
-    console.warn('sanitizeHtml with allowedStyles failed, retrying without style rules:', err);
-    return sanitizeHtml(trimmed, {
-      ...baseOptions,
-      allowedAttributes: { a: ['href', 'target', 'rel'] },
-      allowedStyles: undefined,
-    });
-  }
 }
 
 function normalizeSlug(raw: string): string {
