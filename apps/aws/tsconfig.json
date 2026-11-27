@@ -3,11 +3,9 @@
   "include": [".astro/types.d.ts", "**/*"],
   "exclude": ["dist", "node_modules"],
   "compilerOptions": {
-    "ignoreDeprecations": "5.0",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@emails/*": ["emails/*"]
+      "@/*": ["./src/*"],
+      "@emails/*": ["./emails/*"]
     },
     "jsx": "react-jsx",
     "jsxImportSource": "react"

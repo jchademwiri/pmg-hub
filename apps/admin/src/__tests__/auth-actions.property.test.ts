@@ -65,11 +65,13 @@ vi.mock('@/lib/auth', () => ({
 
 // ─── Mock resend ─────────────────────────────────────────────────────────────
 vi.mock('resend', () => ({
-  Resend: vi.fn().mockImplementation(() => ({
-    emails: {
-      send: mockResendSend,
-    },
-  })),
+  Resend: vi.fn().mockImplementation(function () {
+    return {
+      emails: {
+        send: mockResendSend,
+      },
+    };
+  }),
 }));
 
 // ─── Mock @pmg/db ─────────────────────────────────────────────────────────────

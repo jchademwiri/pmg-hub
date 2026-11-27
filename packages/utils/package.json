@@ -20,6 +20,6 @@
   },
   "devDependencies": {
     "@pmg/typescript-config": "workspace:*",
-    "typescript": "^5.4.0"
+    "typescript": "catalog:"
   }
 }
