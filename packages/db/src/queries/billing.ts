@@ -1864,6 +1864,8 @@ export interface ClientAgingRow {
   clientId: string;
   clientName: string;
   businessName: string | null;
+  phone?: string | null;
+  divisionId?: string | null;
   totalOutstanding: number;
   current: number;
   bucket_1_14: number;
@@ -1884,6 +1886,8 @@ export async function getClientAgingReport(filters?: { year?: number }): Promise
       c.id                                                        AS client_id,
       c.name                                                      AS client_name,
       c.business_name                                             AS business_name,
+      c.phone                                                     AS phone,
+      c.division_id                                               AS division_id,
       COALESCE(SUM(inv.outstanding), 0)::numeric                 AS total_outstanding,
       COALESCE(SUM(CASE WHEN inv.bucket = 'current'  THEN inv.outstanding ELSE 0 END), 0)::numeric AS current,
       COALESCE(SUM(CASE WHEN inv.bucket = '1_14'     THEN inv.outstanding ELSE 0 END), 0)::numeric AS bucket_1_14,
@@ -1908,7 +1912,7 @@ export async function getClientAgingReport(filters?: { year?: number }): Promise
         AND invoice_date <= timezone('Africa/Johannesburg', now())::date
         ${dateFilter}
     ) inv ON inv.client_id = c.id
-    GROUP BY c.id, c.name, c.business_name
+    GROUP BY c.id, c.name, c.business_name, c.phone, c.division_id
     HAVING COALESCE(SUM(inv.outstanding), 0) > 0
     ORDER BY total_outstanding DESC
   `);
@@ -1917,6 +1921,8 @@ export async function getClientAgingReport(filters?: { year?: number }): Promise
     clientId: r.client_id as string,
     clientName: r.client_name as string,
     businessName: r.business_name as string | null,
+    phone: (r.phone as string | null) ?? null,
+    divisionId: (r.division_id as string | null) ?? null,
     totalOutstanding: Number(r.total_outstanding),
     current: Number(r.current),
     bucket_1_14: Number(r.bucket_1_14),

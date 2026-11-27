@@ -1,5 +1,5 @@
 import { db } from '../client';
-import { clients, income } from '../schema/index';
+import { clients, divisions, income } from '../schema/index';
 import type { Client } from '../schema/clients';
 import { sql, eq, asc } from 'drizzle-orm';
 
@@ -9,6 +9,8 @@ export type ClientWithIncomeCount = {
   businessName: string | null;
   email: string | null;
   phone: string | null;
+  divisionId?: string | null;
+  divisionName?: string | null;
   isActive: boolean;
   isRetainer: boolean;
   excludeFromAutoStatements: boolean;
@@ -79,6 +81,8 @@ export async function getClientsWithIncomeCount(): Promise<ClientWithIncomeCount
       businessName: clients.businessName,
       email: clients.email,
       phone: clients.phone,
+      divisionId: clients.divisionId,
+      divisionName: divisions.name,
       isActive: clients.isActive,
       isRetainer: clients.isRetainer,
       excludeFromAutoStatements: clients.excludeFromAutoStatements,
@@ -88,9 +92,10 @@ export async function getClientsWithIncomeCount(): Promise<ClientWithIncomeCount
       incomeCount: sql<number>`CAST(COUNT(${income.id}) AS INTEGER)`,
     })
     .from(clients)
+    .leftJoin(divisions, eq(clients.divisionId, divisions.id))
     .leftJoin(income, eq(income.clientId, clients.id))
-    .groupBy(clients.id)
-    .orderBy(asc(clients.name));
+    .groupBy(clients.id, divisions.name)
+    .orderBy(asc(sql`COALESCE(NULLIF(${clients.businessName}, ''), ${clients.name})`));
 
   return result;
 }

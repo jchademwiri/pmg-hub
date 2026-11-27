@@ -1,0 +1,65 @@
+---
+interface Props {
+  eyebrow?: string;
+  heading?: string;
+  description?: string;
+  whatsappText?: string;
+  primaryLabel?: string;
+  secondaryLabel?: string;
+  showTemplatesLink?: boolean;
+}
+
+const {
+  eyebrow = 'DONE FOR YOU TENDER SUPPORT',
+  heading = 'NEED HELP WITH YOUR TENDER SUBMISSION?',
+  description = 'Our specialists prepare your SBD forms, B-BBEE sworn affidavit, CSD profile, and full compliance pack — with optional hand-delivery and video proof — so you never get disqualified on technicalities.',
+  whatsappText = "Hi, I'm interested in your tender compliance services and full tender preparation.",
+  primaryLabel = 'WhatsApp Our Tender Experts',
+  secondaryLabel = 'Start Free Tender Assessment',
+  showTemplatesLink = false,
+} = Astro.props;
+
+const whatsappHref = `https://wa.me/27745017094?text=${encodeURIComponent(whatsappText)}`;
+---
+
+<section class="py-20 px-6 md:px-12 bg-white/5 border-t border-border dot-grid">
+  <div class="max-w-3xl mx-auto text-center">
+    <p class="text-primary uppercase tracking-widest font-semibold text-[10px] md:text-[11px] mb-3">
+      {eyebrow}
+    </p>
+    <h2 class="font-condensed uppercase text-4xl md:text-5xl text-foreground mb-4">
+      {heading}
+    </h2>
+    <p class="text-muted-foreground text-lg mb-8">
+      {description}
+    </p>
+    <div class="flex flex-wrap items-center justify-center gap-4">
+      <a
+        href={whatsappHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center justify-center bg-primary text-primary-foreground px-8 py-4 rounded-md font-bold uppercase tracking-wider hover:bg-primary-hover transition-colors"
+      >
+        {primaryLabel}
+      </a>
+      <a
+        href="/onboard"
+        class="inline-flex items-center justify-center border border-border bg-card text-foreground px-8 py-4 rounded-md font-bold uppercase tracking-wider hover:border-primary/60 transition-colors"
+      >
+        {secondaryLabel}
+      </a>
+    </div>
+    {
+      showTemplatesLink && (
+        <div class="mt-6">
+          <a
+            href="/templates"
+            class="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary hover:underline underline-offset-4"
+          >
+            Browse Free SBD &amp; B-BBEE Templates →
+          </a>
+        </div>
+      )
+    }
+  </div>
+</section>

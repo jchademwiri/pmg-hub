@@ -142,6 +142,7 @@ interface ClientBillingWorkspaceProps {
   creditHistory?: CreditHistoryEntry[];
   projects?: ProjectScheduleEntry[];
   complianceRecords?: ComplianceDocument[];
+  complianceDocumentTypes?: string[];
 }
 
 interface BulkLogEntry {
@@ -167,6 +168,7 @@ export function ClientBillingWorkspace({
   divisions,
   projects = [],
   complianceRecords,
+  complianceDocumentTypes,
 }: ClientBillingWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1545,7 +1547,11 @@ export function ClientBillingWorkspace({
                   )}
                 </TabsContent>
                 <TabsContent value="compliance" className="m-0 p-6 flex flex-col gap-6">
-                  <ComplianceTable clientId={client.id} records={complianceRecords || []} />
+                  <ComplianceTable
+                    clientId={client.id}
+                    records={complianceRecords || []}
+                    documentTypes={complianceDocumentTypes}
+                  />
                 </TabsContent>
               </CardContent>
             </Card>

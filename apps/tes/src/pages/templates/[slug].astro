@@ -1,0 +1,536 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { PUBLIC_DOCUMENT_CATEGORY_META } from '@pmg/db';
+import {
+  getPublishedDocumentBySlug,
+  getRelatedDocuments,
+  formatFileMeta,
+  formatDocumentContentHtml,
+  hasLegacyStaticMirror,
+} from '../../lib/public-documents';
+
+const slug = (Astro.params.slug || '').trim();
+const doc = slug ? await getPublishedDocumentBySlug(slug) : null;
+
+if (!doc) {
+  return new Response(null, { status: 404, statusText: 'Template Not Found' });
+}
+
+const categoryMeta =
+  PUBLIC_DOCUMENT_CATEGORY_META[doc.category] || PUBLIC_DOCUMENT_CATEGORY_META.other;
+const fileMeta = formatFileMeta(doc.mimeType, doc.fileSize, doc.fileName || doc.s3Key);
+const contentHtml = formatDocumentContentHtml(doc.content);
+const mistakes = Array.isArray(doc.commonMistakes) ? doc.commonMistakes.filter(Boolean) : [];
+const hasMirror = hasLegacyStaticMirror(doc.slug);
+const relatedDocs = await getRelatedDocuments(doc.slug, doc.category, 3);
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+
+const SITE_URL = 'https://www.tenderedgesolutions.co.za';
+const canonical = `${SITE_URL}/templates/${doc.slug}`;
+const displayName = doc.code ? `${doc.code}: ${doc.title}` : doc.title;
+const pageTitle =
+  doc.seoTitle?.trim() ||
+  `Download ${displayName} (${fileMeta.shortLabel}) | TenderEdge Solutions`;
+const pageDescription =
+  doc.seoDescription?.trim() ||
+  doc.subtitle?.trim() ||
+  `Download the free ${displayName} template in ${fileMeta.label} format for South African tenders.`;
+
+const titleWords = doc.title.trim().split(/\s+/);
+const titleLead = titleWords.length > 1 ? titleWords.slice(0, -1).join(' ') : '';
+const titleAccent = titleWords[titleWords.length - 1] || doc.title;
+
+const digitalDocSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'DigitalDocument',
+  name: displayName,
+  description: pageDescription,
+  url: canonical,
+  encodingFormat: doc.mimeType || 'application/pdf',
+  ...(doc.fileSize ? { contentSize: `${doc.fileSize} bytes` } : {}),
+  dateModified: new Date(doc.updatedAt).toISOString(),
+  ...(Array.isArray(doc.keywords) && doc.keywords.length > 0
+    ? { keywords: doc.keywords.join(', ') }
+    : {}),
+  publisher: {
+    '@type': 'Organization',
+    name: 'TenderEdge Solutions',
+    url: SITE_URL,
+  },
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+    { '@type': 'ListItem', position: 2, name: 'Templates', item: `${SITE_URL}/templates` },
+    {
+      '@type': 'ListItem',
+      position: 3,
+      name: categoryMeta.label,
+      item: `${SITE_URL}/templates/category/${categoryMeta.urlSlug}`,
+    },
+    { '@type': 'ListItem', position: 4, name: doc.code || doc.title, item: canonical },
+  ],
+};
+---
+
+<Layout title={pageTitle} description={pageDescription} canonical={canonical}>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(digitalDocSchema)} />
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+  </Fragment>
+
+  <section class="relative pt-28 pb-16 px-6 md:px-12 dot-grid border-b border-border">
+    <div class="max-w-7xl mx-auto w-full">
+      <nav aria-label="Breadcrumb" class="mb-8 text-xs uppercase tracking-widest text-muted-foreground">
+        <ol class="flex flex-wrap items-center gap-2">
+          <li><a href="/" class="hover:text-primary transition-colors">Home</a></li>
+          <li aria-hidden="true">/</li>
+          <li><a href="/templates" class="hover:text-primary transition-colors">Templates</a></li>
+          <li aria-hidden="true">/</li>
+          <li>
+            <a
+              href={`/templates/category/${categoryMeta.urlSlug}`}
+              class="hover:text-primary transition-colors"
+            >
+              {categoryMeta.label}
+            </a>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li class="font-semibold text-primary" aria-current="page">{doc.code || doc.title}</li>
+        </ol>
+      </nav>
+
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        {
+          doc.code && (
+            <span class="text-primary uppercase tracking-widest font-semibold text-xs">
+              {doc.code}
+            </span>
+          )
+        }
+        <span class="inline-flex items-center rounded-md border border-border bg-card px-2.5 py-0.5 text-[11px] font-mono text-muted-foreground">
+          {fileMeta.label}
+          {fileMeta.sizeLabel ? ` • ${fileMeta.sizeLabel}` : ''}
+        </span>
+      </div>
+
+      <h1 class="font-condensed uppercase text-5xl md:text-7xl lg:text-8xl leading-[0.92] mb-6">
+        {titleLead && (
+          <>
+            {titleLead}
+            <br />
+          </>
+        )}
+        <span class="text-primary">{titleAccent}</span>
+      </h1>
+
+      {
+        doc.subtitle && (
+          <p class="text-muted-foreground text-lg md:text-xl max-w-3xl">{doc.subtitle}</p>
+        )
+      }
+    </div>
+  </section>
+
+  <section class="py-16 md:py-24 px-6 md:px-12">
+    <div class="max-w-7xl mx-auto w-full grid md:grid-cols-12 gap-12 lg:gap-20 items-start">
+      <!-- Main Content -->
+      <div class="md:col-span-7 lg:col-span-8">
+        {
+          contentHtml ? (
+            <div
+              class="prose prose-invert prose-lg max-w-none leading-relaxed space-y-5 text-foreground [&_h2]:font-condensed [&_h2]:uppercase [&_h2]:text-3xl [&_h2]:text-primary [&_h2]:mt-10 [&_h2]:mb-4 [&_h3]:font-condensed [&_h3]:uppercase [&_h3]:text-2xl [&_h3]:text-foreground [&_h3]:mt-8 [&_h3]:mb-3 [&_p]:text-muted-foreground [&_p]:leading-relaxed [&_strong]:text-foreground [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-2 [&_li]:text-muted-foreground [&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4 [&_mark]:bg-primary/20 [&_mark]:text-foreground [&_mark]:px-1 [&_mark]:rounded"
+              set:html={contentHtml}
+            />
+          ) : (
+            <p class="text-lg text-muted-foreground leading-relaxed">{pageDescription}</p>
+          )
+        }
+
+        {
+          mistakes.length > 0 && (
+            <div class="mt-12 pt-10 border-t border-border/60">
+              <h2 class="font-condensed uppercase text-3xl text-primary mb-6">
+                Common Mistakes to Avoid
+              </h2>
+              <ul class="space-y-4 text-muted-foreground">
+                {mistakes.map((mistake) => (
+                  <li class="flex items-start gap-3">
+                    <svg
+                      class="w-6 h-6 text-primary shrink-0 mt-0.5"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <span>{mistake}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+
+        <!-- Related Templates for Internal SEO Linking -->
+        {
+          relatedDocs.length > 0 && (
+            <div class="mt-16 pt-10 border-t border-border/60">
+              <div class="flex items-center justify-between mb-6">
+                <h2 class="font-condensed uppercase text-2xl md:text-3xl text-foreground">
+                  Related Tender Templates
+                </h2>
+                <a
+                  href="/templates"
+                  class="text-xs font-semibold uppercase tracking-wider text-primary hover:underline"
+                >
+                  View all →
+                </a>
+              </div>
+              <div class="grid gap-4 sm:grid-cols-3">
+                {relatedDocs.map((rel) => {
+                  const relFmt = formatFileMeta(rel.mimeType, rel.fileSize, rel.fileName || rel.s3Key);
+                  return (
+                    <a
+                      href={`/templates/${rel.slug}`}
+                      class="group flex flex-col rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50"
+                    >
+                      <div class="flex items-center justify-between gap-2 mb-2">
+                        <span class="text-xs font-condensed font-bold text-primary uppercase">
+                          {rel.code || 'Template'}
+                        </span>
+                        <span class="text-[10px] font-mono text-muted-foreground">
+                          {relFmt.shortLabel}
+                        </span>
+                      </div>
+                      <h3 class="text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                        {rel.title}
+                      </h3>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )
+        }
+      </div>
+
+      <!-- Sidebar CTAs -->
+      <aside class="md:col-span-5 lg:col-span-4 space-y-6 md:sticky md:top-24">
+        <!-- Download CTA -->
+        <div class="bg-card border border-border rounded-xl p-8 shadow-xl">
+          <p class="text-primary uppercase tracking-widest font-medium text-[10px] mb-2">
+            FREE INSTANT DOWNLOAD
+          </p>
+          <h3 class="font-condensed uppercase text-3xl mb-3">
+            DOWNLOAD {fileMeta.shortLabel}
+          </h3>
+          <p class="text-muted-foreground text-sm mb-6">
+            Download the blank {doc.code || doc.title} ({fileMeta.label}) template and complete it
+            for your tender submission.
+          </p>
+
+          <button
+            id="download-btn"
+            data-slug={doc.slug}
+            data-docname={doc.code || doc.title}
+            data-ext={fileMeta.ext}
+            data-has-mirror={hasMirror ? 'true' : 'false'}
+            class="w-full flex items-center justify-center gap-2 bg-transparent border-2 border-primary text-primary px-6 py-4 rounded-md font-bold uppercase tracking-wider hover:bg-primary hover:text-primary-foreground transition-all duration-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed group"
+          >
+            <svg
+              id="download-icon"
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="group-hover:translate-y-0.5 transition-transform"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <svg
+              id="loading-spinner"
+              class="animate-spin -ml-1 mr-2 h-5 w-5 hidden"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            <span id="download-text">Download {doc.code || fileMeta.shortLabel}</span>
+          </button>
+
+          {
+            hasMirror && (
+              <div class="mt-3 text-center">
+                <a
+                  href={`/documents/${doc.slug}.pdf`}
+                  download={`${doc.slug}.pdf`}
+                  class="text-xs text-muted-foreground hover:text-primary transition-colors underline-offset-4 hover:underline"
+                >
+                  Direct mirror download ({doc.code || doc.title} PDF)
+                </a>
+              </div>
+            )
+          }
+
+          <!-- Error Banner -->
+          <div
+            id="download-error"
+            class="hidden mt-4 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs space-y-3"
+          >
+            <div class="flex items-start gap-2.5 text-amber-200">
+              <svg
+                class="size-4 shrink-0 text-amber-400 mt-0.5"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <p class="leading-relaxed">
+                Download link temporarily unavailable. Contact us on WhatsApp and we will send you
+                the <strong class="text-white">{doc.code || doc.title}</strong> template right away.
+              </p>
+            </div>
+            <div class={hasMirror ? 'grid grid-cols-2 gap-2 pt-1' : 'pt-1'}>
+              {
+                hasMirror && (
+                  <a
+                    href={`/documents/${doc.slug}.pdf`}
+                    download={`${doc.slug}.pdf`}
+                    class="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded bg-white/10 hover:bg-white/20 text-white font-semibold uppercase tracking-wider text-center transition-colors"
+                  >
+                    Direct Mirror
+                  </a>
+                )
+              }
+              <a
+                href={`https://wa.me/27745017094?text=${encodeURIComponent(`Hi, I'm requesting the ${doc.code || doc.title} template.`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-semibold uppercase tracking-wider text-center transition-colors"
+              >
+                WhatsApp →
+              </a>
+            </div>
+          </div>
+
+          <!-- Post-Download Upsell Prompt -->
+          <div
+            id="download-upsell"
+            class="hidden mt-4 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs space-y-3"
+          >
+            <p class="leading-relaxed text-emerald-200">
+              <strong class="text-white">Template downloading!</strong> Want us to complete,
+              verify &amp; package your full tender pack (including optional hand-delivery with
+              video proof)?
+            </p>
+            <div class="grid grid-cols-2 gap-2">
+              <a
+                href={`https://wa.me/27745017094?text=${encodeURIComponent(`Hi, I just downloaded the ${doc.code || doc.title} template and want help preparing my full tender submission.`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="w-full flex items-center justify-center py-2 px-3 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 font-semibold uppercase tracking-wider text-center transition-colors"
+              >
+                WhatsApp →
+              </a>
+              <a
+                href="/onboard"
+                class="w-full flex items-center justify-center py-2 px-3 rounded bg-white/10 hover:bg-white/20 text-white font-semibold uppercase tracking-wider text-center transition-colors"
+              >
+                Free Assessment
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Done For You Service CTA -->
+        <div class="bg-white/5 border border-white/10 rounded-xl p-8 backdrop-blur-sm space-y-4">
+          <div>
+            <p class="text-white uppercase tracking-widest font-medium text-[10px] mb-2">
+              DONE FOR YOU
+            </p>
+            <h3 class="font-condensed uppercase text-3xl mb-3 text-white">GET IT COMPLETED</h3>
+            <p class="text-muted-foreground text-sm">
+              Save time and avoid administrative disqualification. Let our compliance specialists
+              prepare and verify your entire tender pack.
+            </p>
+          </div>
+
+          <a
+            href={`https://wa.me/27745017094?text=${encodeURIComponent(`Hi, I need help completing the ${doc.code || doc.title} for my tender submission.`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="w-full flex items-center justify-center gap-2 bg-white text-background px-6 py-3.5 rounded-md font-bold uppercase tracking-wider hover:bg-gray-200 transition-colors text-sm"
+          >
+            WhatsApp Our Experts
+          </a>
+          <a
+            href="/onboard"
+            class="w-full flex items-center justify-center gap-2 border border-white/20 text-white px-6 py-3 rounded-md font-semibold uppercase tracking-wider hover:bg-white/10 transition-colors text-xs"
+          >
+            Request Free Tender Assessment
+          </a>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <script>
+    function setupDownload() {
+      const btn = document.getElementById('download-btn');
+      const text = document.getElementById('download-text');
+      const icon = document.getElementById('download-icon');
+      const spinner = document.getElementById('loading-spinner');
+      const errorBox = document.getElementById('download-error');
+      const upsellBox = document.getElementById('download-upsell');
+
+      if (!btn || !text || !icon || !spinner || !errorBox) return;
+
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('error')) {
+        errorBox.classList.remove('hidden');
+      }
+
+      btn.addEventListener('click', async () => {
+        const slug = btn.getAttribute('data-slug') || '';
+        const docName = btn.getAttribute('data-docname') || 'Template';
+        const ext = btn.getAttribute('data-ext') || 'pdf';
+        const hasMirror = btn.getAttribute('data-has-mirror') === 'true';
+
+        btn.setAttribute('disabled', 'true');
+        icon.classList.add('hidden');
+        spinner.classList.remove('hidden');
+        text.textContent = 'Generating Download Link...';
+        errorBox.classList.add('hidden');
+        upsellBox?.classList.add('hidden');
+
+        try {
+          const res = await fetch(
+            `/api/download?form=${encodeURIComponent(slug)}&format=json`,
+            { headers: { Accept: 'application/json' } },
+          );
+          const data = await res.json();
+
+          if (!res.ok || !data.success || !data.url) {
+            throw new Error(data.error || 'Failed to generate download');
+          }
+
+          text.textContent = '✓ Starting Download...';
+          btn.classList.add('bg-primary/20', 'border-primary');
+
+          const downloadLink = document.createElement('a');
+          downloadLink.href = data.url;
+          downloadLink.download = data.filename || `${slug}.${ext}`;
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+          upsellBox?.classList.remove('hidden');
+
+          setTimeout(() => {
+            text.textContent = `Download ${docName}`;
+            btn.removeAttribute('disabled');
+            icon.classList.remove('hidden');
+            spinner.classList.add('hidden');
+            btn.classList.remove('bg-primary/20');
+          }, 3000);
+        } catch (err) {
+          console.error('Download error:', err);
+          if (hasMirror) {
+            const fallbackLink = document.createElement('a');
+            fallbackLink.href = `/documents/${slug}.pdf`;
+            fallbackLink.download = `${slug}.pdf`;
+            document.body.appendChild(fallbackLink);
+            fallbackLink.click();
+            document.body.removeChild(fallbackLink);
+            upsellBox?.classList.remove('hidden');
+
+            text.textContent = '✓ Starting Download (Mirror)...';
+            btn.classList.add('bg-primary/20', 'border-primary');
+            setTimeout(() => {
+              text.textContent = `Download ${docName}`;
+              btn.removeAttribute('disabled');
+              icon.classList.remove('hidden');
+              spinner.classList.add('hidden');
+              btn.classList.remove('bg-primary/20');
+            }, 3000);
+            return;
+          }
+
+          errorBox.classList.remove('hidden');
+          text.textContent = 'Retry Download';
+          btn.removeAttribute('disabled');
+          icon.classList.remove('hidden');
+          spinner.classList.add('hidden');
+        }
+      });
+    }
+
+    function trackTemplateView() {
+      const btn = document.getElementById('download-btn');
+      const slug = btn?.getAttribute('data-slug');
+      if (!slug) return;
+      const key = `tes:viewed:${slug}`;
+      try {
+        if (window.sessionStorage.getItem(key)) return;
+        window.sessionStorage.setItem(key, '1');
+      } catch {
+        // ignore storage errors in private browsing
+      }
+      const payload = JSON.stringify({ slug });
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(
+          '/api/templates/view',
+          new Blob([payload], { type: 'application/json' }),
+        );
+      } else {
+        fetch('/api/templates/view', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+          keepalive: true,
+        }).catch(() => {});
+      }
+    }
+
+    setupDownload();
+    trackTemplateView();
+    document.addEventListener('astro:page-load', () => {
+      setupDownload();
+      trackTemplateView();
+    });
+  </script>
+</Layout>

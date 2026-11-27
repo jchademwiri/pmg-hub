@@ -42,6 +42,7 @@ export {
 } from './queries';
 export { getDivisionWithStatsById, setDivisionActive, getAllDivisions } from './queries';
 export { getAllExpenseCategories, getExpenseCategoryById } from './queries';
+export type { ExpenseCategoryWithAccount } from './queries/expenses';
 export type { ExpenseCategory } from './schema/expense-categories';
 export type { Invitation, NewInvitation } from './schema/invitations';
 
@@ -112,6 +113,7 @@ export {
   getAnnualFinancialStatements,
   getUnpostedInvoicesReconciliation,
   getUnpostedPaymentsReconciliation,
+  getUnpostedExpensesReconciliation,
   getGeneralLedger,
   getAccountingOverview,
   ensureOpenPeriod,
@@ -135,6 +137,7 @@ export type {
   CashFlowResult,
   AnnualFinancialStatementsResult,
   UnpostedPaymentReconciliationRow,
+  UnpostedExpenseReconciliationRow,
   GeneralLedgerRow,
   JournalEntryLineRow,
   AccountingOverview,

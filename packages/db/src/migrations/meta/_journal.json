@@ -435,6 +435,34 @@
       "when": 1795441679989,
       "tag": "0061_add_dividends_and_governance",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1795545377006,
+      "tag": "0062_new_magik",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1795596813406,
+      "tag": "0063_orange_surge",
+      "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1795606655504,
+      "tag": "0064_deep_bloodstorm",
+      "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1795614756843,
+      "tag": "0065_lame_lockjaw",
+      "breakpoints": true
     }
   ]
 }

@@ -3,6 +3,8 @@
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
+import { postUnpostedExpensesCatchUpAction } from '@/actions/accounting/journals';
 import {
   Select,
   SelectContent,
@@ -49,6 +51,8 @@ interface AccountingOverviewClientProps {
   profitAndLoss: ProfitAndLossResult;
   unpostedInvoicesCount: number;
   unpostedPaymentsCount: number;
+  unpostedExpensesCount: number;
+  unpostedExpensesTotal: number;
   recentJournals: Array<{
     id: string;
     entryNumber: string;
@@ -76,10 +80,13 @@ export function AccountingOverviewClient({
   profitAndLoss,
   unpostedInvoicesCount,
   unpostedPaymentsCount,
+  unpostedExpensesCount,
+  unpostedExpensesTotal,
   recentJournals,
 }: AccountingOverviewClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isPostingCatchUp, startCatchUpTransition] = React.useTransition();
 
   function handlePeriodChange(value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -101,8 +108,24 @@ export function AccountingOverviewClient({
   const isBalanceSheetBalanced = bsDiff < 0.01;
 
   const isProfitable = profitAndLoss.netProfit >= 0;
-  const totalUnposted = unpostedInvoicesCount + unpostedPaymentsCount;
+  const totalUnposted = unpostedInvoicesCount + unpostedPaymentsCount + unpostedExpensesCount;
   const isReconciled = totalUnposted === 0;
+
+  const handlePostExpensesCatchUp = () => {
+    startCatchUpTransition(async () => {
+      const res = await postUnpostedExpensesCatchUpAction();
+      if (res.error) {
+        toast.error(res.error);
+      } else if (res.postedCount && res.postedCount > 0) {
+        toast.success(
+          `Posted ${res.postedCount} catch-up expense JE${res.postedCount === 1 ? '' : 's'} (${formatZAR(res.totalAmount ?? 0)}) in ${res.period}.`,
+        );
+        router.refresh();
+      } else {
+        toast.info('All expenses are already posted to the general ledger.');
+      }
+    });
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -349,9 +372,20 @@ export function AccountingOverviewClient({
             {isReconciled ? 'All Synced' : `${totalUnposted} Unposted`}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            {unpostedInvoicesCount} unposted invoice{unpostedInvoicesCount === 1 ? '' : 's'} ·{' '}
-            {unpostedPaymentsCount} payment{unpostedPaymentsCount === 1 ? '' : 's'}
+            {unpostedInvoicesCount} inv · {unpostedPaymentsCount} pmt · {unpostedExpensesCount} exp
+            {unpostedExpensesCount > 0 ? ` (${formatZAR(unpostedExpensesTotal)})` : ''}
           </p>
+          {unpostedExpensesCount > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-2.5 h-7 text-xs border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10"
+              onClick={handlePostExpensesCatchUp}
+              disabled={isPostingCatchUp}
+            >
+              {isPostingCatchUp ? 'Posting Catch-Up…' : 'Post Catch-Up JE'}
+            </Button>
+          )}
         </div>
       </div>
 

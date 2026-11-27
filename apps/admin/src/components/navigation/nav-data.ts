@@ -226,6 +226,7 @@ const EXTRA_LABELS: Record<string, string> = {
   '/settings/billing/templates': 'Document Templates',
   '/settings/billing/statements': 'Automated Statements',
   '/settings/billing/credit': 'Credit Policy',
+  '/settings/compliance': 'Compliance Types',
   '/settings/users': 'Users',
   '/settings/users/invite': 'Invite User',
   '/settings/security': 'Security',

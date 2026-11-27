@@ -12,10 +12,14 @@
     "./bot-protection": {
       "types": "./src/bot-protection.ts",
       "default": "./src/bot-protection.ts"
+    },
+    "./public-documents": {
+      "types": "./src/public-documents.ts",
+      "default": "./src/public-documents.ts"
     }
   },
   "devDependencies": {
     "@pmg/typescript-config": "workspace:*",
-    "typescript": "^5.4.0"
+    "typescript": "catalog:"
   }
 }

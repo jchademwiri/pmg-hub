@@ -9,6 +9,7 @@ import {
   getAccountingOverview,
   getUnpostedInvoicesReconciliation,
   getUnpostedPaymentsReconciliation,
+  getUnpostedExpensesReconciliation,
 } from '@pmg/db';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
 import { formatZAR } from '@/lib/format';
@@ -35,6 +36,7 @@ export default async function AccountingOverviewPage({
     overview,
     unpostedInvoices,
     unpostedPayments,
+    unpostedExpenses,
   ] = await Promise.all([
     getTrialBalance(period),
     getBalanceSheet(period),
@@ -45,7 +47,10 @@ export default async function AccountingOverviewPage({
     getAccountingOverview(),
     getUnpostedInvoicesReconciliation(),
     getUnpostedPaymentsReconciliation(),
+    getUnpostedExpensesReconciliation(),
   ]);
+
+  const unpostedExpensesTotal = unpostedExpenses.reduce((sum, e) => sum + e.amount, 0);
 
   const periodList = allPeriods.map((p) => p.period);
 
@@ -76,6 +81,8 @@ export default async function AccountingOverviewPage({
         profitAndLoss={profitAndLoss}
         unpostedInvoicesCount={unpostedInvoices.length}
         unpostedPaymentsCount={unpostedPayments.length}
+        unpostedExpensesCount={unpostedExpenses.length}
+        unpostedExpensesTotal={unpostedExpensesTotal}
         recentJournals={recentJournals.data.map((j) => ({
           id: j.id,
           entryNumber: j.entryNumber,

@@ -11,6 +11,7 @@ import {
   Mail,
   Receipt,
   Shield,
+  ShieldCheck,
   Users,
 } from 'lucide-react';
 
@@ -36,6 +37,7 @@ const settingsNavItems: {
   { href: '/settings/billing/templates', label: 'Document Templates', icon: FileText },
   { href: '/settings/billing/statements', label: 'Automated Statements', icon: FileText },
   { href: '/settings/billing/credit', label: 'Credit Policy', icon: CreditCard },
+  { href: '/settings/compliance', label: 'Compliance Types', icon: ShieldCheck },
   { href: '/settings/users', label: 'Users', icon: Users },
   { href: '/settings/security', label: 'Security', icon: Shield },
   { href: '/settings/data', label: 'Data & Exports', icon: Database },

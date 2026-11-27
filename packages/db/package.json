@@ -14,25 +14,26 @@
     "db:reset": "bun src/reset.ts",
     "db:seed": "bun src/reset.ts && bun src/seed.ts",
     "db:backfill-payment-allocations": "bun src/backfill-payment-allocations.ts",
+    "db:backfill-public-documents": "bun src/backfill-public-documents.ts",
     "db:cleanup-synthetic-credit-income": "bun src/cleanup-synthetic-credit-income.ts",
     "db:check": "bun src/db-check.ts",
     "test": "vitest run"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.1.0",
+    "@neondatabase/serverless": "^1.2.2",
     "@pmg/utils": "workspace:*",
-    "drizzle-orm": "^0.45.3",
+    "drizzle-orm": "^0.45.4",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@pmg/typescript-config": "workspace:*",
-    "@types/node": "^20.10.0",
+    "@types/node": "^22.15.3",
     "@types/pg": "^8.23.1",
-    "dotenv": "^18.0.4",
+    "dotenv": "^18.0.10",
     "drizzle-kit": "^0.31.11",
-    "fast-check": "^4.10.2",
-    "pg": "^8.23.0",
-    "typescript": "^5.4.0",
-    "vitest": "^3.2.7"
+    "fast-check": "^4.11.0",
+    "pg": "^8.23.1",
+    "typescript": "catalog:",
+    "vitest": "^5.1.2"
   }
 }
