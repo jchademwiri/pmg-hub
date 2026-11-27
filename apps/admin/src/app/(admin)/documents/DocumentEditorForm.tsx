@@ -994,7 +994,7 @@ export function DocumentEditorForm({ document }: DocumentEditorFormProps) {
           </div>
 
           {/* Sticky Sidebar (4 cols) */}
-          <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-6">
+          <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-20">
             {/* Publishing & Autosave Status */}
             <Card>
               <CardHeader className="pb-3">
