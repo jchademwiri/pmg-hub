@@ -5,12 +5,14 @@ import Analytics from '@vercel/analytics/astro';
 import SpeedInsights from '@vercel/speed-insights/astro';
 import GoogleAnalytics from '@/components/GoogleAnalytics.astro';
 import Footer from '@/components/Footer.astro';
+import FloatingWhatsApp from '@/components/FloatingWhatsApp.astro';
 
 interface Props {
 	title?: string;
 	description?: string;
 	canonical?: string;
 	robots?: string;
+	showFloatingWhatsApp?: boolean;
 }
 
 const {
@@ -18,6 +20,7 @@ const {
 	description = 'Get CSD-registered, CIDB-graded, and tender-ready. B-BBEE affidavits, SBD forms, and full tender document prep in Gauteng. Free assessment.',
 	canonical: canonicalProp,
 	robots,
+	showFloatingWhatsApp = true,
 } = Astro.props;
 
 const SITE_URL = Astro.site?.href ?? 'https://www.tenderedgesolutions.co.za';
@@ -300,6 +303,7 @@ const faqSchema = {
 		<Nav />
 		<slot />
 		<Footer />
+		{showFloatingWhatsApp && <FloatingWhatsApp />}
 	</body>
 </html>
 

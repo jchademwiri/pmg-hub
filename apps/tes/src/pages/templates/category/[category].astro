@@ -1,5 +1,6 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
+import UpsellBanner from '../../../components/UpsellBanner.astro';
 import { getPublicDocumentCategoryByUrlSlug } from '@pmg/db';
 import {
   getPublishedDocuments,
@@ -127,12 +128,22 @@ const breadcrumbSchema = {
             <p class="mt-2 text-sm text-muted-foreground mb-6">
               Browse all available tender templates or contact our team on WhatsApp for assistance.
             </p>
-            <a
-              href="/templates"
-              class="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-6 py-3 text-xs font-bold uppercase tracking-wider hover:bg-primary-hover transition-colors"
-            >
-              Browse All Templates
-            </a>
+            <div class="flex flex-wrap items-center justify-center gap-3">
+              <a
+                href="/templates"
+                class="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-6 py-3 text-xs font-bold uppercase tracking-wider hover:bg-primary-hover transition-colors"
+              >
+                Browse All Templates
+              </a>
+              <a
+                href={`https://wa.me/27745017094?text=${encodeURIComponent(`Hi, I'm looking for ${categoryMeta.label} templates for my tender submission.`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center justify-center rounded-md border border-border bg-card text-foreground px-6 py-3 text-xs font-bold uppercase tracking-wider hover:border-primary/60 transition-colors"
+              >
+                Request via WhatsApp
+              </a>
+            </div>
           </div>
         ) : (
           <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -199,4 +210,10 @@ const breadcrumbSchema = {
       }
     </div>
   </section>
+
+  <UpsellBanner
+    heading={`NEED HELP WITH ${categoryMeta.label.toUpperCase()}?`}
+    description={`Our compliance specialists prepare ${categoryMeta.label.toLowerCase()}, verify your CSD & B-BBEE returnables, and package your full tender submission — including optional hand-delivery with video proof.`}
+    whatsappText={`Hi, I need help with ${categoryMeta.label} for my tender submission.`}
+  />
 </Layout>
