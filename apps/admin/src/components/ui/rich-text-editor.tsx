@@ -128,8 +128,11 @@ export function RichTextEditor({
         if (!clipboard) return false;
         const html = clipboard.getData('text/html');
         const plain = clipboard.getData('text/plain');
-        // If pasting plain Markdown (no rich HTML on clipboard), auto-convert to formatted HTML
-        if (!html && plain && looksLikeMarkdown(plain)) {
+        // Preserve real rich HTML (from Word, Google Docs, webpages, rendered chat);
+        // auto-convert plain Markdown (including text copied from syntax-highlighted code blocks)
+        const hasSemanticRichHtml =
+          Boolean(html) && /<(h[1-6]|ul|ol|li|strong|b|em|i|a\s|blockquote|table)\b/i.test(html);
+        if (!hasSemanticRichHtml && plain && looksLikeMarkdown(plain)) {
           event.preventDefault();
           const converted = markdownToHtml(plain);
           if (converted && editorRef.current) {
