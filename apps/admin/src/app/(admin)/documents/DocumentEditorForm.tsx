@@ -263,6 +263,7 @@ export function DocumentEditorForm({ document }: DocumentEditorFormProps) {
   const [restoredAt, setRestoredAt] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [guideTab, setGuideTab] = useState<'write' | 'preview'>('write');
   const { setRightContent, setCustomLabel } = usePageHeader();
 
   // Restore any unsaved draft from localStorage on mount
@@ -861,22 +862,73 @@ export function DocumentEditorForm({ document }: DocumentEditorFormProps) {
               </CardContent>
             </Card>
 
-            {/* Guide & Overview (Tiptap Rich Text) */}
+            {/* Guide & Overview (Tiptap Rich Text with GitHub-style Write / Preview Tabs) */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Guide &amp; Completion Instructions</CardTitle>
-                <CardDescription>
-                  Write helpful guidance using headings, checklists, and links — this content drives
-                  organic Google search traffic to the template page.
-                </CardDescription>
+              <CardHeader className="pb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-base">Guide &amp; Completion Instructions</CardTitle>
+                    <CardDescription>
+                      Write or paste Markdown / rich text using headings, lists, and links — drives
+                      organic Google search traffic.
+                    </CardDescription>
+                  </div>
+                  <div
+                    role="tablist"
+                    aria-label="Guide editor view"
+                    className="inline-flex items-center rounded-lg border border-border bg-muted/40 p-0.5 self-start sm:self-auto shrink-0"
+                  >
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={guideTab === 'write'}
+                      onClick={() => setGuideTab('write')}
+                      className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                        guideTab === 'write'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Write
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={guideTab === 'preview'}
+                      onClick={() => setGuideTab('preview')}
+                      className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                        guideTab === 'preview'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Preview
+                    </button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                <RichTextEditor
-                  value={content}
-                  onChange={setContent}
-                  placeholder="Explain what this template is for, who qualifies, and step-by-step instructions on completing or commissioning it..."
-                  minHeight="300px"
-                />
+                {guideTab === 'write' ? (
+                  <RichTextEditor
+                    value={content}
+                    onChange={setContent}
+                    placeholder="Explain what this template is for, who qualifies, and step-by-step instructions on completing or commissioning it..."
+                    minHeight="300px"
+                  />
+                ) : (
+                  <div className="min-h-[300px] rounded-lg border border-border/80 bg-muted/20 p-5">
+                    {content.trim() ? (
+                      <div
+                        className="prose prose-sm dark:prose-invert max-w-none leading-relaxed [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-primary [&_h2]:mt-5 [&_h2]:mb-2 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-1.5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1 [&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_a]:text-primary [&_a]:underline [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-xs [&_mark]:rounded [&_mark]:bg-amber-400/30 [&_mark]:px-1"
+                        dangerouslySetInnerHTML={{ __html: content }}
+                      />
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">
+                        Nothing to preview yet. Switch to Write and add your guide content.
+                      </p>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
