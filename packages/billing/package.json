@@ -18,9 +18,9 @@
   "dependencies": {
     "@pmg/db": "workspace:*",
     "@pmg/utils": "workspace:*",
-    "@takumi-rs/helpers": "2.13.7",
+    "@takumi-rs/helpers": "2.22.1",
     "server-only": "^0.0.1",
-    "takumi-pdf": "0.14.3"
+    "takumi-pdf": "0.21.3"
   },
   "devDependencies": {
     "@pmg/typescript-config": "workspace:*",
