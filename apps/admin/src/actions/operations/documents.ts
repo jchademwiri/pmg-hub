@@ -105,7 +105,10 @@ function getErrorMessage(err: unknown, fallback: string): string {
 export async function createDocumentAction(
   formData: FormData,
 ): Promise<DocumentActionResult<{ slug: string; s3Key: string }>> {
-  await getSessionOrRedirect();
+  const session = await getSessionOrRedirect();
+  if (!requireRole(session, 'admin')) {
+    return { success: false, error: 'Only admins can create public templates.' };
+  }
 
   try {
     const file = formData.get('file') as File | null;
@@ -211,7 +214,10 @@ export async function updateDocumentAction(
   id: string,
   formData: FormData,
 ): Promise<DocumentActionResult<{ slug: string; s3Key: string }>> {
-  await getSessionOrRedirect();
+  const session = await getSessionOrRedirect();
+  if (!requireRole(session, 'admin')) {
+    return { success: false, error: 'Only admins can edit public templates.' };
+  }
 
   try {
     if (!id) return { success: false, error: 'Document ID is required.' };
@@ -326,7 +332,10 @@ export async function toggleDocumentPublishAction(
   id: string,
   isPublished: boolean,
 ): Promise<DocumentActionResult> {
-  await getSessionOrRedirect();
+  const session = await getSessionOrRedirect();
+  if (!requireRole(session, 'admin')) {
+    return { success: false, error: 'Only admins can change publication status.' };
+  }
 
   try {
     await db
